@@ -3,15 +3,17 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Zap, ArrowRight } from "lucide-react";
+import { Check, Zap, Sparkles, Crown, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { TIER_INFO } from "../components/subscription/FeatureGate";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const plans = [
+const plansData = [
   {
     tier: "free",
     name: "Free",
-    price: "$0",
+    priceMonthly: "$0",
+    priceYearly: "$0",
     period: "forever",
     description: "Get started with basic productivity tools",
     features: [
@@ -32,7 +34,9 @@ const plans = [
   {
     tier: "pro",
     name: "Pro",
-    price: "$9.99",
+    priceMonthly: "$9.99",
+    priceYearly: "$99",
+    savingsYearly: "Save $20",
     period: "per month",
     description: "Supercharge your productivity with AI",
     features: [
@@ -52,7 +56,9 @@ const plans = [
   {
     tier: "premium",
     name: "Premium",
-    price: "$19.99",
+    priceMonthly: "$19.99",
+    priceYearly: "$199",
+    savingsYearly: "Save $40",
     period: "per month",
     description: "The ultimate productivity experience",
     features: [
@@ -74,6 +80,7 @@ const plans = [
 export default function Subscription() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [billingPeriod, setBillingPeriod] = useState("monthly");
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -111,6 +118,12 @@ export default function Subscription() {
     return <Icon className={`w-6 h-6 ${info?.color}`} />;
   };
 
+  const plans = plansData.map(plan => ({
+    ...plan,
+    price: billingPeriod === "yearly" ? plan.priceYearly : plan.priceMonthly,
+    period: billingPeriod === "yearly" ? "per year" : plan.period
+  }));
+
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
@@ -125,6 +138,20 @@ export default function Subscription() {
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Unlock powerful features to supercharge your productivity journey
           </p>
+          
+          <div className="flex justify-center mt-8">
+            <Tabs value={billingPeriod} onValueChange={setBillingPeriod} className="w-auto">
+              <TabsList className="bg-gray-100">
+                <TabsTrigger value="monthly" className="px-6">Monthly</TabsTrigger>
+                <TabsTrigger value="yearly" className="px-6 relative">
+                  Yearly
+                  <Badge className="absolute -top-2 -right-2 bg-green-500 text-white text-[10px] px-1.5">
+                    Save 17%
+                  </Badge>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -169,6 +196,11 @@ export default function Subscription() {
                       <span className="text-4xl font-bold">{plan.price}</span>
                       <span className="text-gray-500 ml-1">/{plan.period}</span>
                     </div>
+                    {billingPeriod === "yearly" && plan.savingsYearly && (
+                      <Badge variant="outline" className="mt-2 bg-green-50 text-green-700 border-green-200">
+                        {plan.savingsYearly}
+                      </Badge>
+                    )}
                     <p className="text-sm text-gray-600 mt-2">{plan.description}</p>
                   </CardHeader>
 
