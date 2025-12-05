@@ -3,13 +3,23 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Calendar } from "lucide-react";
+import { Plus, Calendar, Link as LinkIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion } from "framer-motion";
 import TaskCard from "../components/TaskCard";
 import SpreadTaskModal from "../components/dashboard/SpreadTaskModal";
 import CalendarSyncModal from "../components/calendar/CalendarSyncModal";
+import TaskDependencies from "../components/tasks/TaskDependencies";
+import RecurringTaskModal from "../components/tasks/RecurringTaskModal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Tasks() {
   const queryClient = useQueryClient();
@@ -17,6 +27,10 @@ export default function Tasks() {
   const [spreadTask, setSpreadTask] = useState(null);
   const [showCalendarSync, setShowCalendarSync] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [showDependencyModal, setShowDependencyModal] = useState(false);
+  const [selectedDependencyTask, setSelectedDependencyTask] = useState(null);
+  const [showRecurringModal, setShowRecurringModal] = useState(false);
+  const [selectedRecurringTask, setSelectedRecurringTask] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -209,6 +223,7 @@ export default function Tasks() {
               >
                 <TaskCard
                   task={task}
+                  allTasks={tasks}
                   onStart={(task) => window.location.href = createPageUrl("FocusSession") + `?taskId=${task.id}`}
                   onDelete={(task) => {
                     if (confirm(`Delete "${task.title}"?`)) {
@@ -216,6 +231,15 @@ export default function Tasks() {
                     }
                   }}
                   onSpread={(task) => setSpreadTask(task)}
+                  onSubtaskToggle={handleSubtaskToggle}
+                  onSetDependency={(task) => {
+                    setSelectedDependencyTask(task);
+                    setShowDependencyModal(true);
+                  }}
+                  onSetRecurring={(task) => {
+                    setSelectedRecurringTask(task);
+                    setShowRecurringModal(true);
+                  }}
                 />
               </motion.div>
             ))}
@@ -246,6 +270,55 @@ export default function Tasks() {
           onSyncComplete={() => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
           }}
+        />
+
+        <Dialog open={showDependencyModal} onOpenChange={setShowDependencyModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <LinkIcon className="w-5 h-5 text-purple-600" />
+                Add Task Dependency
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <p className="text-sm text-gray-600">
+                Select a task that must be completed before "{selectedDependencyTask?.title}"
+              </p>
+              <div className="space-y-2">
+                <Label>Blocking Task</Label>
+                <Select onValueChange={handleAddDependency}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a task" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tasks
+                      .filter(t => 
+                        t.id !== selectedDependencyTask?.id && 
+                        !selectedDependencyTask?.blocked_by?.includes(t.id)
+                      )
+                      .map(task => (
+                        <SelectItem key={task.id} value={task.id}>
+                          {task.title}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {selectedDependencyTask && (
+                <TaskDependencies
+                  task={selectedDependencyTask}
+                  allTasks={tasks}
+                />
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <RecurringTaskModal
+          open={showRecurringModal}
+          onOpenChange={setShowRecurringModal}
+          initialTask={selectedRecurringTask}
+          onSave={handleSetRecurring}
         />
       </div>
     </div>

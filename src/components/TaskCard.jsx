@@ -2,8 +2,9 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Circle, Clock, Zap, Play, MoreVertical, CalendarDays } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Zap, Play, MoreVertical, Calendar, CalendarDays, Lock, RefreshCw, Link as LinkIcon } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import SubtaskTracker from "./tasks/SubtaskTracker";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,13 +28,31 @@ const difficultyIcons = {
   hard: { icon: Zap, color: "text-red-500" }
 };
 
-export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, compact = false }) {
+export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, onSubtaskToggle, onSetDependency, onSetRecurring, allTasks = [], compact = false }) {
   const completedSubtasks = task.subtasks?.filter(st => st.completed).length || 0;
   const totalSubtasks = task.subtasks?.length || 0;
   const progress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
 
   const DifficultyIcon = difficultyIcons[task.difficulty]?.icon || Zap;
   const difficultyColor = difficultyIcons[task.difficulty]?.color || "text-gray-500";
+
+  const isBlocked = task.blocked_by?.length > 0 && 
+    task.blocked_by.some(id => {
+      const blockerTask = allTasks.find(t => t.id === id);
+      return blockerTask && blockerTask.status !== 'completed';
+    });
+
+  const handleSubtaskToggle = (index) => {
+    if (onSubtaskToggle) {
+      const updatedSubtasks = [...(task.subtasks || [])];
+      updatedSubtasks[index] = {
+        ...updatedSubtasks[index],
+        completed: !updatedSubtasks[index].completed,
+        completed_date: !updatedSubtasks[index].completed ? new Date().toISOString() : undefined
+      };
+      onSubtaskToggle(task.id, updatedSubtasks);
+    }
+  };
 
   return (
     <motion.div
@@ -46,7 +65,19 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, co
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                {isBlocked && (
+                  <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                    <Lock className="w-3 h-3 mr-1" />
+                    Blocked
+                  </Badge>
+                )}
+                {task.is_recurring && (
+                  <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                    <RefreshCw className="w-3 h-3 mr-1" />
+                    Recurring
+                  </Badge>
+                )}
                 <Badge className={`${categoryColors[task.category]} border font-medium`}>
                   {task.category}
                 </Badge>
@@ -87,6 +118,18 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, co
                     Spread Across Days
                   </DropdownMenuItem>
                 )}
+                {onSetDependency && (
+                  <DropdownMenuItem onClick={() => onSetDependency?.(task)}>
+                    <LinkIcon className="w-4 h-4 mr-2" />
+                    Add Dependency
+                  </DropdownMenuItem>
+                )}
+                {onSetRecurring && (
+                  <DropdownMenuItem onClick={() => onSetRecurring?.(task)}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Set Recurring
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => onDelete?.(task)} className="text-red-600">
                   Delete Task
                 </DropdownMenuItem>
@@ -96,48 +139,29 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, co
         </CardHeader>
         <CardContent className="space-y-3">
           {totalSubtasks > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600 font-medium">Progress</span>
-                <span className="text-purple-600 font-semibold">
-                  {completedSubtasks}/{totalSubtasks} steps
-                </span>
-              </div>
-              <Progress value={progress} className="h-2" />
-            </div>
-          )}
-
-          {!compact && totalSubtasks > 0 && (
-            <div className="space-y-1 max-h-32 overflow-y-auto">
-              {task.subtasks?.slice(0, 3).map((subtask, idx) => (
-                <div key={idx} className="flex items-center justify-between gap-2 text-sm">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {subtask.completed ? (
-                      <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-                    ) : (
-                      <Circle className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                    )}
-                    <span className={`truncate ${subtask.completed ? "line-through text-gray-400" : "text-gray-700"}`}>
-                      {subtask.title}
-                    </span>
-                  </div>
-                  {subtask.estimated_minutes && (
-                    <span className="text-xs text-gray-500 flex-shrink-0">{subtask.estimated_minutes}m</span>
-                  )}
-                </div>
-              ))}
-              {totalSubtasks > 3 && (
-                <p className="text-xs text-gray-500 ml-6">+{totalSubtasks - 3} more steps</p>
-              )}
-            </div>
+            <SubtaskTracker 
+              subtasks={task.subtasks} 
+              onToggle={handleSubtaskToggle}
+              compact={compact}
+            />
           )}
 
           <Button
             onClick={() => onStart?.(task)}
-            className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold shadow-md"
+            disabled={isBlocked}
+            className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold shadow-md disabled:opacity-50"
           >
-            <Play className="w-4 h-4 mr-2" />
-            Start Focus Session
+            {isBlocked ? (
+              <>
+                <Lock className="w-4 h-4 mr-2" />
+                Task Blocked
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4 mr-2" />
+                Start Focus Session
+              </>
+            )}
           </Button>
         </CardContent>
       </Card>
