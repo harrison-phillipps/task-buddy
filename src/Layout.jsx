@@ -42,6 +42,11 @@ const navigationItems = [
     icon: BookOpen,
   },
   {
+    title: "AI Task Generator",
+    url: createPageUrl("AITaskGenerator"),
+    icon: Sparkles,
+  },
+  {
     title: "Break Down Task",
     url: createPageUrl("TaskBreakdown"),
     icon: Sparkles,

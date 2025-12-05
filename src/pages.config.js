@@ -14,6 +14,7 @@ import CalendarCallback from './pages/CalendarCallback';
 import CalendarView from './pages/CalendarView';
 import Subscription from './pages/Subscription';
 import Journal from './pages/Journal';
+import AITaskGenerator from './pages/AITaskGenerator';
 import __Layout from './Layout.jsx';
 
 
@@ -34,6 +35,7 @@ export const PAGES = {
     "CalendarView": CalendarView,
     "Subscription": Subscription,
     "Journal": Journal,
+    "AITaskGenerator": AITaskGenerator,
 }
 
 export const pagesConfig = {
