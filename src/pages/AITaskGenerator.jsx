@@ -21,6 +21,7 @@ export default function AITaskGenerator() {
   const [generatedTasks, setGeneratedTasks] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [userProgress, setUserProgress] = useState(null);
+  const [companionMessage, setCompanionMessage] = useState("");
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -31,6 +32,9 @@ export default function AITaskGenerator() {
         const progressList = await base44.entities.UserProgress.filter({ user_id: user.id });
         if (progressList.length > 0) {
           setUserProgress(progressList[0]);
+          setCompanionMessage(getPersonalizedMessage(progressList[0], "task_breakdown", user));
+        } else {
+          setCompanionMessage(getPersonalizedMessage(null, "task_breakdown", user));
         }
       } catch (error) {
         console.error("Error fetching user:", error);
@@ -200,7 +204,7 @@ Be encouraging and practical. Make tasks feel achievable. Consider natural task 
             >
               <VirtualCompanion 
                 mood="supportive"
-                message={getPersonalizedMessage(userProgress, "task_breakdown", currentUser)}
+                message={companionMessage}
                 size="small"
                 characterType={currentUser?.companion_type || "human"}
                 userProgress={userProgress}
