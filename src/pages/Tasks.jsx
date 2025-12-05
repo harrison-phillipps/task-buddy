@@ -50,6 +50,51 @@ export default function Tasks() {
     },
   });
 
+  const handleSubtaskToggle = async (taskId, updatedSubtasks) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const allCompleted = updatedSubtasks.every(st => st.completed);
+    const anyCompleted = updatedSubtasks.some(st => st.completed);
+    
+    let newStatus = task.status;
+    if (allCompleted && task.status !== 'completed') {
+      newStatus = 'completed';
+    } else if (anyCompleted && task.status === 'not_started') {
+      newStatus = 'in_progress';
+    }
+
+    await updateTaskMutation.mutateAsync({
+      id: taskId,
+      data: { subtasks: updatedSubtasks, status: newStatus }
+    });
+  };
+
+  const handleAddDependency = async (blockerId) => {
+    if (!selectedDependencyTask) return;
+    
+    const blockedBy = [...(selectedDependencyTask.blocked_by || [])];
+    if (!blockedBy.includes(blockerId)) {
+      blockedBy.push(blockerId);
+      
+      await updateTaskMutation.mutateAsync({
+        id: selectedDependencyTask.id,
+        data: { blocked_by: blockedBy }
+      });
+    }
+    setShowDependencyModal(false);
+  };
+
+  const handleSetRecurring = async (recurringData) => {
+    if (!selectedRecurringTask) return;
+
+    await updateTaskMutation.mutateAsync({
+      id: selectedRecurringTask.id,
+      data: recurringData
+    });
+    setShowRecurringModal(false);
+  };
+
   const filteredTasks = tasks.filter(task => {
     if (filter === "all") return true;
     return task.status === filter;
