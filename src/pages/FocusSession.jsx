@@ -1,0 +1,931 @@
+import React, { useState, useEffect, useRef } from "react";
+import { base44 } from "@/api/base44Client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
+import { Play, Pause, CheckCircle, Coffee, ChevronRight, Clock, Timer } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import VirtualCompanion from "../components/VirtualCompanion";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
+import AchievementNotification from "../components/AchievementNotification";
+import { POINTS_SYSTEM, checkNewAchievements, calculateLevel } from "@/components/achievementsData";
+import { getPersonalizedMessage } from "@/components/companionUtils";
+import SessionGoals from "../components/focus/SessionGoals";
+import AmbientSoundPlayer from "../components/focus/AmbientSoundPlayer";
+import PostSessionSummary from "../components/focus/PostSessionSummary";
+
+// Dynamic encouragement based on user progress
+const getEncouragementMessages = (userProgress) => {
+  const base = [
+    "You're doing amazing! Keep it up! 💪",
+    "I'm proud of you for staying focused! ✨",
+    "Look at you go! You've got this! 🌟",
+    "Great progress! We're in this together! 🤝",
+    "You're crushing it! Keep going! 🔥",
+  ];
+
+  const level = userProgress?.level || 1;
+  const sessions = userProgress?.focus_sessions_completed || 0;
+
+  if (level >= 10) {
+    base.push(
+      "A Level " + level + " focus master at work! 🏆",
+      "Your focus powers are legendary! ⚡"
+    );
+  }
+
+  if (sessions >= 25) {
+    base.push(
+      "Session #" + (sessions + 1) + "! You've built an amazing habit! 🧘",
+      "The Focus Master is in the zone! 🎯"
+    );
+  }
+
+  if (userProgress?.current_streak >= 5) {
+    base.push(
+      userProgress.current_streak + " day streak! Unstoppable! 🔥",
+      "Your consistency is incredible! 💪"
+    );
+  }
+
+  return base;
+};
+
+
+
+export default function FocusSession() {
+  const queryClient = useQueryClient();
+  const urlParams = new URLSearchParams(window.location.search);
+  const preselectedTaskId = urlParams.get('taskId');
+
+  const [selectedTaskId, setSelectedTaskId] = useState(preselectedTaskId || null);
+  const [currentSubtaskIndex, setCurrentSubtaskIndex] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [isActive, setIsActive] = useState(false);
+  const [sessionStarted, setSessionStarted] = useState(false);
+  const [moodBefore, setMoodBefore] = useState(null);
+  const [completedSubtasks, setCompletedSubtasks] = useState(new Set());
+  const [sessionNotes, setSessionNotes] = useState("");
+  const [showBreakPrompt, setShowBreakPrompt] = useState(false);
+  const [currentEncouragement, setCurrentEncouragement] = useState("");
+  const [showEncouragement, setShowEncouragement] = useState(false);
+  const [allStepsComplete, setAllStepsComplete] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  
+  const [focusTechnique, setFocusTechnique] = useState("standard");
+  const [workInterval, setWorkInterval] = useState(25);
+  const [breakInterval, setBreakInterval] = useState(5);
+  const [ambientSound, setAmbientSound] = useState("none");
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [pomodorosCompleted, setPomodorosCompleted] = useState(0);
+  const [isBreakTime, setIsBreakTime] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  
+  const [newAchievements, setNewAchievements] = useState([]);
+  const [showAchievement, setShowAchievement] = useState(null);
+  const [userProgress, setUserProgress] = useState(null);
+  
+  // Session Goals
+  const [sessionGoalType, setSessionGoalType] = useState(null);
+  const [sessionGoalValue, setSessionGoalValue] = useState(null);
+  const [sessionStartTime, setSessionStartTime] = useState(null);
+  const [showPostSummary, setShowPostSummary] = useState(false);
+  const [sessionSummaryData, setSessionSummaryData] = useState(null);
+  
+  const audioRef = useRef(null);
+
+  const { data: tasks = [] } = useQuery({
+    queryKey: ['tasks', currentUser?.email],
+    queryFn: () => currentUser ? base44.entities.Task.filter({ created_by: currentUser.email }, '-created_date') : [],
+    enabled: !!currentUser,
+  });
+
+  const selectedTask = tasks.find(t => t.id === selectedTaskId);
+  const currentSubtask = selectedTask?.subtasks?.[currentSubtaskIndex];
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await base44.auth.me();
+        setCurrentUser(user);
+        
+        // Fetch user progress for personalized messages
+        const progressList = await base44.entities.UserProgress.filter({ user_id: user.id });
+        if (progressList.length > 0) {
+          setUserProgress(progressList[0]);
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const updateTaskMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+
+  const createSessionMutation = useMutation({
+    mutationFn: (sessionData) => base44.entities.FocusSession.create(sessionData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+    },
+  });
+
+  useEffect(() => {
+    let interval = null;
+    if (isActive && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft(time => {
+          if (time <= 1) {
+            setIsActive(false);
+            if (focusTechnique === "pomodoro") {
+              handlePomodoroComplete();
+            } else {
+              handleSubtaskComplete();
+            }
+            return 0;
+          }
+          return time - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isActive, timeLeft, currentSubtaskIndex, focusTechnique]);
+
+  useEffect(() => {
+    if (!isActive || !sessionStarted || isBreakTime) return;
+
+    const encouragementMessages = getEncouragementMessages(userProgress);
+
+    const encouragementInterval = setInterval(() => {
+      const randomMessage = encouragementMessages[Math.floor(Math.random() * encouragementMessages.length)];
+      setCurrentEncouragement(randomMessage);
+      setShowEncouragement(true);
+      
+      setTimeout(() => setShowEncouragement(false), 5000);
+    }, 180000);
+
+    const initialTimeout = setTimeout(() => {
+      const randomMessage = encouragementMessages[Math.floor(Math.random() * encouragementMessages.length)];
+      setCurrentEncouragement(randomMessage);
+      setShowEncouragement(true);
+      setTimeout(() => setShowEncouragement(false), 5000);
+    }, 120000);
+
+    return () => {
+      clearInterval(encouragementInterval);
+      clearTimeout(initialTimeout);
+    };
+  }, [isActive, sessionStarted, isBreakTime, userProgress]);
+
+  useEffect(() => {
+    if (soundEnabled && ambientSound !== "none" && isActive && !isBreakTime) {
+      console.log(`Playing ${ambientSound} sound`);
+    }
+  }, [soundEnabled, ambientSound, isActive, isBreakTime]);
+
+  useEffect(() => {
+    if (newAchievements.length > 0 && !showAchievement) {
+      const timeout = setTimeout(() => {
+        const currentIndex = newAchievements.findIndex(a => a.id === showAchievement?.id);
+        if (currentIndex < newAchievements.length - 1) {
+          setShowAchievement(newAchievements[currentIndex + 1]);
+        } else {
+          setShowAchievement(null);
+        }
+      }, 500);
+      return () => clearTimeout(timeout);
+    }
+  }, [showAchievement, newAchievements]);
+
+  const handlePomodoroComplete = () => {
+    if (!isBreakTime) {
+      setPomodorosCompleted(prev => prev + 1);
+      setIsBreakTime(true);
+      setTimeLeft(breakInterval * 60);
+      setShowBreakPrompt(true);
+    } else {
+      setIsBreakTime(false);
+      setShowBreakPrompt(false);
+      handleSubtaskComplete();
+    }
+  };
+
+  const handleSubtaskComplete = () => {
+    const newCompleted = new Set(completedSubtasks);
+    newCompleted.add(currentSubtaskIndex);
+    setCompletedSubtasks(newCompleted);
+
+    const updatedSubtasks = selectedTask.subtasks.map((st, i) => ({
+      ...st,
+      completed: newCompleted.has(i)
+    }));
+
+    updateTaskMutation.mutate({
+      id: selectedTask.id,
+      data: { subtasks: updatedSubtasks }
+    });
+
+    if (currentSubtaskIndex >= selectedTask.subtasks.length - 1) {
+      setAllStepsComplete(true);
+      setShowBreakPrompt(true);
+    } else {
+      const nextIndex = currentSubtaskIndex + 1;
+      setCurrentSubtaskIndex(nextIndex);
+      const nextSubtask = selectedTask.subtasks[nextIndex];
+      
+      if (focusTechnique === "pomodoro") {
+        setTimeLeft(workInterval * 60);
+      } else {
+        setTimeLeft((nextSubtask?.estimated_minutes || 10) * 60);
+      }
+      setIsActive(false);
+    }
+  };
+
+  const startSession = () => {
+    if (!selectedTaskId || !moodBefore) return;
+    setSessionStarted(true);
+    setIsActive(true);
+    setSessionStartTime(Date.now());
+    
+    const firstIncomplete = selectedTask.subtasks?.findIndex(st => !st.completed) || 0;
+    setCurrentSubtaskIndex(firstIncomplete);
+    const firstSubtask = selectedTask.subtasks[firstIncomplete];
+    
+    if (focusTechnique === "pomodoro") {
+      setTimeLeft(workInterval * 60);
+    } else {
+      setTimeLeft((firstSubtask?.estimated_minutes || 10) * 60);
+    }
+    
+    if (selectedTask?.status === 'not_started') {
+      updateTaskMutation.mutate({
+        id: selectedTask.id,
+        data: { status: 'in_progress' }
+      });
+    }
+  };
+
+  const togglePause = () => {
+    setIsActive(!isActive);
+  };
+
+  const skipBreak = () => {
+    setIsBreakTime(false);
+    setShowBreakPrompt(false);
+    setIsActive(true);
+    if (focusTechnique === "pomodoro") {
+      setTimeLeft(workInterval * 60);
+    }
+  };
+
+  const skipToNextStep = () => {
+    if (currentSubtaskIndex < selectedTask.subtasks.length - 1) {
+      setIsActive(false);
+      const nextIndex = currentSubtaskIndex + 1;
+      setCurrentSubtaskIndex(nextIndex);
+      const nextSubtask = selectedTask.subtasks[nextIndex];
+      
+      if (focusTechnique === "pomodoro") {
+        setTimeLeft(workInterval * 60);
+      } else {
+        setTimeLeft((nextSubtask?.estimated_minutes || 10) * 60);
+      }
+    }
+  };
+
+  const completeSession = async (moodAfter) => {
+    const totalDuration = sessionStartTime 
+      ? Math.round((Date.now() - sessionStartTime) / 60000) 
+      : selectedTask.subtasks?.reduce((sum, st) => sum + (st.estimated_minutes || 0), 0) || 0;
+    
+    // Calculate goal achievement
+    let goalAchieved = false;
+    let actualValue = 0;
+    
+    if (sessionGoalType && sessionGoalValue) {
+      if (sessionGoalType === "subtasks") {
+        actualValue = completedSubtasks.size;
+        goalAchieved = actualValue >= sessionGoalValue;
+      } else if (sessionGoalType === "time") {
+        actualValue = totalDuration;
+        goalAchieved = actualValue >= sessionGoalValue;
+      } else if (sessionGoalType === "pomodoros") {
+        actualValue = pomodorosCompleted;
+        goalAchieved = actualValue >= sessionGoalValue;
+      }
+    }
+    
+    // Prepare summary data
+    setSessionSummaryData({
+      taskTitle: selectedTask.title,
+      subtasksCompleted: completedSubtasks.size,
+      totalSubtasks: selectedTask.subtasks?.length || 0,
+      totalMinutes: totalDuration,
+      moodBefore,
+      moodAfter,
+      pomodorosCompleted,
+      focusTechnique,
+      allStepsComplete,
+      goalData: sessionGoalType ? {
+        goalType: sessionGoalType,
+        goalValue: sessionGoalValue,
+        goalAchieved,
+        actualValue
+      } : null
+    });
+    
+    await createSessionMutation.mutateAsync({
+      task_id: selectedTask.id,
+      task_title: selectedTask.title,
+      duration_minutes: totalDuration,
+      completed: allStepsComplete,
+      mood_before: moodBefore,
+      mood_after: moodAfter,
+      notes: sessionNotes,
+      focus_technique: focusTechnique,
+      work_interval: workInterval,
+      break_interval: breakInterval,
+      ambient_sound: ambientSound,
+      pomodoros_completed: pomodorosCompleted
+    });
+
+    if (allStepsComplete) {
+      await updateTaskMutation.mutateAsync({
+        id: selectedTask.id,
+        data: { status: 'completed' }
+      });
+    }
+
+    try {
+      const user = await base44.auth.me();
+      const progressList = await base44.entities.UserProgress.filter({ user_id: user.id });
+      
+      let userProgress;
+      if (progressList.length === 0) {
+        userProgress = await base44.entities.UserProgress.create({
+          user_id: user.id,
+          total_points: 0,
+          level: 1,
+          achievements_unlocked: [],
+          tasks_completed: 0,
+          focus_sessions_completed: 0,
+          total_focus_minutes: 0,
+          brain_dumps_created: 0,
+          current_streak: 0,
+          longest_streak: 0
+        });
+      } else {
+        userProgress = progressList[0];
+      }
+
+      let pointsEarned = POINTS_SYSTEM.FOCUS_SESSION_COMPLETED;
+      if (allStepsComplete) {
+        pointsEarned += POINTS_SYSTEM.TASK_COMPLETED;
+      }
+      // Bonus for achieving goal
+      if (goalAchieved) {
+        pointsEarned += 10;
+      }
+      
+      const today = new Date().toDateString();
+      const lastActivity = userProgress.last_activity_date ? new Date(userProgress.last_activity_date).toDateString() : null;
+      const yesterday = new Date(Date.now() - 86400000).toDateString();
+      
+      let newStreak = userProgress.current_streak || 0;
+      if (lastActivity !== today) {
+        if (lastActivity === yesterday) {
+          newStreak += 1;
+        } else if (lastActivity !== yesterday && lastActivity !== today) {
+          newStreak = 1;
+        }
+      }
+      
+      if (newStreak > 1) {
+        pointsEarned += POINTS_SYSTEM.STREAK_BONUS * newStreak;
+      }
+
+      const updatedProgress = {
+        total_points: userProgress.total_points + pointsEarned,
+        focus_sessions_completed: (userProgress.focus_sessions_completed || 0) + 1,
+        total_focus_minutes: (userProgress.total_focus_minutes || 0) + totalDuration,
+        tasks_completed: allStepsComplete ? (userProgress.tasks_completed || 0) + 1 : userProgress.tasks_completed,
+        current_streak: newStreak,
+        longest_streak: Math.max(newStreak, userProgress.longest_streak || 0),
+        last_activity_date: new Date().toISOString(),
+        level: calculateLevel(userProgress.total_points + pointsEarned)
+      };
+
+      const newAchievementsUnlocked = checkNewAchievements({...userProgress, ...updatedProgress}, userProgress);
+      
+      if (newAchievementsUnlocked.length > 0) {
+        const achievementIds = newAchievementsUnlocked.map(a => a.id);
+        const achievementPoints = newAchievementsUnlocked.reduce((sum, a) => sum + a.points, 0);
+        updatedProgress.total_points += achievementPoints;
+        updatedProgress.achievements_unlocked = [
+          ...(userProgress.achievements_unlocked || []),
+          ...achievementIds
+        ];
+        
+        setNewAchievements(newAchievementsUnlocked);
+        setShowAchievement(newAchievementsUnlocked[0]);
+      }
+
+      await base44.entities.UserProgress.update(userProgress.id, updatedProgress);
+    } catch (error) {
+      console.error("Error updating progress:", error);
+    }
+
+    setShowBreakPrompt(false);
+    setShowPostSummary(true);
+  };
+  
+  const resetSession = () => {
+    setSessionStarted(false);
+    setIsActive(false);
+    setCompletedSubtasks(new Set());
+    setMoodBefore(null);
+    setSessionNotes("");
+    setCurrentSubtaskIndex(0);
+    setTimeLeft(0);
+    setAllStepsComplete(false);
+    setPomodorosCompleted(0);
+    setIsBreakTime(false);
+    setSoundEnabled(false);
+    setSessionGoalType(null);
+    setSessionGoalValue(null);
+    setSessionStartTime(null);
+    setShowPostSummary(false);
+    setSessionSummaryData(null);
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const progress = currentSubtask ? ((currentSubtask.estimated_minutes * 60 - timeLeft) / (currentSubtask.estimated_minutes * 60)) * 100 : 0;
+  const pomodoroProgress = focusTechnique === "pomodoro" ? ((isBreakTime ? breakInterval : workInterval) * 60 - timeLeft) / ((isBreakTime ? breakInterval : workInterval) * 60) * 100 : 0;
+
+  const getCompanionMessage = () => {
+    if (showBreakPrompt && allStepsComplete) {
+      const level = userProgress?.level || 1;
+      if (level >= 10) return "LEGENDARY finish! You're unstoppable! How do you feel? 👑🎉";
+      return "Amazing! You completed all the steps! How do you feel? 🎉";
+    }
+    if (showBreakPrompt && isBreakTime) return "Great work! Time for a break. Stretch, hydrate, or relax!💧";
+    if (!sessionStarted) {
+      return getPersonalizedMessage(userProgress, "focus_start");
+    }
+    if (isBreakTime) return "Break time! Rest your mind for a bit.";
+    if (isActive) return `Working on: ${currentSubtask?.title}`;
+    return "Take your time. I'll be here when you're ready to continue.";
+  };
+
+  const getCompanionMood = () => {
+    if (showBreakPrompt) return "celebrating";
+    if (isActive) return "working";
+    return "supportive";
+  };
+
+  return (
+    <div className="min-h-screen p-4 md:p-8">
+      <AchievementNotification 
+        achievement={showAchievement} 
+        onClose={() => {
+          const currentIndex = newAchievements.findIndex(a => a.id === showAchievement?.id);
+          if (currentIndex < newAchievements.length - 1) {
+            setShowAchievement(newAchievements[currentIndex + 1]);
+          } else {
+            setShowAchievement(null);
+            setNewAchievements([]);
+          }
+        }}
+      />
+      
+      <div className="max-w-4xl mx-auto space-y-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <h1 className="text-3xl md:text-4xl font-bold mb-3 bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">
+            Focus Session 🎯
+          </h1>
+          <p className="text-gray-600">Let's work through each step together!</p>
+        </motion.div>
+
+        <VirtualCompanion 
+                    mood={getCompanionMood()}
+                    message={getCompanionMessage()}
+                    size="small"
+                    showActivity={sessionStarted && isActive && !isBreakTime}
+                    characterType={currentUser?.companion_type || "human"}
+                    userProgress={userProgress}
+                  />
+
+        <AnimatePresence>
+          {showEncouragement && sessionStarted && !isBreakTime && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.9 }}
+              className="fixed top-24 left-1/2 transform -translate-x-1/2 z-50"
+            >
+              <div className="bg-gradient-to-r from-purple-500 to-teal-500 text-white px-6 py-3 rounded-full shadow-2xl border-2 border-white">
+                <p className="font-medium text-sm">{currentEncouragement}</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {showPostSummary && sessionSummaryData ? (
+          <PostSessionSummary
+            sessionData={sessionSummaryData}
+            goalData={sessionSummaryData.goalData}
+            onClose={() => {
+              resetSession();
+              window.location.href = "/Dashboard";
+            }}
+            onStartNew={resetSession}
+          />
+        ) : !sessionStarted ? (
+          <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
+            <CardHeader>
+              <CardTitle>Start Your Session</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label>Choose a task</Label>
+                <Select value={selectedTaskId || ""} onValueChange={setSelectedTaskId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a task to work on" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tasks.filter(t => t.status !== 'completed').map(task => (
+                      <SelectItem key={task.id} value={task.id}>
+                        {task.title} ({task.subtasks?.length || 0} steps)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {selectedTask && (
+                <div className="space-y-2 p-4 bg-gradient-to-r from-purple-50 to-teal-50 rounded-lg">
+                  <p className="text-sm font-medium text-gray-700 mb-2">Task Steps:</p>
+                  {selectedTask.subtasks?.map((subtask, index) => (
+                    <div key={index} className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-white flex items-center justify-center text-xs font-bold text-purple-600">
+                          {index + 1}
+                        </span>
+                        {subtask.title}
+                      </span>
+                      <Badge variant="outline" className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {subtask.estimated_minutes}m
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                <div className="flex items-center gap-2">
+                  <Timer className="w-5 h-5 text-purple-600" />
+                  <Label className="text-base font-semibold">Focus Technique</Label>
+                </div>
+                
+                <Select value={focusTechnique} onValueChange={setFocusTechnique}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="standard">Standard (Follow task times)</SelectItem>
+                    <SelectItem value="pomodoro">Pomodoro Technique</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {focusTechnique === "pomodoro" && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="space-y-4"
+                  >
+                    <div className="space-y-2">
+                      <Label>Work Interval: {workInterval} minutes</Label>
+                      <Slider
+                        value={[workInterval]}
+                        onValueChange={(value) => setWorkInterval(value[0])}
+                        min={10}
+                        max={60}
+                        step={5}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Break Interval: {breakInterval} minutes</Label>
+                      <Slider
+                        value={[breakInterval]}
+                        onValueChange={(value) => setBreakInterval(value[0])}
+                        min={3}
+                        max={15}
+                        step={1}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="text-xs text-gray-600 bg-white p-2 rounded">
+                      💡 Pomodoro: Work in focused intervals with short breaks in between
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+
+              <AmbientSoundPlayer
+                selectedSound={ambientSound}
+                setSelectedSound={setAmbientSound}
+                isPlaying={false}
+              />
+              
+              <SessionGoals
+                selectedGoal={sessionGoalType}
+                setSelectedGoal={setSessionGoalType}
+                goalValue={sessionGoalValue}
+                setGoalValue={setSessionGoalValue}
+                maxSubtasks={selectedTask?.subtasks?.length || 5}
+                focusTechnique={focusTechnique}
+              />
+
+              <div className="space-y-2">
+                <Label>How are you feeling right now?</Label>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                  {['energized', 'focused', 'tired', 'anxious', 'neutral'].map(mood => (
+                    <Button
+                      key={mood}
+                      variant={moodBefore === mood ? "default" : "outline"}
+                      onClick={() => setMoodBefore(mood)}
+                      className={moodBefore === mood ? "bg-gradient-to-r from-purple-500 to-teal-500 text-white" : ""}
+                    >
+                      {mood}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <Button
+                onClick={startSession}
+                disabled={!selectedTaskId || !moodBefore || !selectedTask?.subtasks?.length}
+                className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold py-6 text-lg shadow-lg"
+              >
+                <Play className="w-5 h-5 mr-2" />
+                Start Focus Session
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <AnimatePresence>
+            {!showBreakPrompt || isBreakTime ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+              >
+                <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-sm font-medium text-gray-600">
+                        Step {currentSubtaskIndex + 1} of {selectedTask.subtasks.length}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-gradient-to-r from-purple-500 to-teal-500 text-white">
+                          {completedSubtasks.size} completed
+                        </Badge>
+                        {focusTechnique === "pomodoro" && (
+                          <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+                            🍅 {pomodorosCompleted} Pomodoros
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <Progress 
+                      value={(completedSubtasks.size / selectedTask.subtasks.length) * 100} 
+                      className="h-2 mb-2" 
+                    />
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
+                  <CardContent className="pt-6">
+                    <div className="text-center mb-6">
+                      {isBreakTime ? (
+                        <>
+                          <div className="flex items-center justify-center gap-2 mb-4">
+                            <Coffee className="w-6 h-6 text-teal-500" />
+                            <h3 className="text-lg font-semibold text-gray-700">Break Time!</h3>
+                          </div>
+                          <p className="text-gray-600 mb-4">Take a short break to recharge</p>
+                        </>
+                      ) : (
+                        <>
+                          <h3 className="text-lg font-semibold text-gray-700 mb-2">Current Step:</h3>
+                          <p className="text-xl font-bold text-gray-900 mb-4">{currentSubtask?.title}</p>
+                        </>
+                      )}
+                      
+                      <div className={`text-7xl font-bold mb-4 ${isBreakTime ? 'bg-gradient-to-r from-teal-600 to-blue-600' : 'bg-gradient-to-r from-purple-600 to-teal-600'} bg-clip-text text-transparent`}>
+                        {formatTime(timeLeft)}
+                      </div>
+                      <Progress value={focusTechnique === "pomodoro" ? pomodoroProgress : progress} className="h-3 mb-2" />
+                      {!isBreakTime && (
+                        <p className="text-sm text-gray-500">
+                          {focusTechnique === "pomodoro" ? `Work: ${workInterval} min` : `Estimated: ${currentSubtask?.estimated_minutes} minutes`}
+                        </p>
+                      )}
+                    </div>
+
+                    {ambientSound !== "none" && !isBreakTime && (
+                      <AmbientSoundPlayer
+                        selectedSound={ambientSound}
+                        setSelectedSound={setAmbientSound}
+                        isPlaying={isActive}
+                        compact
+                      />
+                    )}
+                    
+                    {/* Goal Progress Indicator */}
+                    {sessionGoalType && sessionGoalValue && !isBreakTime && (
+                      <div className="mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium text-orange-700">Session Goal</span>
+                          <span className="text-orange-600">
+                            {sessionGoalType === "subtasks" && `${completedSubtasks.size}/${sessionGoalValue} steps`}
+                            {sessionGoalType === "time" && `${sessionStartTime ? Math.round((Date.now() - sessionStartTime) / 60000) : 0}/${sessionGoalValue} min`}
+                            {sessionGoalType === "pomodoros" && `${pomodorosCompleted}/${sessionGoalValue} 🍅`}
+                          </span>
+                        </div>
+                        <Progress 
+                          value={
+                            sessionGoalType === "subtasks" ? (completedSubtasks.size / sessionGoalValue) * 100 :
+                            sessionGoalType === "time" ? (sessionStartTime ? ((Date.now() - sessionStartTime) / 60000 / sessionGoalValue) * 100 : 0) :
+                            (pomodorosCompleted / sessionGoalValue) * 100
+                          } 
+                          className="h-2 mt-2" 
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex gap-3 justify-center mb-6">
+                      <Button
+                        onClick={togglePause}
+                        size="lg"
+                        className="bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white"
+                      >
+                        {isActive ? <Pause className="w-5 h-5 mr-2" /> : <Play className="w-5 h-5 mr-2" />}
+                        {isActive ? "Pause" : "Resume"}
+                      </Button>
+                      {isBreakTime && (
+                        <Button 
+                          onClick={skipBreak} 
+                          variant="outline" 
+                          size="lg"
+                        >
+                          Skip Break
+                        </Button>
+                      )}
+                      {!isBreakTime && currentSubtaskIndex < selectedTask.subtasks.length - 1 && (
+                        <Button 
+                          onClick={skipToNextStep} 
+                          variant="outline" 
+                          size="lg"
+                        >
+                          <ChevronRight className="w-5 h-5 mr-2" />
+                          Next Step
+                        </Button>
+                      )}
+                    </div>
+
+                    {!isBreakTime && (
+                      <div className="mt-6 space-y-2">
+                        <Label>Session notes (optional)</Label>
+                        <Textarea
+                          value={sessionNotes}
+                          onChange={(e) => setSessionNotes(e.target.value)}
+                          placeholder="Jot down any thoughts, ideas, or progress..."
+                          className="h-24"
+                        />
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {!isBreakTime && (
+                  <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
+                    <CardHeader>
+                      <CardTitle className="text-lg">All Steps</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {selectedTask.subtasks.map((subtask, index) => (
+                        <div
+                          key={index}
+                          className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                            index === currentSubtaskIndex
+                              ? 'bg-gradient-to-r from-purple-100 to-teal-100 border-2 border-purple-300'
+                              : completedSubtasks.has(index)
+                              ? 'bg-green-50 border border-green-200'
+                              : 'bg-gray-50 border border-gray-200'
+                          }`}
+                        >
+                          <Checkbox
+                            checked={completedSubtasks.has(index)}
+                            disabled
+                            className="mt-1"
+                          />
+                          <div className="flex-1">
+                            <span className={completedSubtasks.has(index) ? "line-through text-gray-400" : "text-gray-700"}>
+                              {subtask.title}
+                            </span>
+                          </div>
+                          <Badge variant="outline" className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {subtask.estimated_minutes}m
+                          </Badge>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+              >
+                <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      {allStepsComplete ? (
+                        <>
+                          <CheckCircle className="w-6 h-6 text-green-500" />
+                          All Steps Complete! 🎉
+                        </>
+                      ) : (
+                        <>
+                          <Coffee className="w-6 h-6 text-teal-500" />
+                          Step Complete!
+                        </>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {focusTechnique === "pomodoro" && (
+                      <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                        <p className="text-center font-semibold text-orange-700">
+                          🍅 You completed {pomodorosCompleted} Pomodoro{pomodorosCompleted !== 1 ? 's' : ''}!
+                        </p>
+                      </div>
+                    )}
+                    
+                    <p className="text-gray-700">
+                      {allStepsComplete 
+                        ? "Incredible work! You completed all the steps! I'm so proud of you! 🎉" 
+                        : "Great job! Ready to continue with the next step?"}
+                    </p>
+                    
+                    <div className="space-y-2">
+                      <Label>How are you feeling now?</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        {['accomplished', 'frustrated', 'tired', 'energized', 'neutral'].map(mood => (
+                          <Button
+                            key={mood}
+                            variant="outline"
+                            onClick={() => completeSession(mood)}
+                            className="hover:bg-gradient-to-r hover:from-purple-500 hover:to-teal-500 hover:text-white"
+                          >
+                            {mood}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,240 @@
+import React, { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Check, Zap, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { TIER_INFO } from "../components/subscription/FeatureGate";
+
+const plans = [
+  {
+    tier: "free",
+    name: "Free",
+    price: "$0",
+    period: "forever",
+    description: "Get started with basic productivity tools",
+    features: [
+      "Up to 10 active tasks",
+      "Basic brain dumps (2/day)",
+      "Focus sessions (3/day)",
+      "Basic achievements",
+      "1 companion type"
+    ],
+    limitations: [
+      "No AI prioritization",
+      "No calendar sync",
+      "Limited analytics"
+    ],
+    cta: "Current Plan",
+    popular: false
+  },
+  {
+    tier: "pro",
+    name: "Pro",
+    price: "$9.99",
+    period: "per month",
+    description: "Supercharge your productivity with AI",
+    features: [
+      "Up to 100 active tasks",
+      "Unlimited brain dumps",
+      "Unlimited focus sessions",
+      "AI Task Prioritization",
+      "Google Calendar sync",
+      "Advanced analytics",
+      "All ambient sounds",
+      "All achievements"
+    ],
+    limitations: [],
+    cta: "Upgrade to Pro",
+    popular: true
+  },
+  {
+    tier: "premium",
+    name: "Premium",
+    price: "$19.99",
+    period: "per month",
+    description: "The ultimate productivity experience",
+    features: [
+      "Everything in Pro",
+      "Unlimited tasks",
+      "AI Task Breakdown",
+      "Custom companion personalities",
+      "Priority support",
+      "Export your data",
+      "Team collaboration (coming soon)",
+      "Early access to new features"
+    ],
+    limitations: [],
+    cta: "Go Premium",
+    popular: false
+  }
+];
+
+export default function Subscription() {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await base44.auth.me();
+        setCurrentUser(user);
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const currentTier = currentUser?.subscription_tier || "free";
+
+  const handleSelectPlan = async (tier) => {
+    if (tier === currentTier) return;
+    
+    setIsLoading(true);
+    // In a real app, this would redirect to a payment processor
+    // For demo purposes, we'll just update the tier
+    try {
+      await base44.auth.updateMe({ subscription_tier: tier });
+      setCurrentUser({ ...currentUser, subscription_tier: tier });
+      alert(`Successfully upgraded to ${tier}! (Demo mode)`);
+    } catch (error) {
+      console.error("Error updating subscription:", error);
+    }
+    setIsLoading(false);
+  };
+
+  const TierIcon = ({ tier }) => {
+    const info = TIER_INFO[tier];
+    const Icon = info?.icon || Zap;
+    return <Icon className={`w-6 h-6 ${info?.color}`} />;
+  };
+
+  return (
+    <div className="min-h-screen p-4 md:p-8">
+      <div className="max-w-6xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-12"
+        >
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">
+            Choose Your Plan
+          </h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Unlock powerful features to supercharge your productivity journey
+          </p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {plans.map((plan, index) => {
+            const isCurrentPlan = plan.tier === currentTier;
+            const isUpgrade = plans.findIndex(p => p.tier === currentTier) < index;
+            
+            return (
+              <motion.div
+                key={plan.tier}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card className={`relative h-full ${
+                  plan.popular 
+                    ? 'border-2 border-purple-500 shadow-xl' 
+                    : 'border-gray-200'
+                } ${isCurrentPlan ? 'ring-2 ring-green-500' : ''}`}>
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <Badge className="bg-gradient-to-r from-purple-500 to-teal-500 text-white px-4">
+                        Most Popular
+                      </Badge>
+                    </div>
+                  )}
+                  
+                  {isCurrentPlan && (
+                    <div className="absolute -top-3 right-4">
+                      <Badge className="bg-green-500 text-white">
+                        Current Plan
+                      </Badge>
+                    </div>
+                  )}
+
+                  <CardHeader className="text-center pb-4">
+                    <div className={`w-14 h-14 mx-auto mb-4 ${TIER_INFO[plan.tier]?.bgColor} rounded-2xl flex items-center justify-center`}>
+                      <TierIcon tier={plan.tier} />
+                    </div>
+                    <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                    <div className="mt-2">
+                      <span className="text-4xl font-bold">{plan.price}</span>
+                      <span className="text-gray-500 ml-1">/{plan.period}</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-2">{plan.description}</p>
+                  </CardHeader>
+
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      {plan.features.map((feature, idx) => (
+                        <div key={idx} className="flex items-start gap-2 text-sm">
+                          <Check className={`w-4 h-4 mt-0.5 flex-shrink-0 ${TIER_INFO[plan.tier]?.color}`} />
+                          <span>{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {plan.limitations.length > 0 && (
+                      <div className="pt-2 border-t space-y-2">
+                        {plan.limitations.map((limitation, idx) => (
+                          <div key={idx} className="flex items-start gap-2 text-sm text-gray-400">
+                            <span className="w-4 text-center">✕</span>
+                            <span>{limitation}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <Button
+                      onClick={() => handleSelectPlan(plan.tier)}
+                      disabled={isCurrentPlan || isLoading}
+                      className={`w-full mt-4 ${
+                        plan.popular
+                          ? 'bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white'
+                          : isUpgrade
+                            ? 'bg-gray-900 hover:bg-gray-800 text-white'
+                            : ''
+                      }`}
+                      variant={plan.popular ? "default" : isUpgrade ? "default" : "outline"}
+                    >
+                      {isCurrentPlan ? (
+                        "Current Plan"
+                      ) : (
+                        <>
+                          {plan.cta}
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="mt-12 text-center"
+        >
+          <p className="text-gray-500 text-sm">
+            All plans include a 14-day free trial. Cancel anytime.
+          </p>
+          <p className="text-gray-400 text-xs mt-2">
+            Questions? Contact us at support@taskbuddy.app
+          </p>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
