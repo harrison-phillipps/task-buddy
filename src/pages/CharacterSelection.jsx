@@ -56,80 +56,79 @@ export default function CharacterSelection() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Soft Human Option */}
+          {/* Friendly Robot Option */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.98 }}
           >
             <Card
-              onClick={() => setSelectedCompanion('human')}
+              onClick={() => setSelectedCompanion('robot')}
               className={`cursor-pointer transition-all duration-300 ${
-                selectedCompanion === 'human'
-                  ? 'ring-4 ring-purple-500 shadow-2xl bg-white'
+                selectedCompanion === 'robot'
+                  ? 'ring-4 ring-blue-500 shadow-2xl bg-white'
                   : 'hover:shadow-xl bg-white/80'
               }`}
             >
               <CardContent className="p-8 text-center relative">
-                {selectedCompanion === 'human' && (
+                {selectedCompanion === 'robot' && (
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute top-4 right-4 w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center"
+                    className="absolute top-4 right-4 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center"
                   >
                     <Check className="w-5 h-5 text-white" />
                   </motion.div>
                 )}
                 
-                {/* Human Character */}
+                {/* Robot Character */}
                 <div className="mb-6 flex justify-center">
-                  <div className="relative w-48 h-56">
-                    {/* Head */}
-                    <div className="absolute w-24 h-24 top-0 left-1/2 -translate-x-1/2">
-                      <div className="w-full h-full rounded-full bg-gradient-to-br from-orange-200 to-orange-300 shadow-2xl border-4 border-white relative overflow-hidden">
-                        {/* Hair */}
-                        <div className="absolute -top-1 left-0 w-full h-20 bg-gradient-to-b from-amber-700 to-amber-600 rounded-t-full" />
-                        <div className="absolute top-4 -left-2 w-12 h-20 bg-gradient-to-b from-amber-700 to-amber-600 rounded-full" />
-                        <div className="absolute top-4 -right-2 w-12 h-20 bg-gradient-to-b from-amber-700 to-amber-600 rounded-full" />
+                  <div className="relative w-48 h-56 flex items-center justify-center">
+                    <div className="relative w-40 h-40">
+                      {/* Robot body */}
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-28 h-32 bg-gradient-to-br from-slate-400 to-slate-500 rounded-2xl shadow-2xl border-4 border-white">
+                        {/* Chest panel */}
+                        <div className="absolute top-4 left-1/2 -translate-x-1/2 w-16 h-16 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg border-2 border-slate-600">
+                          <div className="absolute inset-2 bg-cyan-300/50 rounded" />
+                        </div>
+                        {/* Buttons */}
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full" />
+                          <div className="w-2 h-2 bg-yellow-400 rounded-full" />
+                          <div className="w-2 h-2 bg-red-400 rounded-full" />
+                        </div>
+                      </div>
+
+                      {/* Robot head */}
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-24 bg-gradient-to-br from-slate-300 to-slate-400 rounded-xl shadow-xl border-4 border-white">
+                        {/* Antenna */}
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-1 h-6 bg-slate-500" />
+                        <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-3 h-3 bg-red-500 rounded-full" />
                         
-                        {/* Face */}
-                        <div className="absolute inset-0 flex items-center justify-center pt-6">
+                        {/* Face screen */}
+                        <div className="absolute inset-3 bg-gradient-to-br from-cyan-300 to-blue-400 rounded-lg flex items-center justify-center">
                           {/* Eyes */}
-                          <div className="absolute top-10 left-1/2 -translate-x-1/2 flex gap-3">
-                            <div className="bg-gray-800 rounded-full w-3 h-3" />
-                            <div className="bg-gray-800 rounded-full w-3 h-3" />
+                          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 flex gap-3">
+                            <div className="w-3 h-3 bg-white rounded-full shadow-inner" />
+                            <div className="w-3 h-3 bg-white rounded-full shadow-inner" />
                           </div>
                           {/* Smile */}
-                          <div className="absolute top-14 left-1/2 -translate-x-1/2 w-8 h-4 border-b-3 border-gray-800 rounded-b-full" style={{ borderBottomWidth: '2px' }} />
+                          <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-8 h-2 border-b-2 border-white rounded-b-full" />
                         </div>
+                        
+                        {/* Ears/Side panels */}
+                        <div className="absolute top-1/3 -left-2 w-3 h-6 bg-slate-400 rounded-l-full border-2 border-white" />
+                        <div className="absolute top-1/3 -right-2 w-3 h-6 bg-slate-400 rounded-r-full border-2 border-white" />
                       </div>
-                    </div>
 
-                    {/* Body - Sweater */}
-                    <div className="absolute top-20 w-32 h-28 left-1/2 -translate-x-1/2">
-                      <div className="w-full h-full rounded-t-3xl rounded-b-2xl bg-gradient-to-br from-orange-300 to-orange-400 border-4 border-white shadow-xl relative">
-                        {/* Sweater texture */}
-                        <div className="absolute inset-0 opacity-20">
-                          <div className="absolute top-1/3 left-0 w-full h-1 bg-orange-600" />
-                          <div className="absolute top-1/2 left-0 w-full h-1 bg-orange-600" />
-                          <div className="absolute top-2/3 left-0 w-full h-1 bg-orange-600" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Arms */}
-                    <div className="absolute top-24 -left-4 w-8 h-20 origin-top">
-                      <div className="w-full h-full rounded-full bg-gradient-to-b from-orange-300 to-orange-400 border-2 border-white shadow-lg" />
-                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-gradient-to-br from-orange-200 to-orange-300 border-2 border-white" />
-                    </div>
-                    <div className="absolute top-24 -right-4 w-8 h-20 origin-top">
-                      <div className="w-full h-full rounded-full bg-gradient-to-b from-orange-300 to-orange-400 border-2 border-white shadow-lg" />
-                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-gradient-to-br from-orange-200 to-orange-300 border-2 border-white" />
+                      {/* Arms */}
+                      <div className="absolute top-28 -left-5 w-4 h-16 bg-gradient-to-b from-slate-400 to-slate-500 rounded-full border-2 border-white" />
+                      <div className="absolute top-28 -right-5 w-4 h-16 bg-gradient-to-b from-slate-400 to-slate-500 rounded-full border-2 border-white" />
                     </div>
                   </div>
                 </div>
 
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Soft Human</h3>
-                <p className="text-gray-600">A warm, friendly companion</p>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Friendly Robot</h3>
+                <p className="text-gray-600">A helpful, tech-savvy buddy</p>
               </CardContent>
             </Card>
           </motion.div>

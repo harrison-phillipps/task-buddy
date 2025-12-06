@@ -14,56 +14,101 @@ const activities = [
   { text: "checking my to-do list", icon: Sparkles, emoji: "✨" },
 ];
 
-function HumanCharacter({ mood, isLarge, isBlinking, currentMood }) {
+function RobotCharacter({ mood, isLarge, currentMood }) {
   return (
-    <div className={`relative ${isLarge ? 'w-48 h-56' : 'w-32 h-40'}`}>
-      {/* Head */}
+    <div className={`relative ${isLarge ? 'w-48 h-56' : 'w-32 h-40'} flex items-center justify-center`}>
       <motion.div
         animate={{
-          y: [0, -8, 0],
-          rotate: [-2, 2, -2]
+          y: [0, -5, 0],
         }}
         transition={{
-          duration: 3,
+          duration: 2.5,
           repeat: Infinity,
           ease: "easeInOut"
         }}
-        className={`absolute ${isLarge ? 'w-24 h-24 top-0 left-1/2 -translate-x-1/2' : 'w-16 h-16 top-0 left-1/2 -translate-x-1/2'}`}
+        className={`relative ${isLarge ? 'w-40 h-40' : 'w-28 h-28'}`}
       >
-        <div className={`w-full h-full rounded-full bg-gradient-to-br ${currentMood.color} relative overflow-hidden`} 
-             style={{ 
-               boxShadow: '0 10px 40px -10px rgba(0,0,0,0.2), inset 0 -20px 20px -20px rgba(255,255,255,0.3), inset 0 20px 20px -20px rgba(0,0,0,0.1)'
-             }}>
-          {/* Face */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 flex gap-3">
+        {/* Robot body */}
+        <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-28 h-32' : 'w-20 h-24'} bg-gradient-to-br from-slate-400 via-slate-450 to-slate-500 rounded-2xl`}
+             style={{ boxShadow: '0 15px 40px -10px rgba(0,0,0,0.3), inset 0 -20px 20px -20px rgba(255,255,255,0.2), inset 0 2px 4px rgba(255,255,255,0.3)' }}>
+          {/* Chest panel */}
+          <div className={`absolute ${isLarge ? 'top-4' : 'top-2'} left-1/2 -translate-x-1/2 ${isLarge ? 'w-16 h-16' : 'w-12 h-12'} bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg border-2 border-slate-600`}
+               style={{ boxShadow: '0 4px 10px rgba(0,0,0,0.2), inset 0 -8px 8px -8px rgba(255,255,255,0.4)' }}>
+            <div className="absolute inset-2 bg-cyan-300/50 rounded" />
+            <motion.div 
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute inset-3 bg-cyan-200/30 rounded blur-sm" 
+            />
+          </div>
+          {/* Buttons */}
+          <div className={`absolute ${isLarge ? 'bottom-4' : 'bottom-2'} left-1/2 -translate-x-1/2 flex gap-2`}>
+            <motion.div 
+              animate={{ opacity: [0.6, 1, 0.6] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className={`${isLarge ? 'w-2 h-2' : 'w-1.5 h-1.5'} bg-green-400 rounded-full`}
+              style={{ boxShadow: '0 0 8px rgba(74,222,128,0.6)' }}
+            />
+            <div className={`${isLarge ? 'w-2 h-2' : 'w-1.5 h-1.5'} bg-yellow-400 rounded-full`} />
+            <div className={`${isLarge ? 'w-2 h-2' : 'w-1.5 h-1.5'} bg-red-400 rounded-full`} />
+          </div>
+        </div>
+
+        {/* Robot head */}
+        <div className={`absolute top-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-24 h-24' : 'w-18 h-18'} bg-gradient-to-br from-slate-300 via-slate-350 to-slate-400 rounded-xl`}
+             style={{ boxShadow: '0 10px 30px -5px rgba(0,0,0,0.3), inset 0 -15px 15px -15px rgba(255,255,255,0.3), inset 0 2px 4px rgba(255,255,255,0.4)' }}>
+          {/* Antenna */}
+          <div className={`absolute ${isLarge ? '-top-5' : '-top-4'} left-1/2 -translate-x-1/2 ${isLarge ? 'w-1.5 h-7' : 'w-1 h-5'} bg-gradient-to-b from-slate-500 to-slate-400`}
+               style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.2)' }} />
+          <motion.div 
+            animate={{ scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className={`absolute ${isLarge ? '-top-6' : '-top-5'} left-1/2 -translate-x-1/2 ${isLarge ? 'w-3 h-3' : 'w-2 h-2'} bg-red-500 rounded-full`}
+            style={{ boxShadow: '0 0 12px rgba(239,68,68,0.8)' }}
+          />
+          
+          {/* Face screen */}
+          <div className={`absolute ${isLarge ? 'inset-3' : 'inset-2'} bg-gradient-to-br from-cyan-300 via-cyan-350 to-blue-400 rounded-lg flex items-center justify-center`}
+               style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15), inset 0 -10px 10px -10px rgba(255,255,255,0.4)' }}>
+            {/* Eyes */}
+            <div className={`absolute top-1/3 left-1/2 -translate-x-1/2 flex ${isLarge ? 'gap-3' : 'gap-2'}`}>
               <motion.div 
-                animate={{ scaleY: isBlinking ? 0.1 : 1 }}
-                transition={{ duration: 0.1 }}
-                className={`bg-gray-800 rounded-full ${isLarge ? 'w-3 h-4' : 'w-2 h-3'}`}
-                style={{ boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}
+                animate={{ scaleY: mood === "celebrating" ? [1, 0.3, 1] : 1 }}
+                transition={{ duration: 0.3, repeat: mood === "celebrating" ? Infinity : 0, repeatDelay: 2 }}
+                className={`${isLarge ? 'w-3 h-3' : 'w-2 h-2'} bg-white rounded-full`}
+                style={{ boxShadow: 'inset 0 -2px 4px rgba(0,0,0,0.2)' }}
               />
               <motion.div 
-                animate={{ scaleY: isBlinking ? 0.1 : 1 }}
-                transition={{ duration: 0.1 }}
-                className={`bg-gray-800 rounded-full ${isLarge ? 'w-3 h-4' : 'w-2 h-3'}`}
-                style={{ boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}
+                animate={{ scaleY: mood === "celebrating" ? [1, 0.3, 1] : 1 }}
+                transition={{ duration: 0.3, repeat: mood === "celebrating" ? Infinity : 0, repeatDelay: 2 }}
+                className={`${isLarge ? 'w-3 h-3' : 'w-2 h-2'} bg-white rounded-full`}
+                style={{ boxShadow: 'inset 0 -2px 4px rgba(0,0,0,0.2)' }}
               />
             </div>
-            <div className={`absolute ${isLarge ? 'top-[55%]' : 'top-[52%]'} left-1/2 -translate-x-1/2 ${isLarge ? 'w-8 h-4' : 'w-5 h-3'} border-b-3 border-gray-800 rounded-b-full`} style={{ borderBottomWidth: '2px' }} />
-            {/* Cheeks */}
-            <div className={`absolute ${isLarge ? 'top-[48%] left-[15%] w-5 h-4' : 'top-[45%] left-[18%] w-3 h-2'} bg-pink-300/40 rounded-full blur-sm`} />
-            <div className={`absolute ${isLarge ? 'top-[48%] right-[15%] w-5 h-4' : 'top-[45%] right-[18%] w-3 h-2'} bg-pink-300/40 rounded-full blur-sm`} />
+            {/* Smile */}
+            <div className={`absolute bottom-1/4 left-1/2 -translate-x-1/2 ${isLarge ? 'w-8 h-2' : 'w-6 h-1.5'} border-b-2 border-white rounded-b-full`} />
           </div>
           
-          {/* Hair with texture */}
-          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-full">
-            <div className={`bg-gradient-to-b from-gray-900 to-gray-800 ${isLarge ? 'h-7' : 'h-5'} rounded-t-full`} 
-                 style={{ boxShadow: 'inset 0 -4px 8px rgba(0,0,0,0.2)' }} />
-          </div>
-          {/* Highlight */}
-          <div className={`absolute ${isLarge ? 'top-4 left-6 w-8 h-8' : 'top-2 left-4 w-6 h-6'} bg-white/30 rounded-full blur-md`} />
+          {/* Ears/Side panels */}
+          <div className={`absolute top-1/3 ${isLarge ? '-left-2 w-3 h-6' : '-left-1.5 w-2 h-5'} bg-gradient-to-l from-slate-400 to-slate-500 rounded-l-full`}
+               style={{ boxShadow: '0 3px 8px rgba(0,0,0,0.2)' }} />
+          <div className={`absolute top-1/3 ${isLarge ? '-right-2 w-3 h-6' : '-right-1.5 w-2 h-5'} bg-gradient-to-r from-slate-400 to-slate-500 rounded-r-full`}
+               style={{ boxShadow: '0 3px 8px rgba(0,0,0,0.2)' }} />
         </div>
+
+        {/* Arms */}
+        <motion.div
+          animate={{ rotate: [-5, 5, -5] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          className={`absolute ${isLarge ? 'top-28 -left-5 w-4 h-16' : 'top-20 -left-3 w-3 h-12'} bg-gradient-to-b from-slate-400 via-slate-450 to-slate-500 rounded-full origin-top`}
+          style={{ boxShadow: '0 6px 15px rgba(0,0,0,0.2), inset 0 -8px 8px -8px rgba(255,255,255,0.2)' }}
+        />
+        <motion.div
+          animate={{ rotate: [5, -5, 5] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+          className={`absolute ${isLarge ? 'top-28 -right-5 w-4 h-16' : 'top-20 -right-3 w-3 h-12'} bg-gradient-to-b from-slate-400 via-slate-450 to-slate-500 rounded-full origin-top`}
+          style={{ boxShadow: '0 6px 15px rgba(0,0,0,0.2), inset 0 -8px 8px -8px rgba(255,255,255,0.2)' }}
+        />
 
         {mood === "celebrating" && (
           <>
@@ -83,45 +128,6 @@ function HumanCharacter({ mood, isLarge, isBlinking, currentMood }) {
             </motion.div>
           </>
         )}
-      </motion.div>
-
-      {/* Body */}
-      <motion.div
-        animate={{ scaleY: [1, 1.02, 1] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        className={`absolute ${isLarge ? 'top-20 w-32 h-28' : 'top-14 w-20 h-20'} left-1/2 -translate-x-1/2`}
-      >
-        <div className={`w-full h-full rounded-t-3xl rounded-b-2xl ${currentMood.bodyColor} relative overflow-hidden`}
-             style={{ boxShadow: '0 10px 30px -10px rgba(0,0,0,0.2), inset 0 -15px 15px -15px rgba(255,255,255,0.2)' }}>
-          <div className="absolute inset-0 opacity-20">
-            <div className={`absolute top-1/3 left-1/2 -translate-x-1/2 w-full ${isLarge ? 'h-1' : 'h-0.5'} bg-white rounded`} />
-          </div>
-          {/* Body highlight */}
-          <div className={`absolute top-4 left-1/2 -translate-x-1/2 ${isLarge ? 'w-16 h-12' : 'w-10 h-8'} bg-white/20 rounded-full blur-xl`} />
-        </div>
-      </motion.div>
-
-      {/* Arms */}
-      <motion.div
-        animate={currentMood.armAnimation}
-        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-        className={`absolute ${isLarge ? 'top-[5.5rem] left-[0.5rem] w-7 h-16' : 'top-[3.8rem] left-1 w-5 h-12'} origin-top`}
-      >
-        <div className={`w-full h-full rounded-full bg-gradient-to-b ${currentMood.color}`} 
-             style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15), inset 0 -8px 8px -8px rgba(255,255,255,0.3)' }} />
-        <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-6 h-6' : 'w-4 h-4'} rounded-full bg-gradient-to-br ${currentMood.color}`}
-             style={{ boxShadow: '0 3px 8px rgba(0,0,0,0.2)' }} />
-      </motion.div>
-
-      <motion.div
-        animate={currentMood.armAnimation}
-        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-        className={`absolute ${isLarge ? 'top-[5.5rem] right-[0.5rem] w-7 h-16' : 'top-[3.8rem] right-1 w-5 h-12'} origin-top`}
-      >
-        <div className={`w-full h-full rounded-full bg-gradient-to-b ${currentMood.color}`} 
-             style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15), inset 0 -8px 8px -8px rgba(255,255,255,0.3)' }} />
-        <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-6 h-6' : 'w-4 h-4'} rounded-full bg-gradient-to-br ${currentMood.color}`}
-             style={{ boxShadow: '0 3px 8px rgba(0,0,0,0.2)' }} />
       </motion.div>
     </div>
   );
@@ -614,11 +620,10 @@ export default function VirtualCompanion({
             ))}
           </>
         )}
-        {characterType === "human" ? (
-          <HumanCharacter 
+        {characterType === "robot" ? (
+          <RobotCharacter 
             mood={mood} 
-            isLarge={isLarge} 
-            isBlinking={isBlinking}
+            isLarge={isLarge}
             currentMood={currentMood}
           />
         ) : characterType === "dog" ? (
