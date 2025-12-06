@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Circle, Clock, Zap, Play, MoreVertical, Calendar, CalendarDays, Lock, RefreshCw, Link as LinkIcon } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Zap, Play, MoreVertical, Calendar, CalendarDays, Lock, RefreshCw, Link as LinkIcon, UserCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import SubtaskTracker from "./tasks/SubtaskTracker";
 import {
@@ -28,7 +28,7 @@ const difficultyIcons = {
   hard: { icon: Zap, color: "text-red-500" }
 };
 
-export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, onSubtaskToggle, onSetDependency, onSetRecurring, allTasks = [], compact = false }) {
+export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, onSubtaskToggle, onSetDependency, onSetRecurring, allTasks = [], compact = false, showTeamInfo = false }) {
   const completedSubtasks = task.subtasks?.filter(st => st.completed).length || 0;
   const totalSubtasks = task.subtasks?.length || 0;
   const progress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
@@ -91,6 +91,12 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                   <Badge className="bg-teal-100 text-teal-700 border-teal-200 flex items-center gap-1">
                     <CalendarDays className="w-3 h-3" />
                     Spread
+                  </Badge>
+                )}
+                {showTeamInfo && task.assigned_to_name && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <UserCircle className="w-3 h-3" />
+                    {task.assigned_to_name}
                   </Badge>
                 )}
                 <DifficultyIcon className={`w-4 h-4 ${difficultyColor}`} />
