@@ -45,10 +45,37 @@ export default function Tasks() {
   }, []);
 
   const { data: tasks = [], isLoading } = useQuery({
-    queryKey: ['tasks', currentUser?.email],
-    queryFn: () => currentUser ? base44.entities.Task.filter({ created_by: currentUser.email }, '-created_date') : [],
+    queryKey: ['tasks', currentUser?.email, selectedTeamId],
+    queryFn: async () => {
+      if (!currentUser) return [];
+      if (selectedTeamId === "personal") {
+        return base44.entities.Task.filter({ created_by: currentUser.email, team_id: null }, '-created_date');
+      }
+      return base44.entities.Task.filter({ team_id: selectedTeamId }, '-created_date');
+    },
     enabled: !!currentUser,
   });
+
+  const { data: teams = [] } = useQuery({
+    queryKey: ['teams', currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser) return [];
+      const allTeams = await base44.entities.Team.list();
+      return allTeams.filter(team => 
+        team.owner_id === currentUser.id || team.member_ids?.includes(currentUser.id)
+      );
+    },
+    enabled: !!currentUser,
+  });
+
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => base44.entities.User.list(),
+    enabled: selectedTeamId !== "personal",
+  });
+
+  const currentTeam = teams.find(t => t.id === selectedTeamId);
+  const teamMembers = currentTeam ? allUsers.filter(u => currentTeam.member_ids?.includes(u.id)) : [];
 
   const deleteTaskMutation = useMutation({
     mutationFn: (taskId) => base44.entities.Task.delete(taskId),

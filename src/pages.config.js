@@ -15,6 +15,8 @@ import CalendarView from './pages/CalendarView';
 import Subscription from './pages/Subscription';
 import Journal from './pages/Journal';
 import AITaskGenerator from './pages/AITaskGenerator';
+import Teams from './pages/Teams';
+import TeamDashboard from './pages/TeamDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -36,6 +38,8 @@ export const PAGES = {
     "Subscription": Subscription,
     "Journal": Journal,
     "AITaskGenerator": AITaskGenerator,
+    "Teams": Teams,
+    "TeamDashboard": TeamDashboard,
 }
 
 export const pagesConfig = {

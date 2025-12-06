@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, ListTodo, Play, LayoutDashboard, User, RefreshCw, Brain, Award, Trophy, MessageSquare, Calendar, BookOpen } from "lucide-react";
+import { Sparkles, ListTodo, Play, LayoutDashboard, User, RefreshCw, Brain, Award, Trophy, MessageSquare, Calendar, BookOpen, Users } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import {
   Sidebar,
@@ -75,6 +75,11 @@ const navigationItems = [
     title: "Leaderboard",
     url: createPageUrl("LeaderboardPage"),
     icon: Trophy,
+  },
+  {
+    title: "Teams",
+    url: createPageUrl("Teams"),
+    icon: Users,
   },
 ];
 

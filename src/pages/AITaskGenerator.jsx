@@ -16,12 +16,16 @@ import { getPersonalizedMessage } from "@/components/companionUtils";
 export default function AITaskGenerator() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const urlParams = new URLSearchParams(window.location.search);
+  const teamIdParam = urlParams.get('teamId');
+  
   const [goalDescription, setGoalDescription] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedTasks, setGeneratedTasks] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [userProgress, setUserProgress] = useState(null);
   const [companionMessage, setCompanionMessage] = useState("");
+  const [teamId, setTeamId] = useState(teamIdParam || null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -60,7 +64,8 @@ export default function AITaskGenerator() {
           due_date: task.due_date,
           subtasks: task.subtasks,
           blocked_by: [],
-          status: "not_started"
+          status: "not_started",
+          team_id: teamId
         };
 
         // Map dependency references to actual IDs
@@ -78,7 +83,11 @@ export default function AITaskGenerator() {
     },
     onSuccess: (count) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      navigate(createPageUrl("Tasks"));
+      if (teamId) {
+        navigate(createPageUrl(`TeamDashboard?teamId=${teamId}`));
+      } else {
+        navigate(createPageUrl("Tasks"));
+      }
     },
   });
 
