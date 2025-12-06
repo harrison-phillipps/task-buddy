@@ -8,7 +8,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, CheckCircle, Loader2, ExternalLink, Unlink, RefreshCw, Repeat } from "lucide-react";
+import { Calendar, Clock, CheckCircle, Loader2, ExternalLink, Unlink, RefreshCw, Repeat } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { parseISO } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, addDays } from "date-fns";
 
@@ -16,15 +18,18 @@ export default function CalendarSyncModal({
   open, 
   onOpenChange, 
   tasks = [],
+  goals = [],
   currentUser,
   onSyncComplete 
 }) {
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [selectedTasks, setSelectedTasks] = useState(new Set());
+  const [selectedGoals, setSelectedGoals] = useState(new Set());
   const [syncSettings, setSyncSettings] = useState({});
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncResults, setSyncResults] = useState(null);
+  const [syncType, setSyncType] = useState("tasks");
 
   useEffect(() => {
     // Check if user has calendar connected
@@ -96,13 +101,13 @@ export default function CalendarSyncModal({
     if (newSelected.has(taskId)) {
       newSelected.delete(taskId);
       const newSettings = { ...syncSettings };
-      delete newSettings[taskId];
+      delete newSettings[`task-${taskId}`];
       setSyncSettings(newSettings);
     } else {
       newSelected.add(taskId);
       setSyncSettings({
         ...syncSettings,
-        [taskId]: {
+        [`task-${taskId}`]: {
           date: format(new Date(), 'yyyy-MM-dd'),
           time: '09:00',
           recurring: 'none',
@@ -111,6 +116,29 @@ export default function CalendarSyncModal({
       });
     }
     setSelectedTasks(newSelected);
+  };
+
+  const toggleGoalSelection = (goalId) => {
+    const newSelected = new Set(selectedGoals);
+    if (newSelected.has(goalId)) {
+      newSelected.delete(goalId);
+      const newSettings = { ...syncSettings };
+      delete newSettings[`goal-${goalId}`];
+      setSyncSettings(newSettings);
+    } else {
+      newSelected.add(goalId);
+      const goal = goals.find(g => g.id === goalId);
+      setSyncSettings({
+        ...syncSettings,
+        [`goal-${goalId}`]: {
+          date: goal.target_date || format(new Date(), 'yyyy-MM-dd'),
+          time: '09:00',
+          recurring: 'none',
+          recurrenceEnd: ''
+        }
+      });
+    }
+    setSelectedGoals(newSelected);
   };
 
   const updateTaskSettings = (taskId, field, value) => {
@@ -124,27 +152,27 @@ export default function CalendarSyncModal({
   };
 
   const handleSync = async () => {
-    if (selectedTasks.size === 0) return;
+    if (selectedTasks.size === 0 && selectedGoals.size === 0) return;
     
     setIsSyncing(true);
     setSyncResults(null);
     
     const results = { success: [], failed: [] };
     
+    // Sync tasks
     for (const taskId of selectedTasks) {
       const task = tasks.find(t => t.id === taskId);
-      const settings = syncSettings[taskId];
+      const settings = syncSettings[`task-${taskId}`];
       
       if (!task || !settings) continue;
       
       try {
-        // Get fresh access token
         const tokenResult = await base44.functions.google_calendar.refresh_access_token({
           refresh_token: currentUser.google_calendar_refresh_token
         });
         
         if (tokenResult.error) {
-          results.failed.push({ task, error: "Token refresh failed" });
+          results.failed.push({ item: task, type: 'task', error: "Token refresh failed" });
           continue;
         }
         
@@ -159,18 +187,59 @@ export default function CalendarSyncModal({
         });
         
         if (syncResult.success) {
-          results.success.push({ task, event_id: syncResult.event_id, link: syncResult.html_link });
+          results.success.push({ item: task, type: 'task', event_id: syncResult.event_id, link: syncResult.html_link });
           
-          // Update task with calendar event ID
           await base44.entities.Task.update(taskId, {
             calendar_event_id: syncResult.event_id,
             calendar_synced: true
           });
         } else {
-          results.failed.push({ task, error: syncResult.error });
+          results.failed.push({ item: task, type: 'task', error: syncResult.error });
         }
       } catch (error) {
-        results.failed.push({ task, error: error.message });
+        results.failed.push({ item: task, type: 'task', error: error.message });
+      }
+    }
+    
+    // Sync goals
+    for (const goalId of selectedGoals) {
+      const goal = goals.find(g => g.id === goalId);
+      const settings = syncSettings[`goal-${goalId}`];
+      
+      if (!goal || !settings) continue;
+      
+      try {
+        const tokenResult = await base44.functions.google_calendar.refresh_access_token({
+          refresh_token: currentUser.google_calendar_refresh_token
+        });
+        
+        if (tokenResult.error) {
+          results.failed.push({ item: goal, type: 'goal', error: "Token refresh failed" });
+          continue;
+        }
+        
+        const syncResult = await base44.functions.google_calendar.sync_goal_to_calendar({
+          access_token: tokenResult.access_token,
+          goal: goal,
+          scheduled_date: settings.date,
+          scheduled_time: settings.time,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          recurring: settings.recurring || 'none',
+          recurrence_end: settings.recurrenceEnd || null
+        });
+        
+        if (syncResult.success) {
+          results.success.push({ item: goal, type: 'goal', event_id: syncResult.event_id, link: syncResult.html_link });
+          
+          await base44.entities.Goal.update(goalId, {
+            calendar_event_id: syncResult.event_id,
+            calendar_synced: true
+          });
+        } else {
+          results.failed.push({ item: goal, type: 'goal', error: syncResult.error });
+        }
+      } catch (error) {
+        results.failed.push({ item: goal, type: 'goal', error: error.message });
       }
     }
     
@@ -183,6 +252,7 @@ export default function CalendarSyncModal({
   };
 
   const incompleteTasks = tasks.filter(t => t.status !== 'completed');
+  const activeGoals = goals.filter(g => g.status !== 'completed');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -246,9 +316,22 @@ export default function CalendarSyncModal({
 
           {isConnected && (
             <>
+              {/* Type Selector */}
+              <Tabs value={syncType} onValueChange={setSyncType}>
+                <TabsList className="w-full">
+                  <TabsTrigger value="tasks" className="flex-1">
+                    Tasks ({incompleteTasks.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="goals" className="flex-1">
+                    Goals ({activeGoals.length})
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+
               {/* Task Selection */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Select tasks to sync</Label>
+              {syncType === "tasks" && (
+                <div className="space-y-3">
+                  <Label className="text-base font-semibold">Select tasks to sync</Label>
                 
                 {incompleteTasks.length === 0 ? (
                   <p className="text-sm text-gray-500 text-center py-4">
@@ -286,7 +369,6 @@ export default function CalendarSyncModal({
                               <span>~{task.estimated_minutes || 30}min</span>
                             </div>
                             
-                            {/* Schedule Settings */}
                             <AnimatePresence>
                               {selectedTasks.has(task.id) && (
                                 <motion.div
@@ -300,8 +382,8 @@ export default function CalendarSyncModal({
                                       <Label className="text-xs text-gray-600">Date</Label>
                                       <Input
                                         type="date"
-                                        value={syncSettings[task.id]?.date || ''}
-                                        onChange={(e) => updateTaskSettings(task.id, 'date', e.target.value)}
+                                        value={syncSettings[`task-${task.id}`]?.date || ''}
+                                        onChange={(e) => updateTaskSettings(`task-${task.id}`, 'date', e.target.value)}
                                         className="h-8 text-sm"
                                       />
                                     </div>
@@ -309,22 +391,21 @@ export default function CalendarSyncModal({
                                       <Label className="text-xs text-gray-600">Start Time</Label>
                                       <Input
                                         type="time"
-                                        value={syncSettings[task.id]?.time || '09:00'}
-                                        onChange={(e) => updateTaskSettings(task.id, 'time', e.target.value)}
+                                        value={syncSettings[`task-${task.id}`]?.time || '09:00'}
+                                        onChange={(e) => updateTaskSettings(`task-${task.id}`, 'time', e.target.value)}
                                         className="h-8 text-sm"
                                       />
                                     </div>
                                   </div>
                                   
-                                  {/* Recurring Options */}
                                   <div className="p-2 bg-purple-50 rounded-lg">
                                     <div className="flex items-center gap-2 mb-2">
                                       <Repeat className="w-3 h-3 text-purple-600" />
                                       <Label className="text-xs text-purple-700 font-medium">Repeat</Label>
                                     </div>
                                     <Select
-                                      value={syncSettings[task.id]?.recurring || 'none'}
-                                      onValueChange={(value) => updateTaskSettings(task.id, 'recurring', value)}
+                                      value={syncSettings[`task-${task.id}`]?.recurring || 'none'}
+                                      onValueChange={(value) => updateTaskSettings(`task-${task.id}`, 'recurring', value)}
                                     >
                                       <SelectTrigger className="h-8 text-sm bg-white">
                                         <SelectValue />
@@ -339,13 +420,13 @@ export default function CalendarSyncModal({
                                       </SelectContent>
                                     </Select>
                                     
-                                    {syncSettings[task.id]?.recurring && syncSettings[task.id]?.recurring !== 'none' && (
+                                    {syncSettings[`task-${task.id}`]?.recurring && syncSettings[`task-${task.id}`]?.recurring !== 'none' && (
                                       <div className="mt-2">
                                         <Label className="text-xs text-gray-600">Until (optional)</Label>
                                         <Input
                                           type="date"
-                                          value={syncSettings[task.id]?.recurrenceEnd || ''}
-                                          onChange={(e) => updateTaskSettings(task.id, 'recurrenceEnd', e.target.value)}
+                                          value={syncSettings[`task-${task.id}`]?.recurrenceEnd || ''}
+                                          onChange={(e) => updateTaskSettings(`task-${task.id}`, 'recurrenceEnd', e.target.value)}
                                           min={format(addDays(new Date(), 1), 'yyyy-MM-dd')}
                                           className="h-8 text-sm mt-1"
                                           placeholder="End date"
@@ -363,6 +444,111 @@ export default function CalendarSyncModal({
                   </div>
                 )}
               </div>
+              )}
+
+              {/* Goal Selection */}
+              {syncType === "goals" && (
+                <div className="space-y-3">
+                  <Label className="text-base font-semibold">Select goals to sync</Label>
+                  
+                  {activeGoals.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-4">
+                      No active goals to sync
+                    </p>
+                  ) : (
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {activeGoals.map(goal => (
+                        <motion.div
+                          key={goal.id}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className={`p-3 rounded-lg border transition-all ${
+                            selectedGoals.has(goal.id) 
+                              ? "border-teal-300 bg-teal-50" 
+                              : "border-gray-200 bg-white hover:border-teal-200"
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <Checkbox
+                              checked={selectedGoals.has(goal.id)}
+                              onCheckedChange={() => toggleGoalSelection(goal.id)}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium text-gray-900 truncate">{goal.title}</p>
+                                {goal.calendar_synced && (
+                                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
+                                    Synced
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                                <Badge variant="secondary" className="text-xs">{goal.type}</Badge>
+                                {goal.target_date && (
+                                  <span>Target: {format(parseISO(goal.target_date), 'MMM d, yyyy')}</span>
+                                )}
+                              </div>
+                              
+                              <AnimatePresence>
+                                {selectedGoals.has(goal.id) && (
+                                  <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="mt-3 pt-3 border-t border-teal-200 space-y-3"
+                                  >
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div>
+                                        <Label className="text-xs text-gray-600">Reminder Date</Label>
+                                        <Input
+                                          type="date"
+                                          value={syncSettings[`goal-${goal.id}`]?.date || ''}
+                                          onChange={(e) => updateTaskSettings(`goal-${goal.id}`, 'date', e.target.value)}
+                                          className="h-8 text-sm"
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label className="text-xs text-gray-600">Time</Label>
+                                        <Input
+                                          type="time"
+                                          value={syncSettings[`goal-${goal.id}`]?.time || '09:00'}
+                                          onChange={(e) => updateTaskSettings(`goal-${goal.id}`, 'time', e.target.value)}
+                                          className="h-8 text-sm"
+                                        />
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="p-2 bg-teal-50 rounded-lg">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <Repeat className="w-3 h-3 text-teal-600" />
+                                        <Label className="text-xs text-teal-700 font-medium">Check-in Frequency</Label>
+                                      </div>
+                                      <Select
+                                        value={syncSettings[`goal-${goal.id}`]?.recurring || 'none'}
+                                        onValueChange={(value) => updateTaskSettings(`goal-${goal.id}`, 'recurring', value)}
+                                      >
+                                        <SelectTrigger className="h-8 text-sm bg-white">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="none">One-time reminder</SelectItem>
+                                          <SelectItem value="weekly">Weekly check-in</SelectItem>
+                                          <SelectItem value="biweekly">Bi-weekly check-in</SelectItem>
+                                          <SelectItem value="monthly">Monthly check-in</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Sync Results */}
               <AnimatePresence>
@@ -380,15 +566,15 @@ export default function CalendarSyncModal({
                           {syncResults.success.length} task(s) synced successfully!
                         </p>
                         <div className="mt-2 space-y-1">
-                          {syncResults.success.map(({ task, link }) => (
+                          {syncResults.success.map(({ item, type, link }) => (
                             <a 
-                              key={task.id}
+                              key={item.id}
                               href={link}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-xs text-green-700 hover:underline flex items-center gap-1"
                             >
-                              {task.title} <ExternalLink className="w-3 h-3" />
+                              {item.title} ({type}) <ExternalLink className="w-3 h-3" />
                             </a>
                           ))}
                         </div>
@@ -408,7 +594,7 @@ export default function CalendarSyncModal({
               {/* Sync Button */}
               <Button
                 onClick={handleSync}
-                disabled={selectedTasks.size === 0 || isSyncing}
+                disabled={(selectedTasks.size === 0 && selectedGoals.size === 0) || isSyncing}
                 className="w-full bg-gradient-to-r from-purple-500 to-teal-500 text-white"
               >
                 {isSyncing ? (
@@ -419,7 +605,7 @@ export default function CalendarSyncModal({
                 ) : (
                   <>
                     <RefreshCw className="w-4 h-4 mr-2" />
-                    Sync {selectedTasks.size > 0 ? `${selectedTasks.size} Task(s)` : "Selected Tasks"}
+                    Sync {selectedTasks.size + selectedGoals.size > 0 ? `${selectedTasks.size + selectedGoals.size} Item(s)` : "Selected Items"}
                   </>
                 )}
               </Button>

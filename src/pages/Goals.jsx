@@ -3,11 +3,12 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Target, Plus } from "lucide-react";
+import { Target, Plus, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 import GoalCard from "../components/goals/GoalCard";
 import CreateGoalModal from "../components/goals/CreateGoalModal";
 import GoalBreakdownModal from "../components/goals/GoalBreakdownModal";
+import CalendarSyncModal from "../components/calendar/CalendarSyncModal";
 
 export default function GoalsPage() {
   const queryClient = useQueryClient();
@@ -15,6 +16,7 @@ export default function GoalsPage() {
   const [filter, setFilter] = useState("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [breakdownGoal, setBreakdownGoal] = useState(null);
+  const [showCalendarSync, setShowCalendarSync] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -81,13 +83,23 @@ export default function GoalsPage() {
             </h1>
             <p className="text-gray-600 mt-1">Define big goals and track your progress</p>
           </div>
-          <Button 
-            onClick={() => setShowCreateModal(true)}
-            className="bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New Goal
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => setShowCalendarSync(true)}
+              variant="outline"
+              className="border-purple-200"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Sync to Calendar
+            </Button>
+            <Button 
+              onClick={() => setShowCreateModal(true)}
+              className="bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Goal
+            </Button>
+          </div>
         </motion.div>
 
         <motion.div
@@ -182,6 +194,17 @@ export default function GoalsPage() {
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
             setBreakdownGoal(null);
+          }}
+        />
+
+        <CalendarSyncModal
+          open={showCalendarSync}
+          onOpenChange={setShowCalendarSync}
+          tasks={[]}
+          goals={goals}
+          currentUser={currentUser}
+          onSyncComplete={() => {
+            queryClient.invalidateQueries({ queryKey: ['goals'] });
           }}
         />
       </div>
