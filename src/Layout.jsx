@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, ListTodo, Play, LayoutDashboard, User, RefreshCw, Brain, Award, Trophy, MessageSquare, Calendar, BookOpen, Users, Target, TrendingUp } from "lucide-react";
+import { Sparkles, ListTodo, Play, LayoutDashboard, User, RefreshCw, Brain, Award, Trophy, MessageSquare, Calendar, BookOpen, Users, Target, TrendingUp, Bell, Settings } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import {
   Sidebar,
@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import React from "react";
 import PersonalitySettingsModal from "@/components/PersonalitySettingsModal";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 const navigationItems = [
   {
@@ -90,6 +91,11 @@ const navigationItems = [
     title: "Teams",
     url: createPageUrl("Teams"),
     icon: Users,
+  },
+  {
+    title: "Notifications",
+    url: createPageUrl("NotificationSettings"),
+    icon: Bell,
   },
 ];
 
@@ -299,10 +305,15 @@ export default function Layout({ children, currentPageName }) {
         </Sidebar>
 
         <main className="flex-1 flex flex-col">
-          <header className="bg-white/70 backdrop-blur-md border-b border-purple-100 px-6 py-4 md:hidden sticky top-0 z-10">
-            <div className="flex items-center gap-4">
-              <SidebarTrigger className="hover:bg-purple-100 p-2 rounded-lg transition-colors duration-200" />
-              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">TaskBuddy</h1>
+          <header className="bg-white/70 backdrop-blur-md border-b border-purple-100 px-6 py-4 sticky top-0 z-10">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4 md:hidden">
+                <SidebarTrigger className="hover:bg-purple-100 p-2 rounded-lg transition-colors duration-200" />
+                <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">TaskBuddy</h1>
+              </div>
+              <div className="ml-auto">
+                <NotificationBell currentUser={currentUser} />
+              </div>
             </div>
           </header>
 
