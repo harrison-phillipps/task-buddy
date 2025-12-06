@@ -20,9 +20,13 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import TaskAssignment from "../components/team/TaskAssignment";
 
 export default function Tasks() {
   const queryClient = useQueryClient();
+  const urlParams = new URLSearchParams(window.location.search);
+  const teamIdParam = urlParams.get('teamId');
+  
   const [filter, setFilter] = useState("all");
   const [spreadTask, setSpreadTask] = useState(null);
   const [showCalendarSync, setShowCalendarSync] = useState(false);
@@ -31,6 +35,7 @@ export default function Tasks() {
   const [selectedDependencyTask, setSelectedDependencyTask] = useState(null);
   const [showRecurringModal, setShowRecurringModal] = useState(false);
   const [selectedRecurringTask, setSelectedRecurringTask] = useState(null);
+  const [selectedTeamId, setSelectedTeamId] = useState(teamIdParam || "personal");
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -156,11 +161,23 @@ export default function Tasks() {
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
         >
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">
-              My Tasks
+          <div className="flex-1">
+            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent mb-3">
+              {selectedTeamId === "personal" ? "My Tasks" : currentTeam?.name || "Team Tasks"}
             </h1>
-            <p className="text-gray-600 mt-1">All your tasks in one place</p>
+            <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
+              <SelectTrigger className="w-64">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="personal">Personal Tasks</SelectItem>
+                {teams.map(team => (
+                  <SelectItem key={team.id} value={team.id}>
+                    {team.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex gap-2">
             <Button 
@@ -248,26 +265,38 @@ export default function Tasks() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <TaskCard
-                  task={task}
-                  allTasks={tasks}
-                  onStart={(task) => window.location.href = createPageUrl("FocusSession") + `?taskId=${task.id}`}
-                  onDelete={(task) => {
-                    if (confirm(`Delete "${task.title}"?`)) {
-                      deleteTaskMutation.mutate(task.id);
-                    }
-                  }}
-                  onSpread={(task) => setSpreadTask(task)}
-                  onSubtaskToggle={handleSubtaskToggle}
-                  onSetDependency={(task) => {
-                    setSelectedDependencyTask(task);
-                    setShowDependencyModal(true);
-                  }}
-                  onSetRecurring={(task) => {
-                    setSelectedRecurringTask(task);
-                    setShowRecurringModal(true);
-                  }}
-                />
+                <div className="space-y-3">
+                  <TaskCard
+                    task={task}
+                    allTasks={tasks}
+                    showTeamInfo={selectedTeamId !== "personal"}
+                    onStart={(task) => window.location.href = createPageUrl("FocusSession") + `?taskId=${task.id}`}
+                    onDelete={(task) => {
+                      if (confirm(`Delete "${task.title}"?`)) {
+                        deleteTaskMutation.mutate(task.id);
+                      }
+                    }}
+                    onSpread={(task) => setSpreadTask(task)}
+                    onSubtaskToggle={handleSubtaskToggle}
+                    onSetDependency={(task) => {
+                      setSelectedDependencyTask(task);
+                      setShowDependencyModal(true);
+                    }}
+                    onSetRecurring={(task) => {
+                      setSelectedRecurringTask(task);
+                      setShowRecurringModal(true);
+                    }}
+                  />
+                  {selectedTeamId !== "personal" && (
+                    <div className="ml-4">
+                      <TaskAssignment
+                        task={task}
+                        teamMembers={teamMembers}
+                        onAssign={(data) => updateTaskMutation.mutate({ id: task.id, data })}
+                      />
+                    </div>
+                  )}
+                </div>
               </motion.div>
             ))}
           </motion.div>
