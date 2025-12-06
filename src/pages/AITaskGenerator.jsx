@@ -95,6 +95,9 @@ export default function AITaskGenerator() {
     if (!goalDescription.trim()) return;
 
     setIsGenerating(true);
+    setCompanionMessage("Analyzing your goal and creating a smart action plan... This is going to be great! 🎯");
+    setCompanionMood("working");
+    
     try {
       const result = await base44.integrations.Core.InvokeLLM({
         prompt: `You are an expert project manager and productivity coach. A user wants to achieve the following goal:
@@ -157,8 +160,23 @@ Be encouraging and practical. Make tasks feel achievable. Consider natural task 
       });
 
       setGeneratedTasks(result);
+      setCompanionMood("celebrating");
+      
+      // Provide personalized coaching after generation
+      const taskCount = result.tasks.length;
+      const hasDependencies = result.tasks.some(t => t.depends_on?.length > 0);
+      
+      let message = "Perfect! I've mapped out " + taskCount + " tasks for you. ";
+      if (hasDependencies) {
+        message += "I noticed some tasks depend on others - smart sequencing! ";
+      }
+      message += "Review them and let's make it happen! 🚀";
+      
+      setCompanionMessage(message);
     } catch (error) {
       console.error("Error generating tasks:", error);
+      setCompanionMessage("Oops! Something went wrong. But don't worry - take a breath and try again. You've got this! 💪");
+      setCompanionMood("supportive");
       alert("Failed to generate tasks. Please try again.");
     }
     setIsGenerating(false);
@@ -212,7 +230,7 @@ Be encouraging and practical. Make tasks feel achievable. Consider natural task 
               transition={{ delay: 0.1 }}
             >
               <VirtualCompanion 
-                mood="supportive"
+                mood={companionMood}
                 message={companionMessage}
                 size="small"
                 characterType={currentUser?.companion_type || "human"}
@@ -270,8 +288,8 @@ Be encouraging and practical. Make tasks feel achievable. Consider natural task 
               className="space-y-6"
             >
               <VirtualCompanion 
-                mood="celebrating"
-                message={generatedTasks.encouragement}
+                mood={companionMood}
+                message={companionMessage}
                 size="small"
                 characterType={currentUser?.companion_type || "human"}
                 userProgress={userProgress}

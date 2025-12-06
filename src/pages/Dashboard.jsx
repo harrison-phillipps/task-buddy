@@ -7,15 +7,21 @@ import { createPageUrl } from "@/utils";
 import { Sparkles, TrendingUp, Clock, CheckCircle, Brain } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import VirtualCompanion from "../components/VirtualCompanion";
+import TaskCard from "../components/TaskCard";
+import SmartTaskSuggestion from "../components/SmartTaskSuggestion";
 import AIPrioritization from "../components/AIPrioritization";
 import WeeklyOverview from "../components/dashboard/WeeklyOverview";
 import { motion } from "framer-motion";
-import { getPersonalizedMessage } from "@/components/companionUtils";
+import { Badge } from "@/components/ui/badge";
+import { getPersonalizedMessage, getProductivityTip } from "@/components/companionUtils";
+import ProactiveCoachingTip from "../components/ProactiveCoachingTip";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const [userProgress, setUserProgress] = useState(null);
+  const [showCoachingTip, setShowCoachingTip] = useState(true);
+  const [coachingTip, setCoachingTip] = useState(null);
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks', currentUser?.email],
@@ -149,6 +155,20 @@ export default function Dashboard() {
             userProgress={userProgress}
           />
         </motion.div>
+
+        {/* Proactive Coaching Tip */}
+        {coachingTip && showCoachingTip && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <ProactiveCoachingTip
+              tip={coachingTip}
+              onDismiss={() => setShowCoachingTip(false)}
+            />
+          </motion.div>
+        )}
 
         {/* Quick Actions */}
         <motion.div

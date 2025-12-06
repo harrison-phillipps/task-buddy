@@ -326,42 +326,164 @@ export function getPersonalizedMessage(userProgress, context, user = null) {
 export { personalityStyles, applyPersonalityStyle };
 
 // Get contextual tips based on user struggles
-export function getProductivityTip(userProgress) {
+export function getProductivityTip(userProgress, context = null, additionalData = {}) {
   const streak = userProgress?.current_streak || 0;
   const longestStreak = userProgress?.longest_streak || 0;
   const focusSessions = userProgress?.focus_sessions_completed || 0;
   const tasksCompleted = userProgress?.tasks_completed || 0;
+  const totalFocusMinutes = userProgress?.total_focus_minutes || 0;
+  const brainDumps = userProgress?.brain_dumps_created || 0;
 
   const tips = [];
 
+  // Streak-related tips
   if (longestStreak > streak && streak < 3) {
     tips.push({
       type: "streak",
-      title: "Build Your Streak",
-      message: "Try setting a daily reminder. Even completing one small task keeps your streak alive!",
-      icon: "🔥"
+      title: "Rebuild Your Streak",
+      message: "You had a " + longestStreak + "-day streak before! Let's get it back. Even 5 minutes today counts! 🔥",
+      priority: "high"
     });
   }
 
+  if (streak >= 3 && streak < 7) {
+    tips.push({
+      type: "encouragement",
+      title: "Streak Growing!",
+      message: streak + " days strong! Keep this momentum going - you're building powerful habits! 💪",
+      priority: "medium"
+    });
+  }
+
+  // Focus session tips
   if (focusSessions < 5) {
     tips.push({
       type: "focus",
-      title: "Focus Power",
-      message: "Start with short 10-15 minute focus sessions. Gradually increase as you build the habit!",
-      icon: "🧘"
+      title: "Focus Session Tip",
+      message: "Try starting with just 10-15 minutes. Short, focused bursts are more effective than marathon sessions! 🎯",
+      priority: "medium"
     });
   }
 
+  if (totalFocusMinutes > 300 && focusSessions < 10) {
+    tips.push({
+      type: "focus",
+      title: "You're Building Focus Stamina!",
+      message: "Nice! You've focused for " + totalFocusMinutes + " minutes. Regular sessions are training your concentration muscle! 🧠",
+      priority: "low"
+    });
+  }
+
+  // Balance tips
   if (tasksCompleted > 10 && focusSessions < 3) {
     tips.push({
       type: "balance",
-      title: "Try Focus Mode",
-      message: "You're great at tasks! Focus sessions can help with deeper, more complex work.",
-      icon: "⚡"
+      title: "Try Deep Focus",
+      message: "You complete tasks quickly! For complex work, try focus sessions to dive deeper without distractions. ⚡",
+      priority: "medium"
     });
   }
 
-  return tips.length > 0 ? tips[Math.floor(Math.random() * tips.length)] : null;
+  if (focusSessions > tasksCompleted * 2) {
+    tips.push({
+      type: "balance",
+      title: "Break It Down",
+      message: "You love focus time! Try breaking bigger goals into smaller tasks for clearer progress tracking. 📝",
+      priority: "medium"
+    });
+  }
+
+  // Brain dump tips
+  if (tasksCompleted > 15 && brainDumps < 3) {
+    tips.push({
+      type: "braindump",
+      title: "Clear Your Mind",
+      message: "Feeling overwhelmed? Try a brain dump! It helps capture floating thoughts and reduce mental clutter. 🧠✨",
+      priority: "high"
+    });
+  }
+
+  // Time of day tips
+  const hour = new Date().getHours();
+  if (hour >= 14 && hour <= 16 && context !== "focus_session") {
+    tips.push({
+      type: "energy",
+      title: "Afternoon Dip?",
+      message: "Post-lunch energy slump is real! Try a 5-minute walk or tackle an easy task to regain momentum. 🚶",
+      priority: "low"
+    });
+  }
+
+  // Context-specific tips
+  if (context === "many_tasks" && additionalData.taskCount > 10) {
+    tips.push({
+      type: "overwhelm",
+      title: "Feeling Overwhelmed?",
+      message: "You have " + additionalData.taskCount + " tasks. Focus on just 3 priority tasks today. Progress over perfection! 🎯",
+      priority: "high"
+    });
+  }
+
+  if (context === "no_due_dates" && additionalData.tasksWithoutDates > 5) {
+    tips.push({
+      type: "planning",
+      title: "Set Some Deadlines",
+      message: "Tasks with due dates are 3x more likely to get done! Add realistic deadlines to your top priorities. 📅",
+      priority: "medium"
+    });
+  }
+
+  if (context === "hard_tasks_blocked" && additionalData.blockedTasks > 0) {
+    tips.push({
+      type: "unblock",
+      title: "Unblock Progress",
+      message: "You have blocked tasks! Can you break dependencies or work on their prerequisites first? 🔓",
+      priority: "high"
+    });
+  }
+
+  // Milestone celebrations
+  if (tasksCompleted === 1) {
+    tips.push({
+      type: "milestone",
+      title: "First Task Complete! 🎉",
+      message: "You just completed your first task! Every journey starts with a single step. Keep going!",
+      priority: "high"
+    });
+  }
+
+  if (tasksCompleted === 10) {
+    tips.push({
+      type: "milestone",
+      title: "10 Tasks Done! 🏆",
+      message: "Double digits! You're building real momentum now. This is where habits form!",
+      priority: "high"
+    });
+  }
+
+  if (tasksCompleted === 25) {
+    tips.push({
+      type: "milestone",
+      title: "25 Tasks Completed! 🌟",
+      message: "WOW! 25 tasks! You've proven you can stick with this. You're a productivity champion!",
+      priority: "high"
+    });
+  }
+
+  if (streak === 7) {
+    tips.push({
+      type: "milestone",
+      title: "One Week Streak! 🔥",
+      message: "7 days in a row! You've officially built a habit. This is where transformation happens!",
+      priority: "high"
+    });
+  }
+
+  // Sort by priority and return highest priority tip
+  const priorityOrder = { high: 3, medium: 2, low: 1 };
+  tips.sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]);
+  
+  return tips.length > 0 ? tips[0] : null;
 }
 
 // Companion visual upgrades based on level
