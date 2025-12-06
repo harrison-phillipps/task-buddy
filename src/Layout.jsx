@@ -137,14 +137,16 @@ export default function Layout({ children, currentPageName }) {
     if (currentUser?.companion_type === 'cat') return '🐱';
     if (currentUser?.companion_type === 'dog') return '🐶';
     if (currentUser?.companion_type === 'orb') return '🔮';
-    return '👤';
+    if (currentUser?.companion_type === 'robot') return '🤖';
+    return '🤖';
   };
 
   const getCompanionName = () => {
     if (currentUser?.companion_type === 'cat') return 'Cozy Cat';
     if (currentUser?.companion_type === 'dog') return 'Playful Dog';
     if (currentUser?.companion_type === 'orb') return 'Magic Orb';
-    return 'Soft Human';
+    if (currentUser?.companion_type === 'robot') return 'Friendly Robot';
+    return 'Friendly Robot';
   };
 
   const getPersonalityLabel = () => {
