@@ -17,6 +17,7 @@ import Journal from './pages/Journal';
 import AITaskGenerator from './pages/AITaskGenerator';
 import Teams from './pages/Teams';
 import TeamDashboard from './pages/TeamDashboard';
+import Goals from './pages/Goals';
 import __Layout from './Layout.jsx';
 
 
@@ -40,6 +41,7 @@ export const PAGES = {
     "AITaskGenerator": AITaskGenerator,
     "Teams": Teams,
     "TeamDashboard": TeamDashboard,
+    "Goals": Goals,
 }
 
 export const pagesConfig = {
