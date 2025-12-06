@@ -25,7 +25,6 @@ export default function AITaskGenerator() {
   const [currentUser, setCurrentUser] = useState(null);
   const [userProgress, setUserProgress] = useState(null);
   const [companionMessage, setCompanionMessage] = useState("");
-  const [teamId, setTeamId] = useState(teamIdParam || null);
 
   useEffect(() => {
     const fetchUser = async () => {
