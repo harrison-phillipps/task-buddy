@@ -105,22 +105,22 @@ function HumanCharacter({ mood, isLarge, isBlinking, currentMood }) {
       <motion.div
         animate={currentMood.armAnimation}
         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-        className={`absolute ${isLarge ? 'top-24 -left-4 w-8 h-20' : 'top-16 -left-2 w-5 h-14'} origin-top`}
+        className={`absolute ${isLarge ? 'top-[5.5rem] left-[0.5rem] w-7 h-16' : 'top-[3.8rem] left-1 w-5 h-12'} origin-top`}
       >
         <div className={`w-full h-full rounded-full bg-gradient-to-b ${currentMood.color}`} 
              style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15), inset 0 -8px 8px -8px rgba(255,255,255,0.3)' }} />
-        <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-7 h-7' : 'w-5 h-5'} rounded-full bg-gradient-to-br ${currentMood.color}`}
+        <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-6 h-6' : 'w-4 h-4'} rounded-full bg-gradient-to-br ${currentMood.color}`}
              style={{ boxShadow: '0 3px 8px rgba(0,0,0,0.2)' }} />
       </motion.div>
 
       <motion.div
         animate={currentMood.armAnimation}
         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-        className={`absolute ${isLarge ? 'top-24 -right-4 w-8 h-20' : 'top-16 -right-2 w-5 h-14'} origin-top`}
+        className={`absolute ${isLarge ? 'top-[5.5rem] right-[0.5rem] w-7 h-16' : 'top-[3.8rem] right-1 w-5 h-12'} origin-top`}
       >
         <div className={`w-full h-full rounded-full bg-gradient-to-b ${currentMood.color}`} 
              style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15), inset 0 -8px 8px -8px rgba(255,255,255,0.3)' }} />
-        <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-7 h-7' : 'w-5 h-5'} rounded-full bg-gradient-to-br ${currentMood.color}`}
+        <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-6 h-6' : 'w-4 h-4'} rounded-full bg-gradient-to-br ${currentMood.color}`}
              style={{ boxShadow: '0 3px 8px rgba(0,0,0,0.2)' }} />
       </motion.div>
     </div>
