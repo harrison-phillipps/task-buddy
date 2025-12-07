@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import React from "react";
 import PersonalitySettingsModal from "@/components/PersonalitySettingsModal";
 import NotificationBell from "@/components/notifications/NotificationBell";
+import PersonalityCustomizer from "@/components/companion/PersonalityCustomizer";
 
 const navigationItems = [
   {
@@ -105,6 +106,7 @@ export default function Layout({ children, currentPageName }) {
   const [currentUser, setCurrentUser] = React.useState(null);
   const [userProgress, setUserProgress] = React.useState(null);
   const [showPersonalityModal, setShowPersonalityModal] = React.useState(false);
+  const [showPersonalityCustomizer, setShowPersonalityCustomizer] = React.useState(false);
 
   React.useEffect(() => {
     const fetchUser = async () => {
@@ -281,6 +283,15 @@ export default function Layout({ children, currentPageName }) {
                         <MessageSquare className="w-3 h-3 mr-2" />
                         {getPersonalityLabel()}
                       </Button>
+                      <Button
+                        onClick={() => setShowPersonalityCustomizer(true)}
+                        variant="outline"
+                        size="sm"
+                        className="w-full bg-white hover:bg-purple-50 border-purple-200 text-purple-700 font-medium"
+                      >
+                        <Sparkles className="w-3 h-3 mr-2" />
+                        Customize AI
+                      </Button>
                     </div>
                   </div>
                 </SidebarGroupContent>
@@ -328,6 +339,13 @@ export default function Layout({ children, currentPageName }) {
           <PersonalitySettingsModal
           open={showPersonalityModal}
           onOpenChange={setShowPersonalityModal}
+          currentUser={currentUser}
+          onUpdate={refreshUser}
+          />
+          
+          <PersonalityCustomizer
+          open={showPersonalityCustomizer}
+          onOpenChange={setShowPersonalityCustomizer}
           currentUser={currentUser}
           onUpdate={refreshUser}
           />

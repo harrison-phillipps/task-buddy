@@ -7,6 +7,7 @@ import { createPageUrl } from "@/utils";
 import { Sparkles, TrendingUp, Clock, CheckCircle, Brain } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import VirtualCompanion from "../components/VirtualCompanion";
+import { generateCompanionMessage } from "../components/ai/CompanionAI";
 import TaskCard from "../components/TaskCard";
 import SmartTaskSuggestion from "../components/SmartTaskSuggestion";
 import AIPrioritization from "../components/AIPrioritization";
@@ -25,6 +26,8 @@ export default function Dashboard() {
   const [showCoachingTip, setShowCoachingTip] = useState(true);
   const [coachingTip, setCoachingTip] = useState(null);
   const [showProgressReport, setShowProgressReport] = useState(false);
+  const [aiMessage, setAiMessage] = useState(null);
+  const [isLoadingMessage, setIsLoadingMessage] = useState(false);
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks', currentUser?.email],
@@ -153,9 +156,11 @@ export default function Dashboard() {
         >
           <VirtualCompanion 
             mood={completedToday.length > 0 ? "celebrating" : "supportive"}
-            message={getCompanionMessage()}
+            message={isLoadingMessage ? "Thinking..." : (aiMessage || getCompanionMessage())}
             characterType={currentUser.companion_type}
             userProgress={userProgress}
+            context="dashboard"
+            enableFeedback={!!aiMessage}
           />
         </motion.div>
 

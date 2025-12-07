@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, BookOpen, Coffee, Music, Palette, Code, Dumbbell, Heart, Crown, Star } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getCompanionUpgrades } from "@/components/companionUtils";
+import MessageFeedback from "./companion/MessageFeedback";
 
 const activities = [
   { text: "organizing my notes", icon: BookOpen, emoji: "📝" },
@@ -454,7 +455,9 @@ export default function VirtualCompanion({
   size = "large",
   showActivity = false,
   characterType = "human",
-  userProgress = null
+  userProgress = null,
+  context = "general",
+  enableFeedback = false
 }) {
   const level = userProgress?.level || 1;
   const upgrades = getCompanionUpgrades(level);
@@ -682,6 +685,13 @@ export default function VirtualCompanion({
         >
           <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white/90 rotate-45 border-l border-t border-purple-100" />
           <p className="text-sm text-gray-700 font-medium">{message}</p>
+          {enableFeedback && (
+            <MessageFeedback 
+              message={message} 
+              context={context}
+              onFeedbackSubmitted={() => console.log("Feedback submitted")}
+            />
+          )}
         </motion.div>
       )}
 
