@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Circle, TrendingUp, MoreVertical, Trash2, Edit2, Flame } from "lucide-react";
+import { CheckCircle, Circle, TrendingUp, MoreVertical, Trash2, Edit2, Flame, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import {
   DropdownMenu,
@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export default function HabitCard({ habit, completions, onComplete, onUpdate, onDelete }) {
+export default function HabitCard({ habit, completions, onComplete, onUpdate, onDelete, onViewInsights }) {
   const today = new Date().toISOString().split('T')[0];
   const todayCompletion = completions.find(c => c.completion_date === today);
   const isCompletedToday = !!todayCompletion;
@@ -61,6 +61,10 @@ export default function HabitCard({ habit, completions, onComplete, onUpdate, on
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onViewInsights}>
+                  <Sparkles className="w-4 h-4 mr-2 text-purple-600" />
+                  AI Insights
+                </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => onUpdate({ is_active: !habit.is_active })}
                 >
