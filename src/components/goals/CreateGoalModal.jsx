@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, X } from "lucide-react";
+import AIEnhancedTextarea from "../ai/AIEnhancedTextarea";
+import { generateGoalStatement } from "../ai/AIContentGenerator";
 
 export default function CreateGoalModal({ open, onOpenChange, onSuccess }) {
   const [title, setTitle] = useState("");
@@ -79,12 +81,17 @@ export default function CreateGoalModal({ open, onOpenChange, onSuccess }) {
           </div>
 
           <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+            <AIEnhancedTextarea
+              label="Description"
               placeholder="What does success look like?"
-              className="h-24"
+              value={description}
+              onChange={(value) => setDescription(value)}
+              onAIGenerate={async () => {
+                if (!title) return "";
+                return await generateGoalStatement(title, type);
+              }}
+              generateLabel="Generate Statement"
+              rows={4}
             />
           </div>
 

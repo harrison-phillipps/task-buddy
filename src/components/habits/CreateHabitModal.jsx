@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Sparkles, Loader2 } from "lucide-react";
+import { generateHabitSuggestions } from "../ai/AIContentGenerator";
 
 const COMMON_HABITS = [
   { icon: '💧', title: 'Drink 8 glasses of water', color: '#3B82F6' },
@@ -27,6 +29,10 @@ export default function CreateHabitModal({ open, onOpenChange, onSuccess }) {
   const [color, setColor] = useState("#8B5CF6");
   const [reminderTime, setReminderTime] = useState("");
   const [daysOfWeek, setDaysOfWeek] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [habitGoal, setHabitGoal] = useState("");
 
   const createHabitMutation = useMutation({
     mutationFn: (habitData) => base44.entities.Habit.create(habitData),
@@ -51,6 +57,27 @@ export default function CreateHabitModal({ open, onOpenChange, onSuccess }) {
     setTitle(habit.title);
     setIcon(habit.icon);
     setColor(habit.color);
+  };
+
+  const handleGenerateSuggestions = async () => {
+    if (!habitGoal.trim()) return;
+    setIsGenerating(true);
+    try {
+      const generated = await generateHabitSuggestions(habitGoal);
+      setSuggestions(generated);
+      setShowSuggestions(true);
+    } catch (error) {
+      console.error("Failed to generate suggestions:", error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleSelectSuggestion = (suggestion) => {
+    setTitle(suggestion.title);
+    setDescription(suggestion.explanation);
+    setFrequency(suggestion.frequency === 'daily' ? 'daily' : 'weekly');
+    setShowSuggestions(false);
   };
 
   const handleDayToggle = (day) => {
@@ -87,22 +114,79 @@ export default function CreateHabitModal({ open, onOpenChange, onSuccess }) {
           <DialogTitle>Create New Habit</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-4">
-          <div className="space-y-2">
-            <Label>Quick Start</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {COMMON_HABITS.map((habit, index) => (
+          {!showSuggestions ? (
+            <>
+              <div className="space-y-2">
+                <Label>Get AI Habit Suggestions</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={habitGoal}
+                    onChange={(e) => setHabitGoal(e.target.value)}
+                    placeholder="e.g., lose weight, be more productive, reduce stress..."
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleGenerateSuggestions}
+                    disabled={!habitGoal.trim() || isGenerating}
+                    className="bg-gradient-to-r from-purple-500 to-teal-500"
+                  >
+                    {isGenerating ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Suggest
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Or Choose a Common Habit</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {COMMON_HABITS.map((habit, index) => (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      className="justify-start"
+                      onClick={() => handleQuickSelect(habit)}
+                    >
+                      <span className="mr-2">{habit.icon}</span>
+                      {habit.title}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>AI Suggested Habits</Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowSuggestions(false)}
+                >
+                  Back
+                </Button>
+              </div>
+              {suggestions.map((suggestion, index) => (
                 <Button
                   key={index}
                   variant="outline"
-                  className="justify-start"
-                  onClick={() => handleQuickSelect(habit)}
+                  className="w-full h-auto p-4 justify-start text-left"
+                  onClick={() => handleSelectSuggestion(suggestion)}
                 >
-                  <span className="mr-2">{habit.icon}</span>
-                  {habit.title}
+                  <div className="space-y-1">
+                    <div className="font-semibold">{suggestion.title}</div>
+                    <div className="text-sm text-gray-600">{suggestion.explanation}</div>
+                  </div>
                 </Button>
               ))}
             </div>
-          </div>
+          )}
 
           <div className="grid grid-cols-4 gap-4">
             <div className="space-y-2">

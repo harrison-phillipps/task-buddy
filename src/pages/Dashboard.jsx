@@ -15,6 +15,8 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { getPersonalizedMessage, getProductivityTip } from "@/components/companionUtils";
 import ProactiveCoachingTip from "../components/ProactiveCoachingTip";
+import ProgressReportModal from "../components/ai/ProgressReportModal";
+import { FileText } from "lucide-react";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -22,6 +24,7 @@ export default function Dashboard() {
   const [userProgress, setUserProgress] = useState(null);
   const [showCoachingTip, setShowCoachingTip] = useState(true);
   const [coachingTip, setCoachingTip] = useState(null);
+  const [showProgressReport, setShowProgressReport] = useState(false);
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks', currentUser?.email],
@@ -175,8 +178,18 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-4"
+          className="grid grid-cols-1 md:grid-cols-4 gap-4"
         >
+          <div onClick={() => setShowProgressReport(true)}>
+            <Card className="bg-gradient-to-br from-blue-500 to-cyan-500 border-none hover:shadow-2xl transition-all duration-300 cursor-pointer group">
+              <CardContent className="p-6 text-white">
+                <FileText className="w-10 h-10 mb-3 group-hover:scale-110 transition-transform" />
+                <h3 className="text-2xl font-bold mb-2">Progress Report</h3>
+                <p className="text-blue-100">AI-powered weekly summary</p>
+              </CardContent>
+            </Card>
+          </div>
+
           <Link to={createPageUrl("BrainDump")}>
             <Card className="bg-gradient-to-br from-indigo-500 to-purple-500 border-none hover:shadow-2xl transition-all duration-300 cursor-pointer group">
               <CardContent className="p-6 text-white">
@@ -315,7 +328,14 @@ export default function Dashboard() {
             </Link>
           </motion.div>
         )}
-      </div>
-    </div>
-  );
-}
+
+        <ProgressReportModal
+          open={showProgressReport}
+          onOpenChange={setShowProgressReport}
+          userProgress={userProgress}
+          timeframe="week"
+        />
+        </div>
+        </div>
+        );
+        }

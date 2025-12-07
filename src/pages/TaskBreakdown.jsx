@@ -7,12 +7,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, CheckCircle, Trash2, Plus, Clock } from "lucide-react";
+import { Sparkles, Loader2, CheckCircle, Edit2, Trash2, Plus, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import VirtualCompanion from "../components/VirtualCompanion";
 import { getPersonalizedMessage } from "../components/companionUtils";
+import AIEnhancedTextarea from "../components/ai/AIEnhancedTextarea";
+import { generateTaskDescription } from "../components/ai/AIContentGenerator";
 
 export default function TaskBreakdown() {
   const navigate = useNavigate();
@@ -192,13 +194,17 @@ Also calculate the total time in minutes for the entire task (sum of all subtask
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Any extra details? (optional)</Label>
-                  <Textarea
-                    id="description"
+                  <AIEnhancedTextarea
+                    label="Any extra details? (optional)"
                     placeholder="Add any context that might help break this down..."
                     value={taskInput.description}
-                    onChange={(e) => setTaskInput({...taskInput, description: e.target.value})}
-                    className="h-24"
+                    onChange={(value) => setTaskInput({...taskInput, description: value})}
+                    onAIGenerate={async () => {
+                      if (!taskInput.title) return "";
+                      return await generateTaskDescription(taskInput.title, "");
+                    }}
+                    generateLabel="Generate Description"
+                    rows={4}
                   />
                 </div>
 
