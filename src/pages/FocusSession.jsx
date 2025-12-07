@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useBackgroundTimer, requestNotificationPermission, showNotification, scheduleEncouragementNotification } from "../components/focus/BackgroundTimer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Play, Pause, CheckCircle, Coffee, ChevronRight, Clock, Timer } from "lucide-react";
+import { Play, Pause, RotateCcw, CheckCircle, Coffee, ChevronRight, Clock, Timer, Target } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import VirtualCompanion from "../components/VirtualCompanion";
 import { Label } from "@/components/ui/label";
@@ -66,9 +67,11 @@ export default function FocusSession() {
 
   const [selectedTaskId, setSelectedTaskId] = useState(preselectedTaskId || null);
   const [currentSubtaskIndex, setCurrentSubtaskIndex] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(0);
+  const [internalTimeLeft, setInternalTimeLeft] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [sessionStarted, setSessionStarted] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [sessionId, setSessionId] = useState(null);
   const [moodBefore, setMoodBefore] = useState(null);
   const [completedSubtasks, setCompletedSubtasks] = useState(new Set());
   const [sessionNotes, setSessionNotes] = useState("");
@@ -99,6 +102,29 @@ export default function FocusSession() {
   const [sessionSummaryData, setSessionSummaryData] = useState(null);
   
   const audioRef = useRef(null);
+  const encouragementTimers = useRef([]);
+
+  // Use background-safe timer
+  const { timeLeft } = useBackgroundTimer({
+    initialTime: internalTimeLeft,
+    isActive: isActive && sessionStarted && !isBreakTime,
+    onComplete: () => {
+      setIsActive(false);
+      if (focusTechnique === "pomodoro") {
+        handlePomodoroComplete();
+      } else {
+        handleSubtaskComplete();
+      }
+    },
+    sessionId: sessionId || 'focus-session'
+  });
+
+  // Check notification permission on mount
+  useEffect(() => {
+    requestNotificationPermission().then(granted => {
+      setNotificationsEnabled(granted);
+    });
+  }, []);
 
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks', currentUser?.email],
@@ -108,6 +134,11 @@ export default function FocusSession() {
 
   const selectedTask = tasks.find(t => t.id === selectedTaskId);
   const currentSubtask = selectedTask?.subtasks?.[currentSubtaskIndex];
+
+  // Update internal time when timeLeft changes
+  useEffect(() => {
+    setInternalTimeLeft(timeLeft);
+  }, [timeLeft]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -163,30 +194,49 @@ export default function FocusSession() {
   }, [isActive, timeLeft, currentSubtaskIndex, focusTechnique]);
 
   useEffect(() => {
-    if (!isActive || !sessionStarted || isBreakTime) return;
+    if (!isActive || !sessionStarted || isBreakTime) {
+      // Clear all encouragement timers
+      encouragementTimers.current.forEach(timer => clearTimeout(timer));
+      encouragementTimers.current = [];
+      return;
+    }
 
     const encouragementMessages = getEncouragementMessages(userProgress);
 
-    const encouragementInterval = setInterval(() => {
+    // Schedule encouragements
+    const timer1 = setTimeout(() => {
       const randomMessage = encouragementMessages[Math.floor(Math.random() * encouragementMessages.length)];
       setCurrentEncouragement(randomMessage);
       setShowEncouragement(true);
       
+      // Show notification if app is in background
+      if (document.hidden && notificationsEnabled) {
+        showNotification('Keep Going! 💪', randomMessage);
+      }
+      
       setTimeout(() => setShowEncouragement(false), 5000);
-    }, 180000);
+    }, 120000); // 2 minutes
 
-    const initialTimeout = setTimeout(() => {
+    const timer2 = setInterval(() => {
       const randomMessage = encouragementMessages[Math.floor(Math.random() * encouragementMessages.length)];
       setCurrentEncouragement(randomMessage);
       setShowEncouragement(true);
+      
+      // Show notification if app is in background
+      if (document.hidden && notificationsEnabled) {
+        showNotification('Keep Going! 💪', randomMessage);
+      }
+      
       setTimeout(() => setShowEncouragement(false), 5000);
-    }, 120000);
+    }, 180000); // 3 minutes
+
+    encouragementTimers.current = [timer1, timer2];
 
     return () => {
-      clearInterval(encouragementInterval);
-      clearTimeout(initialTimeout);
+      encouragementTimers.current.forEach(timer => clearTimeout(timer));
+      encouragementTimers.current = [];
     };
-  }, [isActive, sessionStarted, isBreakTime, userProgress]);
+  }, [isActive, sessionStarted, isBreakTime, userProgress, notificationsEnabled]);
 
   useEffect(() => {
     if (soundEnabled && ambientSound !== "none" && isActive && !isBreakTime) {
@@ -212,8 +262,12 @@ export default function FocusSession() {
     if (!isBreakTime) {
       setPomodorosCompleted(prev => prev + 1);
       setIsBreakTime(true);
-      setTimeLeft(breakInterval * 60);
+      setInternalTimeLeft(breakInterval * 60);
       setShowBreakPrompt(true);
+      
+      if (notificationsEnabled) {
+        showNotification('Pomodoro Complete! 🍅', 'Time for a break!');
+      }
     } else {
       setIsBreakTime(false);
       setShowBreakPrompt(false);
@@ -239,22 +293,31 @@ export default function FocusSession() {
     if (currentSubtaskIndex >= selectedTask.subtasks.length - 1) {
       setAllStepsComplete(true);
       setShowBreakPrompt(true);
+
+      if (notificationsEnabled) {
+        showNotification('All Steps Complete! 🎉', 'Amazing work!');
+      }
     } else {
       const nextIndex = currentSubtaskIndex + 1;
       setCurrentSubtaskIndex(nextIndex);
       const nextSubtask = selectedTask.subtasks[nextIndex];
-      
-      if (focusTechnique === "pomodoro") {
-        setTimeLeft(workInterval * 60);
-      } else {
-        setTimeLeft((nextSubtask?.estimated_minutes || 10) * 60);
-      }
+
+      const nextTime = focusTechnique === "pomodoro" 
+        ? workInterval * 60 
+        : (nextSubtask?.estimated_minutes || 10) * 60;
+
+      setInternalTimeLeft(nextTime);
       setIsActive(false);
     }
   };
 
   const startSession = () => {
     if (!selectedTaskId || !moodBefore) return;
+    
+    // Generate unique session ID
+    const newSessionId = `session_${Date.now()}`;
+    setSessionId(newSessionId);
+    
     setSessionStarted(true);
     setIsActive(true);
     setSessionStartTime(Date.now());
@@ -263,17 +326,29 @@ export default function FocusSession() {
     setCurrentSubtaskIndex(firstIncomplete);
     const firstSubtask = selectedTask.subtasks[firstIncomplete];
     
-    if (focusTechnique === "pomodoro") {
-      setTimeLeft(workInterval * 60);
-    } else {
-      setTimeLeft((firstSubtask?.estimated_minutes || 10) * 60);
-    }
+    const initialTime = focusTechnique === "pomodoro" 
+      ? workInterval * 60 
+      : (firstSubtask?.estimated_minutes || 10) * 60;
+    
+    setInternalTimeLeft(initialTime);
     
     if (selectedTask?.status === 'not_started') {
       updateTaskMutation.mutate({
         id: selectedTask.id,
         data: { status: 'in_progress' }
       });
+    }
+
+    // Request notification permission if not already granted
+    if (!notificationsEnabled) {
+      requestNotificationPermission().then(granted => {
+        setNotificationsEnabled(granted);
+        if (granted) {
+          showNotification('Focus Session Started', `Working on: ${selectedTask.title}`);
+        }
+      });
+    } else {
+      showNotification('Focus Session Started', `Working on: ${selectedTask.title}`);
     }
   };
 
@@ -286,7 +361,7 @@ export default function FocusSession() {
     setShowBreakPrompt(false);
     setIsActive(true);
     if (focusTechnique === "pomodoro") {
-      setTimeLeft(workInterval * 60);
+      setInternalTimeLeft(workInterval * 60);
     }
   };
 
@@ -297,11 +372,11 @@ export default function FocusSession() {
       setCurrentSubtaskIndex(nextIndex);
       const nextSubtask = selectedTask.subtasks[nextIndex];
       
-      if (focusTechnique === "pomodoro") {
-        setTimeLeft(workInterval * 60);
-      } else {
-        setTimeLeft((nextSubtask?.estimated_minutes || 10) * 60);
-      }
+      const nextTime = focusTechnique === "pomodoro" 
+        ? workInterval * 60 
+        : (nextSubtask?.estimated_minutes || 10) * 60;
+      
+      setInternalTimeLeft(nextTime);
     }
   };
 
@@ -458,7 +533,7 @@ export default function FocusSession() {
     setMoodBefore(null);
     setSessionNotes("");
     setCurrentSubtaskIndex(0);
-    setTimeLeft(0);
+    setInternalTimeLeft(0);
     setAllStepsComplete(false);
     setPomodorosCompleted(0);
     setIsBreakTime(false);
@@ -468,6 +543,12 @@ export default function FocusSession() {
     setSessionStartTime(null);
     setShowPostSummary(false);
     setSessionSummaryData(null);
+    setSessionId(null);
+    
+    // Clear any stored session
+    if (sessionId) {
+      localStorage.removeItem(`focus_session_${sessionId}`);
+    }
   };
 
   const formatTime = (seconds) => {
