@@ -11,6 +11,8 @@ import HabitStatsCard from "../components/habits/HabitStatsCard";
 import VirtualCompanion from "../components/VirtualCompanion";
 import { getPersonalizedMessage } from "@/components/companionUtils";
 import { POINTS_SYSTEM } from "@/components/achievementsData";
+import AICoachPanel from "../components/habits/AICoachPanel";
+import HabitInsights from "../components/habits/HabitInsights";
 
 export default function HabitsPage() {
   const queryClient = useQueryClient();
@@ -18,6 +20,7 @@ export default function HabitsPage() {
   const [userProgress, setUserProgress] = useState(null);
   const [filter, setFilter] = useState("active");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [insightsHabit, setInsightsHabit] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -215,6 +218,15 @@ export default function HabitsPage() {
           completions={completions}
         />
 
+        <AICoachPanel
+          habits={habits}
+          userProgress={userProgress}
+          personality={currentUser?.companion_personality_custom || {}}
+          onRecommendationSelect={(rec) => {
+            setShowCreateModal(true);
+          }}
+        />
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -283,6 +295,7 @@ export default function HabitsPage() {
                       deleteHabitMutation.mutate(habit.id);
                     }
                   }}
+                  onViewInsights={() => setInsightsHabit(habit)}
                 />
               </motion.div>
             ))}
@@ -296,6 +309,15 @@ export default function HabitsPage() {
             queryClient.invalidateQueries({ queryKey: ['habits'] });
             setShowCreateModal(false);
           }}
+        />
+
+        <HabitInsights
+          open={!!insightsHabit}
+          onOpenChange={(open) => !open && setInsightsHabit(null)}
+          habit={insightsHabit}
+          completions={completions.filter(c => c.habit_id === insightsHabit?.id)}
+          userProgress={userProgress}
+          personality={currentUser?.companion_personality_custom || {}}
         />
       </div>
     </div>
