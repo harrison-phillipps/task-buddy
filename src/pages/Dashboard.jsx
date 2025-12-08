@@ -120,8 +120,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen p-4 md:p-8 overflow-x-hidden">
+      <div className="max-w-7xl mx-auto space-y-8 w-full">
         {/* Hero Section */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -153,6 +153,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
+          className="w-full overflow-hidden"
         >
           <VirtualCompanion 
             mood={completedToday.length > 0 ? "celebrating" : "supportive"}
