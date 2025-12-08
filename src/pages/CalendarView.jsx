@@ -4,11 +4,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, ChevronLeft, ChevronRight, Clock, CheckCircle, ExternalLink, RefreshCw, Loader2, Plus } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Clock, CheckCircle, ExternalLink, RefreshCw, Loader2, Plus, ArrowRightLeft, Zap } from "lucide-react";
 import AddEventModal from "../components/calendar/AddEventModal";
 import CalendarEventsList from "../components/calendar/CalendarEventsList";
+import CalendarConnectionStatus from "../components/calendar/CalendarConnectionStatus";
+import CalendarSyncModal from "../components/calendar/CalendarSyncModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, startOfWeek, addDays, isSameDay, parseISO } from "date-fns";
+import { toast } from "sonner";
 
 export default function CalendarView() {
   const queryClient = useQueryClient();
@@ -17,12 +20,23 @@ export default function CalendarView() {
   const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showAddEvent, setShowAddEvent] = useState(false);
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [backendEnabled, setBackendEnabled] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const user = await base44.auth.me();
         setCurrentUser(user);
+        
+        // Check if backend functions are enabled
+        try {
+          const result = await base44.functions.google_calendar.get_auth_url({ redirect_uri: 'test' });
+          setBackendEnabled(result.success !== false || !result.message?.includes('Backend functions'));
+        } catch (error) {
+          // Backend functions not available
+          setBackendEnabled(false);
+        }
       } catch (error) {
         console.error("Error fetching user:", error);
       }
@@ -181,6 +195,40 @@ export default function CalendarView() {
     await createTaskFromEventMutation.mutateAsync(event);
   };
 
+  const handleConnect = () => {
+    if (!backendEnabled) {
+      toast.error("Please enable backend functions in Settings first");
+      return;
+    }
+    setShowSyncModal(true);
+  };
+
+  const handleRefreshCalendar = async () => {
+    if (!currentUser?.google_calendar_connected || !backendEnabled) return;
+    
+    setIsRefreshing(true);
+    try {
+      // Fetch events from Google Calendar
+      const result = await base44.functions.google_calendar.list_calendar_events({
+        access_token: currentUser.google_calendar_access_token,
+        time_min: format(weekStart, "yyyy-MM-dd'T'00:00:00Z"),
+        time_max: format(addDays(weekStart, 7), "yyyy-MM-dd'T'23:59:59Z")
+      });
+      
+      if (result.success) {
+        toast.success("Calendar refreshed!");
+        queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
+      } else {
+        toast.error("Failed to refresh calendar");
+      }
+    } catch (error) {
+      console.error("Error refreshing calendar:", error);
+      toast.error("Error refreshing calendar");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -197,7 +245,7 @@ export default function CalendarView() {
             <p className="text-gray-600 mt-1">View and manage your synced tasks</p>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button
               onClick={() => setShowAddEvent(true)}
               className="bg-gradient-to-r from-purple-500 to-teal-500 text-white"
@@ -205,10 +253,18 @@ export default function CalendarView() {
               <Plus className="w-4 h-4 mr-2" />
               Add Event
             </Button>
-            {currentUser?.google_calendar_connected && (
+            <Button
+              onClick={() => setShowSyncModal(true)}
+              variant="outline"
+              className="border-purple-200"
+            >
+              <Zap className="w-4 h-4 mr-2" />
+              Sync Tasks
+            </Button>
+            {currentUser?.google_calendar_connected && backendEnabled && (
               <Button
                 variant="outline"
-                onClick={() => setIsRefreshing(true)}
+                onClick={handleRefreshCalendar}
                 disabled={isRefreshing}
                 className="border-purple-200"
               >
@@ -222,6 +278,13 @@ export default function CalendarView() {
             )}
           </div>
         </motion.div>
+
+        {/* Calendar Connection Status */}
+        <CalendarConnectionStatus
+          isConnected={currentUser?.google_calendar_connected}
+          onConnect={handleConnect}
+          backendEnabled={backendEnabled}
+        />
 
         {/* Week Navigation */}
         <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
@@ -454,6 +517,18 @@ export default function CalendarView() {
         onOpenChange={setShowAddEvent}
         onSave={handleAddEvent}
         defaultDate={format(selectedDate, 'yyyy-MM-dd')}
+      />
+
+      <CalendarSyncModal
+        open={showSyncModal}
+        onOpenChange={setShowSyncModal}
+        tasks={tasks}
+        currentUser={currentUser}
+        onSyncComplete={(results) => {
+          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+          queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
+          toast.success(`${results.success.length} item(s) synced to calendar!`);
+        }}
       />
     </div>
   );
