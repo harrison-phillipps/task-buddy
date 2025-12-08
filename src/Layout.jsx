@@ -30,11 +30,6 @@ const navigationItems = [
     icon: LayoutDashboard,
   },
   {
-    title: "Subscription",
-    url: createPageUrl("Subscription"),
-    icon: Sparkles,
-  },
-  {
     title: "Brain Dump",
     url: createPageUrl("BrainDump"),
     icon: Brain,
