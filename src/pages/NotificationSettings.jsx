@@ -77,17 +77,13 @@ export default function NotificationSettings() {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">
-            Notification Settings
-          </h1>
-          <p className="text-gray-600 mt-1">Manage how and when you receive notifications</p>
-        </motion.div>
+    <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <p className="text-gray-600 text-center">Customize how and when you receive notifications</p>
+      </motion.div>
 
         {/* Task Reminders */}
         <motion.div
@@ -331,6 +327,6 @@ export default function NotificationSettings() {
             </CardContent>
           </Card>
         </motion.div>
-    </div>
-  );
-}
+      </div>
+    );
+  }
