@@ -87,8 +87,8 @@ export default function CalendarConnectionStatus({ isConnected, onConnect, backe
               Connect
             </Button>
           </div>
-        </Card>
-      </motion.div>
-    );
-  }
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
 }
