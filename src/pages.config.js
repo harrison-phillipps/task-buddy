@@ -20,6 +20,7 @@ import TeamDashboard from './pages/TeamDashboard';
 import Goals from './pages/Goals';
 import Habits from './pages/Habits';
 import NotificationSettings from './pages/NotificationSettings';
+import Settings from './pages/Settings';
 import __Layout from './Layout.jsx';
 
 
@@ -46,6 +47,7 @@ export const PAGES = {
     "Goals": Goals,
     "Habits": Habits,
     "NotificationSettings": NotificationSettings,
+    "Settings": Settings,
 }
 
 export const pagesConfig = {

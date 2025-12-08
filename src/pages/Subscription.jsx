@@ -269,7 +269,37 @@ export default function Subscription() {
             Questions? Contact us at support@taskbuddy.app
           </p>
         </motion.div>
-      </div>
+
+        {/* Cancel Subscription Section */}
+        {currentUser?.subscription_tier && currentUser.subscription_tier !== "free" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mt-12"
+          >
+            <Card className="bg-red-50 border-red-200">
+              <CardHeader>
+                <CardTitle className="text-red-800 flex items-center gap-2">
+                  <XCircle className="w-5 h-5" />
+                  Cancel Subscription
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-red-700">
+                  If you cancel your subscription, you'll be moved to the Free plan and lose access to premium features.
+                </p>
+                <Button
+                  onClick={handleCancelSubscription}
+                  variant="destructive"
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Cancel My Subscription
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
     </div>
   );
 }

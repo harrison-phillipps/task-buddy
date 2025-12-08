@@ -331,7 +331,6 @@ export default function NotificationSettings() {
             </CardContent>
           </Card>
         </motion.div>
-      </div>
     </div>
   );
 }
