@@ -17,7 +17,7 @@ const activities = [
 
 function RobotCharacter({ mood, isLarge, currentMood }) {
   return (
-    <div className={`relative ${isLarge ? 'w-48 h-56' : 'w-32 h-40'} flex items-center justify-center`}>
+    <div className={`relative ${isLarge ? 'w-48 h-56' : 'w-28 sm:w-32 h-36 sm:h-40'} flex items-center justify-center flex-shrink-0`}>
       <motion.div
         animate={{
           y: [0, -5, 0],
@@ -136,7 +136,7 @@ function RobotCharacter({ mood, isLarge, currentMood }) {
 
 function CatCharacter({ mood, isLarge, currentMood }) {
   return (
-    <div className={`relative ${isLarge ? 'w-48 h-56' : 'w-32 h-40'} flex items-center justify-center`}>
+    <div className={`relative ${isLarge ? 'w-48 h-56' : 'w-28 sm:w-32 h-36 sm:h-40'} flex items-center justify-center flex-shrink-0`}>
       <motion.div
         animate={{
           y: [0, -5, 0],
@@ -246,7 +246,7 @@ function CatCharacter({ mood, isLarge, currentMood }) {
 
 function DogCharacter({ mood, isLarge, currentMood }) {
   return (
-    <div className={`relative ${isLarge ? 'w-48 h-56' : 'w-32 h-40'} flex items-center justify-center`}>
+    <div className={`relative ${isLarge ? 'w-48 h-56' : 'w-28 sm:w-32 h-36 sm:h-40'} flex items-center justify-center flex-shrink-0`}>
       <motion.div
         animate={{
           y: [0, -5, 0],
@@ -345,7 +345,7 @@ function OrbCharacter({ mood, isLarge }) {
   const currentColor = moodColors[mood] || moodColors.supportive;
 
   return (
-    <div className={`relative ${isLarge ? 'w-48 h-56' : 'w-32 h-40'} flex items-center justify-center`}>
+    <div className={`relative ${isLarge ? 'w-48 h-56' : 'w-28 sm:w-32 h-36 sm:h-40'} flex items-center justify-center flex-shrink-0`}>
       <motion.div
         animate={{
           y: [0, -8, 0],

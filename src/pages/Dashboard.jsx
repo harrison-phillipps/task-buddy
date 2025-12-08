@@ -120,8 +120,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-8 overflow-x-hidden">
-      <div className="max-w-7xl mx-auto space-y-8 w-full">
+    <div className="min-h-screen p-2 sm:p-4 md:p-8 overflow-x-hidden w-full">
+      <div className="max-w-7xl mx-auto space-y-6 md:space-y-8 w-full px-2 sm:px-0">
         {/* Hero Section */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -184,7 +184,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-4"
+          className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4"
         >
           <div onClick={() => setShowProgressReport(true)}>
             <Card className="bg-gradient-to-br from-blue-500 to-cyan-500 border-none hover:shadow-2xl transition-all duration-300 cursor-pointer group">
@@ -232,7 +232,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-6"
+          className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-6"
         >
           <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
             <CardHeader className="pb-3">
