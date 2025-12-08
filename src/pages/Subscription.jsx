@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Zap, Sparkles, Crown, ArrowRight } from "lucide-react";
+import { Check, Zap, Sparkles, Crown, ArrowRight, XCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { TIER_INFO } from "../components/subscription/FeatureGate";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -113,6 +113,21 @@ export default function Subscription() {
       console.error("Error updating subscription:", error);
     }
     setIsLoading(false);
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!confirm("Are you sure you want to cancel your subscription? You'll be downgraded to the Free plan.")) {
+      return;
+    }
+    
+    try {
+      await base44.auth.updateMe({ subscription_tier: "free" });
+      setCurrentUser({ ...currentUser, subscription_tier: "free" });
+      alert("Subscription cancelled. You've been moved to the Free plan.");
+    } catch (error) {
+      console.error("Error cancelling subscription:", error);
+      alert("Failed to cancel subscription. Please try again.");
+    }
   };
 
   const TierIcon = ({ tier }) => {
@@ -275,7 +290,7 @@ export default function Subscription() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.6 }}
             className="mt-12"
           >
             <Card className="bg-red-50 border-red-200">
@@ -300,6 +315,7 @@ export default function Subscription() {
             </Card>
           </motion.div>
         )}
+      </div>
     </div>
   );
 }
