@@ -15,6 +15,7 @@ import {
   SidebarFooter,
   SidebarProvider,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import React from "react";
@@ -100,9 +101,10 @@ const navigationItems = [
   },
 ];
 
-export default function Layout({ children, currentPageName }) {
+function LayoutContent({ children, currentPageName }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { setOpenMobile } = useSidebar();
   const [currentUser, setCurrentUser] = React.useState(null);
   const [userProgress, setUserProgress] = React.useState(null);
   const [showPersonalityModal, setShowPersonalityModal] = React.useState(false);
@@ -172,8 +174,12 @@ export default function Layout({ children, currentPageName }) {
 
   const currentLevel = userProgress ? Math.floor(userProgress.total_points / 200) + 1 : 1;
 
+  const handleNavClick = () => {
+    setOpenMobile(false);
+  };
+
   return (
-    <SidebarProvider>
+    <>
       <style>{`
         :root {
           --primary-purple: #8B5CF6;
@@ -233,7 +239,7 @@ export default function Layout({ children, currentPageName }) {
                           location.pathname === item.url ? 'bg-gradient-to-r from-purple-500 to-teal-500 text-white shadow-md' : ''
                         }`}
                       >
-                        <Link to={item.url} className="flex items-center gap-3 px-4 py-3">
+                        <Link to={item.url} className="flex items-center gap-3 px-4 py-3" onClick={handleNavClick}>
                           <item.icon className="w-5 h-5" />
                           <span className="font-medium">{item.title}</span>
                         </Link>
@@ -349,6 +355,14 @@ export default function Layout({ children, currentPageName }) {
           currentUser={currentUser}
           onUpdate={refreshUser}
           />
+          </>
+          );
+          }
+
+          export default function Layout({ children, currentPageName }) {
+          return (
+          <SidebarProvider>
+          <LayoutContent children={children} currentPageName={currentPageName} />
           </SidebarProvider>
           );
           }
