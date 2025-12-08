@@ -18,6 +18,9 @@ import { getPersonalizedMessage, getProductivityTip } from "@/components/compani
 import ProactiveCoachingTip from "../components/ProactiveCoachingTip";
 import ProgressReportModal from "../components/ai/ProgressReportModal";
 import { FileText } from "lucide-react";
+import QuickAddTask from "../components/dashboard/QuickAddTask";
+import GoalsProgress from "../components/dashboard/GoalsProgress";
+import WidgetCustomizer from "../components/dashboard/WidgetCustomizer";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -28,6 +31,17 @@ export default function Dashboard() {
   const [showProgressReport, setShowProgressReport] = useState(false);
   const [aiMessage, setAiMessage] = useState(null);
   const [isLoadingMessage, setIsLoadingMessage] = useState(false);
+  const [visibleWidgets, setVisibleWidgets] = useState(() => {
+    const saved = localStorage.getItem('dashboardWidgets');
+    return saved ? JSON.parse(saved) : {
+      stats: true,
+      quickAdd: true,
+      goalsProgress: true,
+      weeklyOverview: true,
+      aiPrioritization: true,
+      companion: true
+    };
+  });
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks', currentUser?.email],
@@ -111,6 +125,12 @@ export default function Dashboard() {
 
   const currentLevel = userProgress ? Math.floor(userProgress.total_points / 200) + 1 : 1;
 
+  const handleToggleWidget = (widgetId) => {
+    const updated = { ...visibleWidgets, [widgetId]: !visibleWidgets[widgetId] };
+    setVisibleWidgets(updated);
+    localStorage.setItem('dashboardWidgets', JSON.stringify(updated));
+  };
+
   if (!currentUser) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -128,42 +148,60 @@ export default function Dashboard() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center py-8"
         >
-          <h1 className="text-4xl md:text-5xl font-bold mb-3 bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">
-            {getGreeting()}! 👋
-          </h1>
-          <p className="text-gray-600 text-lg">Let's make progress together, one step at a time</p>
-          
-          {userProgress && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="mt-4 inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-full border-2 border-yellow-300"
-            >
-              <Sparkles className="w-5 h-5 text-purple-600" />
-              <span className="font-bold text-gray-900">Level {currentLevel}</span>
-              <span className="text-gray-600">•</span>
-              <span className="font-bold text-purple-600">{userProgress.total_points} points</span>
-            </motion.div>
-          )}
+          <div className="flex items-center justify-center gap-4 mb-3">
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">
+              {getGreeting()}! 👋
+            </h1>
+          </div>
+          <p className="text-gray-600 text-lg mb-4">Let's make progress together, one step at a time</p>
+
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            {userProgress && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 }}
+                className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-full border-2 border-yellow-300"
+              >
+                <Sparkles className="w-5 h-5 text-purple-600" />
+                <span className="font-bold text-gray-900">Level {currentLevel}</span>
+                <span className="text-gray-600">•</span>
+                <span className="font-bold text-purple-600">{userProgress.total_points} points</span>
+              </motion.div>
+            )}
+            <WidgetCustomizer visibleWidgets={visibleWidgets} onToggleWidget={handleToggleWidget} />
+          </div>
         </motion.div>
 
         {/* Virtual Companion */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2 }}
-          className="w-full overflow-hidden"
-        >
-          <VirtualCompanion 
-            mood={completedToday.length > 0 ? "celebrating" : "supportive"}
-            message={isLoadingMessage ? "Thinking..." : (aiMessage || getCompanionMessage())}
-            characterType={currentUser.companion_type}
-            userProgress={userProgress}
-            context="dashboard"
-            enableFeedback={!!aiMessage}
-          />
-        </motion.div>
+        {visibleWidgets.companion && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="w-full overflow-hidden"
+          >
+            <VirtualCompanion 
+              mood={completedToday.length > 0 ? "celebrating" : "supportive"}
+              message={isLoadingMessage ? "Thinking..." : (aiMessage || getCompanionMessage())}
+              characterType={currentUser.companion_type}
+              userProgress={userProgress}
+              context="dashboard"
+              enableFeedback={!!aiMessage}
+            />
+          </motion.div>
+        )}
+
+        {/* Quick Add Task */}
+        {visibleWidgets.quickAdd && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+          >
+            <QuickAddTask currentUser={currentUser} />
+          </motion.div>
+        )}
 
         {/* Proactive Coaching Tip */}
         {coachingTip && showCoachingTip && (
@@ -227,13 +265,25 @@ export default function Dashboard() {
           </Link>
         </motion.div>
 
+        {/* Goals Progress Visualization */}
+        {visibleWidgets.goalsProgress && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+          >
+            <GoalsProgress currentUser={currentUser} />
+          </motion.div>
+        )}
+
         {/* Stats */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-6"
-        >
+        {visibleWidgets.stats && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-6"
+          >
           <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
@@ -283,21 +333,24 @@ export default function Dashboard() {
             <CardContent>
               <p className="text-4xl font-bold">{userProgress?.current_streak || 0} 🔥</p>
               <p className="text-sm text-yellow-100 mt-1">days in a row!</p>
-            </CardContent>
-          </Card>
-        </motion.div>
+              </CardContent>
+              </Card>
+              </motion.div>
+              )}
 
         {/* Weekly Overview */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <WeeklyOverview tasks={tasks} />
-        </motion.div>
+        {visibleWidgets.weeklyOverview && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <WeeklyOverview tasks={tasks} />
+          </motion.div>
+        )}
 
         {/* AI Prioritization */}
-        {tasks.filter(t => t.status !== 'completed').length > 0 && (
+        {visibleWidgets.aiPrioritization && tasks.filter(t => t.status !== 'completed').length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
