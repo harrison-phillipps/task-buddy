@@ -529,7 +529,7 @@ export default function VirtualCompanion({
   };
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex flex-col items-center gap-4 w-full max-w-full overflow-hidden">
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -681,10 +681,10 @@ export default function VirtualCompanion({
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-2xl shadow-lg border border-purple-100 max-w-md text-center relative"
+          className="bg-white/90 backdrop-blur-sm px-4 md:px-6 py-3 rounded-2xl shadow-lg border border-purple-100 max-w-full md:max-w-md text-center relative mx-4"
         >
           <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white/90 rotate-45 border-l border-t border-purple-100" />
-          <p className="text-sm text-gray-700 font-medium">{message}</p>
+          <p className="text-sm text-gray-700 font-medium break-words">{message}</p>
           {enableFeedback && (
             <MessageFeedback 
               message={message} 
