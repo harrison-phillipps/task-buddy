@@ -3,7 +3,13 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Calendar, Link as LinkIcon } from "lucide-react";
+import { Plus, Calendar, Link as LinkIcon, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion } from "framer-motion";
@@ -153,6 +159,36 @@ export default function Tasks() {
     completed: tasks.filter(t => t.status === "completed").length,
   };
 
+  // Group tasks by category
+  const groupedTasks = filteredTasks.reduce((acc, task) => {
+    const category = task.category || 'other';
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(task);
+    return acc;
+  }, {});
+
+  const categoryLabels = {
+    work: "💼 Work",
+    personal: "🏠 Personal",
+    health: "💪 Health",
+    creative: "🎨 Creative",
+    learning: "📚 Learning",
+    household: "🧹 Household",
+    other: "📋 Other"
+  };
+
+  const categoryColors = {
+    work: "from-blue-100 to-blue-50 border-blue-200",
+    personal: "from-purple-100 to-purple-50 border-purple-200",
+    health: "from-green-100 to-green-50 border-green-200",
+    creative: "from-pink-100 to-pink-50 border-pink-200",
+    learning: "from-yellow-100 to-yellow-50 border-yellow-200",
+    household: "from-orange-100 to-orange-50 border-orange-200",
+    other: "from-gray-100 to-gray-50 border-gray-200"
+  };
+
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -256,49 +292,73 @@ export default function Tasks() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="space-y-4"
           >
-            {filteredTasks.map((task, index) => (
-              <motion.div
-                key={task.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <div className="space-y-3">
-                  <TaskCard
-                    task={task}
-                    allTasks={tasks}
-                    showTeamInfo={selectedTeamId !== "personal"}
-                    onStart={(task) => window.location.href = createPageUrl("FocusSession") + `?taskId=${task.id}`}
-                    onDelete={(task) => {
-                      if (confirm(`Delete "${task.title}"?`)) {
-                        deleteTaskMutation.mutate(task.id);
-                      }
-                    }}
-                    onSpread={(task) => setSpreadTask(task)}
-                    onSubtaskToggle={handleSubtaskToggle}
-                    onSetDependency={(task) => {
-                      setSelectedDependencyTask(task);
-                      setShowDependencyModal(true);
-                    }}
-                    onSetRecurring={(task) => {
-                      setSelectedRecurringTask(task);
-                      setShowRecurringModal(true);
-                    }}
-                  />
-                  {selectedTeamId !== "personal" && (
-                    <div className="ml-4">
-                      <TaskAssignment
-                        task={task}
-                        teamMembers={teamMembers}
-                        onAssign={(data) => updateTaskMutation.mutate({ id: task.id, data })}
-                      />
+            <Accordion type="multiple" defaultValue={Object.keys(groupedTasks)} className="space-y-4">
+              {Object.entries(groupedTasks).map(([category, categoryTasks]) => (
+                <AccordionItem 
+                  key={category} 
+                  value={category}
+                  className={`bg-gradient-to-br ${categoryColors[category]} border rounded-lg overflow-hidden`}
+                >
+                  <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                    <div className="flex items-center justify-between w-full pr-4">
+                      <span className="text-lg font-semibold text-gray-800">
+                        {categoryLabels[category] || category}
+                      </span>
+                      <span className="text-sm font-medium text-gray-600 bg-white px-3 py-1 rounded-full">
+                        {categoryTasks.length} {categoryTasks.length === 1 ? 'task' : 'tasks'}
+                      </span>
                     </div>
-                  )}
-                </div>
-              </motion.div>
-            ))}
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+                      {categoryTasks.map((task, index) => (
+                        <motion.div
+                          key={task.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.03 }}
+                        >
+                          <div className="space-y-3">
+                            <TaskCard
+                              task={task}
+                              allTasks={tasks}
+                              showTeamInfo={selectedTeamId !== "personal"}
+                              onStart={(task) => window.location.href = createPageUrl("FocusSession") + `?taskId=${task.id}`}
+                              onDelete={(task) => {
+                                if (confirm(`Delete "${task.title}"?`)) {
+                                  deleteTaskMutation.mutate(task.id);
+                                }
+                              }}
+                              onSpread={(task) => setSpreadTask(task)}
+                              onSubtaskToggle={handleSubtaskToggle}
+                              onSetDependency={(task) => {
+                                setSelectedDependencyTask(task);
+                                setShowDependencyModal(true);
+                              }}
+                              onSetRecurring={(task) => {
+                                setSelectedRecurringTask(task);
+                                setShowRecurringModal(true);
+                              }}
+                            />
+                            {selectedTeamId !== "personal" && (
+                              <div className="ml-4">
+                                <TaskAssignment
+                                  task={task}
+                                  teamMembers={teamMembers}
+                                  onAssign={(data) => updateTaskMutation.mutate({ id: task.id, data })}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </motion.div>
         )}
 

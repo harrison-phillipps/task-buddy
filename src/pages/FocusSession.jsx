@@ -172,26 +172,7 @@ export default function FocusSession() {
     },
   });
 
-  useEffect(() => {
-    let interval = null;
-    if (isActive && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft(time => {
-          if (time <= 1) {
-            setIsActive(false);
-            if (focusTechnique === "pomodoro") {
-              handlePomodoroComplete();
-            } else {
-              handleSubtaskComplete();
-            }
-            return 0;
-          }
-          return time - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isActive, timeLeft, currentSubtaskIndex, focusTechnique]);
+
 
   useEffect(() => {
     if (!isActive || !sessionStarted || isBreakTime) {
