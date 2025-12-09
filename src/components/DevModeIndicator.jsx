@@ -8,6 +8,7 @@ import { ACHIEVEMENTS, REWARDS, BADGES } from "./achievementsData";
 
 export default function DevModeIndicator() {
   const [expanded, setExpanded] = useState(false);
+  const [selectedTab, setSelectedTab] = useState("features");
   
   const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
   
@@ -50,7 +51,31 @@ export default function DevModeIndicator() {
                 </CardTitle>
                 <p className="text-purple-100 text-sm">Development mode - showing all rewards & features</p>
               </CardHeader>
-              <CardContent className="p-4 space-y-4">
+              
+              {/* Tabs */}
+              <div className="flex border-b border-gray-200 bg-gray-50">
+                <button
+                  onClick={() => setSelectedTab("features")}
+                  className={`px-4 py-2 text-sm font-medium ${selectedTab === "features" ? "border-b-2 border-purple-600 text-purple-600" : "text-gray-600"}`}
+                >
+                  Features
+                </button>
+                <button
+                  onClick={() => setSelectedTab("rewards")}
+                  className={`px-4 py-2 text-sm font-medium ${selectedTab === "rewards" ? "border-b-2 border-purple-600 text-purple-600" : "text-gray-600"}`}
+                >
+                  Rewards
+                </button>
+                <button
+                  onClick={() => setSelectedTab("achievements")}
+                  className={`px-4 py-2 text-sm font-medium ${selectedTab === "achievements" ? "border-b-2 border-purple-600 text-purple-600" : "text-gray-600"}`}
+                >
+                  Progress
+                </button>
+              </div>
+              
+              <CardContent className="p-4 space-y-4">{selectedTab === "features" && (
+                <>
                 {/* Pro Features */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm font-semibold text-purple-700">
@@ -82,55 +107,123 @@ export default function DevModeIndicator() {
                     ))}
                   </div>
                 </div>
+                </>
+              )}
 
-                {/* Achievements */}
+              {selectedTab === "rewards" && (
+                <>
+                  {/* Themes */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-pink-700">
+                      🎨 Themes ({REWARDS.themes.length})
+                    </div>
+                    <div className="grid grid-cols-1 gap-2">
+                      {REWARDS.themes.map(theme => (
+                        <button
+                          key={theme.id}
+                          className="flex items-center gap-3 p-3 bg-gradient-to-r from-pink-50 to-purple-50 hover:from-pink-100 hover:to-purple-100 rounded-lg border border-pink-200 transition-all text-left"
+                        >
+                          <span className="text-2xl">{theme.icon}</span>
+                          <div className="flex-1">
+                            <div className="font-semibold text-sm text-gray-800">{theme.name}</div>
+                            <div className="text-xs text-gray-600">{theme.description}</div>
+                          </div>
+                          <Badge variant="outline" className="text-xs">Lvl {theme.unlockLevel}</Badge>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Companions */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-blue-700">
+                      🤖 Companions ({REWARDS.companions.length})
+                    </div>
+                    <div className="grid grid-cols-1 gap-2">
+                      {REWARDS.companions.map(companion => (
+                        <button
+                          key={companion.id}
+                          className="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 rounded-lg border border-blue-200 transition-all text-left"
+                        >
+                          <span className="text-2xl">{companion.icon}</span>
+                          <div className="flex-1">
+                            <div className="font-semibold text-sm text-gray-800">{companion.name}</div>
+                            <div className="text-xs text-gray-600">{companion.description}</div>
+                          </div>
+                          <Badge variant="outline" className="text-xs">Lvl {companion.unlockLevel}</Badge>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Titles */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-yellow-700">
+                      👑 Titles ({REWARDS.titles.length})
+                    </div>
+                    <div className="grid grid-cols-1 gap-2">
+                      {REWARDS.titles.map(title => (
+                        <button
+                          key={title.id}
+                          className="flex items-center gap-3 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 hover:from-yellow-100 hover:to-orange-100 rounded-lg border border-yellow-200 transition-all text-left"
+                        >
+                          <span className="text-2xl">{title.icon}</span>
+                          <div className="flex-1">
+                            <div className="font-semibold text-sm text-gray-800">{title.name}</div>
+                            <div className="text-xs text-gray-600">{title.description}</div>
+                          </div>
+                          <Badge variant="outline" className="text-xs">Lvl {title.unlockLevel}</Badge>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Power-ups */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-green-700">
+                      ⚡ Power-ups ({REWARDS.powerups.length})
+                    </div>
+                    <div className="grid grid-cols-1 gap-2">
+                      {REWARDS.powerups.map(powerup => (
+                        <button
+                          key={powerup.id}
+                          className="flex items-center gap-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 rounded-lg border border-green-200 transition-all text-left"
+                        >
+                          <span className="text-2xl">{powerup.icon}</span>
+                          <div className="flex-1">
+                            <div className="font-semibold text-sm text-gray-800">{powerup.name}</div>
+                            <div className="text-xs text-gray-600">{powerup.description}</div>
+                          </div>
+                          <div className="flex flex-col items-end gap-1">
+                            <Badge variant="outline" className="text-xs">Lvl {powerup.unlockLevel}</Badge>
+                            <span className="text-xs text-gray-500">{powerup.uses} uses</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {selectedTab === "achievements" && (
+                <>
+                  {/* Achievements */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm font-semibold text-blue-700">
                     <Trophy className="w-4 h-4" />
                     Achievements ({Object.keys(ACHIEVEMENTS).length})
                   </div>
-                  <div className="grid grid-cols-2 gap-1">
-                    {Object.values(ACHIEVEMENTS).slice(0, 6).map(achievement => (
-                      <div key={achievement.id} className="flex items-center gap-1 text-xs bg-blue-50 px-2 py-1 rounded">
-                        <span>{achievement.icon}</span>
-                        <span className="text-gray-600 truncate">{achievement.title}</span>
+                  <div className="grid grid-cols-1 gap-2">
+                    {Object.values(ACHIEVEMENTS).map(achievement => (
+                      <div key={achievement.id} className="flex items-center gap-3 p-2 bg-blue-50 rounded-lg border border-blue-100">
+                        <span className="text-xl">{achievement.icon}</span>
+                        <div className="flex-1">
+                          <div className="font-semibold text-xs text-gray-800">{achievement.title}</div>
+                          <div className="text-xs text-gray-600">{achievement.description}</div>
+                        </div>
+                        <Badge variant="outline" className="text-xs">{achievement.points} pts</Badge>
                       </div>
                     ))}
-                  </div>
-                  <p className="text-xs text-gray-500 italic">...and {Object.keys(ACHIEVEMENTS).length - 6} more</p>
-                </div>
-
-                {/* Rewards */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-green-700">
-                    <Zap className="w-4 h-4" />
-                    Unlockable Rewards
-                  </div>
-                  <div className="space-y-1.5">
-                    <div className="text-xs font-medium text-gray-600">Themes: {REWARDS.themes.length}</div>
-                    <div className="flex flex-wrap gap-1">
-                      {REWARDS.themes.map(theme => (
-                        <Badge key={theme.id} variant="outline" className="text-xs">
-                          {theme.icon} {theme.name}
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="text-xs font-medium text-gray-600 mt-2">Companions: {REWARDS.companions.length}</div>
-                    <div className="flex flex-wrap gap-1">
-                      {REWARDS.companions.map(comp => (
-                        <Badge key={comp.id} variant="outline" className="text-xs">
-                          {comp.icon} {comp.name}
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="text-xs font-medium text-gray-600 mt-2">Power-ups: {REWARDS.powerups.length}</div>
-                    <div className="flex flex-wrap gap-1">
-                      {REWARDS.powerups.map(powerup => (
-                        <Badge key={powerup.id} variant="outline" className="text-xs">
-                          {powerup.icon} {powerup.name}
-                        </Badge>
-                      ))}
-                    </div>
                   </div>
                 </div>
 
@@ -140,16 +233,21 @@ export default function DevModeIndicator() {
                     <Trophy className="w-4 h-4" />
                     Special Badges ({Object.keys(BADGES).length})
                   </div>
-                  <div className="grid grid-cols-2 gap-1">
-                    {Object.values(BADGES).slice(0, 6).map(badge => (
-                      <div key={badge.id} className="flex items-center gap-1 text-xs bg-orange-50 px-2 py-1 rounded">
-                        <span>{badge.icon}</span>
-                        <span className="text-gray-600 truncate">{badge.name}</span>
+                  <div className="grid grid-cols-1 gap-2">
+                    {Object.values(BADGES).map(badge => (
+                      <div key={badge.id} className="flex items-center gap-3 p-2 bg-orange-50 rounded-lg border border-orange-100">
+                        <span className="text-xl">{badge.icon}</span>
+                        <div className="flex-1">
+                          <div className="font-semibold text-xs text-gray-800">{badge.name}</div>
+                          <div className="text-xs text-gray-600">{badge.description}</div>
+                        </div>
+                        <Badge variant="outline" className="text-xs">{badge.points} pts</Badge>
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-500 italic">...and {Object.keys(BADGES).length - 6} more</p>
                 </div>
+                </>
+              )}
 
                 <div className="pt-2 border-t border-gray-200">
                   <p className="text-xs text-center text-gray-500">
