@@ -1,22 +1,73 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Code, Sparkles, Crown, Lock, Unlock, Trophy, Zap } from "lucide-react";
+import { Code, Sparkles, Crown, Lock, Unlock, Trophy, Zap, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FEATURE_ACCESS, TIER_INFO } from "./subscription/FeatureGate";
 import { ACHIEVEMENTS, REWARDS, BADGES } from "./achievementsData";
+import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
 
 export default function DevModeIndicator() {
   const [expanded, setExpanded] = useState(false);
   const [selectedTab, setSelectedTab] = useState("features");
+  const [currentUser, setCurrentUser] = useState(null);
   
   const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
   
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await base44.auth.me();
+        setCurrentUser(user);
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
+    };
+    if (isDevelopment) {
+      fetchUser();
+    }
+  }, [isDevelopment]);
+
   if (!isDevelopment) return null;
 
   const allFeatures = Object.keys(FEATURE_ACCESS);
   const proFeatures = allFeatures.filter(f => FEATURE_ACCESS[f].includes("pro") && !FEATURE_ACCESS[f].includes("free"));
   const premiumFeatures = allFeatures.filter(f => FEATURE_ACCESS[f].includes("premium") && !FEATURE_ACCESS[f].includes("pro"));
+
+  const handleSelectTheme = async (themeId) => {
+    try {
+      await base44.auth.updateMe({ selected_theme: themeId });
+      toast.success("Theme applied! (Refresh to see changes)");
+      setCurrentUser({ ...currentUser, selected_theme: themeId });
+    } catch (error) {
+      console.error("Error updating theme:", error);
+      toast.error("Failed to apply theme");
+    }
+  };
+
+  const handleSelectCompanion = async (companionType) => {
+    try {
+      await base44.auth.updateMe({ companion_type: companionType });
+      toast.success("Companion changed! (Refresh to see changes)");
+      setCurrentUser({ ...currentUser, companion_type: companionType });
+      window.location.reload();
+    } catch (error) {
+      console.error("Error updating companion:", error);
+      toast.error("Failed to change companion");
+    }
+  };
+
+  const handleSelectTitle = async (titleId) => {
+    try {
+      await base44.auth.updateMe({ selected_title: titleId });
+      toast.success("Title equipped!");
+      setCurrentUser({ ...currentUser, selected_title: titleId });
+    } catch (error) {
+      console.error("Error updating title:", error);
+      toast.error("Failed to equip title");
+    }
+  };
 
   return (
     <>
@@ -121,7 +172,8 @@ export default function DevModeIndicator() {
                       {REWARDS.themes.map(theme => (
                         <button
                           key={theme.id}
-                          className="flex items-center gap-3 p-3 bg-gradient-to-r from-pink-50 to-purple-50 hover:from-pink-100 hover:to-purple-100 rounded-lg border border-pink-200 transition-all text-left"
+                          onClick={() => handleSelectTheme(theme.id)}
+                          className={`flex items-center gap-3 p-3 bg-gradient-to-r from-pink-50 to-purple-50 hover:from-pink-100 hover:to-purple-100 rounded-lg border-2 ${currentUser?.selected_theme === theme.id ? 'border-pink-500 bg-pink-100' : 'border-pink-200'} transition-all text-left relative`}
                         >
                           <span className="text-2xl">{theme.icon}</span>
                           <div className="flex-1">
@@ -129,6 +181,9 @@ export default function DevModeIndicator() {
                             <div className="text-xs text-gray-600">{theme.description}</div>
                           </div>
                           <Badge variant="outline" className="text-xs">Lvl {theme.unlockLevel}</Badge>
+                          {currentUser?.selected_theme === theme.id && (
+                            <Check className="w-4 h-4 text-pink-600 absolute top-2 right-2" />
+                          )}
                         </button>
                       ))}
                     </div>
@@ -140,19 +195,36 @@ export default function DevModeIndicator() {
                       🤖 Companions ({REWARDS.companions.length})
                     </div>
                     <div className="grid grid-cols-1 gap-2">
-                      {REWARDS.companions.map(companion => (
-                        <button
-                          key={companion.id}
-                          className="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 rounded-lg border border-blue-200 transition-all text-left"
-                        >
-                          <span className="text-2xl">{companion.icon}</span>
-                          <div className="flex-1">
-                            <div className="font-semibold text-sm text-gray-800">{companion.name}</div>
-                            <div className="text-xs text-gray-600">{companion.description}</div>
-                          </div>
-                          <Badge variant="outline" className="text-xs">Lvl {companion.unlockLevel}</Badge>
-                        </button>
-                      ))}
+                      {REWARDS.companions.map(companion => {
+                        const companionTypes = {
+                          companion_owl: 'owl',
+                          companion_fox: 'fox',
+                          companion_dragon: 'dragon'
+                        };
+                        const companionType = companionTypes[companion.id];
+                        const isActive = currentUser?.companion_type === companionType;
+                        
+                        return (
+                          <button
+                            key={companion.id}
+                            onClick={() => companionType && handleSelectCompanion(companionType)}
+                            className={`flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 rounded-lg border-2 ${isActive ? 'border-blue-500 bg-blue-100' : 'border-blue-200'} transition-all text-left relative`}
+                          >
+                            <span className="text-2xl">{companion.icon}</span>
+                            <div className="flex-1">
+                              <div className="font-semibold text-sm text-gray-800">{companion.name}</div>
+                              <div className="text-xs text-gray-600">{companion.description}</div>
+                            </div>
+                            <Badge variant="outline" className="text-xs">Lvl {companion.unlockLevel}</Badge>
+                            {isActive && (
+                              <Check className="w-4 h-4 text-blue-600 absolute top-2 right-2" />
+                            )}
+                          </button>
+                        );
+                      })}
+                      <div className="text-xs text-gray-500 italic px-2">
+                        Note: Existing companions (Cat, Dog, Robot, Orb) can be selected from Character Selection page
+                      </div>
                     </div>
                   </div>
 
@@ -165,7 +237,8 @@ export default function DevModeIndicator() {
                       {REWARDS.titles.map(title => (
                         <button
                           key={title.id}
-                          className="flex items-center gap-3 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 hover:from-yellow-100 hover:to-orange-100 rounded-lg border border-yellow-200 transition-all text-left"
+                          onClick={() => handleSelectTitle(title.id)}
+                          className={`flex items-center gap-3 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 hover:from-yellow-100 hover:to-orange-100 rounded-lg border-2 ${currentUser?.selected_title === title.id ? 'border-yellow-500 bg-yellow-100' : 'border-yellow-200'} transition-all text-left relative`}
                         >
                           <span className="text-2xl">{title.icon}</span>
                           <div className="flex-1">
@@ -173,6 +246,9 @@ export default function DevModeIndicator() {
                             <div className="text-xs text-gray-600">{title.description}</div>
                           </div>
                           <Badge variant="outline" className="text-xs">Lvl {title.unlockLevel}</Badge>
+                          {currentUser?.selected_title === title.id && (
+                            <Check className="w-4 h-4 text-yellow-600 absolute top-2 right-2" />
+                          )}
                         </button>
                       ))}
                     </div>
