@@ -22,6 +22,7 @@ import React from "react";
 import PersonalitySettingsModal from "@/components/PersonalitySettingsModal";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import PersonalityCustomizer from "@/components/companion/PersonalityCustomizer";
+import DevModeIndicator from "@/components/DevModeIndicator";
 
 const navigationItems = [
   {
@@ -350,6 +351,8 @@ function LayoutContent({ children, currentPageName }) {
           currentUser={currentUser}
           onUpdate={refreshUser}
           />
+
+          <DevModeIndicator />
           </>
           );
           }
