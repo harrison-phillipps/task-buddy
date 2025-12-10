@@ -21,6 +21,7 @@ import { FileText } from "lucide-react";
 import QuickAddTask from "../components/dashboard/QuickAddTask";
 import GoalsProgress from "../components/dashboard/GoalsProgress";
 import WidgetCustomizer from "../components/dashboard/WidgetCustomizer";
+import OnboardingTour from "../components/onboarding/OnboardingTour";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -141,6 +142,8 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen p-2 sm:p-4 md:p-8 overflow-x-hidden w-full">
+      <OnboardingTour currentUser={currentUser} />
+
       <div className="max-w-7xl mx-auto space-y-6 md:space-y-8 w-full px-2 sm:px-0">
         {/* Hero Section */}
         <motion.div
@@ -161,7 +164,7 @@ export default function Dashboard() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2 }}
-                className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-full border-2 border-yellow-300"
+                className="level-display inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-full border-2 border-yellow-300"
               >
                 <Sparkles className="w-5 h-5 text-purple-600" />
                 <span className="font-bold text-gray-900">Level {currentLevel}</span>
@@ -223,7 +226,7 @@ export default function Dashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
           className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4"
-        >
+          >
           <div onClick={() => setShowProgressReport(true)}>
             <Card className="bg-gradient-to-br from-blue-500 to-cyan-500 border-none hover:shadow-2xl transition-all duration-300 cursor-pointer group">
               <CardContent className="p-6 text-white">
@@ -235,7 +238,7 @@ export default function Dashboard() {
           </div>
 
           <Link to={createPageUrl("BrainDump")}>
-            <Card className="bg-gradient-to-br from-indigo-500 to-purple-500 border-none hover:shadow-2xl transition-all duration-300 cursor-pointer group">
+            <Card className="brain-dump-card bg-gradient-to-br from-indigo-500 to-purple-500 border-none hover:shadow-2xl transition-all duration-300 cursor-pointer group">
               <CardContent className="p-6 text-white">
                 <Brain className="w-10 h-10 mb-3 group-hover:scale-110 transition-transform" />
                 <h3 className="text-2xl font-bold mb-2">Brain Dump</h3>
@@ -245,7 +248,7 @@ export default function Dashboard() {
           </Link>
 
           <Link to={createPageUrl("TaskBreakdown")}>
-            <Card className="bg-gradient-to-br from-purple-500 to-teal-500 border-none hover:shadow-2xl transition-all duration-300 cursor-pointer group">
+            <Card className="breakdown-card bg-gradient-to-br from-purple-500 to-teal-500 border-none hover:shadow-2xl transition-all duration-300 cursor-pointer group">
               <CardContent className="p-6 text-white">
                 <Sparkles className="w-10 h-10 mb-3 group-hover:scale-110 transition-transform" />
                 <h3 className="text-2xl font-bold mb-2">Break Down Task</h3>
@@ -255,7 +258,7 @@ export default function Dashboard() {
           </Link>
 
           <Link to={createPageUrl("FocusSession")}>
-            <Card className="bg-gradient-to-br from-pink-500 to-orange-500 border-none hover:shadow-2xl transition-all duration-300 cursor-pointer group">
+            <Card className="focus-card bg-gradient-to-br from-pink-500 to-orange-500 border-none hover:shadow-2xl transition-all duration-300 cursor-pointer group">
               <CardContent className="p-6 text-white">
                 <Clock className="w-10 h-10 mb-3 group-hover:scale-110 transition-transform" />
                 <h3 className="text-2xl font-bold mb-2">Focus Session</h3>
@@ -263,7 +266,7 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </Link>
-        </motion.div>
+          </motion.div>
 
         {/* Goals Progress Visualization */}
         {visibleWidgets.goalsProgress && (
