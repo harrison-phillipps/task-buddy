@@ -226,6 +226,10 @@ export default function TeamDashboard() {
                         onDelete={() => {}}
                         allTasks={teamTasks}
                         showTeamInfo
+                        onOpenCollabView={(task) => {
+                          setCollabTask(task);
+                          setShowCollabView(true);
+                        }}
                       />
                     </div>
                   ))
