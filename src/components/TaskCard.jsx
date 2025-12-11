@@ -186,6 +186,19 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                 Collaborate
               </Button>
             )}
+            {!task.focus_block_scheduled && task.status !== 'completed' && (
+              <Button
+                onClick={() => {
+                  // Open schedule focus modal
+                  window.dispatchEvent(new CustomEvent('scheduleFocusBlock', { detail: task }));
+                }}
+                variant="outline"
+                className="w-full border-purple-200 hover:bg-purple-50"
+              >
+                <Zap className="w-4 h-4 mr-2" />
+                Schedule Focus
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>

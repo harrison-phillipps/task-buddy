@@ -4,14 +4,17 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, ChevronLeft, ChevronRight, Clock, CheckCircle, ExternalLink, RefreshCw, Loader2, Plus, ArrowRightLeft, Zap } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Clock, CheckCircle, ExternalLink, RefreshCw, Loader2, Plus, ArrowRightLeft, Zap, Users, Filter } from "lucide-react";
 import AddEventModal from "../components/calendar/AddEventModal";
 import CalendarEventsList from "../components/calendar/CalendarEventsList";
 import CalendarConnectionStatus from "../components/calendar/CalendarConnectionStatus";
 import CalendarSyncModal from "../components/calendar/CalendarSyncModal";
+import AutoScheduleFocusBlock from "../components/calendar/AutoScheduleFocusBlock";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, startOfWeek, addDays, isSameDay, parseISO } from "date-fns";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
 
 export default function CalendarView() {
   const queryClient = useQueryClient();
@@ -22,6 +25,9 @@ export default function CalendarView() {
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [backendEnabled, setBackendEnabled] = useState(false);
+  const [selectedTeamFilter, setSelectedTeamFilter] = useState("all");
+  const [showScheduleFocus, setShowScheduleFocus] = useState(false);
+  const [taskToSchedule, setTaskToSchedule] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -44,16 +50,43 @@ export default function CalendarView() {
     fetchUser();
   }, []);
 
-  const { data: tasks = [] } = useQuery({
+  const { data: allTasks = [] } = useQuery({
     queryKey: ['tasks', currentUser?.email],
     queryFn: () => currentUser ? base44.entities.Task.filter({ created_by: currentUser.email }, '-created_date') : [],
     enabled: !!currentUser,
   });
 
-  const { data: calendarEvents = [] } = useQuery({
+  const { data: teams = [] } = useQuery({
+    queryKey: ['teams', currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser) return [];
+      const allTeams = await base44.entities.Team.list();
+      return allTeams.filter(team => 
+        team.owner_id === currentUser.id || team.member_ids?.includes(currentUser.id)
+      );
+    },
+    enabled: !!currentUser,
+  });
+
+  // Filter tasks based on selected team/space
+  const tasks = allTasks.filter(task => {
+    if (selectedTeamFilter === "all") return true;
+    if (selectedTeamFilter === "personal") return !task.team_id;
+    return task.team_id === selectedTeamFilter;
+  });
+
+  const { data: allCalendarEvents = [] } = useQuery({
     queryKey: ['calendarEvents', currentUser?.email],
     queryFn: () => currentUser ? base44.entities.CalendarEvent.filter({ created_by: currentUser.email }, 'start_date') : [],
     enabled: !!currentUser,
+  });
+
+  // Filter calendar events based on selected team
+  const calendarEvents = allCalendarEvents.filter(event => {
+    if (selectedTeamFilter === "all") return true;
+    const linkedTask = allTasks.find(t => t.id === event.task_id);
+    if (selectedTeamFilter === "personal") return !linkedTask?.team_id;
+    return linkedTask?.team_id === selectedTeamFilter;
   });
 
   const updateTaskMutation = useMutation({
@@ -245,7 +278,25 @@ export default function CalendarView() {
             <p className="text-gray-600 mt-1">View and manage your synced tasks</p>
           </div>
           
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap items-center">
+            <Select value={selectedTeamFilter} onValueChange={setSelectedTeamFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Calendars</SelectItem>
+                <SelectItem value="personal">Personal</SelectItem>
+                {teams.map(team => (
+                  <SelectItem key={team.id} value={team.id}>
+                    <div className="flex items-center gap-2">
+                      <Users className="w-3 h-3" />
+                      {team.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
             <Button
               onClick={() => setShowAddEvent(true)}
               className="bg-gradient-to-r from-purple-500 to-teal-500 text-white"
@@ -382,16 +433,24 @@ export default function CalendarView() {
                         className={`p-4 rounded-xl border transition-all ${
                           (item.type === 'subtask' && item.subtask?.completed) || item.status === 'completed'
                             ? "bg-green-50 border-green-200"
+                            : item.team_id
+                            ? "bg-teal-50 border-teal-200 hover:border-teal-300"
                             : "bg-white border-gray-200 hover:border-purple-200"
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
                               {item.type === 'subtask' ? (
                                 <Badge variant="outline" className="text-xs">Step</Badge>
                               ) : (
                                 <Badge className="bg-purple-100 text-purple-700 text-xs">Task</Badge>
+                              )}
+                              {item.team_id && (
+                                <Badge className="bg-teal-100 text-teal-700 text-xs flex items-center gap-1">
+                                  <Users className="w-3 h-3" />
+                                  Team
+                                </Badge>
                               )}
                               {item.calendar_synced && (
                                 <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
@@ -418,6 +477,21 @@ export default function CalendarView() {
                             </div>
                           </div>
                           <div className="flex flex-col gap-2">
+                            {item.type !== 'subtask' && !item.calendar_synced && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setTaskToSchedule(item);
+                                  setShowScheduleFocus(true);
+                                }}
+                                className="text-purple-600 hover:text-purple-700"
+                                title="Schedule focus block"
+                              >
+                                <Zap className="w-4 h-4" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="sm"
@@ -522,12 +596,23 @@ export default function CalendarView() {
       <CalendarSyncModal
         open={showSyncModal}
         onOpenChange={setShowSyncModal}
-        tasks={tasks}
+        tasks={allTasks}
         currentUser={currentUser}
+        selectedTeamId={selectedTeamFilter !== "all" ? selectedTeamFilter : null}
         onSyncComplete={(results) => {
           queryClient.invalidateQueries({ queryKey: ['tasks'] });
           queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
           toast.success(`${results.success.length} item(s) synced to calendar!`);
+        }}
+      />
+
+      <AutoScheduleFocusBlock
+        open={showScheduleFocus}
+        onOpenChange={setShowScheduleFocus}
+        task={taskToSchedule}
+        onScheduled={() => {
+          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+          queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
         }}
       />
     </div>

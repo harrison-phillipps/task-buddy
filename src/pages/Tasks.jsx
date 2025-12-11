@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import TaskAssignment from "../components/team/TaskAssignment";
 import CollaborativeTaskView from "../components/collaboration/CollaborativeTaskView";
+import AutoScheduleFocusBlock from "../components/calendar/AutoScheduleFocusBlock";
 
 export default function Tasks() {
   const queryClient = useQueryClient();
@@ -45,6 +46,18 @@ export default function Tasks() {
   const [selectedTeamId, setSelectedTeamId] = useState(teamIdParam || "personal");
   const [showCollabView, setShowCollabView] = useState(false);
   const [collabTask, setCollabTask] = useState(null);
+  const [showScheduleFocus, setShowScheduleFocus] = useState(false);
+  const [taskToSchedule, setTaskToSchedule] = useState(null);
+
+  // Listen for schedule focus events from TaskCard
+  useEffect(() => {
+    const handleScheduleFocus = (e) => {
+      setTaskToSchedule(e.detail);
+      setShowScheduleFocus(true);
+    };
+    window.addEventListener('scheduleFocusBlock', handleScheduleFocus);
+    return () => window.removeEventListener('scheduleFocusBlock', handleScheduleFocus);
+  }, []);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -449,6 +462,16 @@ export default function Tasks() {
           open={showCollabView}
           onOpenChange={setShowCollabView}
           currentUser={currentUser}
+        />
+
+        <AutoScheduleFocusBlock
+          open={showScheduleFocus}
+          onOpenChange={setShowScheduleFocus}
+          task={taskToSchedule}
+          onScheduled={() => {
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
+          }}
         />
       </div>
     </div>

@@ -20,6 +20,7 @@ export default function CalendarSyncModal({
   tasks = [],
   goals = [],
   currentUser,
+  selectedTeamId = null,
   onSyncComplete 
 }) {
   const [isConnected, setIsConnected] = useState(false);
@@ -251,8 +252,20 @@ export default function CalendarSyncModal({
     }
   };
 
-  const incompleteTasks = tasks.filter(t => t.status !== 'completed');
-  const activeGoals = goals.filter(g => g.status !== 'completed');
+  // Filter by selected team if specified
+  const incompleteTasks = tasks.filter(t => {
+    if (t.status === 'completed') return false;
+    if (selectedTeamId === "personal") return !t.team_id;
+    if (selectedTeamId) return t.team_id === selectedTeamId;
+    return true;
+  });
+  
+  const activeGoals = goals.filter(g => {
+    if (g.status === 'completed') return false;
+    if (selectedTeamId === "personal") return !g.team_id;
+    if (selectedTeamId) return g.team_id === selectedTeamId;
+    return true;
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -263,7 +276,11 @@ export default function CalendarSyncModal({
             Calendar Sync
           </DialogTitle>
           <DialogDescription>
-            Sync your tasks to Google Calendar for better time blocking
+            {selectedTeamId === "personal" 
+              ? "Sync your personal tasks to Google Calendar"
+              : selectedTeamId
+              ? "Sync team tasks to Google Calendar"
+              : "Sync your tasks to Google Calendar for better time blocking"}
           </DialogDescription>
         </DialogHeader>
 
@@ -356,8 +373,11 @@ export default function CalendarSyncModal({
                             onCheckedChange={() => toggleTaskSelection(task.id)}
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <p className="font-medium text-gray-900 truncate">{task.title}</p>
+                              {task.team_id && (
+                                <Badge className="bg-teal-100 text-teal-700 text-xs">Team</Badge>
+                              )}
                               {task.calendar_synced && (
                                 <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
                                   Synced
