@@ -13,6 +13,9 @@ import TaskCard from "../components/TaskCard";
 import TaskCommentsSection from "../components/team/TaskCommentsSection";
 import TeamActivityDashboard from "../components/collaboration/TeamActivityDashboard";
 import CollaborativeTaskView from "../components/collaboration/CollaborativeTaskView";
+import TeamMessaging from "../components/team/TeamMessaging";
+import MemberRoleManager from "../components/team/MemberRoleManager";
+import { hasPermission, PERMISSIONS } from "../components/team/TeamPermissions";
 
 export default function TeamDashboard() {
   const queryClient = useQueryClient();

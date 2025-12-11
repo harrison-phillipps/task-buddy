@@ -15,6 +15,8 @@ import SubtaskTracker from "../tasks/SubtaskTracker";
 export default function CollaborativeTaskView({ task, open, onOpenChange, currentUser }) {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("details");
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const { isEditing, startEditing, stopEditing, isOtherUserEditing, otherEditorName } = useCoEditing(task, currentUser);
 
   const { data: team } = useQuery({
     queryKey: ['team', task?.team_id],
