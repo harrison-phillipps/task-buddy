@@ -63,7 +63,7 @@ export default function TeamsPage() {
       setShowCreateDialog(false);
       setNewTeamName("");
       setNewTeamDescription("");
-      toast.success("Team created!");
+      toast.success("Space created!");
     },
   });
 
@@ -128,29 +128,29 @@ export default function TeamsPage() {
         >
           <div>
             <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">
-              Team Workspaces
+              Shared Spaces
             </h1>
-            <p className="text-gray-600">Collaborate with your team on shared tasks</p>
+            <p className="text-gray-600">Collaborate with your team, partner, friends, or family</p>
           </div>
 
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
               <Button className="bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white">
                 <Plus className="w-4 h-4 mr-2" />
-                Create Team
+                Create Space
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create New Team</DialogTitle>
+                <DialogTitle>Create New Shared Space</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 pt-4">
                 <div className="space-y-2">
-                  <Label>Team Name</Label>
+                  <Label>Space Name</Label>
                   <Input
                     value={newTeamName}
                     onChange={(e) => setNewTeamName(e.target.value)}
-                    placeholder="e.g., Marketing Team"
+                    placeholder="e.g., Our Home Projects, Sarah & John, Study Group..."
                   />
                 </div>
                 <div className="space-y-2">
@@ -158,7 +158,7 @@ export default function TeamsPage() {
                   <Textarea
                     value={newTeamDescription}
                     onChange={(e) => setNewTeamDescription(e.target.value)}
-                    placeholder="What's this team working on?"
+                    placeholder="What will you work on together?"
                     className="h-24"
                   />
                 </div>
@@ -167,7 +167,7 @@ export default function TeamsPage() {
                   disabled={!newTeamName.trim() || createTeamMutation.isPending}
                   className="w-full bg-gradient-to-r from-purple-500 to-teal-500"
                 >
-                  Create Team
+                  Create Space
                 </Button>
               </div>
             </DialogContent>
@@ -176,7 +176,7 @@ export default function TeamsPage() {
 
         <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
           <CardHeader>
-            <CardTitle className="text-lg">Join a Team</CardTitle>
+            <CardTitle className="text-lg">Join a Space</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex gap-3">
@@ -201,8 +201,8 @@ export default function TeamsPage() {
           <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
             <CardContent className="py-12 text-center">
               <Users className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No teams yet</h3>
-              <p className="text-gray-600 mb-6">Create a team to start collaborating</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No spaces yet</h3>
+              <p className="text-gray-600 mb-6">Create a space to collaborate with others</p>
             </CardContent>
           </Card>
         ) : (
@@ -274,7 +274,7 @@ export default function TeamsPage() {
                             className="flex-1"
                           >
                             <LogOut className="w-4 h-4 mr-2" />
-                            Leave Team
+                            Leave Space
                           </Button>
                         )}
                         <Button
