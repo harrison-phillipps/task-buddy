@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, CheckCircle, Clock, AlertCircle, MessageSquare, Plus } from "lucide-react";
+import { Users, CheckCircle, Clock, AlertCircle, MessageSquare, Plus, Shield, ListTodo } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -159,7 +159,38 @@ export default function TeamDashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <TeamActivityDashboard team={team} currentUser={currentUser} />
+          <Tabs defaultValue="overview" className="space-y-6">
+            <TabsList className="bg-white/80 backdrop-blur-sm border border-purple-100">
+              <TabsTrigger value="overview">
+                <ListTodo className="w-4 h-4 mr-2" />
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="chat">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Team Chat
+              </TabsTrigger>
+              <TabsTrigger value="members">
+                <Shield className="w-4 h-4 mr-2" />
+                Members & Roles
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview">
+              <TeamActivityDashboard team={team} currentUser={currentUser} />
+            </TabsContent>
+
+            <TabsContent value="chat">
+              <TeamMessaging team={team} currentUser={currentUser} />
+            </TabsContent>
+
+            <TabsContent value="members">
+              <MemberRoleManager 
+                team={team} 
+                members={teamMembers}
+                currentUser={currentUser}
+              />
+            </TabsContent>
+          </Tabs>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

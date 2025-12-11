@@ -5,12 +5,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import { Users, MessageSquare, Activity, X, CheckCircle, Clock, User } from "lucide-react";
 import TaskCommentsSection from "../team/TaskCommentsSection";
 import TaskActivityFeed from "./TaskActivityFeed";
 import TaskAssignment from "../team/TaskAssignment";
 import SubtaskTracker from "../tasks/SubtaskTracker";
+import CoEditingIndicator, { useCoEditing } from "./CoEditingIndicator";
+import { canEditTask } from "../team/TeamPermissions";
 
 export default function CollaborativeTaskView({ task, open, onOpenChange, currentUser }) {
   const queryClient = useQueryClient();
@@ -22,8 +26,11 @@ export default function CollaborativeTaskView({ task, open, onOpenChange, curren
     queryKey: ['team', task?.team_id],
     queryFn: () => base44.entities.Team.filter({ id: task.team_id }),
     enabled: !!task?.team_id,
-    select: (data) => data[0]
+    select: (data) => data[0],
+    refetchInterval: 5000
   });
+
+  const canEdit = team && currentUser ? canEditTask(team, currentUser.id, task) : false;
 
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
@@ -93,6 +100,13 @@ export default function CollaborativeTaskView({ task, open, onOpenChange, curren
           </div>
         </DialogHeader>
 
+        {currentUser && task && (
+          <CoEditingIndicator 
+            task={task} 
+            currentUser={currentUser}
+          />
+        )}
+
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="details">Details</TabsTrigger>
@@ -111,12 +125,45 @@ export default function CollaborativeTaskView({ task, open, onOpenChange, curren
           </TabsList>
 
           <TabsContent value="details" className="space-y-4">
-            {task.description && (
-              <div>
-                <h4 className="font-semibold text-gray-700 mb-2">Description</h4>
-                <p className="text-gray-600">{task.description}</p>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label className="font-semibold text-gray-700">Description</Label>
+                {canEdit && !isOtherUserEditing && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (isEditingDescription) {
+                        stopEditing();
+                        setIsEditingDescription(false);
+                      } else {
+                        startEditing();
+                        setIsEditingDescription(true);
+                      }
+                    }}
+                  >
+                    {isEditingDescription ? "Cancel" : "Edit"}
+                  </Button>
+                )}
               </div>
-            )}
+              {isEditingDescription ? (
+                <Textarea
+                  defaultValue={task.description}
+                  onBlur={(e) => {
+                    updateTaskMutation.mutate({
+                      id: task.id,
+                      data: { description: e.target.value }
+                    });
+                    stopEditing();
+                    setIsEditingDescription(false);
+                  }}
+                  className="min-h-[100px]"
+                  autoFocus
+                />
+              ) : (
+                <p className="text-gray-600">{task.description || "No description"}</p>
+              )}
+            </div>
 
             <div>
               <h4 className="font-semibold text-gray-700 mb-2">Status</h4>
