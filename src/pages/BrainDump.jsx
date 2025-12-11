@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, CheckCircle, Brain, Trash2, Clock, Layers } from "lucide-react";
+import { Sparkles, Loader2, CheckCircle, Brain, Trash2, Clock, Layers, Mic, Repeat } from "lucide-react";
+import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -77,13 +78,26 @@ export default function BrainDump() {
 
     setIsProcessing(true);
     try {
+      // Get existing tasks for duplicate detection
+      const existingTasks = await base44.entities.Task.filter({ 
+        created_by: currentUser.email 
+      }, '-created_date', 100);
+
       const result = await base44.integrations.Core.InvokeLLM({
         prompt: `You are a supportive ADHD coach helping someone organize their thoughts into actionable tasks.
 
 Brain Dump:
 ${brainDumpText}
 
-Analyze this brain dump and extract distinct tasks. For each task:
+EXISTING TASKS (check for duplicates):
+${existingTasks.map(t => `- ${t.title} (${t.category}${t.is_recurring ? ', recurring: ' + t.recurrence_pattern : ''})`).join('\n')}
+
+Analyze this brain dump and:
+1. SKIP tasks that are duplicates of existing tasks
+2. Identify recurring patterns (daily/weekly routines, regular activities)
+3. Extract distinct NEW tasks only
+
+For each task:
 1. Create a clear, specific title
 2. Determine the category (work, personal, health, creative, learning, household, or other)
 3. Assess difficulty (easy, medium, or hard)
@@ -91,9 +105,13 @@ Analyze this brain dump and extract distinct tasks. For each task:
 5. Break it down into 3-7 actionable subtasks
 6. For each subtask, estimate realistic time in minutes (5-30 minutes each)
 7. Add a brief description if helpful
+8. Mark if recurring and suggest pattern (daily, weekly, biweekly, monthly)
+9. Provide reason for recurring suggestion
 
 Be encouraging and supportive. If something seems vague, interpret it generously and break it into concrete steps.
-Calculate total time for each task (sum of subtask times).`,
+Calculate total time for each task (sum of subtask times).
+
+IMPORTANT: Only return NEW tasks (skip duplicates), and identify recurring patterns.`,
         response_json_schema: {
           type: "object",
           properties: {
@@ -108,6 +126,12 @@ Calculate total time for each task (sum of subtask times).`,
                   difficulty: { type: "string" },
                   energy_level_needed: { type: "string" },
                   estimated_minutes: { type: "number" },
+                  is_recurring: { type: "boolean" },
+                  recurrence_pattern: { 
+                    type: "string",
+                    enum: ["none", "daily", "weekly", "biweekly", "monthly"]
+                  },
+                  recurrence_reason: { type: "string" },
                   subtasks: {
                     type: "array",
                     items: {
@@ -123,7 +147,13 @@ Calculate total time for each task (sum of subtask times).`,
                 }
               }
             },
-            encouragement: { type: "string" }
+            encouragement: { type: "string" },
+            duplicates_skipped: { type: "number" },
+            duplicates_list: { 
+              type: "array",
+              items: { type: "string" }
+            },
+            recurring_detected: { type: "number" }
           }
         }
       });
@@ -160,6 +190,16 @@ Calculate total time for each task (sum of subtask times).`,
       }
 
       setExtractedTasks({ ...result, brainDumpId: savedBrainDump.id });
+
+      // Show feedback about duplicates and recurring patterns
+      if (result.duplicates_skipped > 0) {
+        toast.info(`Skipped ${result.duplicates_skipped} duplicate task(s)`, {
+          description: result.duplicates_list?.join(', ')
+        });
+      }
+      if (result.recurring_detected > 0) {
+        toast.success(`Detected ${result.recurring_detected} recurring pattern(s)! 🔄`);
+      }
     } catch (error) {
       console.error("Error processing brain dump:", error);
     }
@@ -169,7 +209,9 @@ Calculate total time for each task (sum of subtask times).`,
   const handleSaveAll = () => {
     const tasksToCreate = extractedTasks.tasks.map(task => ({
       ...task,
-      status: "not_started"
+      status: "not_started",
+      is_recurring: task.is_recurring || false,
+      recurrence_pattern: task.recurrence_pattern || "none"
     }));
     createTasksMutation.mutate({
       tasks: tasksToCreate,
@@ -490,9 +532,20 @@ Calculate total time for each task (sum of subtask times).`,
                                     <Clock className="w-3 h-3" />
                                     {task.estimated_minutes}m
                                   </Badge>
+                                  {task.is_recurring && (
+                                    <Badge className="bg-orange-100 text-orange-700 flex items-center gap-1">
+                                      <Repeat className="w-3 h-3" />
+                                      {task.recurrence_pattern}
+                                    </Badge>
+                                  )}
                                 </div>
                                 {task.description && (
                                   <p className="text-sm text-gray-600 mb-3">{task.description}</p>
+                                )}
+                                {task.is_recurring && task.recurrence_reason && (
+                                  <p className="text-xs text-orange-700 bg-orange-50 p-2 rounded mb-3 italic">
+                                    🔄 {task.recurrence_reason}
+                                  </p>
                                 )}
                               </div>
                               <Button
