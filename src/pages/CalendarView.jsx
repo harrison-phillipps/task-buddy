@@ -14,7 +14,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format, startOfWeek, addDays, isSameDay, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
 
 export default function CalendarView() {
   const queryClient = useQueryClient();
