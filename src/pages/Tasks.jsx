@@ -27,6 +27,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import TaskAssignment from "../components/team/TaskAssignment";
+import CollaborativeTaskView from "../components/collaboration/CollaborativeTaskView";
 
 export default function Tasks() {
   const queryClient = useQueryClient();
@@ -42,6 +43,8 @@ export default function Tasks() {
   const [showRecurringModal, setShowRecurringModal] = useState(false);
   const [selectedRecurringTask, setSelectedRecurringTask] = useState(null);
   const [selectedTeamId, setSelectedTeamId] = useState(teamIdParam || "personal");
+  const [showCollabView, setShowCollabView] = useState(false);
+  const [collabTask, setCollabTask] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -341,6 +344,10 @@ export default function Tasks() {
                                 setSelectedRecurringTask(task);
                                 setShowRecurringModal(true);
                               }}
+                              onOpenCollabView={(task) => {
+                                setCollabTask(task);
+                                setShowCollabView(true);
+                              }}
                             />
                             {selectedTeamId !== "personal" && (
                               <div className="ml-4">
@@ -435,6 +442,13 @@ export default function Tasks() {
           onOpenChange={setShowRecurringModal}
           initialTask={selectedRecurringTask}
           onSave={handleSetRecurring}
+        />
+
+        <CollaborativeTaskView
+          task={collabTask}
+          open={showCollabView}
+          onOpenChange={setShowCollabView}
+          currentUser={currentUser}
         />
       </div>
     </div>

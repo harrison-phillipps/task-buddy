@@ -11,6 +11,8 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import TaskCard from "../components/TaskCard";
 import TaskCommentsSection from "../components/team/TaskCommentsSection";
+import TeamActivityDashboard from "../components/collaboration/TeamActivityDashboard";
+import CollaborativeTaskView from "../components/collaboration/CollaborativeTaskView";
 
 export default function TeamDashboard() {
   const queryClient = useQueryClient();
@@ -19,6 +21,8 @@ export default function TeamDashboard() {
   
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [showCollabView, setShowCollabView] = useState(false);
+  const [collabTask, setCollabTask] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -147,6 +151,14 @@ export default function TeamDashboard() {
           </div>
         </motion.div>
 
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <TeamActivityDashboard team={team} currentUser={currentUser} />
+        </motion.div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <Tabs defaultValue="my-tasks" className="space-y-6">
@@ -188,6 +200,10 @@ export default function TeamDashboard() {
                       onDelete={() => {}}
                       allTasks={teamTasks}
                       showTeamInfo
+                      onOpenCollabView={(task) => {
+                        setCollabTask(task);
+                        setShowCollabView(true);
+                      }}
                     />
                   </div>
                 ))}
@@ -272,6 +288,13 @@ export default function TeamDashboard() {
             )}
           </div>
         </div>
+
+        <CollaborativeTaskView
+          task={collabTask}
+          open={showCollabView}
+          onOpenChange={setShowCollabView}
+          currentUser={currentUser}
+        />
       </div>
     </div>
   );

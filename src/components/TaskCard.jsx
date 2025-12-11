@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Circle, Clock, Zap, Play, MoreVertical, Calendar, CalendarDays, Lock, RefreshCw, Link as LinkIcon, UserCircle } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Zap, Play, MoreVertical, Calendar, CalendarDays, Lock, RefreshCw, Link as LinkIcon, UserCircle, Users } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import SubtaskTracker from "./tasks/SubtaskTracker";
 import {
@@ -28,7 +28,7 @@ const difficultyIcons = {
   hard: { icon: Zap, color: "text-red-500" }
 };
 
-export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, onSubtaskToggle, onSetDependency, onSetRecurring, allTasks = [], compact = false, showTeamInfo = false }) {
+export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, onSubtaskToggle, onSetDependency, onSetRecurring, onOpenCollabView, allTasks = [], compact = false, showTeamInfo = false }) {
   const completedSubtasks = task.subtasks?.filter(st => st.completed).length || 0;
   const totalSubtasks = task.subtasks?.length || 0;
   const progress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
@@ -99,6 +99,12 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                     {task.assigned_to_name}
                   </Badge>
                 )}
+                {task.team_id && (
+                  <Badge className="bg-teal-100 text-teal-700 border-teal-200 flex items-center gap-1">
+                    <Users className="w-3 h-3" />
+                    Team
+                  </Badge>
+                )}
                 <DifficultyIcon className={`w-4 h-4 ${difficultyColor}`} />
               </div>
               <CardTitle className="text-lg font-bold text-gray-900">
@@ -152,23 +158,35 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
             />
           )}
 
-          <Button
-            onClick={() => onStart?.(task)}
-            disabled={isBlocked}
-            className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold shadow-md disabled:opacity-50"
-          >
-            {isBlocked ? (
-              <>
-                <Lock className="w-4 h-4 mr-2" />
-                Task Blocked
-              </>
-            ) : (
-              <>
-                <Play className="w-4 h-4 mr-2" />
-                Start Focus Session
-              </>
+          <div className="space-y-2">
+            <Button
+              onClick={() => onStart?.(task)}
+              disabled={isBlocked}
+              className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold shadow-md disabled:opacity-50"
+            >
+              {isBlocked ? (
+                <>
+                  <Lock className="w-4 h-4 mr-2" />
+                  Task Blocked
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4 mr-2" />
+                  Start Focus Session
+                </>
+              )}
+            </Button>
+            {task.team_id && onOpenCollabView && (
+              <Button
+                onClick={() => onOpenCollabView?.(task)}
+                variant="outline"
+                className="w-full border-teal-200 hover:bg-teal-50"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Collaborate
+              </Button>
             )}
-          </Button>
+          </div>
         </CardContent>
       </Card>
     </motion.div>
