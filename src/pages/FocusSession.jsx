@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Play, Pause, RotateCcw, CheckCircle, Coffee, ChevronRight, Clock, Timer, Target } from "lucide-react";
+import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import VirtualCompanion from "../components/VirtualCompanion";
 import { Label } from "@/components/ui/label";
@@ -260,7 +261,7 @@ export default function FocusSession() {
     }
   };
 
-  const handleSubtaskComplete = () => {
+  const handleSubtaskComplete = (forceComplete = false) => {
     const newCompleted = new Set(completedSubtasks);
     newCompleted.add(currentSubtaskIndex);
     setCompletedSubtasks(newCompleted);
@@ -294,6 +295,21 @@ export default function FocusSession() {
       setTimeLeft(nextTime);
       setIsActive(false);
     }
+  };
+
+  const handleCompleteEarly = () => {
+    setIsActive(false);
+    if (focusTechnique === "pomodoro" && !isBreakTime) {
+      handlePomodoroComplete();
+    } else {
+      handleSubtaskComplete(true);
+    }
+  };
+
+  const handleNeedMoreTime = () => {
+    const additionalTime = focusTechnique === "pomodoro" ? 5 * 60 : (currentSubtask?.estimated_minutes || 5) * 60 * 0.5;
+    setTimeLeft(prev => prev + additionalTime);
+    toast.success(`Added ${Math.floor(additionalTime / 60)} more minutes!`);
   };
 
   const startSession = () => {
@@ -853,33 +869,60 @@ export default function FocusSession() {
                       </div>
                     )}
 
-                    <div className="flex gap-3 justify-center mb-6">
-                      <Button
-                        onClick={togglePause}
-                        size="lg"
-                        className="bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white"
-                      >
-                        {isActive ? <Pause className="w-5 h-5 mr-2" /> : <Play className="w-5 h-5 mr-2" />}
-                        {isActive ? "Pause" : "Resume"}
-                      </Button>
-                      {isBreakTime && (
-                        <Button 
-                          onClick={skipBreak} 
-                          variant="outline" 
+                    <div className="space-y-3">
+                      <div className="flex gap-3 justify-center">
+                        <Button
+                          onClick={togglePause}
                           size="lg"
+                          className="bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white"
                         >
-                          Skip Break
+                          {isActive ? <Pause className="w-5 h-5 mr-2" /> : <Play className="w-5 h-5 mr-2" />}
+                          {isActive ? "Pause" : "Resume"}
                         </Button>
-                      )}
+                        {isBreakTime && (
+                          <Button 
+                            onClick={skipBreak} 
+                            variant="outline" 
+                            size="lg"
+                          >
+                            Skip Break
+                          </Button>
+                        )}
+                        {!isBreakTime && (
+                          <>
+                            <Button 
+                              onClick={handleCompleteEarly}
+                              variant="outline"
+                              size="lg"
+                              className="border-green-200 text-green-700 hover:bg-green-50"
+                            >
+                              <CheckCircle className="w-5 h-5 mr-2" />
+                              Complete Now
+                            </Button>
+                            <Button 
+                              onClick={handleNeedMoreTime}
+                              variant="outline"
+                              size="lg"
+                              className="border-orange-200 text-orange-700 hover:bg-orange-50"
+                            >
+                              <Clock className="w-5 h-5 mr-2" />
+                              +More Time
+                            </Button>
+                          </>
+                        )}
+                      </div>
                       {!isBreakTime && currentSubtaskIndex < selectedTask.subtasks.length - 1 && (
-                        <Button 
-                          onClick={skipToNextStep} 
-                          variant="outline" 
-                          size="lg"
-                        >
-                          <ChevronRight className="w-5 h-5 mr-2" />
-                          Next Step
-                        </Button>
+                        <div className="flex justify-center">
+                          <Button 
+                            onClick={skipToNextStep} 
+                            variant="ghost" 
+                            size="sm"
+                            className="text-gray-500"
+                          >
+                            <ChevronRight className="w-4 h-4 mr-1" />
+                            Skip to Next Step
+                          </Button>
+                        </div>
                       )}
                     </div>
 
@@ -903,33 +946,48 @@ export default function FocusSession() {
                       <CardTitle className="text-lg">All Steps</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      {selectedTask.subtasks.map((subtask, index) => (
-                        <div
-                          key={index}
-                          className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
-                            index === currentSubtaskIndex
-                              ? 'bg-gradient-to-r from-purple-100 to-teal-100 border-2 border-purple-300'
-                              : completedSubtasks.has(index)
-                              ? 'bg-green-50 border border-green-200'
-                              : 'bg-gray-50 border border-gray-200'
-                          }`}
-                        >
-                          <Checkbox
-                            checked={completedSubtasks.has(index)}
-                            disabled
-                            className="mt-1"
-                          />
-                          <div className="flex-1">
-                            <span className={completedSubtasks.has(index) ? "line-through text-gray-400" : "text-gray-700"}>
-                              {subtask.title}
-                            </span>
+                      {selectedTask.subtasks.map((subtask, index) => {
+                        const isCompleted = completedSubtasks.has(index);
+                        const isCurrent = index === currentSubtaskIndex;
+
+                        return (
+                          <div
+                            key={index}
+                            className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                              isCurrent
+                                ? 'bg-gradient-to-r from-purple-100 to-teal-100 border-2 border-purple-300'
+                                : isCompleted
+                                ? 'bg-green-50 border border-green-200'
+                                : 'bg-gray-50 border border-gray-200'
+                            }`}
+                          >
+                            <Checkbox
+                              checked={isCompleted}
+                              disabled={index !== currentSubtaskIndex}
+                              onCheckedChange={(checked) => {
+                                if (checked && isCurrent) {
+                                  handleCompleteEarly();
+                                }
+                              }}
+                              className="mt-1"
+                            />
+                            <div className="flex-1">
+                              <span className={isCompleted ? "line-through text-gray-400" : "text-gray-700"}>
+                                {subtask.title}
+                              </span>
+                              {isCurrent && !isCompleted && (
+                                <Badge variant="outline" className="ml-2 text-xs">
+                                  Working on this
+                                </Badge>
+                              )}
+                            </div>
+                            <Badge variant="outline" className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {subtask.estimated_minutes}m
+                            </Badge>
                           </div>
-                          <Badge variant="outline" className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {subtask.estimated_minutes}m
-                          </Badge>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </CardContent>
                   </Card>
                 )}
