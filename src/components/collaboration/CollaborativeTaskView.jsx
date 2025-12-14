@@ -20,7 +20,6 @@ export default function CollaborativeTaskView({ task, open, onOpenChange, curren
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("details");
   const [isEditingDescription, setIsEditingDescription] = useState(false);
-  const { isEditing, startEditing, stopEditing, isOtherUserEditing, otherEditorName } = useCoEditing(task, currentUser);
 
   const { data: team } = useQuery({
     queryKey: ['team', task?.team_id],
@@ -30,7 +29,10 @@ export default function CollaborativeTaskView({ task, open, onOpenChange, curren
     refetchInterval: 5000
   });
 
-  const canEdit = team && currentUser ? canEditTask(team, currentUser.id, task) : false;
+  if (!task || !currentUser) return null;
+
+  const { isEditing, startEditing, stopEditing, isOtherUserEditing, otherEditorName } = useCoEditing(task, currentUser);
+  const canEdit = team ? canEditTask(team, currentUser.id, task) : false;
 
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
@@ -100,12 +102,10 @@ export default function CollaborativeTaskView({ task, open, onOpenChange, curren
           </div>
         </DialogHeader>
 
-        {currentUser && task && (
-          <CoEditingIndicator 
-            task={task} 
-            currentUser={currentUser}
-          />
-        )}
+        <CoEditingIndicator 
+          task={task} 
+          currentUser={currentUser}
+        />
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-4">
