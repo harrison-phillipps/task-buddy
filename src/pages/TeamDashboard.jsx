@@ -48,9 +48,13 @@ export default function TeamDashboard() {
     fetchUser();
   }, []);
 
-  const { data: team } = useQuery({
+  const { data: team, isLoading: teamLoading, error: teamError } = useQuery({
     queryKey: ['team', teamId],
-    queryFn: () => base44.entities.Team.filter({ id: teamId }).then(teams => teams[0]),
+    queryFn: async () => {
+      if (!teamId) return null;
+      const teams = await base44.entities.Team.filter({ id: teamId });
+      return teams[0] || null;
+    },
     enabled: !!teamId,
   });
 
@@ -109,10 +113,37 @@ export default function TeamDashboard() {
     },
   });
 
-  if (!team) {
+  if (!teamId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-600">No team selected</p>
+      </div>
+    );
+  }
+
+  if (teamLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (teamError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-2">Error loading team</p>
+          <p className="text-sm text-gray-600">{teamError.message}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!team) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-600">Team not found</p>
       </div>
     );
   }
