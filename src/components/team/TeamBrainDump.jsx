@@ -1,20 +1,27 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Brain, Sparkles, Loader2, Trash2, CheckCircle, User } from "lucide-react";
+import { Brain, Sparkles, Loader2, Trash2, CheckCircle, User, History, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 export default function TeamBrainDump({ team, currentUser, members }) {
   const queryClient = useQueryClient();
   const [input, setInput] = useState("");
   const [ideas, setIdeas] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+
+  const { data: previousDumps = [] } = useQuery({
+    queryKey: ['teamBrainDumps', team.id],
+    queryFn: () => base44.entities.BrainDump.filter({ team_id: team.id }, '-created_date'),
+  });
 
   const createTasksMutation = useMutation({
     mutationFn: (tasksData) => base44.entities.Task.bulkCreate(tasksData),
@@ -104,7 +111,17 @@ Return ONLY valid JSON array, no markdown.`,
     }));
 
     try {
-      await createTasksMutation.mutateAsync(tasksToCreate);
+      const createdTasks = await createTasksMutation.mutateAsync(tasksToCreate);
+      
+      // Save brain dump to history
+      await base44.entities.BrainDump.create({
+        content: input,
+        tasks_created: tasksToCreate.length,
+        task_ids: createdTasks.map(t => t.id),
+        team_id: team.id
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['teamBrainDumps'] });
       toast.success(`Created ${tasksToCreate.length} team tasks!`);
       setIdeas([]);
       setInput("");
@@ -112,6 +129,12 @@ Return ONLY valid JSON array, no markdown.`,
       console.error("Error creating tasks:", error);
       toast.error("Failed to create tasks");
     }
+  };
+
+  const loadPreviousDump = (dump) => {
+    setInput(dump.content);
+    setShowHistory(false);
+    toast.success("Previous brain dump loaded!");
   };
 
   const categoryColors = {
@@ -128,11 +151,26 @@ Return ONLY valid JSON array, no markdown.`,
     <div className="space-y-6">
       <Card className="bg-gradient-to-br from-purple-50 to-teal-50 border-purple-200">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <Brain className="w-6 h-6 text-purple-600" />
-            Team Brain Dump
-          </CardTitle>
-          <p className="text-sm text-gray-600">Dump all your team's ideas and let AI organize them into tasks</p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Brain className="w-6 h-6 text-purple-600" />
+                Team Brain Dump
+              </CardTitle>
+              <p className="text-sm text-gray-600">Dump all your team's ideas and let AI organize them into tasks</p>
+            </div>
+            {previousDumps.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowHistory(!showHistory)}
+                className="shrink-0"
+              >
+                <History className="w-4 h-4 mr-2" />
+                History
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <Textarea
@@ -172,6 +210,39 @@ Return ONLY valid JSON array, no markdown.`,
           </div>
         </CardContent>
       </Card>
+
+      {showHistory && previousDumps.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <History className="w-5 h-5 text-purple-600" />
+              Previous Team Brain Dumps
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {previousDumps.map((dump) => (
+                <motion.div
+                  key={dump.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 bg-white border border-gray-200 rounded-lg hover:border-purple-300 transition-all cursor-pointer"
+                  onClick={() => loadPreviousDump(dump)}
+                >
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <Calendar className="w-4 h-4" />
+                      {format(new Date(dump.created_date), 'MMM d, yyyy h:mm a')}
+                    </div>
+                    <Badge variant="outline">{dump.tasks_created} tasks</Badge>
+                  </div>
+                  <p className="text-sm text-gray-700 line-clamp-3">{dump.content}</p>
+                </motion.div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {ideas.length > 0 && (
         <Card>
