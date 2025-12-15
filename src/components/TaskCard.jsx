@@ -28,7 +28,7 @@ const difficultyIcons = {
   hard: { icon: Zap, color: "text-red-500" }
 };
 
-export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, onSubtaskToggle, onSetDependency, onSetRecurring, onOpenCollabView, allTasks = [], compact = false, showTeamInfo = false }) {
+export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, onSubtaskToggle, onSetDependency, onSetRecurring, onOpenCollabView, onStartCollab, allTasks = [], compact = false, showTeamInfo = false }) {
   const completedSubtasks = task.subtasks?.filter(st => st.completed).length || 0;
   const totalSubtasks = task.subtasks?.length || 0;
   const progress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
@@ -176,16 +176,28 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                 </>
               )}
             </Button>
-            {task.team_id && onOpenCollabView && (
-              <Button
-                onClick={() => onOpenCollabView?.(task)}
-                variant="outline"
-                className="w-full border-teal-200 hover:bg-teal-50"
-              >
-                <Users className="w-4 h-4 mr-2" />
-                Collaborate
-              </Button>
-            )}
+            <div className="grid grid-cols-2 gap-2">
+              {task.team_id && onOpenCollabView && (
+                <Button
+                  onClick={() => onOpenCollabView?.(task)}
+                  variant="outline"
+                  className="border-teal-200 hover:bg-teal-50"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Collaborate
+                </Button>
+              )}
+              {task.team_id && onStartCollab && (
+                <Button
+                  onClick={() => onStartCollab?.(task)}
+                  variant="outline"
+                  className="border-purple-200 hover:bg-purple-50"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Team Session
+                </Button>
+              )}
+            </div>
             {!task.focus_block_scheduled && task.status !== 'completed' && (
               <Button
                 onClick={() => {

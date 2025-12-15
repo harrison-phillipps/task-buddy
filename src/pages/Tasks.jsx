@@ -355,7 +355,7 @@ export default function Tasks() {
                             <TaskCard
                               task={task}
                               allTasks={tasks}
-                              showTeamInfo={selectedTeamId !== "personal"}
+                              showTeamInfo={selectedTeamId !== "personal" || !!task.team_id}
                               onStart={(task) => window.location.href = createPageUrl("FocusSession") + `?taskId=${task.id}`}
                               onDelete={(task) => {
                                 if (confirm(`Delete "${task.title}"?`)) {
