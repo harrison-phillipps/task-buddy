@@ -4,13 +4,18 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { UserCircle, Users } from "lucide-react";
 
-export default function TaskAssignment({ task, teamMembers, onAssign }) {
+export default function TaskAssignment({ task, teamMembers = [], onAssign }) {
   const assignedUsers = task.assigned_to_users || [];
-  const displayValue = assignedUsers.length > 0 
-    ? assignedUsers.length === teamMembers.length 
-      ? "all" 
-      : assignedUsers[0].user_id
-    : task.assigned_to || "unassigned";
+  
+  // Determine display value
+  let displayValue = "unassigned";
+  if (assignedUsers.length > 1 && assignedUsers.length === teamMembers.length) {
+    displayValue = "all";
+  } else if (assignedUsers.length === 1) {
+    displayValue = assignedUsers[0].user_id;
+  } else if (task.assigned_to) {
+    displayValue = task.assigned_to;
+  }
 
   return (
     <div className="space-y-2">
