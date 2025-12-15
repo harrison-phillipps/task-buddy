@@ -69,8 +69,13 @@ export default function TeamDashboard() {
     team?.owner_id === user.id || team?.member_ids?.includes(user.id)
   );
 
-  const myTasks = teamTasks.filter(t => t.assigned_to === currentUser?.id);
-  const unassignedTasks = teamTasks.filter(t => !t.assigned_to);
+  const myTasks = teamTasks.filter(t => 
+    t.assigned_to === currentUser?.id || 
+    t.assigned_to_users?.some(u => u.user_id === currentUser?.id)
+  );
+  const unassignedTasks = teamTasks.filter(t => 
+    !t.assigned_to && (!t.assigned_to_users || t.assigned_to_users.length === 0)
+  );
   const completedTasks = teamTasks.filter(t => t.status === 'completed');
 
   const updateTaskMutation = useMutation({
