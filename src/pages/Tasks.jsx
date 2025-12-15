@@ -115,11 +115,14 @@ export default function Tasks() {
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
     queryFn: () => base44.entities.User.list(),
-    enabled: selectedTeamId !== "personal",
   });
 
   const currentTeam = teams.find(t => t.id === selectedTeamId);
-  const teamMembers = currentTeam ? allUsers.filter(u => currentTeam.member_ids?.includes(u.id)) : [];
+  const getTeamMembers = (task) => {
+    const taskTeam = teams.find(t => t.id === task.team_id);
+    if (!taskTeam) return [];
+    return allUsers.filter(u => taskTeam.member_ids?.includes(u.id));
+  };
 
   const deleteTaskMutation = useMutation({
     mutationFn: (taskId) => base44.entities.Task.delete(taskId),
@@ -382,11 +385,11 @@ export default function Tasks() {
                                 setShowCollabView(true);
                               }}
                             />
-                            {selectedTeamId !== "personal" && (
+                            {task.team_id && (
                               <div className="ml-4">
                                 <TaskAssignment
                                   task={task}
-                                  teamMembers={teamMembers}
+                                  teamMembers={getTeamMembers(task)}
                                   onAssign={(data) => updateTaskMutation.mutate({ id: task.id, data })}
                                 />
                               </div>
