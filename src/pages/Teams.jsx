@@ -54,7 +54,7 @@ export default function TeamsPage() {
       return await base44.entities.Team.create({
         ...teamData,
         owner_id: currentUser.id,
-        member_ids: [currentUser.id],
+        member_ids: [],
         invite_code: inviteCode
       });
     },
@@ -209,7 +209,7 @@ export default function TeamsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {teams.map((team) => {
               const isOwner = team.owner_id === currentUser?.id;
-              const memberCount = team.member_ids?.length || 0;
+              const memberCount = (team.member_ids?.length || 0) + 1; // +1 for owner
 
               return (
                 <motion.div
