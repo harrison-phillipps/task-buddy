@@ -61,7 +61,7 @@ export default function TeamDashboard() {
   });
 
   // Get team members from team entity (includes stored user details)
-  const teamMembers = React.useMemo(() => {
+  const teamMembers = (() => {
     if (!team) return [];
     
     const members = [];
@@ -70,26 +70,28 @@ export default function TeamDashboard() {
     if (team.owner_id) {
       members.push({
         id: team.owner_id,
-        full_name: team.owner_name,
+        full_name: team.owner_name || team.owner_email,
         email: team.owner_email,
         role: 'admin'
       });
     }
     
     // Add other members
-    if (team.members) {
+    if (team.members && Array.isArray(team.members)) {
       team.members.forEach(member => {
-        members.push({
-          id: member.user_id,
-          full_name: member.user_name,
-          email: member.user_email,
-          role: member.role || 'member'
-        });
+        if (member && member.user_id) {
+          members.push({
+            id: member.user_id,
+            full_name: member.user_name || member.user_email,
+            email: member.user_email,
+            role: member.role || 'member'
+          });
+        }
       });
     }
     
     return members;
-  }, [team]);
+  })();
 
   const myTasks = teamTasks.filter(t => 
     t.assigned_to === currentUser?.id || 
