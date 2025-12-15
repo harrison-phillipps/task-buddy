@@ -60,14 +60,36 @@ export default function TeamDashboard() {
     enabled: !!teamId,
   });
 
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => base44.entities.User.list(),
-  });
-
-  const teamMembers = allUsers.filter(user => 
-    team?.owner_id === user.id || team?.member_ids?.includes(user.id)
-  );
+  // Get team members from team entity (includes stored user details)
+  const teamMembers = React.useMemo(() => {
+    if (!team) return [];
+    
+    const members = [];
+    
+    // Add owner
+    if (team.owner_id) {
+      members.push({
+        id: team.owner_id,
+        full_name: team.owner_name,
+        email: team.owner_email,
+        role: 'admin'
+      });
+    }
+    
+    // Add other members
+    if (team.members) {
+      team.members.forEach(member => {
+        members.push({
+          id: member.user_id,
+          full_name: member.user_name,
+          email: member.user_email,
+          role: member.role || 'member'
+        });
+      });
+    }
+    
+    return members;
+  }, [team]);
 
   const myTasks = teamTasks.filter(t => 
     t.assigned_to === currentUser?.id || 

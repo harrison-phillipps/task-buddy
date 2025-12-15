@@ -54,6 +54,9 @@ export default function TeamsPage() {
       return await base44.entities.Team.create({
         ...teamData,
         owner_id: currentUser.id,
+        owner_name: currentUser.full_name || currentUser.email,
+        owner_email: currentUser.email,
+        members: [],
         member_ids: [],
         invite_code: inviteCode
       });
@@ -73,10 +76,20 @@ export default function TeamsPage() {
       const team = allTeams.find(t => t.invite_code === code.toUpperCase());
       
       if (!team) throw new Error("Invalid invite code");
-      if (team.member_ids?.includes(currentUser.id)) throw new Error("Already a member");
+      if (team.member_ids?.includes(currentUser.id) || team.members?.some(m => m.user_id === currentUser.id)) {
+        throw new Error("Already a member");
+      }
+
+      const newMember = {
+        user_id: currentUser.id,
+        user_name: currentUser.full_name || currentUser.email,
+        user_email: currentUser.email,
+        role: "member"
+      };
 
       await base44.entities.Team.update(team.id, {
-        member_ids: [...(team.member_ids || []), currentUser.id]
+        member_ids: [...(team.member_ids || []), currentUser.id],
+        members: [...(team.members || []), newMember]
       });
 
       return team;
@@ -94,7 +107,8 @@ export default function TeamsPage() {
   const leaveTeamMutation = useMutation({
     mutationFn: async (team) => {
       await base44.entities.Team.update(team.id, {
-        member_ids: team.member_ids.filter(id => id !== currentUser.id)
+        member_ids: team.member_ids.filter(id => id !== currentUser.id),
+        members: team.members?.filter(m => m.user_id !== currentUser.id) || []
       });
     },
     onSuccess: () => {
@@ -209,7 +223,7 @@ export default function TeamsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {teams.map((team) => {
               const isOwner = team.owner_id === currentUser?.id;
-              const memberCount = (team.member_ids?.length || 0) + 1; // +1 for owner
+              const memberCount = (team.members?.length || 0) + 1; // +1 for owner
 
               return (
                 <motion.div

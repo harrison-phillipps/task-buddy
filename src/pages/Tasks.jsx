@@ -112,18 +112,35 @@ export default function Tasks() {
     enabled: !!currentUser,
   });
 
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => base44.entities.User.list(),
-  });
-
   const currentTeam = teams.find(t => t.id === selectedTeamId);
+  
   const getTeamMembers = (task) => {
     const taskTeam = teams.find(t => t.id === task.team_id);
     if (!taskTeam) return [];
-    // Include both owner and members
-    const teamUserIds = [taskTeam.owner_id, ...(taskTeam.member_ids || [])];
-    return allUsers.filter(u => teamUserIds.includes(u.id));
+    
+    const members = [];
+    
+    // Add owner
+    if (taskTeam.owner_id) {
+      members.push({
+        id: taskTeam.owner_id,
+        full_name: taskTeam.owner_name,
+        email: taskTeam.owner_email
+      });
+    }
+    
+    // Add other members
+    if (taskTeam.members) {
+      taskTeam.members.forEach(member => {
+        members.push({
+          id: member.user_id,
+          full_name: member.user_name,
+          email: member.user_email
+        });
+      });
+    }
+    
+    return members;
   };
 
   const deleteTaskMutation = useMutation({
