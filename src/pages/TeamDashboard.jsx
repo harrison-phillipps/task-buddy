@@ -17,6 +17,8 @@ import TeamMessaging from "../components/team/TeamMessaging";
 import MemberRoleManager from "../components/team/MemberRoleManager";
 import { hasPermission, PERMISSIONS } from "../components/team/TeamPermissions";
 import TeamBrainDump from "../components/team/TeamBrainDump";
+import CollaborativeFocusModal from "../components/team/CollaborativeFocusModal";
+import ActiveCollaborativeSessions from "../components/team/ActiveCollaborativeSessions";
 
 export default function TeamDashboard() {
   const queryClient = useQueryClient();
@@ -27,6 +29,8 @@ export default function TeamDashboard() {
   const [selectedTask, setSelectedTask] = useState(null);
   const [showCollabView, setShowCollabView] = useState(false);
   const [collabTask, setCollabTask] = useState(null);
+  const [showCollabFocus, setShowCollabFocus] = useState(false);
+  const [collabFocusTask, setCollabFocusTask] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -181,7 +185,10 @@ export default function TeamDashboard() {
             </TabsList>
 
             <TabsContent value="overview">
-              <TeamActivityDashboard team={team} currentUser={currentUser} />
+              <div className="space-y-6">
+                <ActiveCollaborativeSessions teamId={teamId} currentUser={currentUser} />
+                <TeamActivityDashboard team={team} currentUser={currentUser} />
+              </div>
             </TabsContent>
 
             <TabsContent value="braindump">
@@ -228,16 +235,20 @@ export default function TeamDashboard() {
                         onDelete={() => {}}
                         allTasks={teamTasks}
                         showTeamInfo
+                        onStartCollab={(task) => {
+                          setCollabFocusTask(task);
+                          setShowCollabFocus(true);
+                        }}
                       />
-                    </div>
-                  ))
-                )}
-              </TabsContent>
+                      </div>
+                      ))
+                      )}
+                      </TabsContent>
 
-              <TabsContent value="all-tasks" className="space-y-4">
-                {teamTasks.map(task => (
-                  <div key={task.id} onClick={() => setSelectedTask(task)}>
-                    <TaskCard
+                      <TabsContent value="all-tasks" className="space-y-4">
+                      {teamTasks.map(task => (
+                      <div key={task.id} onClick={() => setSelectedTask(task)}>
+                      <TaskCard
                       task={task}
                       onUpdate={(data) => updateTaskMutation.mutate({ id: task.id, data })}
                       onDelete={() => {}}
@@ -247,10 +258,14 @@ export default function TeamDashboard() {
                         setCollabTask(task);
                         setShowCollabView(true);
                       }}
-                    />
-                  </div>
-                ))}
-              </TabsContent>
+                      onStartCollab={(task) => {
+                        setCollabFocusTask(task);
+                        setShowCollabFocus(true);
+                      }}
+                      />
+                      </div>
+                      ))}
+                      </TabsContent>
 
               <TabsContent value="unassigned" className="space-y-4">
                 {unassignedTasks.length === 0 ? (
@@ -342,7 +357,15 @@ export default function TeamDashboard() {
           onOpenChange={setShowCollabView}
           currentUser={currentUser}
         />
-      </div>
-    </div>
-  );
-}
+
+        <CollaborativeFocusModal
+          task={collabFocusTask}
+          team={team}
+          open={showCollabFocus}
+          onOpenChange={setShowCollabFocus}
+          currentUser={currentUser}
+        />
+        </div>
+        </div>
+        );
+        }

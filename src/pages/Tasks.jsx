@@ -76,7 +76,19 @@ export default function Tasks() {
     queryFn: async () => {
       if (!currentUser) return [];
       if (selectedTeamId === "personal") {
-        return base44.entities.Task.filter({ created_by: currentUser.email, team_id: null }, '-created_date');
+        // Get personal tasks AND assigned team tasks
+        const personalTasks = await base44.entities.Task.filter({ 
+          created_by: currentUser.email, 
+          team_id: null 
+        }, '-created_date');
+        const assignedTeamTasks = await base44.entities.Task.filter({ 
+          assigned_to: currentUser.id 
+        }, '-created_date');
+        // Combine and deduplicate
+        const allTasks = [...personalTasks, ...assignedTeamTasks];
+        return allTasks.filter((task, index, self) => 
+          index === self.findIndex(t => t.id === task.id)
+        );
       }
       return base44.entities.Task.filter({ team_id: selectedTeamId }, '-created_date');
     },
