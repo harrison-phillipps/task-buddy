@@ -51,11 +51,11 @@ export default function TeamDashboard() {
   const { data: team, isLoading: teamLoading, error: teamError } = useQuery({
     queryKey: ['team', teamId],
     queryFn: async () => {
-      if (!teamId) return null;
       const allTeams = await base44.entities.Team.list();
       return allTeams.find(t => t.id === teamId) || null;
     },
-    enabled: !!teamId && !!currentUser,
+    enabled: !!teamId,
+    retry: 1,
   });
 
   const { data: teamTasks = [] } = useQuery({
