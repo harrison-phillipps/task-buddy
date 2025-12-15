@@ -391,24 +391,30 @@ export default function Tasks() {
                                 <TaskAssignment
                                   task={task}
                                   teamMembers={getTeamMembers(task)}
-                                  onAssign={async (data) => {
-                                    await updateTaskMutation.mutateAsync({ id: task.id, data });
-
-                                    // Create notification for task assignment
-                                    if (data.assigned_to || data.assigned_to_users?.length > 0) {
-                                      await base44.entities.TeamNotification.create({
-                                        team_id: task.team_id,
-                                        type: "task_assigned",
-                                        title: `Task assigned: "${task.title}"`,
-                                        message: data.assigned_to_users?.length > 1 
-                                          ? `Task assigned to ${data.assigned_to_users.length} team members`
-                                          : `Task assigned to ${data.assigned_to_name}`,
-                                        priority: "medium",
-                                        related_id: task.id,
-                                        created_by: currentUser?.id
-                                      });
-                                      queryClient.invalidateQueries({ queryKey: ['teamNotifications'] });
-                                    }
+                                  onAssign={(data) => {
+                                    updateTaskMutation.mutate({ id: task.id, data }, {
+                                      onSuccess: async () => {
+                                        // Create notification for task assignment
+                                        if (data.assigned_to || data.assigned_to_users?.length > 0) {
+                                          try {
+                                            await base44.entities.TeamNotification.create({
+                                              team_id: task.team_id,
+                                              type: "task_assigned",
+                                              title: `Task assigned: "${task.title}"`,
+                                              message: data.assigned_to_users?.length > 1 
+                                                ? `Task assigned to ${data.assigned_to_users.length} team members`
+                                                : `Task assigned to ${data.assigned_to_name}`,
+                                              priority: "medium",
+                                              related_id: task.id,
+                                              created_by: currentUser?.id
+                                            });
+                                            queryClient.invalidateQueries({ queryKey: ['teamNotifications'] });
+                                          } catch (error) {
+                                            console.error("Error creating notification:", error);
+                                          }
+                                        }
+                                      }
+                                    });
                                   }}
                                 />
                               </div>

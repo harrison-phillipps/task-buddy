@@ -34,7 +34,7 @@ export default function TaskAssignment({ task, teamMembers = [], onAssign }) {
       )}
       <Select
         value={displayValue}
-        onValueChange={async (value) => {
+        onValueChange={(value) => {
           let assignmentData;
           if (value === "all") {
             assignmentData = {
@@ -63,7 +63,7 @@ export default function TaskAssignment({ task, teamMembers = [], onAssign }) {
             };
           }
           
-          await onAssign(assignmentData);
+          onAssign(assignmentData);
         }}
       >
         <SelectTrigger>
