@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import TaskCard from "../components/TaskCard";
 import TaskCommentsSection from "../components/team/TaskCommentsSection";
+import TaskAssignment from "../components/team/TaskAssignment";
 import TeamActivityDashboard from "../components/collaboration/TeamActivityDashboard";
 import CollaborativeTaskView from "../components/collaboration/CollaborativeTaskView";
 import TeamMessaging from "../components/team/TeamMessaging";
@@ -64,7 +65,9 @@ export default function TeamDashboard() {
     queryFn: () => base44.entities.User.list(),
   });
 
-  const teamMembers = allUsers.filter(user => team?.member_ids?.includes(user.id));
+  const teamMembers = allUsers.filter(user => 
+    team?.owner_id === user.id || team?.member_ids?.includes(user.id)
+  );
 
   const myTasks = teamTasks.filter(t => t.assigned_to === currentUser?.id);
   const unassignedTasks = teamTasks.filter(t => !t.assigned_to);
@@ -255,44 +258,108 @@ export default function TeamDashboard() {
                   </Card>
                 ) : (
                   myTasks.map(task => (
-                    <div key={task.id} onClick={() => setSelectedTask(task)}>
+                    <div key={task.id} className="space-y-3">
+                      <div onClick={() => setSelectedTask(task)}>
+                        <TaskCard
+                          task={task}
+                          onUpdate={(data) => updateTaskMutation.mutate({ id: task.id, data })}
+                          onDelete={() => {}}
+                          allTasks={teamTasks}
+                          showTeamInfo
+                          onStartCollab={(task) => {
+                            setCollabFocusTask(task);
+                            setShowCollabFocus(true);
+                          }}
+                        />
+                      </div>
+                      <div className="ml-4">
+                        <TaskAssignment
+                          task={task}
+                          teamMembers={teamMembers}
+                          onAssign={(data) => {
+                            updateTaskMutation.mutate({ id: task.id, data }, {
+                              onSuccess: async () => {
+                                if (data.assigned_to || data.assigned_to_users?.length > 0) {
+                                  try {
+                                    await base44.entities.TeamNotification.create({
+                                      team_id: task.team_id,
+                                      type: "task_assigned",
+                                      title: `Task assigned: "${task.title}"`,
+                                      message: data.assigned_to_users?.length > 1 
+                                        ? `Task assigned to ${data.assigned_to_users.length} team members`
+                                        : `Task assigned to ${data.assigned_to_name}`,
+                                      priority: "medium",
+                                      related_id: task.id,
+                                      created_by: currentUser?.id
+                                    });
+                                    queryClient.invalidateQueries({ queryKey: ['teamNotifications'] });
+                                  } catch (error) {
+                                    console.error("Error creating notification:", error);
+                                  }
+                                }
+                              }
+                            });
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))
+                )}
+                      </TabsContent>
+
+              <TabsContent value="all-tasks" className="space-y-4">
+                {teamTasks.map(task => (
+                  <div key={task.id} className="space-y-3">
+                    <div onClick={() => setSelectedTask(task)}>
                       <TaskCard
                         task={task}
                         onUpdate={(data) => updateTaskMutation.mutate({ id: task.id, data })}
                         onDelete={() => {}}
                         allTasks={teamTasks}
                         showTeamInfo
+                        onOpenCollabView={(task) => {
+                          setCollabTask(task);
+                          setShowCollabView(true);
+                        }}
                         onStartCollab={(task) => {
                           setCollabFocusTask(task);
                           setShowCollabFocus(true);
                         }}
                       />
-                      </div>
-                      ))
-                      )}
-                      </TabsContent>
-
-                      <TabsContent value="all-tasks" className="space-y-4">
-                      {teamTasks.map(task => (
-                      <div key={task.id} onClick={() => setSelectedTask(task)}>
-                      <TaskCard
-                      task={task}
-                      onUpdate={(data) => updateTaskMutation.mutate({ id: task.id, data })}
-                      onDelete={() => {}}
-                      allTasks={teamTasks}
-                      showTeamInfo
-                      onOpenCollabView={(task) => {
-                        setCollabTask(task);
-                        setShowCollabView(true);
-                      }}
-                      onStartCollab={(task) => {
-                        setCollabFocusTask(task);
-                        setShowCollabFocus(true);
-                      }}
+                    </div>
+                    <div className="ml-4">
+                      <TaskAssignment
+                        task={task}
+                        teamMembers={teamMembers}
+                        onAssign={(data) => {
+                          updateTaskMutation.mutate({ id: task.id, data }, {
+                            onSuccess: async () => {
+                              if (data.assigned_to || data.assigned_to_users?.length > 0) {
+                                try {
+                                  await base44.entities.TeamNotification.create({
+                                    team_id: task.team_id,
+                                    type: "task_assigned",
+                                    title: `Task assigned: "${task.title}"`,
+                                    message: data.assigned_to_users?.length > 1 
+                                      ? `Task assigned to ${data.assigned_to_users.length} team members`
+                                      : `Task assigned to ${data.assigned_to_name}`,
+                                    priority: "medium",
+                                    related_id: task.id,
+                                    created_by: currentUser?.id
+                                  });
+                                  queryClient.invalidateQueries({ queryKey: ['teamNotifications'] });
+                                } catch (error) {
+                                  console.error("Error creating notification:", error);
+                                }
+                              }
+                            }
+                          });
+                        }}
                       />
-                      </div>
-                      ))}
-                      </TabsContent>
+                    </div>
+                  </div>
+                ))}
+              </TabsContent>
 
               <TabsContent value="unassigned" className="space-y-4">
                 {unassignedTasks.length === 0 ? (
@@ -304,18 +371,50 @@ export default function TeamDashboard() {
                   </Card>
                 ) : (
                   unassignedTasks.map(task => (
-                    <div key={task.id} onClick={() => setSelectedTask(task)}>
-                      <TaskCard
-                        task={task}
-                        onUpdate={(data) => updateTaskMutation.mutate({ id: task.id, data })}
-                        onDelete={() => {}}
-                        allTasks={teamTasks}
-                        showTeamInfo
-                        onOpenCollabView={(task) => {
-                          setCollabTask(task);
-                          setShowCollabView(true);
-                        }}
-                      />
+                    <div key={task.id} className="space-y-3">
+                      <div onClick={() => setSelectedTask(task)}>
+                        <TaskCard
+                          task={task}
+                          onUpdate={(data) => updateTaskMutation.mutate({ id: task.id, data })}
+                          onDelete={() => {}}
+                          allTasks={teamTasks}
+                          showTeamInfo
+                          onOpenCollabView={(task) => {
+                            setCollabTask(task);
+                            setShowCollabView(true);
+                          }}
+                        />
+                      </div>
+                      <div className="ml-4">
+                        <TaskAssignment
+                          task={task}
+                          teamMembers={teamMembers}
+                          onAssign={(data) => {
+                            updateTaskMutation.mutate({ id: task.id, data }, {
+                              onSuccess: async () => {
+                                if (data.assigned_to || data.assigned_to_users?.length > 0) {
+                                  try {
+                                    await base44.entities.TeamNotification.create({
+                                      team_id: task.team_id,
+                                      type: "task_assigned",
+                                      title: `Task assigned: "${task.title}"`,
+                                      message: data.assigned_to_users?.length > 1 
+                                        ? `Task assigned to ${data.assigned_to_users.length} team members`
+                                        : `Task assigned to ${data.assigned_to_name}`,
+                                      priority: "medium",
+                                      related_id: task.id,
+                                      created_by: currentUser?.id
+                                    });
+                                    queryClient.invalidateQueries({ queryKey: ['teamNotifications'] });
+                                  } catch (error) {
+                                    console.error("Error creating notification:", error);
+                                  }
+                                }
+                              }
+                            });
+                          }}
+                        />
+                      </div>
                     </div>
                   ))
                 )}
