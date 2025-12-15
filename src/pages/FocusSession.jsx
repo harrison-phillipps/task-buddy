@@ -113,7 +113,7 @@ export default function FocusSession() {
   }, []);
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ['tasks', currentUser?.id],
+    queryKey: ['focusSessionTasks', currentUser?.id],
     queryFn: async () => {
       if (!currentUser) return [];
       // Get personal tasks
@@ -121,18 +121,15 @@ export default function FocusSession() {
         created_by: currentUser.email, 
         team_id: null 
       }, '-created_date');
-      // Get assigned team tasks
-      const assignedTeamTasks = await base44.entities.Task.filter({ 
-        assigned_to: currentUser.id 
-      }, '-created_date');
-      // Get tasks where user is in assigned_to_users array
-      const allTeamTasks = await base44.entities.Task.list();
-      const multiAssignedTasks = allTeamTasks.filter(task => 
+      // Get all tasks and filter for assigned ones
+      const allTasks = await base44.entities.Task.list('-created_date');
+      const assignedTasks = allTasks.filter(task => 
+        task.assigned_to === currentUser.id || 
         task.assigned_to_users?.some(u => u.user_id === currentUser.id)
       );
       // Combine and deduplicate
-      const allTasks = [...personalTasks, ...assignedTeamTasks, ...multiAssignedTasks];
-      return allTasks.filter((task, index, self) => 
+      const combined = [...personalTasks, ...assignedTasks];
+      return combined.filter((task, index, self) => 
         index === self.findIndex(t => t.id === task.id)
       );
     },
