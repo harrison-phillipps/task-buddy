@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, CheckCircle, Clock, AlertCircle, MessageSquare, Plus, Shield, ListTodo, Brain } from "lucide-react";
+import { Users, CheckCircle, Clock, AlertCircle, MessageSquare, Plus, Shield, ListTodo, Brain, Calendar, Bell, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -19,6 +19,9 @@ import { hasPermission, PERMISSIONS } from "../components/team/TeamPermissions";
 import TeamBrainDump from "../components/team/TeamBrainDump";
 import CollaborativeFocusModal from "../components/team/CollaborativeFocusModal";
 import ActiveCollaborativeSessions from "../components/team/ActiveCollaborativeSessions";
+import TeamCalendar from "../components/team/TeamCalendar";
+import TeamNotifications from "../components/team/TeamNotifications";
+import TeamTemplates from "../components/team/TeamTemplates";
 
 export default function TeamDashboard() {
   const queryClient = useQueryClient();
@@ -170,6 +173,18 @@ export default function TeamDashboard() {
                 <ListTodo className="w-4 h-4 mr-2" />
                 Overview
               </TabsTrigger>
+              <TabsTrigger value="calendar" className="flex-shrink-0">
+                <Calendar className="w-4 h-4 mr-2" />
+                Calendar
+              </TabsTrigger>
+              <TabsTrigger value="notifications" className="flex-shrink-0">
+                <Bell className="w-4 h-4 mr-2" />
+                Notifications
+              </TabsTrigger>
+              <TabsTrigger value="templates" className="flex-shrink-0">
+                <FileText className="w-4 h-4 mr-2" />
+                Templates
+              </TabsTrigger>
               <TabsTrigger value="braindump" className="flex-shrink-0">
                 <Brain className="w-4 h-4 mr-2" />
                 Brain Dump
@@ -189,6 +204,18 @@ export default function TeamDashboard() {
                 <ActiveCollaborativeSessions teamId={teamId} currentUser={currentUser} />
                 <TeamActivityDashboard team={team} currentUser={currentUser} />
               </div>
+            </TabsContent>
+
+            <TabsContent value="calendar">
+              <TeamCalendar team={team} currentUser={currentUser} />
+            </TabsContent>
+
+            <TabsContent value="notifications">
+              <TeamNotifications team={team} currentUser={currentUser} />
+            </TabsContent>
+
+            <TabsContent value="templates">
+              <TeamTemplates team={team} currentUser={currentUser} />
             </TabsContent>
 
             <TabsContent value="braindump">
