@@ -40,7 +40,6 @@ export default function TeamDashboard() {
     const fetchUser = async () => {
       try {
         const user = await base44.auth.me();
-        console.log('Current user:', user);
         setCurrentUser(user);
       } catch (error) {
         console.error("Error fetching user:", error);
@@ -49,31 +48,14 @@ export default function TeamDashboard() {
     fetchUser();
   }, []);
 
-  useEffect(() => {
-    console.log('TeamDashboard mounted - teamId:', teamId);
-    console.log('Team data:', team);
-    console.log('Team loading:', teamLoading);
-    console.log('Team error:', teamError);
-  }, [teamId, team, teamLoading, teamError]);
-
   const { data: team, isLoading: teamLoading, error: teamError } = useQuery({
     queryKey: ['team', teamId],
     queryFn: async () => {
-      console.log('Fetching team with ID:', teamId);
-      if (!teamId) {
-        console.log('No teamId provided');
-        return null;
-      }
-      try {
-        const teams = await base44.entities.Team.filter({ id: teamId });
-        console.log('Fetched teams:', teams);
-        return teams[0] || null;
-      } catch (error) {
-        console.error('Error fetching team:', error);
-        throw error;
-      }
+      if (!teamId) return null;
+      const allTeams = await base44.entities.Team.list();
+      return allTeams.find(t => t.id === teamId) || null;
     },
-    enabled: !!teamId,
+    enabled: !!teamId && !!currentUser,
   });
 
   const { data: teamTasks = [] } = useQuery({
