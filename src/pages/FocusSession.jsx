@@ -185,6 +185,7 @@ export default function FocusSession() {
     mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['focusSessionTasks'] });
     },
   });
 
