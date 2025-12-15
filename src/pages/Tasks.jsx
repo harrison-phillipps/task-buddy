@@ -211,14 +211,14 @@ export default function Tasks() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+          className="flex flex-col gap-4"
         >
-          <div className="flex-1">
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent mb-3">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent mb-3 break-words">
               {selectedTeamId === "personal" ? "My Tasks" : currentTeam?.name || "Team Tasks"}
             </h1>
             <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
-              <SelectTrigger className="w-64">
+              <SelectTrigger className="w-full sm:w-64">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -231,17 +231,18 @@ export default function Tasks() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button 
               variant="outline"
               onClick={() => setShowCalendarSync(true)}
-              className="border-purple-200 hover:bg-purple-50"
+              className="border-purple-200 hover:bg-purple-50 flex-1 sm:flex-none"
             >
               <Calendar className="w-4 h-4 mr-2" />
-              Sync to Calendar
+              <span className="hidden sm:inline">Sync to Calendar</span>
+              <span className="sm:hidden">Sync</span>
             </Button>
-            <Link to={createPageUrl("TaskBreakdown")}>
-              <Button className="bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold shadow-lg">
+            <Link to={createPageUrl("TaskBreakdown")} className="flex-1 sm:flex-none">
+              <Button className="bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold shadow-lg w-full">
                 <Plus className="w-4 h-4 mr-2" />
                 New Task
               </Button>
@@ -255,17 +256,19 @@ export default function Tasks() {
           transition={{ delay: 0.1 }}
         >
           <Tabs value={filter} onValueChange={setFilter}>
-            <TabsList className="bg-white/80 backdrop-blur-sm border border-purple-100">
-              <TabsTrigger value="all" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-teal-500 data-[state=active]:text-white">
+            <TabsList className="bg-white/80 backdrop-blur-sm border border-purple-100 w-full grid grid-cols-2 sm:grid-cols-4 h-auto">
+              <TabsTrigger value="all" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-teal-500 data-[state=active]:text-white text-xs sm:text-sm">
                 All ({statusCounts.all})
               </TabsTrigger>
-              <TabsTrigger value="not_started">
-                Not Started ({statusCounts.not_started})
+              <TabsTrigger value="not_started" className="text-xs sm:text-sm">
+                <span className="hidden sm:inline">Not Started</span>
+                <span className="sm:hidden">Not Started</span> ({statusCounts.not_started})
               </TabsTrigger>
-              <TabsTrigger value="in_progress">
-                In Progress ({statusCounts.in_progress})
+              <TabsTrigger value="in_progress" className="text-xs sm:text-sm">
+                <span className="hidden sm:inline">In Progress</span>
+                <span className="sm:hidden">In Progress</span> ({statusCounts.in_progress})
               </TabsTrigger>
-              <TabsTrigger value="completed">
+              <TabsTrigger value="completed" className="text-xs sm:text-sm">
                 Completed ({statusCounts.completed})
               </TabsTrigger>
             </TabsList>

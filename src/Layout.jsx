@@ -185,7 +185,7 @@ function LayoutContent({ children, currentPageName }) {
           --soft-purple: #F3F0FF;
         }
       `}</style>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-purple-50 via-teal-50 to-blue-50">
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-purple-50 via-teal-50 to-blue-50 overflow-x-hidden">
         <Sidebar className="border-r border-purple-100 bg-white/80 backdrop-blur-sm">
           <SidebarHeader className="border-b border-purple-100 p-6">
             <div className="flex items-center gap-3">
@@ -319,14 +319,14 @@ function LayoutContent({ children, currentPageName }) {
           </SidebarFooter>
         </Sidebar>
 
-        <main className="flex-1 flex flex-col">
-          <header className="bg-white/70 backdrop-blur-md border-b border-purple-100 px-6 py-4 sticky top-0 z-10">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
+        <main className="flex-1 flex flex-col min-w-0">
+          <header className="bg-white/70 backdrop-blur-md border-b border-purple-100 px-3 sm:px-6 py-4 sticky top-0 z-10">
+            <div className="flex items-center justify-between gap-2 sm:gap-4">
+              <div className="flex items-center gap-2 sm:gap-4">
                 <SidebarTrigger className="hover:bg-purple-100 p-2 rounded-lg transition-colors duration-200">
                   <PanelLeft className="w-5 h-5" />
                 </SidebarTrigger>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent md:hidden">TaskBuddy</h1>
+                <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent md:hidden">TaskBuddy</h1>
               </div>
               <div className="ml-auto">
                 <NotificationBell currentUser={currentUser} />

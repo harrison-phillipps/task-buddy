@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, CheckCircle, Clock, AlertCircle, MessageSquare, Plus, Shield, ListTodo } from "lucide-react";
+import { Users, CheckCircle, Clock, AlertCircle, MessageSquare, Plus, Shield, ListTodo, Brain } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -16,6 +16,7 @@ import CollaborativeTaskView from "../components/collaboration/CollaborativeTask
 import TeamMessaging from "../components/team/TeamMessaging";
 import MemberRoleManager from "../components/team/MemberRoleManager";
 import { hasPermission, PERMISSIONS } from "../components/team/TeamPermissions";
+import TeamBrainDump from "../components/team/TeamBrainDump";
 
 export default function TeamDashboard() {
   const queryClient = useQueryClient();
@@ -84,19 +85,19 @@ export default function TeamDashboard() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent break-words">
                 {team.name}
               </h1>
               {team.description && (
-                <p className="text-gray-600">{team.description}</p>
+                <p className="text-gray-600 text-sm sm:text-base">{team.description}</p>
               )}
             </div>
-            <Link to={createPageUrl("Tasks") + `?teamId=${teamId}`}>
-              <Button className="bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white">
+            <Link to={createPageUrl("Tasks") + `?teamId=${teamId}`} className="w-full sm:w-auto">
+              <Button className="bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-2" />
-                New Team Task
+                New Task
               </Button>
             </Link>
           </div>
@@ -160,16 +161,20 @@ export default function TeamDashboard() {
           transition={{ delay: 0.2 }}
         >
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="bg-white/80 backdrop-blur-sm border border-purple-100">
-              <TabsTrigger value="overview">
+            <TabsList className="bg-white/80 backdrop-blur-sm border border-purple-100 flex-wrap h-auto">
+              <TabsTrigger value="overview" className="flex-shrink-0">
                 <ListTodo className="w-4 h-4 mr-2" />
                 Overview
               </TabsTrigger>
-              <TabsTrigger value="chat">
+              <TabsTrigger value="braindump" className="flex-shrink-0">
+                <Brain className="w-4 h-4 mr-2" />
+                Brain Dump
+              </TabsTrigger>
+              <TabsTrigger value="chat" className="flex-shrink-0">
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Team Chat
               </TabsTrigger>
-              <TabsTrigger value="members">
+              <TabsTrigger value="members" className="flex-shrink-0">
                 <Shield className="w-4 h-4 mr-2" />
                 Members & Roles
               </TabsTrigger>
@@ -177,6 +182,10 @@ export default function TeamDashboard() {
 
             <TabsContent value="overview">
               <TeamActivityDashboard team={team} currentUser={currentUser} />
+            </TabsContent>
+
+            <TabsContent value="braindump">
+              <TeamBrainDump team={team} currentUser={currentUser} members={teamMembers} />
             </TabsContent>
 
             <TabsContent value="chat">
