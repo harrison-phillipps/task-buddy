@@ -34,33 +34,36 @@ export default function TaskAssignment({ task, teamMembers = [], onAssign }) {
       )}
       <Select
         value={displayValue}
-        onValueChange={(value) => {
+        onValueChange={async (value) => {
+          let assignmentData;
           if (value === "all") {
-            onAssign({
+            assignmentData = {
               assigned_to: null,
               assigned_to_name: null,
               assigned_to_users: teamMembers.map(m => ({
                 user_id: m.id,
                 user_name: m.full_name || m.email
               }))
-            });
+            };
           } else if (value === "unassigned") {
-            onAssign({
+            assignmentData = {
               assigned_to: null,
               assigned_to_name: null,
               assigned_to_users: []
-            });
+            };
           } else {
             const assignedUser = teamMembers.find(m => m.id === value);
-            onAssign({
+            assignmentData = {
               assigned_to: value,
               assigned_to_name: assignedUser ? (assignedUser.full_name || assignedUser.email) : null,
               assigned_to_users: [{
                 user_id: value,
                 user_name: assignedUser ? (assignedUser.full_name || assignedUser.email) : null
               }]
-            });
+            };
           }
+          
+          await onAssign(assignmentData);
         }}
       >
         <SelectTrigger>

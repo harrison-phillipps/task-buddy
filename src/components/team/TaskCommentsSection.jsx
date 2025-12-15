@@ -8,9 +8,10 @@ import { Send, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import moment from "moment";
 
-export default function TaskCommentsSection({ taskId, currentUser, teamMembers }) {
+export default function TaskCommentsSection({ task, currentUser, team, onCommentAdded }) {
   const queryClient = useQueryClient();
   const [newComment, setNewComment] = useState("");
+  const taskId = task?.id;
 
   const { data: comments = [] } = useQuery({
     queryKey: ['taskComments', taskId],
@@ -19,10 +20,30 @@ export default function TaskCommentsSection({ taskId, currentUser, teamMembers }
   });
 
   const addCommentMutation = useMutation({
-    mutationFn: (commentData) => base44.entities.TaskComment.create(commentData),
+    mutationFn: async (commentData) => {
+      // Create the comment
+      const comment = await base44.entities.TaskComment.create(commentData);
+      
+      // Create notification for team members (except the commenter)
+      if (task?.team_id && team) {
+        await base44.entities.TeamNotification.create({
+          team_id: task.team_id,
+          type: "task_commented",
+          title: `New comment on "${task.title}"`,
+          message: `${currentUser.full_name || currentUser.email} commented: "${newComment.slice(0, 50)}${newComment.length > 50 ? '...' : ''}"`,
+          priority: "medium",
+          related_id: task.id,
+          created_by: currentUser.id
+        });
+      }
+      
+      return comment;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['taskComments', taskId] });
+      queryClient.invalidateQueries({ queryKey: ['teamNotifications'] });
       setNewComment("");
+      onCommentAdded?.();
     },
   });
 

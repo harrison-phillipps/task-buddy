@@ -60,6 +60,8 @@ export default function TeamNotifications({ team, currentUser }) {
 
   const typeIcons = {
     task_assigned: CheckCircle,
+    task_commented: Info,
+    status_changed: AlertCircle,
     deadline_reminder: AlertCircle,
     session_started: Bell,
     task_completed: Check,

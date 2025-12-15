@@ -368,9 +368,12 @@ export default function TeamDashboard() {
                     <p className="font-medium text-sm text-gray-900">{selectedTask.title}</p>
                   </div>
                   <TaskCommentsSection
-                    taskId={selectedTask.id}
+                    task={selectedTask}
                     currentUser={currentUser}
-                    teamMembers={teamMembers}
+                    team={team}
+                    onCommentAdded={() => {
+                      queryClient.invalidateQueries({ queryKey: ['teamNotifications'] });
+                    }}
                   />
                 </CardContent>
               </Card>

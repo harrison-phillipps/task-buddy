@@ -67,6 +67,20 @@ export default function CollaborativeTaskView({ task, open, onOpenChange, curren
       action_type: "status_changed",
       description: `changed status to ${newStatus.replace('_', ' ')}`
     });
+    
+    // Create notification for status change
+    if (task.team_id) {
+      await base44.entities.TeamNotification.create({
+        team_id: task.team_id,
+        type: newStatus === "completed" ? "task_completed" : "status_changed",
+        title: `Task status updated: "${task.title}"`,
+        message: `${currentUser.display_name || currentUser.full_name} changed status to ${newStatus.replace('_', ' ')}`,
+        priority: newStatus === "completed" ? "low" : "medium",
+        related_id: task.id,
+        created_by: currentUser.id
+      });
+      queryClient.invalidateQueries({ queryKey: ['teamNotifications'] });
+    }
   };
 
   if (!task) return null;
@@ -255,6 +269,7 @@ export default function CollaborativeTaskView({ task, open, onOpenChange, curren
                   description: "added a comment"
                 });
                 queryClient.invalidateQueries({ queryKey: ['taskActivities'] });
+                queryClient.invalidateQueries({ queryKey: ['teamNotifications'] });
               }}
             />
           </TabsContent>
