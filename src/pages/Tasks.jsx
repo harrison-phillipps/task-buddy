@@ -121,7 +121,9 @@ export default function Tasks() {
   const getTeamMembers = (task) => {
     const taskTeam = teams.find(t => t.id === task.team_id);
     if (!taskTeam) return [];
-    return allUsers.filter(u => taskTeam.member_ids?.includes(u.id));
+    // Include both owner and members
+    const teamUserIds = [taskTeam.owner_id, ...(taskTeam.member_ids || [])];
+    return allUsers.filter(u => teamUserIds.includes(u.id));
   };
 
   const deleteTaskMutation = useMutation({
