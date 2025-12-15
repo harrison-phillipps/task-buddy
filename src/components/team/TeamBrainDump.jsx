@@ -37,16 +37,17 @@ export default function TeamBrainDump({ team, currentUser, members }) {
     setIsProcessing(true);
     try {
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Extract actionable tasks from this brain dump text. Return a JSON array of tasks.
+        prompt: `Extract actionable tasks from this brain dump text. Break down each task into subtasks with time estimates.
         
 Brain dump: ${input}
 
-For each task, determine:
+For each task, provide:
 - title (brief, actionable)
 - description (details if any)
 - category (work/personal/health/creative/learning/household/other)
 - difficulty (easy/medium/hard)
-- estimated_minutes (realistic estimate)
+- estimated_minutes (total time for all subtasks)
+- subtasks: array of steps with title and estimated_minutes for each
 
 Return ONLY valid JSON array, no markdown.`,
         response_json_schema: {
@@ -61,7 +62,19 @@ Return ONLY valid JSON array, no markdown.`,
                   description: { type: "string" },
                   category: { type: "string" },
                   difficulty: { type: "string" },
-                  estimated_minutes: { type: "number" }
+                  estimated_minutes: { type: "number" },
+                  subtasks: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        title: { type: "string" },
+                        estimated_minutes: { type: "number" },
+                        completed: { type: "boolean" },
+                        order: { type: "number" }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -104,6 +117,7 @@ Return ONLY valid JSON array, no markdown.`,
       category: idea.category,
       difficulty: idea.difficulty,
       estimated_minutes: idea.estimated_minutes,
+      subtasks: idea.subtasks || [],
       status: 'not_started',
       team_id: team.id,
       assigned_to: idea.assigned_to,
