@@ -93,10 +93,13 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                     Spread
                   </Badge>
                 )}
-                {showTeamInfo && task.assigned_to_name && (
+                {showTeamInfo && (task.assigned_to_name || task.assigned_to_users?.length > 0) && (
                   <Badge variant="outline" className="flex items-center gap-1">
                     <UserCircle className="w-3 h-3" />
-                    {task.assigned_to_name}
+                    {task.assigned_to_users?.length > 1 
+                      ? `${task.assigned_to_users.length} members`
+                      : task.assigned_to_name || task.assigned_to_users?.[0]?.user_name
+                    }
                   </Badge>
                 )}
                 {task.team_id && (

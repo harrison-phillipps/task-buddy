@@ -84,8 +84,13 @@ export default function Tasks() {
         const assignedTeamTasks = await base44.entities.Task.filter({ 
           assigned_to: currentUser.id 
         }, '-created_date');
+        // Get tasks where user is in assigned_to_users array
+        const allTeamTasks = await base44.entities.Task.list();
+        const multiAssignedTasks = allTeamTasks.filter(task => 
+          task.assigned_to_users?.some(u => u.user_id === currentUser.id)
+        );
         // Combine and deduplicate
-        const allTasks = [...personalTasks, ...assignedTeamTasks];
+        const allTasks = [...personalTasks, ...assignedTeamTasks, ...multiAssignedTasks];
         return allTasks.filter((task, index, self) => 
           index === self.findIndex(t => t.id === task.id)
         );
