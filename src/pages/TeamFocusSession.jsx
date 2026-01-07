@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import VirtualCompanion from "../components/VirtualCompanion";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 
 export default function TeamFocusSession() {
   const queryClient = useQueryClient();
@@ -25,6 +26,8 @@ export default function TeamFocusSession() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [completedSubtasks, setCompletedSubtasks] = useState(new Set());
+  const [isGeneratingSubtasks, setIsGeneratingSubtasks] = useState(false);
+  const [needsBreakdown, setNeedsBreakdown] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -41,13 +44,19 @@ export default function TeamFocusSession() {
             // Fetch the task
             const tasks = await base44.entities.Task.filter({ id: session.task_id });
             if (tasks.length > 0) {
-              setTask(tasks[0]);
+              const fetchedTask = tasks[0];
+              setTask(fetchedTask);
               
-              // Find first incomplete subtask
-              const firstIncomplete = tasks[0].subtasks?.findIndex(st => !st.completed) || 0;
-              setCurrentSubtaskIndex(firstIncomplete);
-              const firstSubtask = tasks[0].subtasks[firstIncomplete];
-              setTimeLeft((firstSubtask?.estimated_minutes || 10) * 60);
+              // Check if task needs AI breakdown
+              if (!fetchedTask.subtasks || fetchedTask.subtasks.length === 0) {
+                setNeedsBreakdown(true);
+              } else {
+                // Find first incomplete subtask
+                const firstIncomplete = fetchedTask.subtasks?.findIndex(st => !st.completed) || 0;
+                setCurrentSubtaskIndex(firstIncomplete);
+                const firstSubtask = fetchedTask.subtasks[firstIncomplete];
+                setTimeLeft((firstSubtask?.estimated_minutes || 10) * 60);
+              }
             }
           }
         }
@@ -85,6 +94,70 @@ export default function TeamFocusSession() {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
+
+  const generateSubtasks = async () => {
+    setIsGeneratingSubtasks(true);
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Break down this task into 3-6 actionable subtasks:
+        
+Task: ${task.title}
+Description: ${task.description || 'No description'}
+Difficulty: ${task.difficulty}
+
+For each subtask, provide:
+- title: Clear, specific action step
+- estimated_minutes: Realistic time estimate (5-30 minutes)
+
+Return ONLY valid JSON with this structure:
+{
+  "subtasks": [
+    {"title": "...", "estimated_minutes": 10},
+    ...
+  ]
+}`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            subtasks: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  estimated_minutes: { type: "number" }
+                },
+                required: ["title", "estimated_minutes"]
+              }
+            }
+          },
+          required: ["subtasks"]
+        }
+      });
+
+      const subtasksWithStatus = result.subtasks.map((st, index) => ({
+        ...st,
+        completed: false,
+        order: index
+      }));
+
+      await updateTaskMutation.mutateAsync({
+        id: task.id,
+        data: { subtasks: subtasksWithStatus }
+      });
+
+      setTask({ ...task, subtasks: subtasksWithStatus });
+      setNeedsBreakdown(false);
+      setCurrentSubtaskIndex(0);
+      setTimeLeft((subtasksWithStatus[0]?.estimated_minutes || 10) * 60);
+      toast.success("Task broken down successfully!");
+    } catch (error) {
+      console.error("Error generating subtasks:", error);
+      toast.error("Failed to break down task");
+    } finally {
+      setIsGeneratingSubtasks(false);
+    }
+  };
 
   const handleSubtaskComplete = () => {
     const newCompleted = new Set(completedSubtasks);
@@ -126,6 +199,70 @@ export default function TeamFocusSession() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (needsBreakdown) {
+    return (
+      <div className="min-h-screen p-4 md:p-8">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            <h1 className="text-3xl md:text-4xl font-bold mb-3 bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">
+              Team Focus Session 🎯
+            </h1>
+          </motion.div>
+
+          <VirtualCompanion 
+            mood="supportive"
+            message="Let me break down this task into manageable steps for your team!"
+            size="small"
+            characterType={currentUser?.companion_type || "robot"}
+          />
+
+          <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-600" />
+                Task Breakdown Needed
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 bg-purple-50 rounded-lg">
+                <h3 className="font-semibold text-gray-900 mb-2">{task.title}</h3>
+                {task.description && (
+                  <p className="text-sm text-gray-600">{task.description}</p>
+                )}
+              </div>
+
+              <p className="text-gray-600">
+                This task doesn't have subtasks yet. Let AI break it down into clear, manageable steps for your team to work through together.
+              </p>
+
+              <Button
+                onClick={generateSubtasks}
+                disabled={isGeneratingSubtasks}
+                className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold py-6"
+              >
+                {isGeneratingSubtasks ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Breaking Down Task...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Break Down Task with AI
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
