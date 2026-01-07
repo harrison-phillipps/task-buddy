@@ -41,7 +41,7 @@ export default function CollaborativeFocusModal({ task, team, open, onOpenChange
       queryClient.invalidateQueries({ queryKey: ['collaborativeSessions'] });
       toast.success("Collaborative focus session started!");
       onOpenChange(false);
-      window.location.href = `/FocusSession?collaborativeSessionId=${session.id}`;
+      window.location.href = `/TeamFocusSession?sessionId=${session.id}`;
     },
   });
 
