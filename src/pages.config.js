@@ -22,6 +22,7 @@ import TaskBreakdown from './pages/TaskBreakdown';
 import Tasks from './pages/Tasks';
 import TeamDashboard from './pages/TeamDashboard';
 import Teams from './pages/Teams';
+import TeamFocusSession from './pages/TeamFocusSession';
 import __Layout from './Layout.jsx';
 
 
@@ -50,6 +51,7 @@ export const PAGES = {
     "Tasks": Tasks,
     "TeamDashboard": TeamDashboard,
     "Teams": Teams,
+    "TeamFocusSession": TeamFocusSession,
 }
 
 export const pagesConfig = {
