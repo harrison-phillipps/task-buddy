@@ -117,17 +117,17 @@ function LayoutContent({ children, currentPageName }) {
         if (progressList.length > 0) {
           setUserProgress(progressList[0]);
         } else {
-          // If no progress, initialize it (or handle as needed)
           setUserProgress(null);
         }
       } catch (error) {
         console.error("Error fetching user or user progress:", error);
+        // Don't block the app if user fetch fails
         setCurrentUser(null);
         setUserProgress(null);
       }
     };
     fetchUser();
-  }, [location.pathname]); // Refetch when navigating
+  }, [location.pathname]);
 
   const handleChangeCompanion = () => {
     navigate(createPageUrl("CharacterSelection"));
