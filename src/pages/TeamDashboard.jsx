@@ -115,26 +115,33 @@ export default function TeamDashboard() {
 
   if (!teamId) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600">No team selected</p>
+      <div className="min-h-screen flex items-center justify-center p-8">
+        <div className="text-center">
+          <p className="text-gray-600 text-lg">No team selected</p>
+          <a href={createPageUrl("Teams")} className="text-purple-600 hover:underline mt-2 block">Go to Teams</a>
+        </div>
       </div>
     );
   }
 
-  if (teamLoading) {
+  if (teamLoading || !currentUser) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading team...</p>
+        </div>
       </div>
     );
   }
 
   if (teamError) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center p-8">
         <div className="text-center">
-          <p className="text-red-600 mb-2">Error loading team</p>
-          <p className="text-sm text-gray-600">{teamError.message}</p>
+          <p className="text-red-600 mb-2 text-lg">Error loading team</p>
+          <p className="text-sm text-gray-600 mb-4">{teamError.message}</p>
+          <a href={createPageUrl("Teams")} className="text-purple-600 hover:underline">Go back to Teams</a>
         </div>
       </div>
     );
@@ -142,8 +149,12 @@ export default function TeamDashboard() {
 
   if (!team) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600">Team not found</p>
+      <div className="min-h-screen flex items-center justify-center p-8">
+        <div className="text-center">
+          <p className="text-gray-600 mb-2 text-lg">Team not found</p>
+          <p className="text-sm text-gray-500 mb-4">The team you're looking for doesn't exist or you don't have access.</p>
+          <a href={createPageUrl("Teams")} className="text-purple-600 hover:underline">Go back to Teams</a>
+        </div>
       </div>
     );
   }

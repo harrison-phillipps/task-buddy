@@ -1,53 +1,55 @@
-import Dashboard from './pages/Dashboard';
-import TaskBreakdown from './pages/TaskBreakdown';
-import FocusSession from './pages/FocusSession';
-import CharacterSelection from './pages/CharacterSelection';
+import AITaskGenerator from './pages/AITaskGenerator';
+import Achievements from './pages/Achievements';
+import Analytics from './pages/Analytics';
 import BrainDump from './pages/BrainDump';
 import BrainDumpHistory from './pages/BrainDumpHistory';
-import SessionHistory from './pages/SessionHistory';
-import Achievements from './pages/Achievements';
-import Tasks from './pages/Tasks';
-import LeaderboardPage from './pages/LeaderboardPage';
-import Analytics from './pages/Analytics';
-import Onboarding from './pages/Onboarding';
 import CalendarCallback from './pages/CalendarCallback';
 import CalendarView from './pages/CalendarView';
-import Subscription from './pages/Subscription';
-import Journal from './pages/Journal';
-import AITaskGenerator from './pages/AITaskGenerator';
-import Teams from './pages/Teams';
-import TeamDashboard from './pages/TeamDashboard';
+import CharacterSelection from './pages/CharacterSelection';
+import Dashboard from './pages/Dashboard';
+import FocusSession from './pages/FocusSession';
 import Goals from './pages/Goals';
 import Habits from './pages/Habits';
+import Home from './pages/Home';
+import Journal from './pages/Journal';
+import LeaderboardPage from './pages/LeaderboardPage';
 import NotificationSettings from './pages/NotificationSettings';
+import Onboarding from './pages/Onboarding';
+import SessionHistory from './pages/SessionHistory';
 import Settings from './pages/Settings';
+import Subscription from './pages/Subscription';
+import TaskBreakdown from './pages/TaskBreakdown';
+import Tasks from './pages/Tasks';
+import TeamDashboard from './pages/TeamDashboard';
+import Teams from './pages/Teams';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Dashboard": Dashboard,
-    "TaskBreakdown": TaskBreakdown,
-    "FocusSession": FocusSession,
-    "CharacterSelection": CharacterSelection,
+    "AITaskGenerator": AITaskGenerator,
+    "Achievements": Achievements,
+    "Analytics": Analytics,
     "BrainDump": BrainDump,
     "BrainDumpHistory": BrainDumpHistory,
-    "SessionHistory": SessionHistory,
-    "Achievements": Achievements,
-    "Tasks": Tasks,
-    "LeaderboardPage": LeaderboardPage,
-    "Analytics": Analytics,
-    "Onboarding": Onboarding,
     "CalendarCallback": CalendarCallback,
     "CalendarView": CalendarView,
-    "Subscription": Subscription,
-    "Journal": Journal,
-    "AITaskGenerator": AITaskGenerator,
-    "Teams": Teams,
-    "TeamDashboard": TeamDashboard,
+    "CharacterSelection": CharacterSelection,
+    "Dashboard": Dashboard,
+    "FocusSession": FocusSession,
     "Goals": Goals,
     "Habits": Habits,
+    "Home": Home,
+    "Journal": Journal,
+    "LeaderboardPage": LeaderboardPage,
     "NotificationSettings": NotificationSettings,
+    "Onboarding": Onboarding,
+    "SessionHistory": SessionHistory,
     "Settings": Settings,
+    "Subscription": Subscription,
+    "TaskBreakdown": TaskBreakdown,
+    "Tasks": Tasks,
+    "TeamDashboard": TeamDashboard,
+    "Teams": Teams,
 }
 
 export const pagesConfig = {
