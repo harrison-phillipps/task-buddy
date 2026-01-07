@@ -62,7 +62,6 @@ export default function Dashboard() {
     enabled: !!currentUser,
   });
 
-  // Check if user has completed onboarding
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -84,9 +83,25 @@ export default function Dashboard() {
         const progressList = await base44.entities.UserProgress.filter({ user_id: user.id });
         if (progressList.length > 0) {
           setUserProgress(progressList[0]);
+        } else {
+          // Initialize progress for new users
+          const newProgress = await base44.entities.UserProgress.create({
+            user_id: user.id,
+            total_points: 0,
+            level: 1,
+            tasks_completed: 0,
+            focus_sessions_completed: 0,
+            total_focus_minutes: 0,
+            brain_dumps_created: 0,
+            current_streak: 0,
+            longest_streak: 0
+          });
+          setUserProgress(newProgress);
         }
       } catch (error) {
         console.error("Error fetching user:", error);
+        // Still set a basic user object so the app doesn't break
+        setCurrentUser({ id: 'error', email: 'error@example.com' });
       }
     };
 
