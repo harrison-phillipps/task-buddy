@@ -177,6 +177,14 @@ export default function TeamDashboard() {
 
   return (
     <div className="min-h-screen p-4 md:p-8">
+      <RealTimeTaskSync 
+        teamId={teamId} 
+        onTaskUpdate={(event) => {
+          if (event.type === 'update') {
+            toast.success(`Task "${event.data.title}" was updated`);
+          }
+        }}
+      />
       <div className="max-w-7xl mx-auto space-y-8">
         <motion.div
           initial={{ opacity: 0, y: -20 }}

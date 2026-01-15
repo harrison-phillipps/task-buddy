@@ -13,6 +13,7 @@ import VirtualCompanion from "../components/VirtualCompanion";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
+import FocusSessionChat from "../components/team/FocusSessionChat";
 
 export default function TeamFocusSession() {
   const queryClient = useQueryClient();
@@ -28,6 +29,26 @@ export default function TeamFocusSession() {
   const [completedSubtasks, setCompletedSubtasks] = useState(new Set());
   const [isGeneratingSubtasks, setIsGeneratingSubtasks] = useState(false);
   const [needsBreakdown, setNeedsBreakdown] = useState(false);
+
+  // Real-time task sync
+  useEffect(() => {
+    if (!task?.id) return;
+    
+    const unsubscribe = base44.entities.Task.subscribe((event) => {
+      if (event.data?.id === task.id) {
+        setTask(event.data);
+        if (event.data.subtasks && event.data.subtasks.length > 0) {
+          const newCompleted = new Set();
+          event.data.subtasks.forEach((st, idx) => {
+            if (st.completed) newCompleted.add(idx);
+          });
+          setCompletedSubtasks(newCompleted);
+        }
+      }
+    });
+
+    return unsubscribe;
+  }, [task?.id]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -348,11 +369,13 @@ Return ONLY valid JSON with this structure:
           </CardContent>
         </Card>
 
-        <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
-          <CardHeader>
-            <CardTitle className="text-lg">All Steps</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
+              <CardHeader>
+                <CardTitle className="text-lg">All Steps</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
             {task.subtasks.map((subtask, index) => {
               const isCompleted = completedSubtasks.has(index);
               const isCurrent = index === currentSubtaskIndex;
@@ -390,8 +413,14 @@ Return ONLY valid JSON with this structure:
                 </div>
               );
             })}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div>
+            <FocusSessionChat sessionId={sessionId} currentUser={currentUser} />
+          </div>
+        </div>
       </div>
     </div>
   );
