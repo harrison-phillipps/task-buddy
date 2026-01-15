@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, Clock, Zap, Play, MoreVertical, Calendar, CalendarDays, Lock, RefreshCw, Link as LinkIcon, UserCircle, Users } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import SubtaskTracker from "./tasks/SubtaskTracker";
+import RecurringTaskBadge from "./tasks/RecurringTaskBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,18 +67,13 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
-                {isBlocked && (
-                  <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-                    <Lock className="w-3 h-3 mr-1" />
-                    Blocked
-                  </Badge>
-                )}
-                {task.is_recurring && (
-                  <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                    <RefreshCw className="w-3 h-3 mr-1" />
-                    Recurring
-                  </Badge>
-                )}
+                  {isBlocked && (
+                    <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                      <Lock className="w-3 h-3 mr-1" />
+                      Blocked
+                    </Badge>
+                  )}
+                  <RecurringTaskBadge task={task} />
                 <Badge className={`${categoryColors[task.category]} border font-medium`}>
                   {task.category}
                 </Badge>

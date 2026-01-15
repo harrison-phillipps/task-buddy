@@ -88,6 +88,9 @@ export default function AIPrioritization({
           st.scheduled_date && isToday(parseISO(st.scheduled_date))
         );
 
+        const isRecurringInstance = task.parent_recurring_task_id ? true : false;
+        const isRecurringTemplate = task.is_recurring && !task.parent_recurring_task_id;
+
         return {
           id: task.id,
           title: task.title,
@@ -104,7 +107,9 @@ export default function AIPrioritization({
           progress_percent: progressPercent,
           has_scheduled_today: hasScheduledToday,
           is_blocked: task.blocked_by?.length > 0,
-          is_spread: task.spread_across_days
+          is_spread: task.spread_across_days,
+          is_recurring_instance: isRecurringInstance,
+          is_recurring_template: isRecurringTemplate
         };
       });
 
@@ -139,13 +144,15 @@ ${JSON.stringify(taskData, null, 2)}
 Consider these factors in order of importance:
 1. URGENCY: Overdue and due-today tasks are highest priority
 2. DEADLINES: Tasks due within 3 days need attention
-3. SCHEDULED: Tasks with subtasks scheduled for today
-4. PROGRESS: Tasks already in-progress (momentum)
-5. ENERGY MATCH: Match task difficulty with time of day (morning=high energy, evening=low)
-6. QUICK WINS: Short tasks for momentum building
-7. BLOCKED: Deprioritize blocked tasks
-8. USER PRIORITY: Respect user-set priority levels
-9. CALENDAR CONFLICTS: Consider busy calendar slots - suggest tasks that fit available time gaps
+3. RECURRING INSTANCES: Prioritize recurring task instances due today to maintain habits
+4. SCHEDULED: Tasks with subtasks scheduled for today
+5. PROGRESS: Tasks already in-progress (momentum)
+6. ENERGY MATCH: Match task difficulty with time of day (morning=high energy, evening=low)
+7. QUICK WINS: Short tasks for momentum building
+8. BLOCKED: Deprioritize blocked tasks
+9. RECURRING TEMPLATES: Deprioritize templates (they generate instances)
+10. USER PRIORITY: Respect user-set priority levels
+11. CALENDAR CONFLICTS: Consider busy calendar slots - suggest tasks that fit available time gaps
 
 For each task, provide:
 - Its optimal position (1 = do first)
