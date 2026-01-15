@@ -1,3 +1,4 @@
+import React from "react";
 import { base44 } from "@/api/base44Client";
 import { addDays, addWeeks, addMonths, parseISO, format, startOfDay, isBefore } from "date-fns";
 
@@ -108,32 +109,4 @@ function calculateNextOccurrence(currentDate, template) {
     default:
       return addDays(currentDate, 1);
   }
-}
-
-/**
- * Hook to check and process recurring tasks on component mount
- */
-export function useRecurringTaskProcessor(currentUser) {
-  React.useEffect(() => {
-    if (!currentUser) return;
-
-    const checkRecurring = async () => {
-      const lastCheck = localStorage.getItem('last_recurring_check');
-      const today = format(new Date(), 'yyyy-MM-dd');
-      
-      if (lastCheck !== today) {
-        const created = await processRecurringTasks(currentUser.email);
-        if (created > 0) {
-          console.log(`Created ${created} new recurring task instances`);
-        }
-        localStorage.setItem('last_recurring_check', today);
-      }
-    };
-
-    checkRecurring();
-    
-    // Check every hour
-    const interval = setInterval(checkRecurring, 3600000);
-    return () => clearInterval(interval);
-  }, [currentUser]);
 }
