@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { 
-  Brain, RefreshCw, Loader2, ChevronRight, Clock, Calendar, Target, AlertTriangle, Sparkles, Play
+  Brain, RefreshCw, Loader2, ChevronRight, Clock, Calendar, Target, AlertTriangle, Sparkles, Play, TrendingUp
 } from "lucide-react";
+import PriorityIndicator from "./dashboard/PriorityIndicator";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -237,10 +238,17 @@ For each task, provide:
   };
 
   const getUrgencyBadge = (score) => {
-    if (score >= 8) return { label: "Urgent", className: "bg-red-500 text-white" };
-    if (score >= 6) return { label: "High", className: "bg-orange-500 text-white" };
-    if (score >= 4) return { label: "Medium", className: "bg-yellow-500 text-white" };
-    return { label: "Low", className: "bg-green-500 text-white" };
+    if (score >= 8) return { label: "Urgent", className: "bg-red-500 text-white", priority: "critical" };
+    if (score >= 6) return { label: "High", className: "bg-orange-500 text-white", priority: "high" };
+    if (score >= 4) return { label: "Medium", className: "bg-yellow-500 text-white", priority: "medium" };
+    return { label: "Low", className: "bg-green-500 text-white", priority: "low" };
+  };
+
+  const getAIPriorityLevel = (urgencyScore, position) => {
+    if (urgencyScore >= 9 || position === 1) return "critical";
+    if (urgencyScore >= 7 || position <= 2) return "high";
+    if (urgencyScore >= 5 || position <= 4) return "medium";
+    return "low";
   };
 
   // Render upgrade prompt if no access
@@ -338,27 +346,26 @@ For each task, provide:
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="p-4 bg-gradient-to-r from-purple-50 to-teal-50 rounded-xl border-2 border-purple-200"
+                  className="relative p-4 bg-gradient-to-r from-purple-50 to-teal-50 rounded-xl border-2 border-purple-200 overflow-hidden"
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge className="bg-gradient-to-r from-purple-500 to-teal-500 text-white">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-200/30 to-teal-200/30 rounded-full blur-3xl" />
+                  <div className="flex items-center gap-2 mb-2 relative z-10">
+                    <Badge className="bg-gradient-to-r from-purple-500 to-teal-500 text-white flex items-center gap-1">
+                      <TrendingUp className="w-3 h-3" />
                       #1 Priority
                     </Badge>
-                    {prioritizedTasks[0].urgencyScore >= 8 && (
-                      <Badge className="bg-red-500 text-white animate-pulse">
-                        <AlertTriangle className="w-3 h-3 mr-1" />
-                        Urgent
-                      </Badge>
-                    )}
+                    <PriorityIndicator 
+                      priority={getAIPriorityLevel(prioritizedTasks[0].urgencyScore, 1)} 
+                    />
                   </div>
-                  <h3 className="font-bold text-gray-900 text-lg mb-1">
+                  <h3 className="font-bold text-gray-900 text-lg mb-1 relative z-10">
                     {prioritizedTasks[0].title}
                   </h3>
-                  <p className="text-sm text-gray-600 mb-3">
+                  <p className="text-sm text-gray-600 mb-3 relative z-10">
                     💡 {prioritizedTasks[0].aiReason}
                   </p>
-                  <div className="flex items-center gap-2 mb-3 flex-wrap">
-                    <Badge variant="outline" className={difficultyColors[prioritizedTasks[0].difficulty || 'medium']}>
+                  <div className="flex items-center gap-2 mb-3 flex-wrap relative z-10">
+                    <Badge variant="outline" className={`${difficultyColors[prioritizedTasks[0].difficulty || 'medium']} font-medium`}>
                       {prioritizedTasks[0].difficulty || 'medium'}
                     </Badge>
                     <Badge variant="outline">
@@ -383,7 +390,7 @@ For each task, provide:
                   </div>
                   <Button
                     onClick={() => startTask(prioritizedTasks[0])}
-                    className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white"
+                    className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white shadow-lg hover:shadow-xl transition-all relative z-10"
                   >
                     <Play className="w-4 h-4 mr-2" />
                     Start Now
@@ -399,24 +406,30 @@ For each task, provide:
                   </p>
                   {prioritizedTasks.slice(1, 6).map((task, index) => {
                     const urgencyBadge = getUrgencyBadge(task.urgencyScore);
+                    const priorityLevel = getAIPriorityLevel(task.urgencyScore, task.position);
                     return (
                       <motion.div
                         key={task.id}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-purple-200 hover:shadow-sm transition-all group cursor-pointer"
+                        className="flex items-center gap-3 p-3 bg-white rounded-lg border-2 border-gray-200 hover:border-purple-300 hover:shadow-md transition-all group cursor-pointer relative"
                         onClick={() => startTask(task)}
+                        style={{
+                          borderLeftWidth: '4px',
+                          borderLeftColor: 
+                            priorityLevel === 'critical' ? '#ef4444' :
+                            priorityLevel === 'high' ? '#f97316' :
+                            priorityLevel === 'medium' ? '#eab308' : '#22c55e'
+                        }}
                       >
-                        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-sm font-bold text-gray-600">
+                        <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-purple-100 to-teal-100 text-sm font-bold text-purple-700 shadow-sm">
                           {index + 2}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <p className="font-medium text-gray-800 truncate">{task.title}</p>
-                            <Badge className={`text-[10px] ${urgencyBadge.className}`}>
-                              {urgencyBadge.label}
-                            </Badge>
+                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                            <p className="font-medium text-gray-900 truncate">{task.title}</p>
+                            <PriorityIndicator priority={priorityLevel} compact />
                           </div>
                           <p className="text-xs text-gray-500 truncate">
                             {task.aiReason}
