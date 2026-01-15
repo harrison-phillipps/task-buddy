@@ -22,6 +22,7 @@ import QuickAddTask from "../components/dashboard/QuickAddTask";
 import GoalsProgress from "../components/dashboard/GoalsProgress";
 import WidgetCustomizer from "../components/dashboard/WidgetCustomizer";
 import OnboardingTour from "../components/onboarding/OnboardingTour";
+import { processRecurringTasks } from "../components/tasks/RecurringTaskProcessor";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -97,6 +98,15 @@ export default function Dashboard() {
             longest_streak: 0
           });
           setUserProgress(newProgress);
+        }
+
+        // Process recurring tasks once per day
+        const lastCheck = localStorage.getItem('last_recurring_check');
+        const today = new Date().toISOString().split('T')[0];
+        if (lastCheck !== today) {
+          processRecurringTasks(user.email).then(() => {
+            localStorage.setItem('last_recurring_check', today);
+          });
         }
       } catch (error) {
         console.error("Error fetching user:", error);
