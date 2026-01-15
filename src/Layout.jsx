@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, ListTodo, Play, LayoutDashboard, User, RefreshCw, Brain, Award, Trophy, MessageSquare, Calendar, BookOpen, Users, Target, TrendingUp, Settings, PanelLeftClose, PanelLeft } from "lucide-react";
+import { Sparkles, ListTodo, Play, LayoutDashboard, User, RefreshCw, Brain, Award, Trophy, MessageSquare, Calendar, Users, Target, Settings, PanelLeftClose, PanelLeft } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import {
   Sidebar,
@@ -36,11 +36,6 @@ const navigationItems = [
     icon: Brain,
   },
   {
-    title: "Journal",
-    url: createPageUrl("Journal"),
-    icon: BookOpen,
-  },
-  {
     title: "AI Task Generator",
     url: createPageUrl("AITaskGenerator"),
     icon: Sparkles,
@@ -56,11 +51,6 @@ const navigationItems = [
     icon: Target,
   },
   {
-    title: "Habits",
-    url: createPageUrl("Habits"),
-    icon: TrendingUp,
-  },
-  {
     title: "My Tasks",
     url: createPageUrl("Tasks"),
     icon: ListTodo,
@@ -74,16 +64,6 @@ const navigationItems = [
     title: "Focus Session",
     url: createPageUrl("FocusSession"),
     icon: Play,
-  },
-  {
-    title: "Achievements",
-    url: createPageUrl("Achievements"),
-    icon: Award,
-  },
-  {
-    title: "Leaderboard",
-    url: createPageUrl("LeaderboardPage"),
-    icon: Trophy,
   },
   {
     title: "Teams",

@@ -9,9 +9,7 @@ import CharacterSelection from './pages/CharacterSelection';
 import Dashboard from './pages/Dashboard';
 import FocusSession from './pages/FocusSession';
 import Goals from './pages/Goals';
-import Habits from './pages/Habits';
 import Home from './pages/Home';
-import Journal from './pages/Journal';
 import LeaderboardPage from './pages/LeaderboardPage';
 import NotificationSettings from './pages/NotificationSettings';
 import Onboarding from './pages/Onboarding';
@@ -21,8 +19,8 @@ import Subscription from './pages/Subscription';
 import TaskBreakdown from './pages/TaskBreakdown';
 import Tasks from './pages/Tasks';
 import TeamDashboard from './pages/TeamDashboard';
-import Teams from './pages/Teams';
 import TeamFocusSession from './pages/TeamFocusSession';
+import Teams from './pages/Teams';
 import __Layout from './Layout.jsx';
 
 
@@ -38,9 +36,7 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "FocusSession": FocusSession,
     "Goals": Goals,
-    "Habits": Habits,
     "Home": Home,
-    "Journal": Journal,
     "LeaderboardPage": LeaderboardPage,
     "NotificationSettings": NotificationSettings,
     "Onboarding": Onboarding,
@@ -50,8 +46,8 @@ export const PAGES = {
     "TaskBreakdown": TaskBreakdown,
     "Tasks": Tasks,
     "TeamDashboard": TeamDashboard,
-    "Teams": Teams,
     "TeamFocusSession": TeamFocusSession,
+    "Teams": Teams,
 }
 
 export const pagesConfig = {
