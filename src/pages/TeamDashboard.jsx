@@ -23,6 +23,9 @@ import ActiveCollaborativeSessions from "../components/team/ActiveCollaborativeS
 import TeamCalendar from "../components/team/TeamCalendar";
 import TeamNotifications from "../components/team/TeamNotifications";
 import TeamTemplates from "../components/team/TeamTemplates";
+import RealTimeTaskSync from "../components/collaboration/RealTimeTaskSync";
+import LivePresenceIndicator from "../components/collaboration/LivePresenceIndicator";
+import { toast } from "sonner";
 
 export default function TeamDashboard() {
   const queryClient = useQueryClient();
@@ -354,6 +357,7 @@ export default function TeamDashboard() {
                 ) : (
                   myTasks.map(task => (
                     <div key={task.id} className="space-y-3">
+                      <LivePresenceIndicator task={task} currentUser={currentUser} />
                       <div onClick={() => setSelectedTask(task)}>
                         <TaskCard
                           task={task}
