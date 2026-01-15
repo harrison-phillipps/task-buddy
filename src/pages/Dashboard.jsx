@@ -23,6 +23,7 @@ import GoalsProgress from "../components/dashboard/GoalsProgress";
 import WidgetCustomizer from "../components/dashboard/WidgetCustomizer";
 import OnboardingTour from "../components/onboarding/OnboardingTour";
 import { processRecurringTasks } from "../components/tasks/RecurringTaskProcessor";
+import HabitFormationBot from "../components/ai/HabitFormationBot";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -374,6 +375,20 @@ export default function Dashboard() {
             transition={{ delay: 0.5 }}
           >
             <WeeklyOverview tasks={tasks} />
+          </motion.div>
+        )}
+
+        {/* Habit Formation Bot */}
+        {tasks.filter(t => t.is_recurring || t.parent_recurring_task_id).length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55 }}
+          >
+            <HabitFormationBot 
+              recurringTasks={tasks.filter(t => t.is_recurring || t.parent_recurring_task_id)}
+              userProgress={userProgress}
+            />
           </motion.div>
         )}
 

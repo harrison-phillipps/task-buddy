@@ -21,6 +21,7 @@ import { getPersonalizedMessage } from "@/components/companionUtils";
 import SessionGoals from "../components/focus/SessionGoals";
 import AmbientSoundPlayer from "../components/focus/AmbientSoundPlayer";
 import PostSessionSummary from "../components/focus/PostSessionSummary";
+import FocusBoosterBot from "../components/ai/FocusBoosterBot";
 
 // Dynamic encouragement based on user progress
 const getEncouragementMessages = (userProgress) => {
@@ -101,6 +102,7 @@ export default function FocusSession() {
   const [sessionStartTime, setSessionStartTime] = useState(null);
   const [showPostSummary, setShowPostSummary] = useState(false);
   const [sessionSummaryData, setSessionSummaryData] = useState(null);
+  const [showFocusBot, setShowFocusBot] = useState(true);
   
   const audioRef = useRef(null);
   const encouragementTimers = useRef([]);
