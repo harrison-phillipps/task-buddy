@@ -607,6 +607,15 @@ export default function FocusSession() {
 
   return (
     <div className="min-h-screen p-4 md:p-8">
+      <FocusBoosterBot
+        currentTask={selectedTask}
+        timeLeft={timeLeft}
+        isActive={isActive}
+        moodBefore={moodBefore}
+        sessionDuration={focusTechnique === "pomodoro" ? workInterval * 60 : (currentSubtask?.estimated_minutes || 10) * 60}
+        showBot={showFocusBot && sessionStarted && !isBreakTime}
+        onDismiss={() => setShowFocusBot(false)}
+      />
       <AchievementNotification 
         achievement={showAchievement} 
         onClose={() => {

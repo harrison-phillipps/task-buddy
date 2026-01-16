@@ -15,6 +15,7 @@ import VirtualCompanion from "../components/VirtualCompanion";
 import { getPersonalizedMessage } from "../components/companionUtils";
 import AIEnhancedTextarea from "../components/ai/AIEnhancedTextarea";
 import { generateTaskDescription } from "../components/ai/AIContentGenerator";
+import TaskBreakdownBot from "../components/ai/TaskBreakdownBot";
 
 export default function TaskBreakdown() {
   const navigate = useNavigate();
@@ -176,6 +177,19 @@ Also calculate the total time in minutes for the entire task (sum of all subtask
                 userProgress={userProgress}
               />
             </motion.div>
+
+            {taskInput.title && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <TaskBreakdownBot 
+                  taskTitle={taskInput.title}
+                  taskDescription={taskInput.description}
+                />
+              </motion.div>
+            )}
 
             <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
               <CardHeader>
