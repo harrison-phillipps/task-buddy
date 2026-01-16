@@ -30,6 +30,8 @@ import AdvancedControls from "../components/focus/AdvancedControls";
 import MindfulnessBreak from "../components/focus/MindfulnessBreak";
 import PersonalizedJourneyAnalyzer from "../components/focus/PersonalizedJourneyAnalyzer";
 import JourneyRecommendations from "../components/focus/JourneyRecommendations";
+import MoodCoach from "../components/focus/MoodCoach";
+import PostSessionMoodReflection from "../components/focus/PostSessionMoodReflection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Dynamic encouragement based on user progress
@@ -118,6 +120,8 @@ export default function FocusSession() {
   const [includeMindfulness, setIncludeMindfulness] = useState(false);
   const [mindfulnessType, setMindfulnessType] = useState("breathing");
   const [showMindfulness, setShowMindfulness] = useState(false);
+  const [preSessionRitual, setPreSessionRitual] = useState(null);
+  const [showMoodReflection, setShowMoodReflection] = useState(false);
   
   const audioRef = useRef(null);
   const encouragementTimers = useRef([]);
@@ -498,12 +502,37 @@ export default function FocusSession() {
   };
 
   const completeSession = async (moodAfter) => {
+    // Show mood reflection first
+    setShowMoodReflection(true);
+    setSessionSummaryData({
+      taskTitle: selectedTask.title,
+      subtasksCompleted: completedSubtasks.size,
+      totalSubtasks: selectedTask.subtasks?.length || 0,
+      totalMinutes: sessionStartTime ? Math.round((Date.now() - sessionStartTime) / 60000) : 0,
+      moodBefore,
+      moodAfter,
+      pomodorosCompleted,
+      focusTechnique,
+      allStepsComplete,
+      goalData: sessionGoalType ? {
+        goalType: sessionGoalType,
+        goalValue: sessionGoalValue,
+        goalAchieved: false
+      } : null
+    });
+  };
+
+  const finishSessionAfterReflection = async (reflectionNotes) => {
+    setShowMoodReflection(false);
+    
     const totalDuration = sessionStartTime 
       ? Math.round((Date.now() - sessionStartTime) / 60000) 
       : selectedTask.subtasks?.reduce((sum, st) => sum + (st.estimated_minutes || 0), 0) || 0;
     
     const currentTime = new Date().getHours();
     const timeOfDay = currentTime < 12 ? "morning" : currentTime < 17 ? "afternoon" : "evening";
+    
+    const moodAfter = sessionSummaryData.moodAfter;
     
     // Calculate goal achievement
     let goalAchieved = false;
@@ -675,6 +704,17 @@ export default function FocusSession() {
     }
 
     setShowBreakPrompt(false);
+    
+    // Update session summary with final goal achievement
+    setSessionSummaryData(prev => ({
+      ...prev,
+      goalData: prev.goalData ? {
+        ...prev.goalData,
+        goalAchieved,
+        actualValue
+      } : null
+    }));
+    
     setShowPostSummary(true);
   };
   
@@ -954,6 +994,16 @@ export default function FocusSession() {
                 </div>
               </div>
 
+              {preSessionRitual && moodBefore && (
+                <div className="p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg border border-pink-200">
+                  <p className="text-xs font-semibold text-pink-900 mb-2 flex items-center gap-1">
+                    <Heart className="w-3 h-3" />
+                    Recommended Pre-Session Ritual:
+                  </p>
+                  <p className="text-sm text-gray-700">{preSessionRitual}</p>
+                </div>
+              )}
+
               <Button
                 onClick={startSession}
                 disabled={!selectedTaskId || !moodBefore || !selectedTask?.subtasks?.length}
@@ -968,6 +1018,15 @@ export default function FocusSession() {
 
             <TabsContent value="dynamic">
               <div className="space-y-4">
+                <MoodCoach
+                  currentMood={moodBefore}
+                  journeyData={journeyData}
+                  onSuggestRitual={(ritual) => {
+                    setPreSessionRitual(ritual);
+                    toast.info("Pre-session ritual suggested!", { duration: 3000 });
+                  }}
+                />
+
                 <PersonalizedJourneyAnalyzer
                   currentUser={currentUser}
                   journeyData={journeyData}
@@ -1280,21 +1339,30 @@ export default function FocusSession() {
                         : "Great job! Ready to continue with the next step?"}
                     </p>
                     
-                    <div className="space-y-2">
-                      <Label>How are you feeling now?</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                        {['accomplished', 'frustrated', 'tired', 'energized', 'neutral'].map(mood => (
-                          <Button
-                            key={mood}
-                            variant="outline"
-                            onClick={() => completeSession(mood)}
-                            className="hover:bg-gradient-to-r hover:from-purple-500 hover:to-teal-500 hover:text-white"
-                          >
-                            {mood}
-                          </Button>
-                        ))}
+                    {showMoodReflection ? (
+                      <PostSessionMoodReflection
+                        moodBefore={moodBefore}
+                        moodAfter={sessionSummaryData?.moodAfter}
+                        sessionData={sessionSummaryData}
+                        onComplete={finishSessionAfterReflection}
+                      />
+                    ) : (
+                      <div className="space-y-2">
+                        <Label>How are you feeling now?</Label>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                          {['accomplished', 'frustrated', 'tired', 'energized', 'neutral'].map(mood => (
+                            <Button
+                              key={mood}
+                              variant="outline"
+                              onClick={() => completeSession(mood)}
+                              className="hover:bg-gradient-to-r hover:from-purple-500 hover:to-teal-500 hover:text-white"
+                            >
+                              {mood}
+                            </Button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
