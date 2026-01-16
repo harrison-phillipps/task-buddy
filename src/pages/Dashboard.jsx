@@ -24,6 +24,9 @@ import WidgetCustomizer from "../components/dashboard/WidgetCustomizer";
 import OnboardingTour from "../components/onboarding/OnboardingTour";
 import { processRecurringTasks } from "../components/tasks/RecurringTaskProcessor";
 import HabitFormationBot from "../components/ai/HabitFormationBot";
+import ProductivityForecasterBot from "../components/ai/ProductivityForecasterBot";
+import SkillDevelopmentBot from "../components/ai/SkillDevelopmentBot";
+import EnergyManagementBot from "../components/ai/EnergyManagementBot";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -378,19 +381,44 @@ export default function Dashboard() {
           </motion.div>
         )}
 
-        {/* Habit Formation Bot */}
-        {tasks.filter(t => t.is_recurring || t.parent_recurring_task_id).length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.55 }}
-          >
+        {/* AI Coaching Bots */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+        >
+          {tasks.filter(t => t.is_recurring || t.parent_recurring_task_id).length > 0 && (
             <HabitFormationBot 
               recurringTasks={tasks.filter(t => t.is_recurring || t.parent_recurring_task_id)}
               userProgress={userProgress}
             />
-          </motion.div>
-        )}
+          )}
+          
+          {tasks.length > 5 && (
+            <ProductivityForecasterBot 
+              tasks={tasks}
+              sessions={sessions}
+              userProgress={userProgress}
+            />
+          )}
+          
+          {tasks.length > 3 && (
+            <SkillDevelopmentBot 
+              tasks={tasks}
+              sessions={sessions}
+              userProgress={userProgress}
+            />
+          )}
+          
+          {sessions.length > 2 && (
+            <EnergyManagementBot 
+              tasks={tasks}
+              sessions={sessions}
+              userProgress={userProgress}
+            />
+          )}
+        </motion.div>
 
         {/* AI Prioritization */}
         {visibleWidgets.aiPrioritization && tasks.filter(t => t.status !== 'completed').length > 0 && (
