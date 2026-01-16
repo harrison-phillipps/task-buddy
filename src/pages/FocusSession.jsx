@@ -26,6 +26,8 @@ import FocusSessionTemplates from "../components/focus/FocusSessionTemplates";
 import SessionHistoryAnalyzer from "../components/focus/SessionHistoryAnalyzer";
 import DynamicTemplateGenerator from "../components/focus/DynamicTemplateGenerator";
 import RealTimeAICoach from "../components/focus/RealTimeAICoach";
+import AdvancedControls from "../components/focus/AdvancedControls";
+import MindfulnessBreak from "../components/focus/MindfulnessBreak";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Dynamic encouragement based on user progress
@@ -111,6 +113,9 @@ export default function FocusSession() {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [pauseCount, setPauseCount] = useState(0);
   const [dynamicBreakSuggestion, setDynamicBreakSuggestion] = useState(null);
+  const [includeMindfulness, setIncludeMindfulness] = useState(false);
+  const [mindfulnessType, setMindfulnessType] = useState("breathing");
+  const [showMindfulness, setShowMindfulness] = useState(false);
   
   const audioRef = useRef(null);
   const encouragementTimers = useRef([]);
@@ -284,9 +289,15 @@ export default function FocusSession() {
   const handlePomodoroComplete = () => {
     if (!isBreakTime) {
       setPomodorosCompleted(prev => prev + 1);
-      setIsBreakTime(true);
-      setTimeLeft(breakInterval * 60);
-      setShowBreakPrompt(true);
+      
+      // Show mindfulness break if enabled
+      if (includeMindfulness && pomodorosCompleted % 2 === 1) {
+        setShowMindfulness(true);
+      } else {
+        setIsBreakTime(true);
+        setTimeLeft(breakInterval * 60);
+        setShowBreakPrompt(true);
+      }
       
       if (notificationsEnabled) {
         showNotification('Pomodoro Complete! 🍅', 'Time for a break!');
@@ -390,6 +401,20 @@ export default function FocusSession() {
       setDynamicBreakSuggestion(suggestion.value);
       toast.info(`Break suggestion: ${suggestion.value}`, { duration: 5000 });
     }
+  };
+
+  const handleAdvancedSettings = (settings) => {
+    if (focusTechnique === "pomodoro") {
+      setWorkInterval(settings.sessionLength);
+      setBreakInterval(settings.breakDuration);
+    }
+    setIncludeMindfulness(settings.includeMindfulness || false);
+    setMindfulnessType(settings.mindfulnessType || "breathing");
+    toast.success("Applied advanced settings!");
+  };
+
+  const handleTaskAdjustment = async (suggestion) => {
+    toast.info(suggestion, { duration: 8000 });
   };
 
   const startSession = () => {
@@ -899,12 +924,25 @@ export default function FocusSession() {
             </TabsContent>
 
             <TabsContent value="dynamic">
-              <DynamicTemplateGenerator
-                selectedTask={selectedTask}
-                currentMood={moodBefore}
-                currentEnergy={selectedTask?.energy_level_needed}
-                onApplyTemplate={handleApplyTemplate}
-              />
+              <div className="space-y-4">
+                <DynamicTemplateGenerator
+                  selectedTask={selectedTask}
+                  currentMood={moodBefore}
+                  currentEnergy={selectedTask?.energy_level_needed}
+                  onApplyTemplate={handleApplyTemplate}
+                />
+                
+                {selectedTaskId && (
+                  <AdvancedControls
+                    task={selectedTask}
+                    currentMood={moodBefore}
+                    currentEnergy={selectedTask?.energy_level_needed}
+                    sessionDuration={0}
+                    onApplySettings={handleAdvancedSettings}
+                    onTaskAdjustment={handleTaskAdjustment}
+                  />
+                )}
+              </div>
             </TabsContent>
 
             <TabsContent value="templates">
