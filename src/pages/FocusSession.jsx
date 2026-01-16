@@ -144,6 +144,12 @@ export default function FocusSession() {
     enabled: !!currentUser,
   });
 
+  const { data: sessions = [] } = useQuery({
+    queryKey: ['sessions', currentUser?.email],
+    queryFn: () => currentUser ? base44.entities.FocusSession.filter({ created_by: currentUser.email }, '-created_date', 20) : [],
+    enabled: !!currentUser,
+  });
+
   const selectedTask = tasks.find(t => t.id === selectedTaskId);
   const currentSubtask = selectedTask?.subtasks?.[currentSubtaskIndex];
 
