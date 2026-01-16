@@ -28,6 +28,8 @@ import DynamicTemplateGenerator from "../components/focus/DynamicTemplateGenerat
 import RealTimeAICoach from "../components/focus/RealTimeAICoach";
 import AdvancedControls from "../components/focus/AdvancedControls";
 import MindfulnessBreak from "../components/focus/MindfulnessBreak";
+import PersonalizedJourneyAnalyzer from "../components/focus/PersonalizedJourneyAnalyzer";
+import JourneyRecommendations from "../components/focus/JourneyRecommendations";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Dynamic encouragement based on user progress
@@ -156,6 +158,12 @@ export default function FocusSession() {
   const { data: sessions = [] } = useQuery({
     queryKey: ['sessions', currentUser?.email],
     queryFn: () => currentUser ? base44.entities.FocusSession.filter({ created_by: currentUser.email }, '-created_date', 20) : [],
+    enabled: !!currentUser,
+  });
+
+  const { data: journeyData = [] } = useQuery({
+    queryKey: ['focusJourney', currentUser?.id],
+    queryFn: () => currentUser ? base44.entities.FocusJourney.filter({ user_id: currentUser.id }, '-created_date', 30) : [],
     enabled: !!currentUser,
   });
 
@@ -494,6 +502,9 @@ export default function FocusSession() {
       ? Math.round((Date.now() - sessionStartTime) / 60000) 
       : selectedTask.subtasks?.reduce((sum, st) => sum + (st.estimated_minutes || 0), 0) || 0;
     
+    const currentTime = new Date().getHours();
+    const timeOfDay = currentTime < 12 ? "morning" : currentTime < 17 ? "afternoon" : "evening";
+    
     // Calculate goal achievement
     let goalAchieved = false;
     let actualValue = 0;
@@ -627,6 +638,38 @@ export default function FocusSession() {
       }
 
       await base44.entities.UserProgress.update(userProgress.id, updatedProgress);
+
+      // Save journey data for personalized recommendations
+      const effectivenessScore = Math.round(
+        ((completedSubtasks.size / (selectedTask.subtasks?.length || 1)) * 50) +
+        (goalAchieved ? 30 : 0) +
+        (moodAfter === 'accomplished' || moodAfter === 'energized' ? 20 : 0)
+      );
+
+      await base44.entities.FocusJourney.create({
+        user_id: user.id,
+        session_date: new Date().toISOString().split('T')[0],
+        task_category: selectedTask.category,
+        task_difficulty: selectedTask.difficulty,
+        focus_technique: focusTechnique,
+        work_interval: workInterval,
+        break_interval: breakInterval,
+        ambient_sound: ambientSound,
+        mood_before: moodBefore,
+        mood_after: moodAfter,
+        energy_before: selectedTask.energy_level_needed,
+        duration_minutes: totalDuration,
+        subtasks_completed: completedSubtasks.size,
+        total_subtasks: selectedTask.subtasks?.length || 0,
+        effectiveness_score: effectivenessScore,
+        pause_count: pauseCount,
+        goal_achieved: goalAchieved,
+        mindfulness_used: includeMindfulness,
+        mindfulness_type: mindfulnessType,
+        time_of_day: timeOfDay
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['focusJourney'] });
     } catch (error) {
       console.error("Error updating progress:", error);
     }
@@ -925,6 +968,26 @@ export default function FocusSession() {
 
             <TabsContent value="dynamic">
               <div className="space-y-4">
+                <PersonalizedJourneyAnalyzer
+                  currentUser={currentUser}
+                  journeyData={journeyData}
+                />
+
+                <JourneyRecommendations
+                  currentMood={moodBefore}
+                  currentEnergy={selectedTask?.energy_level_needed}
+                  taskDifficulty={selectedTask?.difficulty}
+                  journeyData={journeyData}
+                  onApplyRecommendation={(settings) => {
+                    setFocusTechnique(settings.focusTechnique);
+                    setWorkInterval(settings.workInterval);
+                    setBreakInterval(settings.breakInterval);
+                    setAmbientSound(settings.ambientSound);
+                    setIncludeMindfulness(settings.includeMindfulness);
+                    setMindfulnessType(settings.mindfulnessType);
+                  }}
+                />
+                
                 <DynamicTemplateGenerator
                   selectedTask={selectedTask}
                   currentMood={moodBefore}
