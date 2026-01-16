@@ -24,6 +24,8 @@ import PostSessionSummary from "../components/focus/PostSessionSummary";
 import FocusBoosterBot from "../components/ai/FocusBoosterBot";
 import FocusSessionTemplates from "../components/focus/FocusSessionTemplates";
 import SessionHistoryAnalyzer from "../components/focus/SessionHistoryAnalyzer";
+import DynamicTemplateGenerator from "../components/focus/DynamicTemplateGenerator";
+import RealTimeAICoach from "../components/focus/RealTimeAICoach";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Dynamic encouragement based on user progress
@@ -107,6 +109,8 @@ export default function FocusSession() {
   const [sessionSummaryData, setSessionSummaryData] = useState(null);
   const [showFocusBot, setShowFocusBot] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [pauseCount, setPauseCount] = useState(0);
+  const [dynamicBreakSuggestion, setDynamicBreakSuggestion] = useState(null);
   
   const audioRef = useRef(null);
   const encouragementTimers = useRef([]);
@@ -351,20 +355,40 @@ export default function FocusSession() {
     setWorkInterval(template.work_interval);
     setBreakInterval(template.break_interval);
     setAmbientSound(template.ambient_sound);
-    setShowFocusBot(template.enable_focus_bot);
+    setShowFocusBot(template.enable_focus_bot !== false);
     if (template.session_goal_type && template.session_goal_type !== 'none') {
       setSessionGoalType(template.session_goal_type);
       setSessionGoalValue(template.session_goal_value);
     }
+    
+    if (template.pre_session_ritual) {
+      toast.info(`Pre-session ritual: ${template.pre_session_ritual}`, { duration: 8000 });
+    }
+    
+    if (template.break_activities?.length > 0) {
+      setDynamicBreakSuggestion(template.break_activities[0]);
+    }
 
-    // Update usage count
-    try {
-      await base44.entities.FocusSessionTemplate.update(template.id, {
-        usage_count: (template.usage_count || 0) + 1
-      });
-      queryClient.invalidateQueries({ queryKey: ['focusTemplates'] });
-    } catch (error) {
-      console.error("Error updating template usage:", error);
+    // Update usage count for saved templates
+    if (template.id && !template.is_dynamic) {
+      try {
+        await base44.entities.FocusSessionTemplate.update(template.id, {
+          usage_count: (template.usage_count || 0) + 1
+        });
+        queryClient.invalidateQueries({ queryKey: ['focusTemplates'] });
+      } catch (error) {
+        console.error("Error updating template usage:", error);
+      }
+    }
+  };
+
+  const handleAISuggestion = (suggestion) => {
+    if (suggestion.type === "sound") {
+      setAmbientSound(suggestion.value);
+      setSoundEnabled(true);
+    } else if (suggestion.type === "break") {
+      setDynamicBreakSuggestion(suggestion.value);
+      toast.info(`Break suggestion: ${suggestion.value}`, { duration: 5000 });
     }
   };
 
@@ -410,6 +434,9 @@ export default function FocusSession() {
   };
 
   const togglePause = () => {
+    if (isActive) {
+      setPauseCount(prev => prev + 1);
+    }
     setIsActive(!isActive);
   };
 
@@ -601,6 +628,8 @@ export default function FocusSession() {
     setShowPostSummary(false);
     setSessionSummaryData(null);
     setSessionId(null);
+    setPauseCount(0);
+    setDynamicBreakSuggestion(null);
     
     // Clear any stored session
     if (sessionId) {
@@ -640,6 +669,21 @@ export default function FocusSession() {
 
   return (
     <div className="min-h-screen p-4 md:p-8">
+      <RealTimeAICoach
+        sessionState={{
+          isActive,
+          isBreakTime,
+          timeLeft,
+          sessionStartTime,
+          moodBefore,
+          ambientSound,
+          focusTechnique,
+          completedSubtasks,
+          totalSubtasks: selectedTask?.subtasks?.length || 0,
+          pauseCount
+        }}
+        onSuggestion={handleAISuggestion}
+      />
       <FocusBoosterBot
         currentTask={selectedTask}
         timeLeft={timeLeft}
@@ -710,10 +754,11 @@ export default function FocusSession() {
           />
         ) : !sessionStarted ? (
           <Tabs defaultValue="setup" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="setup">Setup</TabsTrigger>
+              <TabsTrigger value="dynamic">AI Dynamic</TabsTrigger>
               <TabsTrigger value="templates">Templates</TabsTrigger>
-              <TabsTrigger value="analysis">AI Analysis</TabsTrigger>
+              <TabsTrigger value="analysis">Analysis</TabsTrigger>
             </TabsList>
 
             <TabsContent value="setup">
@@ -853,6 +898,15 @@ export default function FocusSession() {
               </Card>
             </TabsContent>
 
+            <TabsContent value="dynamic">
+              <DynamicTemplateGenerator
+                selectedTask={selectedTask}
+                currentMood={moodBefore}
+                currentEnergy={selectedTask?.energy_level_needed}
+                onApplyTemplate={handleApplyTemplate}
+              />
+            </TabsContent>
+
             <TabsContent value="templates">
               <FocusSessionTemplates 
                 onSelectTemplate={handleApplyTemplate}
@@ -908,7 +962,14 @@ export default function FocusSession() {
                             <Coffee className="w-6 h-6 text-teal-500" />
                             <h3 className="text-lg font-semibold text-gray-700">Break Time!</h3>
                           </div>
-                          <p className="text-gray-600 mb-4">Take a short break to recharge</p>
+                          {dynamicBreakSuggestion ? (
+                            <div className="mb-4 p-3 bg-teal-50 rounded-lg border border-teal-200">
+                              <p className="text-sm font-medium text-teal-900 mb-1">Suggested Activity:</p>
+                              <p className="text-sm text-teal-700">{dynamicBreakSuggestion}</p>
+                            </div>
+                          ) : (
+                            <p className="text-gray-600 mb-4">Take a short break to recharge</p>
+                          )}
                         </>
                       ) : (
                         <>
