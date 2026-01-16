@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import React from "react";
 import PersonalitySettingsModal from "@/components/PersonalitySettingsModal";
 import NotificationBell from "@/components/notifications/NotificationBell";
-import PersonalityCustomizer from "@/components/companion/PersonalityCustomizer";
+import DeepPersonalityCustomizer from "@/components/companion/DeepPersonalityCustomizer";
 import DevModeIndicator from "@/components/DevModeIndicator";
 
 const navigationItems = [
@@ -266,13 +266,13 @@ function LayoutContent({ children, currentPageName }) {
                         {getPersonalityLabel()}
                       </Button>
                       <Button
-                        onClick={() => setShowPersonalityCustomizer(true)}
+                        onClick={() => setShowDeepCustomizer(true)}
                         variant="outline"
                         size="sm"
                         className="w-full bg-white hover:bg-purple-50 border-purple-200 text-purple-700 font-medium"
                       >
                         <Sparkles className="w-3 h-3 mr-2" />
-                        Customize AI
+                        Deep Customize
                       </Button>
                     </div>
                   </div>
@@ -327,9 +327,9 @@ function LayoutContent({ children, currentPageName }) {
           onUpdate={refreshUser}
           />
           
-          <PersonalityCustomizer
-          open={showPersonalityCustomizer}
-          onOpenChange={setShowPersonalityCustomizer}
+          <DeepPersonalityCustomizer
+          open={showDeepCustomizer}
+          onOpenChange={setShowDeepCustomizer}
           currentUser={currentUser}
           onUpdate={refreshUser}
           />

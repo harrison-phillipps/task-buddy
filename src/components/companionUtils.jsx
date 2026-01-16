@@ -45,11 +45,58 @@ function applyPersonalityStyle(message, personality = "motivational") {
   return prefix + transformed + suffix;
 }
 
+// Get AI-enhanced message based on archetype and traits
+async function getAIEnhancedMessage(baseMessage, user, context) {
+  if (!user?.companion_archetype && !user?.companion_traits) {
+    return baseMessage;
+  }
+
+  try {
+    const archetype = user.companion_archetype || "energetic_coach";
+    const traits = user.companion_traits || {};
+    const prefs = user.companion_preferences || {};
+
+    const result = await base44.integrations.Core.InvokeLLM({
+      prompt: `Transform this message to match the user's companion personality.
+
+BASE MESSAGE: "${baseMessage}"
+CONTEXT: ${context}
+
+COMPANION ARCHETYPE: ${archetype}
+TRAITS:
+- Encouragement: ${traits.encouragement || 70}% (0=minimal, 100=highly motivating)
+- Humor: ${traits.humor || 40}% (0=serious, 100=witty)
+- Directness: ${traits.directness || 50}% (0=gentle, 100=concise)
+- Wisdom: ${traits.wisdom || 30}% (0=practical, 100=philosophical)
+- Formality: ${traits.formality || 40}% (0=casual, 100=professional)
+- Empathy: ${traits.empathy || 60}% (0=task-focused, 100=supportive)
+
+PREFERENCES:
+- Emoji usage: ${prefs.emoji_usage || "moderate"}
+- Message length: ${prefs.message_length || "balanced"}
+
+TRANSFORM the message to perfectly match these settings. Keep the core meaning but adjust tone, style, and length.`,
+      response_json_schema: {
+        type: "object",
+        properties: {
+          transformed_message: { type: "string" }
+        }
+      }
+    });
+
+    return result.transformed_message || baseMessage;
+  } catch (error) {
+    console.error("AI enhancement failed:", error);
+    return baseMessage;
+  }
+}
+
 // Personalized companion messages based on user progress
 export function getPersonalizedMessage(userProgress, context, user = null) {
   const displayName = user?.display_name || "friend";
   const pronouns = getPronouns(user?.gender);
   const personality = user?.companion_personality || "motivational";
+  const archetype = user?.companion_archetype;
   const level = userProgress?.level || 1;
   const streak = userProgress?.current_streak || 0;
   const longestStreak = userProgress?.longest_streak || 0;
@@ -316,6 +363,12 @@ export function getPersonalizedMessage(userProgress, context, user = null) {
 
   const contextMessages = messages[context] || messages.dashboard;
   const baseMessage = contextMessages[Math.floor(Math.random() * contextMessages.length)];
+  
+  // If user has archetype/traits customization, enhance with AI
+  if (archetype || user?.companion_traits) {
+    // Return promise for AI-enhanced message
+    return getAIEnhancedMessage(baseMessage, user, context);
+  }
   
   // For calm and direct, return as-is (they're already styled)
   // For motivational and witty, they're already expressive
