@@ -32,6 +32,8 @@ import PersonalizedJourneyAnalyzer from "../components/focus/PersonalizedJourney
 import JourneyRecommendations from "../components/focus/JourneyRecommendations";
 import MoodCoach from "../components/focus/MoodCoach";
 import PostSessionMoodReflection from "../components/focus/PostSessionMoodReflection";
+import AdaptiveBreakSuggestion from "../components/focus/AdaptiveBreakSuggestion";
+import GuidedBreakFlow from "../components/focus/GuidedBreakFlow";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Dynamic encouragement based on user progress
@@ -122,6 +124,8 @@ export default function FocusSession() {
   const [showMindfulness, setShowMindfulness] = useState(false);
   const [preSessionRitual, setPreSessionRitual] = useState(null);
   const [showMoodReflection, setShowMoodReflection] = useState(false);
+  const [adaptiveBreakConfig, setAdaptiveBreakConfig] = useState(null);
+  const [showGuidedBreak, setShowGuidedBreak] = useState(false);
   
   const audioRef = useRef(null);
   const encouragementTimers = useRef([]);
@@ -480,10 +484,18 @@ export default function FocusSession() {
   const skipBreak = () => {
     setIsBreakTime(false);
     setShowBreakPrompt(false);
+    setShowGuidedBreak(false);
+    setAdaptiveBreakConfig(null);
     setIsActive(true);
     if (focusTechnique === "pomodoro") {
       setTimeLeft(workInterval * 60);
     }
+  };
+
+  const handleAdaptiveBreak = (breakConfig) => {
+    setAdaptiveBreakConfig(breakConfig);
+    setShowGuidedBreak(true);
+    setIsActive(false);
   };
 
   const skipToNextStep = () => {
@@ -777,6 +789,21 @@ export default function FocusSession() {
 
   return (
     <div className="min-h-screen p-4 md:p-8">
+      <AdaptiveBreakSuggestion
+        sessionState={{
+          isActive,
+          isBreakTime,
+          timeLeft,
+          sessionStartTime,
+          moodBefore,
+          focusTechnique,
+          completedSubtasks: completedSubtasks.size,
+          totalSubtasks: selectedTask?.subtasks?.length || 0,
+          pauseCount
+        }}
+        journeyData={journeyData}
+        onTakeBreak={handleAdaptiveBreak}
+      />
       <RealTimeAICoach
         sessionState={{
           isActive,
@@ -1370,7 +1397,20 @@ export default function FocusSession() {
           </AnimatePresence>
         )}
 
-        {showMindfulness && (
+        {showGuidedBreak && adaptiveBreakConfig && (
+          <GuidedBreakFlow
+            breakConfig={adaptiveBreakConfig}
+            onComplete={() => {
+              setShowGuidedBreak(false);
+              setAdaptiveBreakConfig(null);
+              setIsActive(true);
+              toast.success("Great break! Back to focus!");
+            }}
+            onSkip={skipBreak}
+          />
+        )}
+
+        {showMindfulness && !showGuidedBreak && (
           <MindfulnessBreak
             type={mindfulnessType}
             duration={breakInterval * 60}
