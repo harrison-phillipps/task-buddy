@@ -25,6 +25,9 @@ import TeamNotifications from "../components/team/TeamNotifications";
 import TeamTemplates from "../components/team/TeamTemplates";
 import RealTimeTaskSync from "../components/collaboration/RealTimeTaskSync";
 import LivePresenceIndicator from "../components/collaboration/LivePresenceIndicator";
+import TeamBottleneckAnalyzer from "../components/team/TeamBottleneckAnalyzer";
+import TeamProgressVisualization from "../components/team/TeamProgressVisualization";
+import RealTimeNotificationCenter from "../components/team/RealTimeNotificationCenter";
 import { toast } from "sonner";
 
 export default function TeamDashboard() {
@@ -261,6 +264,24 @@ export default function TeamDashboard() {
               </CardContent>
             </Card>
           </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+        >
+          <TeamProgressVisualization 
+            team={team}
+            tasks={teamTasks}
+            members={teamMembers}
+          />
+          <TeamBottleneckAnalyzer 
+            team={team}
+            tasks={teamTasks}
+            members={teamMembers}
+          />
         </motion.div>
 
         <motion.div
