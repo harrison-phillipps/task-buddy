@@ -84,7 +84,7 @@ function LayoutContent({ children, currentPageName }) {
   const [currentUser, setCurrentUser] = React.useState(null);
   const [userProgress, setUserProgress] = React.useState(null);
   const [showPersonalityModal, setShowPersonalityModal] = React.useState(false);
-  const [showPersonalityCustomizer, setShowPersonalityCustomizer] = React.useState(false);
+  const [showDeepCustomizer, setShowDeepCustomizer] = React.useState(false);
 
   React.useEffect(() => {
     const fetchUser = async () => {
