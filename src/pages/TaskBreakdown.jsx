@@ -25,7 +25,8 @@ export default function TaskBreakdown() {
     description: "",
     category: "personal",
     difficulty: "medium",
-    energy_level_needed: "medium"
+    energy_level_needed: "medium",
+    current_mood: null
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [breakdownResult, setBreakdownResult] = useState(null);
@@ -71,16 +72,26 @@ Task: ${taskInput.title}
 Description: ${taskInput.description || "No additional details"}
 Difficulty: ${taskInput.difficulty}
 Energy Level Needed: ${taskInput.energy_level_needed}
+Current Mood: ${taskInput.current_mood || "not specified"}
 
-Break this down into 3-7 clear, actionable subtasks. Each subtask should:
+IMPORTANT: Based on their current mood, include a FIRST preparatory step to help them transition into the task:
+- If TIRED: suggest something energizing (e.g., "Do 10 jumping jacks", "Splash cold water on face", "Make a quick energizing drink", "Stand and stretch for 2 minutes")
+- If ANXIOUS: suggest something calming (e.g., "Take 5 deep breaths", "Write down 3 things you're grateful for", "Listen to a calming song")
+- If OVERWHELMED: suggest something grounding (e.g., "Tidy your immediate workspace for 2 minutes", "Write a quick brain dump of worries", "Look at your task and say 'I only need to do one step at a time'")
+- If UNMOTIVATED: suggest something activating (e.g., "Put on your favorite upbeat playlist", "Change into fresh/comfortable clothes", "Set a 2-minute timer and move around")
+- If DISTRACTED: suggest something focusing (e.g., "Clear your desk of distractions", "Put phone in another room", "Set up a 'focus mode' environment")
+
+Then break down the actual task into 3-7 clear, actionable subtasks. Each subtask should:
 - Be specific and concrete
 - Take 5-30 minutes to complete
 - Have a clear start and end point
 - Be ordered logically
 - Use encouraging, supportive language
-- Include a realistic time estimate in minutes for how long it will take
+- Include a realistic time estimate in minutes
 
-Also calculate the total time in minutes for the entire task (sum of all subtask times).`,
+The preparatory step should take 2-5 minutes maximum and feel doable even in their current mood state.
+
+Calculate total time including the prep step.`,
         response_json_schema: {
           type: "object",
           properties: {
@@ -277,6 +288,26 @@ Also calculate the total time in minutes for the entire task (sum of all subtask
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>How are you feeling right now?</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                    {['tired', 'anxious', 'overwhelmed', 'unmotivated', 'distracted'].map(mood => (
+                      <Button
+                        key={mood}
+                        type="button"
+                        variant={taskInput.current_mood === mood ? "default" : "outline"}
+                        onClick={() => setTaskInput({...taskInput, current_mood: mood})}
+                        className={taskInput.current_mood === mood ? "bg-gradient-to-r from-purple-500 to-teal-500 text-white" : ""}
+                      >
+                        {mood}
+                      </Button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    💡 This helps us suggest a good first step to help you get started
+                  </p>
                 </div>
 
                 <Button
