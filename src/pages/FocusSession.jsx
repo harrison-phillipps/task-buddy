@@ -1238,6 +1238,25 @@ export default function FocusSession() {
             )}
           </AnimatePresence>
         )}
+
+        {showMindfulness && (
+          <MindfulnessBreak
+            type={mindfulnessType}
+            duration={breakInterval * 60}
+            onComplete={() => {
+              setShowMindfulness(false);
+              setIsBreakTime(true);
+              setTimeLeft(breakInterval * 60);
+              setShowBreakPrompt(true);
+            }}
+            onSkip={() => {
+              setShowMindfulness(false);
+              setIsBreakTime(false);
+              setShowBreakPrompt(false);
+              handleSubtaskComplete();
+            }}
+          />
+        )}
       </div>
     </div>
   );
