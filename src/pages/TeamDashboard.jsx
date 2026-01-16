@@ -183,6 +183,10 @@ export default function TeamDashboard() {
 
   return (
     <div className="min-h-screen p-4 md:p-8">
+      <RealTimeNotificationCenter 
+        team={team}
+        currentUser={currentUser}
+      />
       <RealTimeTaskSync 
         teamId={teamId} 
         onTaskUpdate={(event) => {
