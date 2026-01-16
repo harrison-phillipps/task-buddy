@@ -22,6 +22,9 @@ import SessionGoals from "../components/focus/SessionGoals";
 import AmbientSoundPlayer from "../components/focus/AmbientSoundPlayer";
 import PostSessionSummary from "../components/focus/PostSessionSummary";
 import FocusBoosterBot from "../components/ai/FocusBoosterBot";
+import FocusSessionTemplates from "../components/focus/FocusSessionTemplates";
+import SessionHistoryAnalyzer from "../components/focus/SessionHistoryAnalyzer";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Dynamic encouragement based on user progress
 const getEncouragementMessages = (userProgress) => {
@@ -103,6 +106,7 @@ export default function FocusSession() {
   const [showPostSummary, setShowPostSummary] = useState(false);
   const [sessionSummaryData, setSessionSummaryData] = useState(null);
   const [showFocusBot, setShowFocusBot] = useState(true);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
   
   const audioRef = useRef(null);
   const encouragementTimers = useRef([]);
@@ -333,6 +337,29 @@ export default function FocusSession() {
     const additionalTime = focusTechnique === "pomodoro" ? 5 * 60 : (currentSubtask?.estimated_minutes || 5) * 60 * 0.5;
     setTimeLeft(prev => prev + additionalTime);
     toast.success(`Added ${Math.floor(additionalTime / 60)} more minutes!`);
+  };
+
+  const handleApplyTemplate = async (template) => {
+    setSelectedTemplate(template);
+    setFocusTechnique(template.focus_technique);
+    setWorkInterval(template.work_interval);
+    setBreakInterval(template.break_interval);
+    setAmbientSound(template.ambient_sound);
+    setShowFocusBot(template.enable_focus_bot);
+    if (template.session_goal_type && template.session_goal_type !== 'none') {
+      setSessionGoalType(template.session_goal_type);
+      setSessionGoalValue(template.session_goal_value);
+    }
+
+    // Update usage count
+    try {
+      await base44.entities.FocusSessionTemplate.update(template.id, {
+        usage_count: (template.usage_count || 0) + 1
+      });
+      queryClient.invalidateQueries({ queryKey: ['focusTemplates'] });
+    } catch (error) {
+      console.error("Error updating template usage:", error);
+    }
   };
 
   const startSession = () => {
@@ -676,11 +703,19 @@ export default function FocusSession() {
             onStartNew={resetSession}
           />
         ) : !sessionStarted ? (
-          <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
-            <CardHeader>
-              <CardTitle>Start Your Session</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          <Tabs defaultValue="setup" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="setup">Setup</TabsTrigger>
+              <TabsTrigger value="templates">Templates</TabsTrigger>
+              <TabsTrigger value="analysis">AI Analysis</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="setup">
+              <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
+                <CardHeader>
+                  <CardTitle>Start Your Session</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label>Choose a task</Label>
                 <Select value={selectedTaskId || ""} onValueChange={setSelectedTaskId}>
@@ -808,8 +843,24 @@ export default function FocusSession() {
                 <Play className="w-5 h-5 mr-2" />
                 Start Focus Session
               </Button>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="templates">
+              <FocusSessionTemplates 
+                onSelectTemplate={handleApplyTemplate}
+                currentUser={currentUser}
+              />
+            </TabsContent>
+
+            <TabsContent value="analysis">
+              <SessionHistoryAnalyzer
+                sessions={sessions}
+                currentUser={currentUser}
+              />
+            </TabsContent>
+          </Tabs>
         ) : (
           <AnimatePresence>
             {!showBreakPrompt || isBreakTime ? (
