@@ -102,11 +102,12 @@ For each task:
 2. Determine the category (work, personal, health, creative, learning, household, or other)
 3. Assess difficulty (easy, medium, or hard)
 4. Determine energy level needed (low, medium, or high)
-5. Break it down into 3-7 actionable subtasks
-6. For each subtask, estimate realistic time in minutes (5-30 minutes each)
-7. Add a brief description if helpful
-8. Mark if recurring and suggest pattern (daily, weekly, biweekly, monthly)
-9. Provide reason for recurring suggestion
+5. Categorize using MoSCoW priority: must_do (critical/urgent), should_do (important), could_do (nice to have)
+6. Break it down into 3-7 actionable subtasks
+7. For each subtask, estimate realistic time in minutes (5-30 minutes each)
+8. Add a brief description if helpful
+9. Mark if recurring and suggest pattern (daily, weekly, biweekly, monthly)
+10. Provide reason for recurring suggestion
 
 Be encouraging and supportive. If something seems vague, interpret it generously and break it into concrete steps.
 Calculate total time for each task (sum of subtask times).
@@ -125,6 +126,10 @@ IMPORTANT: Only return NEW tasks (skip duplicates), and identify recurring patte
                   category: { type: "string" },
                   difficulty: { type: "string" },
                   energy_level_needed: { type: "string" },
+                  task_priority: { 
+                    type: "string",
+                    enum: ["must_do", "should_do", "could_do"]
+                  },
                   estimated_minutes: { type: "number" },
                   is_recurring: { type: "boolean" },
                   recurrence_pattern: { 
@@ -211,7 +216,8 @@ IMPORTANT: Only return NEW tasks (skip duplicates), and identify recurring patte
       ...task,
       status: "not_started",
       is_recurring: task.is_recurring || false,
-      recurrence_pattern: task.recurrence_pattern || "none"
+      recurrence_pattern: task.recurrence_pattern || "none",
+      task_priority: task.task_priority || null
     }));
     createTasksMutation.mutate({
       tasks: tasksToCreate,
@@ -254,6 +260,8 @@ IMPORTANT: Only return NEW tasks (skip duplicates), and identify recurring patte
         key = task.energy_level_needed || "medium";
       } else if (groupBy === "difficulty") {
         key = task.difficulty || "medium";
+      } else if (groupBy === "priority") {
+        key = task.task_priority || "should_do";
       }
 
       if (!grouped[key]) {
@@ -288,9 +296,16 @@ IMPORTANT: Only return NEW tasks (skip duplicates), and identify recurring patte
       hard: "⭐⭐⭐"
     };
 
+    const priorityEmojis = {
+      must_do: "🔴",
+      should_do: "🟡",
+      could_do: "🟢"
+    };
+
     if (groupBy === "category") return categoryEmojis[groupName] || "📌";
     if (groupBy === "energy") return energyEmojis[groupName] || "🟡";
     if (groupBy === "difficulty") return difficultyEmojis[groupName] || "⭐⭐";
+    if (groupBy === "priority") return priorityEmojis[groupName] || "🟡";
     return "📋";
   };
 
@@ -471,6 +486,7 @@ IMPORTANT: Only return NEW tasks (skip duplicates), and identify recurring patte
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">No grouping</SelectItem>
+                            <SelectItem value="priority">By Priority (MoSCoW)</SelectItem>
                             <SelectItem value="category">By Category</SelectItem>
                             <SelectItem value="energy">By Energy Level</SelectItem>
                             <SelectItem value="difficulty">By Difficulty</SelectItem>
@@ -527,6 +543,17 @@ IMPORTANT: Only return NEW tasks (skip duplicates), and identify recurring patte
                                   )}
                                   {groupBy !== "energy" && (
                                     <Badge variant="outline">{task.energy_level_needed} energy</Badge>
+                                  )}
+                                  {groupBy !== "priority" && task.task_priority && (
+                                    <Badge className={
+                                      task.task_priority === 'must_do' ? 'bg-red-100 text-red-700' :
+                                      task.task_priority === 'should_do' ? 'bg-yellow-100 text-yellow-700' :
+                                      'bg-green-100 text-green-700'
+                                    }>
+                                      {task.task_priority === 'must_do' ? '🔴 Must Do' :
+                                       task.task_priority === 'should_do' ? '🟡 Should Do' :
+                                       '🟢 Could Do'}
+                                    </Badge>
                                   )}
                                   <Badge variant="outline" className="flex items-center gap-1">
                                     <Clock className="w-3 h-3" />

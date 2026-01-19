@@ -29,7 +29,7 @@ const difficultyIcons = {
   hard: { icon: Zap, color: "text-red-500" }
 };
 
-export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, onSubtaskToggle, onSetDependency, onSetRecurring, onOpenCollabView, onStartCollab, allTasks = [], compact = false, showTeamInfo = false }) {
+export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, onSubtaskToggle, onSetDependency, onSetRecurring, onOpenCollabView, onStartCollab, onQuickComplete, onChangePriority, allTasks = [], compact = false, showTeamInfo = false }) {
   const completedSubtasks = task.subtasks?.filter(st => st.completed).length || 0;
   const totalSubtasks = task.subtasks?.length || 0;
   const progress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
@@ -89,6 +89,17 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                     Spread
                   </Badge>
                 )}
+                {task.task_priority && (
+                  <Badge className={
+                    task.task_priority === 'must_do' ? 'bg-red-100 text-red-700 border-red-200' :
+                    task.task_priority === 'should_do' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                    'bg-green-100 text-green-700 border-green-200'
+                  }>
+                    {task.task_priority === 'must_do' ? '🔴 Must Do' :
+                     task.task_priority === 'should_do' ? '🟡 Should Do' :
+                     '🟢 Could Do'}
+                  </Badge>
+                )}
                 {showTeamInfo && (task.assigned_to_name || task.assigned_to_users?.length > 0) && (
                   <Badge variant="outline" className="flex items-center gap-1">
                     <UserCircle className="w-3 h-3" />
@@ -120,6 +131,25 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                {task.status !== 'completed' && onQuickComplete && (
+                  <DropdownMenuItem onClick={() => onQuickComplete?.(task)}>
+                    <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" />
+                    Mark as Complete
+                  </DropdownMenuItem>
+                )}
+                {onChangePriority && (
+                  <>
+                    <DropdownMenuItem onClick={() => onChangePriority?.(task, 'must_do')}>
+                      🔴 Must Do
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onChangePriority?.(task, 'should_do')}>
+                      🟡 Should Do
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onChangePriority?.(task, 'could_do')}>
+                      🟢 Could Do
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuItem onClick={() => onEdit?.(task)}>
                   Edit Task
                 </DropdownMenuItem>
