@@ -172,6 +172,20 @@ export default function Tasks() {
     },
   });
 
+  const quickCompleteMutation = useMutation({
+    mutationFn: (task) => {
+      const completedSubtasks = task.subtasks?.map(st => ({ ...st, completed: true })) || [];
+      return base44.entities.Task.update(task.id, {
+        status: 'completed',
+        subtasks: completedSubtasks
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast.success('Task marked as completed!');
+    },
+  });
+
   const handleSubtaskToggle = async (taskId, updatedSubtasks) => {
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
@@ -215,6 +229,18 @@ export default function Tasks() {
       data: recurringData
     });
     setShowRecurringModal(false);
+  };
+
+  const handleQuickComplete = (task) => {
+    quickCompleteMutation.mutate(task);
+  };
+
+  const handleChangePriority = (task, priority) => {
+    updateTaskMutation.mutate({
+      id: task.id,
+      data: { task_priority: priority }
+    });
+    toast.success(`Task priority updated to ${priority.replace('_', ' ')}`);
   };
 
   const filteredTasks = tasks.filter(task => {
@@ -422,6 +448,8 @@ export default function Tasks() {
                                 setCollabTask(task);
                                 setShowCollabView(true);
                               }}
+                              onQuickComplete={handleQuickComplete}
+                              onChangePriority={handleChangePriority}
                             />
                             {task.team_id && (
                               <div className="ml-4">
