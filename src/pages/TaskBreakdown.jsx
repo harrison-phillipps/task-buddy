@@ -16,6 +16,7 @@ import { getPersonalizedMessage } from "../components/companionUtils";
 import AIEnhancedTextarea from "../components/ai/AIEnhancedTextarea";
 import { generateTaskDescription } from "../components/ai/AIContentGenerator";
 import TaskBreakdownBot from "../components/ai/TaskBreakdownBot";
+import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
 
 export default function TaskBreakdown() {
   const navigate = useNavigate();
@@ -33,6 +34,9 @@ export default function TaskBreakdown() {
   const [editingSubtasks, setEditingSubtasks] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [userProgress, setUserProgress] = useState(null);
+  const [duplicateCheck, setDuplicateCheck] = useState(null);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [pendingTaskData, setPendingTaskData] = useState(null);
 
   // Fetch current user and progress
   useEffect(() => {
@@ -128,14 +132,53 @@ Calculate total time including the prep step.`,
     setIsProcessing(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const totalTime = editingSubtasks.reduce((sum, st) => sum + (st.estimated_minutes || 0), 0);
-    createTaskMutation.mutate({
+    const taskData = {
       ...taskInput,
       subtasks: editingSubtasks,
       estimated_minutes: totalTime,
       status: "not_started"
+    };
+
+    // Check for duplicates
+    const existingTasks = await base44.entities.Task.filter({ 
+      created_by: currentUser.email 
+    }, '-created_date');
+    
+    const nonCompletedTasks = existingTasks.filter(t => t.status !== 'completed');
+    const duplicates = nonCompletedTasks.filter(existing => {
+      const titleSimilarity = existing.title.toLowerCase().includes(taskInput.title.toLowerCase().substring(0, 10)) ||
+                              taskInput.title.toLowerCase().includes(existing.title.toLowerCase().substring(0, 10));
+      const categorySame = existing.category === taskInput.category;
+      return titleSimilarity && categorySame;
     });
+
+    if (duplicates.length > 0) {
+      setDuplicateCheck({
+        duplicates: duplicates,
+        newTaskTitle: taskInput.title
+      });
+      setPendingTaskData(taskData);
+      setShowDuplicateDialog(true);
+    } else {
+      createTaskMutation.mutate(taskData);
+    }
+  };
+
+  const handleProceedWithDuplicates = () => {
+    if (pendingTaskData) {
+      createTaskMutation.mutate(pendingTaskData);
+    }
+    setShowDuplicateDialog(false);
+    setPendingTaskData(null);
+    setDuplicateCheck(null);
+  };
+
+  const handleCancelDuplicates = () => {
+    setShowDuplicateDialog(false);
+    setPendingTaskData(null);
+    setDuplicateCheck(null);
   };
 
   const updateSubtask = (index, field, value) => {
@@ -443,6 +486,15 @@ Calculate total time including the prep step.`,
             </motion.div>
           </AnimatePresence>
         )}
+
+        <DuplicateTaskChecker
+          open={showDuplicateDialog}
+          onOpenChange={setShowDuplicateDialog}
+          duplicates={duplicateCheck?.duplicates || []}
+          newTaskTitle={duplicateCheck?.newTaskTitle || ""}
+          onProceed={handleProceedWithDuplicates}
+          onCancel={handleCancelDuplicates}
+        />
       </div>
     </div>
   );

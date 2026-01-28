@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Sparkles, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import DuplicateTaskChecker from "../tasks/DuplicateTaskChecker";
 
 export default function QuickAddTask({ currentUser }) {
   const queryClient = useQueryClient();
@@ -30,6 +31,28 @@ export default function QuickAddTask({ currentUser }) {
   const handleQuickAdd = async () => {
     if (!taskTitle.trim()) return;
 
+    // Check for duplicates first
+    const existingTasks = await base44.entities.Task.filter({ 
+      created_by: currentUser.email 
+    }, '-created_date');
+    
+    const nonCompletedTasks = existingTasks.filter(t => t.status !== 'completed');
+    const duplicates = nonCompletedTasks.filter(existing => {
+      const titleSimilarity = existing.title.toLowerCase().includes(taskTitle.toLowerCase().substring(0, 10)) ||
+                              taskTitle.toLowerCase().includes(existing.title.toLowerCase().substring(0, 10));
+      return titleSimilarity;
+    });
+
+    if (duplicates.length > 0) {
+      setDuplicateCheck({
+        duplicates: duplicates,
+        newTaskTitle: taskTitle
+      });
+      setPendingTaskTitle(taskTitle);
+      setShowDuplicateDialog(true);
+      return;
+    }
+
     // Simple quick add
     createTaskMutation.mutate({
       title: taskTitle,
@@ -37,6 +60,26 @@ export default function QuickAddTask({ currentUser }) {
       category: "personal",
       priority: "medium"
     });
+  };
+
+  const handleProceedWithDuplicates = () => {
+    if (pendingTaskTitle) {
+      createTaskMutation.mutate({
+        title: pendingTaskTitle,
+        status: "not_started",
+        category: "personal",
+        priority: "medium"
+      });
+    }
+    setShowDuplicateDialog(false);
+    setPendingTaskTitle("");
+    setDuplicateCheck(null);
+  };
+
+  const handleCancelDuplicates = () => {
+    setShowDuplicateDialog(false);
+    setPendingTaskTitle("");
+    setDuplicateCheck(null);
   };
 
   const handleSmartAdd = async () => {
