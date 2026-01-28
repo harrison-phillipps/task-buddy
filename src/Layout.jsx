@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, ListTodo, Play, LayoutDashboard, User, RefreshCw, Brain, Award, Trophy, MessageSquare, Calendar, Users, Target, Settings, PanelLeftClose, PanelLeft } from "lucide-react";
+import { Sparkles, ListTodo, Play, LayoutDashboard, User, RefreshCw, Brain, Award, Trophy, MessageSquare, Calendar, Users, Target, Settings, PanelLeftClose, PanelLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import {
   Sidebar,
@@ -26,19 +26,27 @@ import DevModeIndicator from "@/components/DevModeIndicator";
 
 const navigationItems = [
   {
-    title: "Dashboard",
+    title: "Home",
     url: createPageUrl("Dashboard"),
     icon: LayoutDashboard,
   },
   {
+    title: "My Tasks",
+    url: createPageUrl("Tasks"),
+    icon: ListTodo,
+  },
+  {
+    title: "Focus Now",
+    url: createPageUrl("FocusSession"),
+    icon: Play,
+  },
+];
+
+const moreItems = [
+  {
     title: "Brain Dump",
     url: createPageUrl("BrainDump"),
     icon: Brain,
-  },
-  {
-    title: "AI Task Generator",
-    url: createPageUrl("AITaskGenerator"),
-    icon: Sparkles,
   },
   {
     title: "Break Down Task",
@@ -51,19 +59,9 @@ const navigationItems = [
     icon: Target,
   },
   {
-    title: "My Tasks",
-    url: createPageUrl("Tasks"),
-    icon: ListTodo,
-  },
-  {
     title: "Calendar",
     url: createPageUrl("CalendarView"),
     icon: Calendar,
-  },
-  {
-    title: "Focus Session",
-    url: createPageUrl("FocusSession"),
-    icon: Play,
   },
   {
     title: "Teams",
@@ -85,6 +83,7 @@ function LayoutContent({ children, currentPageName }) {
   const [userProgress, setUserProgress] = React.useState(null);
   const [showPersonalityModal, setShowPersonalityModal] = React.useState(false);
   const [showDeepCustomizer, setShowDeepCustomizer] = React.useState(false);
+  const [showMoreMenu, setShowMoreMenu] = React.useState(false);
 
   React.useEffect(() => {
     const fetchUser = async () => {
@@ -202,9 +201,6 @@ function LayoutContent({ children, currentPageName }) {
           
           <SidebarContent className="p-3">
             <SidebarGroup>
-              <SidebarGroupLabel className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2 py-2">
-                Navigation
-              </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {navigationItems.map((item) => (
@@ -215,14 +211,45 @@ function LayoutContent({ children, currentPageName }) {
                           location.pathname === item.url ? 'bg-gradient-to-r from-purple-500 to-teal-500 text-white shadow-md' : ''
                         }`}
                       >
-                        <Link to={item.url} className="flex items-center gap-3 px-4 py-3" onClick={handleNavClick}>
-                          <item.icon className="w-5 h-5" />
-                          <span className="font-medium">{item.title}</span>
+                        <Link to={item.url} className="flex items-center gap-3 px-4 py-4" onClick={handleNavClick}>
+                          <item.icon className="w-6 h-6" />
+                          <span className="font-semibold text-base">{item.title}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
                 </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <button
+                  onClick={() => setShowMoreMenu(!showMoreMenu)}
+                  className="w-full flex items-center justify-between px-4 py-2 text-gray-600 hover:text-purple-700 hover:bg-purple-50 rounded-xl transition-colors"
+                >
+                  <span className="font-medium text-sm">More Tools</span>
+                  {showMoreMenu ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+                {showMoreMenu && (
+                  <SidebarMenu className="mt-2">
+                    {moreItems.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton 
+                          asChild 
+                          className={`hover:bg-purple-50 hover:text-purple-700 transition-all duration-300 rounded-xl mb-1 ${
+                            location.pathname === item.url ? 'bg-purple-100 text-purple-700' : ''
+                          }`}
+                        >
+                          <Link to={item.url} className="flex items-center gap-3 px-4 py-2 text-sm" onClick={handleNavClick}>
+                            <item.icon className="w-4 h-4" />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                )}
               </SidebarGroupContent>
             </SidebarGroup>
 
