@@ -3,8 +3,9 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Calendar, Link as LinkIcon, ChevronDown, ChevronRight, CheckCircle2 } from "lucide-react";
+import { Plus, Calendar, Link as LinkIcon, ChevronDown, ChevronRight, CheckCircle2, Sparkles, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { analyzeTaskPriority } from "../components/ai/TaskPrioritizer";
 import {
   Accordion,
   AccordionContent,
@@ -55,6 +56,10 @@ export default function Tasks() {
   const [collabTask, setCollabTask] = useState(null);
   const [showScheduleFocus, setShowScheduleFocus] = useState(false);
   const [taskToSchedule, setTaskToSchedule] = useState(null);
+  const [isAnalyzingPriority, setIsAnalyzingPriority] = useState(false);
+  const [aiPrioritizedTasks, setAiPrioritizedTasks] = useState(null);
+  const [showAIInsights, setShowAIInsights] = useState(false);
+  const [aiStrategy, setAiStrategy] = useState("");
 
   // Listen for schedule focus events from TaskCard
   useEffect(() => {
@@ -90,7 +95,7 @@ export default function Tasks() {
     fetchUser();
   }, []);
 
-  const { data: tasks = [], isLoading } = useQuery({
+  const { data: rawTasks = [], isLoading } = useQuery({
     queryKey: ['tasks', currentUser?.email, selectedTeamId],
     queryFn: async () => {
       if (!currentUser) return [];
@@ -118,6 +123,9 @@ export default function Tasks() {
     },
     enabled: !!currentUser,
   });
+
+  // Use AI prioritized tasks if available, otherwise use raw tasks
+  const tasks = aiPrioritizedTasks || rawTasks;
 
   const { data: teams = [] } = useQuery({
     queryKey: ['teams', currentUser?.id],
@@ -253,6 +261,43 @@ export default function Tasks() {
     toast.success(`Task priority updated to ${priority.replace('_', ' ')}`);
   };
 
+  const handleAIPrioritization = async () => {
+    if (!currentUser) return;
+    
+    setIsAnalyzingPriority(true);
+    try {
+      // Get AI prioritization preferences from user data
+      const preferences = currentUser.ai_prioritization_preferences || {};
+      
+      // Get all tasks for history analysis
+      const allUserTasks = await base44.entities.Task.filter({ 
+        created_by: currentUser.email 
+      }, '-updated_date', 200);
+
+      const activeTasks = rawTasks.filter(t => t.status !== 'completed');
+      
+      const result = await analyzeTaskPriority(activeTasks, allUserTasks, preferences);
+      
+      setAiPrioritizedTasks(result.tasks);
+      setAiStrategy(result.strategy);
+      setShowAIInsights(true);
+      
+      toast.success("AI prioritization complete! ✨", {
+        description: result.recommended_focus
+      });
+    } catch (error) {
+      console.error("AI prioritization error:", error);
+      toast.error("Failed to analyze priorities");
+    }
+    setIsAnalyzingPriority(false);
+  };
+
+  const clearAIPrioritization = () => {
+    setAiPrioritizedTasks(null);
+    setShowAIInsights(false);
+    toast.info("AI prioritization cleared");
+  };
+
   const filteredTasks = tasks.filter(task => {
     // Don't show recurring templates in the task list (they're just templates)
     if (task.is_recurring && !task.parent_recurring_task_id && !task.due_date) {
@@ -382,6 +427,38 @@ export default function Tasks() {
                 <SelectItem value="could_do">🟢 Could Do</SelectItem>
               </SelectContent>
             </Select>
+            {aiPrioritizedTasks ? (
+              <Button 
+                variant="outline"
+                onClick={clearAIPrioritization}
+                className="border-purple-200 bg-purple-50 hover:bg-purple-100 flex-1 sm:flex-none"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Clear AI Sort</span>
+                <span className="sm:hidden">Clear AI</span>
+              </Button>
+            ) : (
+              <Button 
+                variant="outline"
+                onClick={handleAIPrioritization}
+                disabled={isAnalyzingPriority || rawTasks.length === 0}
+                className="border-purple-200 hover:bg-purple-50 flex-1 sm:flex-none"
+              >
+                {isAnalyzingPriority ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    <span className="hidden sm:inline">Analyzing...</span>
+                    <span className="sm:hidden">...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    <span className="hidden sm:inline">AI Prioritize</span>
+                    <span className="sm:hidden">AI Sort</span>
+                  </>
+                )}
+              </Button>
+            )}
             <Button 
               variant="outline"
               onClick={() => setShowCalendarSync(true)}
@@ -399,6 +476,28 @@ export default function Tasks() {
             </Link>
           </div>
         </motion.div>
+
+        {showAIInsights && aiStrategy && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-r from-purple-100 to-teal-100 border border-purple-200 rounded-xl p-4"
+          >
+            <div className="flex items-start gap-3">
+              <Sparkles className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 mb-1">AI Strategy Recommendation</h3>
+                <p className="text-sm text-gray-700">{aiStrategy}</p>
+              </div>
+              <button
+                onClick={() => setShowAIInsights(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}

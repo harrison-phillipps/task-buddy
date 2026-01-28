@@ -2,16 +2,23 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Circle, Clock, Zap, Play, MoreVertical, Calendar, CalendarDays, Lock, RefreshCw, Link as LinkIcon, UserCircle, Users } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Zap, Play, MoreVertical, Calendar, CalendarDays, Lock, RefreshCw, Link as LinkIcon, UserCircle, Users, Sparkles, Info } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import SubtaskTracker from "./tasks/SubtaskTracker";
 import RecurringTaskBadge from "./tasks/RecurringTaskBadge";
+import { getAIPriorityColor, getAIPriorityLabel, getUrgencyIcon } from "./ai/TaskPrioritizer";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const categoryColors = {
   work: "bg-blue-100 text-blue-700 border-blue-200",
@@ -56,6 +63,9 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
     }
   };
 
+  const hasAIPriority = task.ai_priority_score !== undefined;
+  const aiPriorityGradient = hasAIPriority ? getAIPriorityColor(task.ai_priority_score) : "";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -63,7 +73,7 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
       whileHover={{ y: -4 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className={`bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 border-purple-100 ${isCompleted ? 'opacity-60' : ''}`}>
+      <Card className={`bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 border-purple-100 ${isCompleted ? 'opacity-60' : ''} ${hasAIPriority && !isCompleted ? `border-l-4 bg-gradient-to-r ${aiPriorityGradient} bg-opacity-5` : ''}`}>
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 flex-1">
@@ -79,6 +89,23 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
               </button>
               <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  {hasAIPriority && !isCompleted && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge className={`bg-gradient-to-r ${aiPriorityGradient} text-white border-none font-semibold cursor-help`}>
+                            <Sparkles className="w-3 h-3 mr-1" />
+                            AI: {task.ai_priority_score} {getUrgencyIcon(task.ai_urgency_level)}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p className="font-semibold mb-1">{getAIPriorityLabel(task.ai_priority_score)}</p>
+                          <p className="text-xs mb-2">{task.ai_reasoning}</p>
+                          <p className="text-xs text-gray-400">Best time: {task.ai_best_time} • Match: {task.ai_energy_match}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                   {isBlocked && (
                     <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
                       <Lock className="w-3 h-3 mr-1" />
