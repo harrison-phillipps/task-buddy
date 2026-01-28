@@ -40,8 +40,11 @@ export default function Tasks() {
   const teamIdParam = urlParams.get('teamId');
   
   const [filter, setFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
   const [spreadTask, setSpreadTask] = useState(null);
   const [showCalendarSync, setShowCalendarSync] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [completedTaskTitle, setCompletedTaskTitle] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
   const [showDependencyModal, setShowDependencyModal] = useState(false);
   const [selectedDependencyTask, setSelectedDependencyTask] = useState(null);
