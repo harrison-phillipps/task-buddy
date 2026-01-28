@@ -37,6 +37,8 @@ export default function Dashboard() {
   const [showProgressReport, setShowProgressReport] = useState(false);
   const [aiMessage, setAiMessage] = useState(null);
   const [isLoadingMessage, setIsLoadingMessage] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [completedTaskTitle, setCompletedTaskTitle] = useState("");
   const [visibleWidgets, setVisibleWidgets] = useState(() => {
     const saved = localStorage.getItem('dashboardWidgets');
     return saved ? JSON.parse(saved) : {
