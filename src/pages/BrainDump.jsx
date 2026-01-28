@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { POINTS_SYSTEM } from "@/components/achievementsData";
 import { getPersonalizedMessage } from "@/components/companionUtils";
 import VoiceToText from "../components/VoiceToText";
+import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
 
 export default function BrainDump() {
   const navigate = useNavigate();
@@ -27,6 +28,9 @@ export default function BrainDump() {
   const [groupBy, setGroupBy] = useState("none");
   const [showHistory, setShowHistory] = useState(false);
   const [userProgress, setUserProgress] = useState(null);
+  const [duplicateCheck, setDuplicateCheck] = useState(null);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [pendingTasks, setPendingTasks] = useState(null);
 
   const { data: brainDumps = [] } = useQuery({
     queryKey: ['brainDumps', currentUser?.email],
@@ -211,7 +215,7 @@ IMPORTANT: Only return NEW tasks (skip duplicates), and identify recurring patte
     setIsProcessing(false);
   };
 
-  const handleSaveAll = () => {
+  const handleSaveAll = async () => {
     const tasksToCreate = extractedTasks.tasks.map(task => ({
       ...task,
       status: "not_started",
@@ -219,10 +223,53 @@ IMPORTANT: Only return NEW tasks (skip duplicates), and identify recurring patte
       recurrence_pattern: task.recurrence_pattern || "none",
       task_priority: task.task_priority || null
     }));
-    createTasksMutation.mutate({
-      tasks: tasksToCreate,
-      brainDumpId: extractedTasks.brainDumpId
+
+    // Check for duplicates in non-completed tasks
+    const existingTasks = await base44.entities.Task.filter({ 
+      created_by: currentUser.email 
+    }, '-created_date');
+    
+    const nonCompletedTasks = existingTasks.filter(t => t.status !== 'completed');
+    const duplicates = [];
+
+    tasksToCreate.forEach(newTask => {
+      const similar = nonCompletedTasks.filter(existing => {
+        const titleSimilarity = existing.title.toLowerCase().includes(newTask.title.toLowerCase().substring(0, 10)) ||
+                                newTask.title.toLowerCase().includes(existing.title.toLowerCase().substring(0, 10));
+        const categorySame = existing.category === newTask.category;
+        return titleSimilarity && categorySame;
+      });
+      duplicates.push(...similar);
     });
+
+    if (duplicates.length > 0) {
+      setDuplicateCheck({
+        duplicates: Array.from(new Set(duplicates.map(d => d.id))).map(id => duplicates.find(d => d.id === id)),
+        newTaskTitle: `${tasksToCreate.length} new task${tasksToCreate.length > 1 ? 's' : ''} from brain dump`
+      });
+      setPendingTasks({ tasks: tasksToCreate, brainDumpId: extractedTasks.brainDumpId });
+      setShowDuplicateDialog(true);
+    } else {
+      createTasksMutation.mutate({
+        tasks: tasksToCreate,
+        brainDumpId: extractedTasks.brainDumpId
+      });
+    }
+  };
+
+  const handleProceedWithDuplicates = () => {
+    if (pendingTasks) {
+      createTasksMutation.mutate(pendingTasks);
+    }
+    setShowDuplicateDialog(false);
+    setPendingTasks(null);
+    setDuplicateCheck(null);
+  };
+
+  const handleCancelDuplicates = () => {
+    setShowDuplicateDialog(false);
+    setPendingTasks(null);
+    setDuplicateCheck(null);
   };
 
   const loadBrainDump = (brainDump) => {
@@ -638,6 +685,15 @@ IMPORTANT: Only return NEW tasks (skip duplicates), and identify recurring patte
             </motion.div>
           </AnimatePresence>
         )}
+
+        <DuplicateTaskChecker
+          open={showDuplicateDialog}
+          onOpenChange={setShowDuplicateDialog}
+          duplicates={duplicateCheck?.duplicates || []}
+          newTaskTitle={duplicateCheck?.newTaskTitle || ""}
+          onProceed={handleProceedWithDuplicates}
+          onCancel={handleCancelDuplicates}
+        />
       </div>
     </div>
   );

@@ -11,6 +11,9 @@ import { toast } from "sonner";
 export default function QuickAddTask({ currentUser }) {
   const queryClient = useQueryClient();
   const [taskTitle, setTaskTitle] = useState("");
+  const [duplicateCheck, setDuplicateCheck] = useState(null);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [pendingTaskTitle, setPendingTaskTitle] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -144,6 +147,15 @@ export default function QuickAddTask({ currentUser }) {
           )}
         </AnimatePresence>
       </CardContent>
+      
+      <DuplicateTaskChecker
+        open={showDuplicateDialog}
+        onOpenChange={setShowDuplicateDialog}
+        duplicates={duplicateCheck?.duplicates || []}
+        newTaskTitle={duplicateCheck?.newTaskTitle || ""}
+        onProceed={handleProceedWithDuplicates}
+        onCancel={handleCancelDuplicates}
+      />
     </Card>
   );
 }
