@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, CheckCircle, Edit2, Trash2, Plus, Clock } from "lucide-react";
+import { Sparkles, Loader2, CheckCircle, Edit2, Trash2, Plus, Clock, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -37,6 +37,21 @@ export default function TaskBreakdown() {
   const [duplicateCheck, setDuplicateCheck] = useState(null);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const [pendingTaskData, setPendingTaskData] = useState(null);
+  const [selectedTeam, setSelectedTeam] = useState(null);
+
+  const { data: teams = [] } = useQuery({
+    queryKey: ['teams', currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser) return [];
+      const allTeams = await base44.entities.Team.list();
+      return allTeams.filter(team => 
+        team.owner_id === currentUser.id || 
+        team.member_ids?.includes(currentUser.id) ||
+        team.members?.some(m => m.user_id === currentUser.id)
+      );
+    },
+    enabled: !!currentUser
+  });
 
   // Fetch current user and progress
   useEffect(() => {
@@ -138,7 +153,8 @@ Calculate total time including the prep step.`,
       ...taskInput,
       subtasks: editingSubtasks,
       estimated_minutes: totalTime,
-      status: "not_started"
+      status: "not_started",
+      team_id: selectedTeam || undefined
     };
 
     // Check for duplicates
@@ -352,6 +368,26 @@ Calculate total time including the prep step.`,
                     💡 This helps us suggest a good first step to help you get started
                   </p>
                 </div>
+
+                {teams.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      Assign to Team (optional)
+                    </Label>
+                    <Select value={selectedTeam || ""} onValueChange={setSelectedTeam}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Personal task" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={null}>Personal task</SelectItem>
+                        {teams.map(team => (
+                          <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <Button
                   onClick={handleBreakdown}
