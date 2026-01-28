@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/accordion";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import confetti from "canvas-confetti";
 import TaskCard from "../components/TaskCard";
 import SpreadTaskModal from "../components/dashboard/SpreadTaskModal";
 import CalendarSyncModal from "../components/calendar/CalendarSyncModal";
@@ -181,9 +182,11 @@ export default function Tasks() {
         subtasks: completedSubtasks
       });
     },
-    onSuccess: () => {
+    onSuccess: (data, task) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success('Task marked as completed!');
+      setCompletedTaskTitle(task.title);
+      setShowCelebration(true);
+      setTimeout(() => setShowCelebration(false), 3000);
     },
   });
 
@@ -197,6 +200,9 @@ export default function Tasks() {
     let newStatus = task.status;
     if (allCompleted && task.status !== 'completed') {
       newStatus = 'completed';
+      setCompletedTaskTitle(task.title);
+      setShowCelebration(true);
+      setTimeout(() => setShowCelebration(false), 3000);
     } else if (anyCompleted && task.status === 'not_started') {
       newStatus = 'in_progress';
     }
@@ -249,8 +255,22 @@ export default function Tasks() {
     if (task.is_recurring && !task.parent_recurring_task_id && !task.due_date) {
       return false;
     }
-    if (filter === "all") return true;
-    return task.status === filter;
+    
+    // Status filter
+    let statusMatch = false;
+    if (filter === "all") {
+      statusMatch = task.status !== 'completed'; // All = active tasks only
+    } else {
+      statusMatch = task.status === filter;
+    }
+    
+    // Priority filter
+    let priorityMatch = true;
+    if (priorityFilter !== "all") {
+      priorityMatch = task.task_priority === priorityFilter;
+    }
+    
+    return statusMatch && priorityMatch;
   });
 
   const statusCounts = {
@@ -290,8 +310,39 @@ export default function Tasks() {
     other: "from-gray-100 to-gray-50 border-gray-200"
   };
 
+  // Trigger confetti when celebration shows
+  useEffect(() => {
+    if (showCelebration) {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#8B5CF6', '#14B8A6', '#FB7185', '#FCD34D']
+      });
+    }
+  }, [showCelebration]);
+
   return (
     <div className="min-h-screen p-4 md:p-8">
+      <AnimatePresence>
+        {showCelebration && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: -50 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: -50 }}
+            className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-purple-500 to-teal-500 text-white px-8 py-4 rounded-2xl shadow-2xl"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">🎉</span>
+              <div>
+                <p className="font-bold text-lg">Task Completed!</p>
+                <p className="text-sm text-purple-100">{completedTaskTitle}</p>
+              </div>
+              <span className="text-3xl">✨</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="max-w-7xl mx-auto space-y-6">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -316,7 +367,18 @@ export default function Tasks() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap items-center">
+            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="Filter by priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Priorities</SelectItem>
+                <SelectItem value="must_do">🔴 Must Do</SelectItem>
+                <SelectItem value="should_do">🟡 Should Do</SelectItem>
+                <SelectItem value="could_do">🟢 Could Do</SelectItem>
+              </SelectContent>
+            </Select>
             <Button 
               variant="outline"
               onClick={() => setShowCalendarSync(true)}
