@@ -31,6 +31,7 @@ export default function BrainDump() {
   const [duplicateCheck, setDuplicateCheck] = useState(null);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const [pendingTasks, setPendingTasks] = useState(null);
+  const [companionMessage, setCompanionMessage] = useState("");
 
   const { data: brainDumps = [] } = useQuery({
     queryKey: ['brainDumps', currentUser?.email],
@@ -48,6 +49,8 @@ export default function BrainDump() {
         const progressList = await base44.entities.UserProgress.filter({ user_id: user.id });
         if (progressList.length > 0) {
           setUserProgress(progressList[0]);
+          // Set initial companion message
+          setCompanionMessage(getPersonalizedMessage(progressList[0], "brain_dump"));
         }
       } catch (error) {
         console.error("Error fetching user:", error);
@@ -55,6 +58,17 @@ export default function BrainDump() {
     };
     fetchUser();
   }, []);
+
+  // Update companion message every 30 seconds
+  useEffect(() => {
+    if (!userProgress) return;
+    
+    const interval = setInterval(() => {
+      setCompanionMessage(getPersonalizedMessage(userProgress, "brain_dump"));
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [userProgress]);
 
   const createTasksMutation = useMutation({
     mutationFn: async ({ tasks, brainDumpId }) => {
@@ -390,7 +404,7 @@ IMPORTANT: Only return NEW tasks (skip duplicates), and identify recurring patte
             >
               <VirtualCompanion 
                 mood="supportive"
-                message={getPersonalizedMessage(userProgress, "brain_dump")}
+                message={companionMessage}
                 size="small"
                 characterType={currentUser?.companion_type || "human"}
                 userProgress={userProgress}
