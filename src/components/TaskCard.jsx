@@ -33,6 +33,7 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
   const completedSubtasks = task.subtasks?.filter(st => st.completed).length || 0;
   const totalSubtasks = task.subtasks?.length || 0;
   const progress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
+  const isCompleted = task.status === 'completed';
 
   const DifficultyIcon = difficultyIcons[task.difficulty]?.icon || Zap;
   const difficultyColor = difficultyIcons[task.difficulty]?.color || "text-gray-500";
@@ -62,10 +63,21 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
       whileHover={{ y: -4 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 border-purple-100">
+      <Card className={`bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 border-purple-100 ${isCompleted ? 'opacity-60' : ''}`}>
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-3">
-            <div className="flex-1">
+            <div className="flex items-start gap-3 flex-1">
+              <button
+                onClick={() => onQuickComplete?.(task)}
+                className="flex-shrink-0 mt-1 hover:scale-110 transition-transform"
+              >
+                {isCompleted ? (
+                  <CheckCircle2 className="w-7 h-7 text-green-500" />
+                ) : (
+                  <Circle className="w-7 h-7 text-gray-400 hover:text-green-500" />
+                )}
+              </button>
+              <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                   {isBlocked && (
                     <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
@@ -117,12 +129,13 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                 )}
                 <DifficultyIcon className={`w-4 h-4 ${difficultyColor}`} />
               </div>
-              <CardTitle className="text-lg font-bold text-gray-900">
+              <CardTitle className={`text-lg font-bold text-gray-900 ${isCompleted ? 'line-through text-gray-500' : ''}`}>
                 {task.title}
               </CardTitle>
               {task.description && !compact && (
                 <p className="text-sm text-gray-600 mt-2">{task.description}</p>
               )}
+              </div>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -188,58 +201,26 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
           )}
 
           <div className="space-y-2">
-            <Button
-              onClick={() => onStart?.(task)}
-              disabled={isBlocked}
-              className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold shadow-md disabled:opacity-50"
-            >
-              {isBlocked ? (
-                <>
-                  <Lock className="w-4 h-4 mr-2" />
-                  Task Blocked
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4 mr-2" />
-                  Start Focus Session
-                </>
-              )}
-            </Button>
-            <div className="grid grid-cols-2 gap-2">
-              {task.team_id && onOpenCollabView && (
-                <Button
-                  onClick={() => onOpenCollabView?.(task)}
-                  variant="outline"
-                  className="border-teal-200 hover:bg-teal-50"
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  Collaborate
-                </Button>
-              )}
-              {task.team_id && onStartCollab && (
-                <Button
-                  onClick={() => onStartCollab?.(task)}
-                  variant="outline"
-                  className="border-purple-200 hover:bg-purple-50"
-                >
-                  <Play className="w-4 h-4 mr-2" />
-                  Team Session
-                </Button>
-              )}
-            </div>
-            {!task.focus_block_scheduled && task.status !== 'completed' && (
+            {!isCompleted && (
               <Button
-                onClick={() => {
-                  // Open schedule focus modal
-                  window.dispatchEvent(new CustomEvent('scheduleFocusBlock', { detail: task }));
-                }}
-                variant="outline"
-                className="w-full border-purple-200 hover:bg-purple-50"
+                onClick={() => onStart?.(task)}
+                disabled={isBlocked}
+                className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold shadow-md disabled:opacity-50 text-base py-6"
               >
-                <Zap className="w-4 h-4 mr-2" />
-                Schedule Focus
+                {isBlocked ? (
+                  <>
+                    <Lock className="w-5 h-5 mr-2" />
+                    Task Blocked
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-5 h-5 mr-2" />
+                    Start Now
+                  </>
+                )}
               </Button>
             )}
+
           </div>
         </CardContent>
       </Card>
