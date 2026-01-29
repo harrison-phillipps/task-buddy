@@ -23,6 +23,7 @@ import PersonalitySettingsModal from "@/components/PersonalitySettingsModal";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import DeepPersonalityCustomizer from "@/components/companion/DeepPersonalityCustomizer";
 import DevModeIndicator from "@/components/DevModeIndicator";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const navigationItems = [
   {
@@ -85,26 +86,7 @@ function LayoutContent({ children, currentPageName }) {
   const [showDeepCustomizer, setShowDeepCustomizer] = React.useState(false);
   const [showMoreMenu, setShowMoreMenu] = React.useState(false);
 
-  // Dark mode detection
-  React.useEffect(() => {
-    const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
-    const updateDarkMode = (e) => {
-      if (e.matches) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    };
-
-    // Initial check
-    updateDarkMode(darkModeQuery);
-
-    // Listen for changes
-    darkModeQuery.addEventListener('change', updateDarkMode);
-    
-    return () => darkModeQuery.removeEventListener('change', updateDarkMode);
-  }, []);
+  // Dark mode detection - handled by ThemeToggle component now
 
   React.useEffect(() => {
     const fetchUser = async () => {
@@ -356,7 +338,8 @@ function LayoutContent({ children, currentPageName }) {
                 </SidebarTrigger>
                 <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 dark:from-purple-400 dark:to-teal-400 bg-clip-text text-transparent md:hidden">TaskBuddy</h1>
               </div>
-              <div className="ml-auto">
+              <div className="ml-auto flex items-center gap-2">
+                <ThemeToggle />
                 <NotificationBell currentUser={currentUser} />
               </div>
             </div>

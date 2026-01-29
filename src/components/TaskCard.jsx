@@ -21,19 +21,19 @@ import {
 } from "@/components/ui/tooltip";
 
 const categoryColors = {
-  work: "bg-blue-100 text-blue-700 border-blue-200",
-  personal: "bg-purple-100 text-purple-700 border-purple-200",
-  health: "bg-green-100 text-green-700 border-green-200",
-  creative: "bg-pink-100 text-pink-700 border-pink-200",
-  learning: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  household: "bg-teal-100 text-teal-700 border-teal-200",
-  other: "bg-gray-100 text-gray-700 border-gray-200"
+  work: "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border-blue-200 dark:border-blue-800",
+  personal: "bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-200 border-purple-200 dark:border-purple-800",
+  health: "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 border-green-200 dark:border-green-800",
+  creative: "bg-pink-100 dark:bg-pink-900 text-pink-700 dark:text-pink-200 border-pink-200 dark:border-pink-800",
+  learning: "bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800",
+  household: "bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-200 border-teal-200 dark:border-teal-800",
+  other: "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700"
 };
 
 const difficultyIcons = {
-  easy: { icon: Zap, color: "text-green-500" },
-  medium: { icon: Zap, color: "text-yellow-500" },
-  hard: { icon: Zap, color: "text-red-500" }
+  easy: { icon: Zap, color: "text-green-500 dark:text-green-400" },
+  medium: { icon: Zap, color: "text-yellow-500 dark:text-yellow-400" },
+  hard: { icon: Zap, color: "text-red-500 dark:text-red-400" }
 };
 
 export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, onSubtaskToggle, onSetDependency, onSetRecurring, onOpenCollabView, onStartCollab, onQuickComplete, onChangePriority, allTasks = [], compact = false, showTeamInfo = false }) {
@@ -73,7 +73,7 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
       whileHover={{ y: -4 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className={`bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 border-purple-100 ${isCompleted ? 'opacity-60' : ''} ${hasAIPriority && !isCompleted ? `border-l-4 bg-gradient-to-r ${aiPriorityGradient} bg-opacity-5` : ''}`}>
+      <Card className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 border-purple-100 dark:border-gray-700 ${isCompleted ? 'opacity-60' : ''} ${hasAIPriority && !isCompleted ? `border-l-4 bg-gradient-to-r ${aiPriorityGradient} bg-opacity-5` : ''}`}>
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 flex-1">
@@ -107,7 +107,7 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                     </TooltipProvider>
                   )}
                   {isBlocked && (
-                    <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                    <Badge variant="outline" className="bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800">
                       <Lock className="w-3 h-3 mr-1" />
                       Blocked
                     </Badge>
@@ -117,22 +117,22 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                   {task.category}
                 </Badge>
                 {task.estimated_minutes && (
-                  <Badge variant="outline" className="flex items-center gap-1">
+                  <Badge variant="outline" className="flex items-center gap-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
                     <Clock className="w-3 h-3" />
                     {task.estimated_minutes}m total
                   </Badge>
                 )}
                 {task.spread_across_days && (
-                  <Badge className="bg-teal-100 text-teal-700 border-teal-200 flex items-center gap-1">
+                  <Badge className="bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-200 border-teal-200 dark:border-teal-800 flex items-center gap-1">
                     <CalendarDays className="w-3 h-3" />
                     Spread
                   </Badge>
                 )}
                 {task.task_priority && (
                   <Badge className={
-                    task.task_priority === 'must_do' ? 'bg-red-100 text-red-700 border-red-200' :
-                    task.task_priority === 'should_do' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
-                    'bg-green-100 text-green-700 border-green-200'
+                    task.task_priority === 'must_do' ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 border-red-200 dark:border-red-800' :
+                    task.task_priority === 'should_do' ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800' :
+                    'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 border-green-200 dark:border-green-800'
                   }>
                     {task.task_priority === 'must_do' ? '🔴 Must Do' :
                      task.task_priority === 'should_do' ? '🟡 Should Do' :
@@ -140,7 +140,7 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                   </Badge>
                 )}
                 {showTeamInfo && (task.assigned_to_name || task.assigned_to_users?.length > 0) && (
-                  <Badge variant="outline" className="flex items-center gap-1">
+                  <Badge variant="outline" className="flex items-center gap-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
                     <UserCircle className="w-3 h-3" />
                     {task.assigned_to_users?.length > 1 
                       ? `${task.assigned_to_users.length} members`
@@ -149,24 +149,24 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                   </Badge>
                 )}
                 {task.team_id && (
-                  <Badge className="bg-teal-100 text-teal-700 border-teal-200 flex items-center gap-1">
+                  <Badge className="bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-200 border-teal-200 dark:border-teal-800 flex items-center gap-1">
                     <Users className="w-3 h-3" />
                     Team
                   </Badge>
                 )}
                 <DifficultyIcon className={`w-4 h-4 ${difficultyColor}`} />
               </div>
-              <CardTitle className={`text-lg font-bold text-gray-900 ${isCompleted ? 'line-through text-gray-500' : ''}`}>
+              <CardTitle className={`text-lg font-bold text-gray-900 dark:text-gray-100 ${isCompleted ? 'line-through text-gray-500 dark:text-gray-400' : ''}`}>
                 {task.title}
               </CardTitle>
               {task.description && !compact && (
-                <p className="text-sm text-gray-600 mt-2">{task.description}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{task.description}</p>
               )}
               </div>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button variant="ghost" size="icon" className="h-8 w-8 dark:text-gray-300">
                   <MoreVertical className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
