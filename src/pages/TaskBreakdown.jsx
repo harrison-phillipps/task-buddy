@@ -17,6 +17,7 @@ import AIEnhancedTextarea from "../components/ai/AIEnhancedTextarea";
 import { generateTaskDescription } from "../components/ai/AIContentGenerator";
 import TaskBreakdownBot from "../components/ai/TaskBreakdownBot";
 import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
+import AITaskBreakdownSuggestion from "../components/tasks/AITaskBreakdownSuggestion";
 
 export default function TaskBreakdown() {
   const navigate = useNavigate();
@@ -388,6 +389,28 @@ Calculate total time including the prep step.`,
                     </Select>
                   </div>
                 )}
+
+                <AITaskBreakdownSuggestion
+                  taskTitle={taskInput.title}
+                  taskDescription={taskInput.description}
+                  taskDifficulty={taskInput.difficulty}
+                  onApplySuggestions={(subtasks) => {
+                    setBreakdownResult({
+                      subtasks: subtasks,
+                      encouragement: "Perfect! I've created an AI breakdown for you. Feel free to customize it! ✨"
+                    });
+                    setEditingSubtasks(subtasks);
+                  }}
+                />
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-gray-200" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-2 text-gray-500">Or use smart breakdown</span>
+                  </div>
+                </div>
 
                 <Button
                   onClick={handleBreakdown}
