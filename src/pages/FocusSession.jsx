@@ -34,6 +34,8 @@ import MoodCoach from "../components/focus/MoodCoach";
 import PostSessionMoodReflection from "../components/focus/PostSessionMoodReflection";
 import AdaptiveBreakSuggestion from "../components/focus/AdaptiveBreakSuggestion";
 import GuidedBreakFlow from "../components/focus/GuidedBreakFlow";
+import SmartTimerRecommendations from "../components/focus/SmartTimerRecommendations";
+import CalendarFocusBlocker from "../components/focus/CalendarFocusBlocker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Dynamic encouragement based on user progress
@@ -995,6 +997,30 @@ export default function FocusSession() {
                 setSelectedSound={setAmbientSound}
                 isPlaying={false}
               />
+
+              <SmartTimerRecommendations
+                currentMood={moodBefore}
+                energyLevel={selectedTask?.energy_level_needed}
+                taskDifficulty={selectedTask?.difficulty}
+                journeyData={journeyData}
+                onApplyRecommendation={(settings) => {
+                  setWorkInterval(settings.workInterval);
+                  setBreakInterval(settings.breakInterval);
+                  setFocusTechnique(settings.focusTechnique);
+                  setAmbientSound(settings.ambientSound);
+                }}
+              />
+
+              {selectedTask && (
+                <CalendarFocusBlocker
+                  task={selectedTask}
+                  estimatedDuration={selectedTask.subtasks?.reduce((sum, st) => sum + (st.estimated_minutes || 0), 0) || 30}
+                  onBlockCreated={() => {
+                    // Refresh tasks to show updated focus_block_scheduled flag
+                    queryClient.invalidateQueries({ queryKey: ['focusSessionTasks'] });
+                  }}
+                />
+              )}
               
               <SessionGoals
                 selectedGoal={sessionGoalType}
