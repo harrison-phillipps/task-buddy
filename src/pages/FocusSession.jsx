@@ -849,10 +849,10 @@ export default function FocusSession() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <h1 className="text-3xl md:text-4xl font-bold mb-3 bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl md:text-4xl font-bold mb-3 bg-gradient-to-r from-purple-600 to-teal-600 dark:from-purple-400 dark:to-teal-400 bg-clip-text text-transparent">
             Focus Session 🎯
           </h1>
-          <p className="text-gray-600">Let's work through each step together!</p>
+          <p className="text-gray-600 dark:text-gray-400">Let's work through each step together!</p>
         </motion.div>
 
         <VirtualCompanion 
@@ -891,17 +891,17 @@ export default function FocusSession() {
           />
         ) : !sessionStarted ? (
           <Tabs defaultValue="setup" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="setup">Setup</TabsTrigger>
-              <TabsTrigger value="dynamic">AI Dynamic</TabsTrigger>
-              <TabsTrigger value="templates">Templates</TabsTrigger>
-              <TabsTrigger value="analysis">Analysis</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4 dark:bg-gray-800">
+              <TabsTrigger value="setup" className="dark:data-[state=active]:bg-gray-700">Setup</TabsTrigger>
+              <TabsTrigger value="dynamic" className="dark:data-[state=active]:bg-gray-700">AI Dynamic</TabsTrigger>
+              <TabsTrigger value="templates" className="dark:data-[state=active]:bg-gray-700">Templates</TabsTrigger>
+              <TabsTrigger value="analysis" className="dark:data-[state=active]:bg-gray-700">Analysis</TabsTrigger>
             </TabsList>
 
             <TabsContent value="setup">
-              <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
+              <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-purple-100 dark:border-gray-700">
                 <CardHeader>
-                  <CardTitle>Start Your Session</CardTitle>
+                  <CardTitle className="dark:text-gray-100">Start Your Session</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
               <div className="space-y-2">
@@ -922,17 +922,17 @@ export default function FocusSession() {
               </div>
 
               {selectedTask && (
-                <div className="space-y-2 p-4 bg-gradient-to-r from-purple-50 to-teal-50 rounded-lg">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Task Steps:</p>
+                <div className="space-y-2 p-4 bg-gradient-to-r from-purple-50 to-teal-50 dark:from-purple-900/30 dark:to-teal-900/30 rounded-lg">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Task Steps:</p>
                   {selectedTask.subtasks?.map((subtask, index) => (
                     <div key={index} className="flex items-center justify-between text-sm">
-                      <span className="flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-white flex items-center justify-center text-xs font-bold text-purple-600">
+                      <span className="flex items-center gap-2 text-gray-900 dark:text-gray-100">
+                        <span className="w-6 h-6 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-purple-600 dark:text-purple-400">
                           {index + 1}
                         </span>
                         {subtask.title}
                       </span>
-                      <Badge variant="outline" className="flex items-center gap-1">
+                      <Badge variant="outline" className="flex items-center gap-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
                         <Clock className="w-3 h-3" />
                         {subtask.estimated_minutes}m
                       </Badge>
@@ -941,10 +941,10 @@ export default function FocusSession() {
                 </div>
               )}
 
-              <div className="space-y-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="space-y-4 p-4 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-200 dark:border-purple-800">
                 <div className="flex items-center gap-2">
-                  <Timer className="w-5 h-5 text-purple-600" />
-                  <Label className="text-base font-semibold">Focus Technique</Label>
+                  <Timer className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  <Label className="text-base font-semibold dark:text-gray-200">Focus Technique</Label>
                 </div>
                 
                 <Select value={focusTechnique} onValueChange={setFocusTechnique}>
@@ -985,7 +985,7 @@ export default function FocusSession() {
                         className="w-full"
                       />
                     </div>
-                    <div className="text-xs text-gray-600 bg-white p-2 rounded">
+                    <div className="text-xs text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 p-2 rounded">
                       💡 Pomodoro: Work in focused intervals with short breaks in between
                     </div>
                   </motion.div>
@@ -1048,12 +1048,12 @@ export default function FocusSession() {
               </div>
 
               {preSessionRitual && moodBefore && (
-                <div className="p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg border border-pink-200">
-                  <p className="text-xs font-semibold text-pink-900 mb-2 flex items-center gap-1">
+                <div className="p-4 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/30 dark:to-purple-900/30 rounded-lg border border-pink-200 dark:border-pink-800">
+                  <p className="text-xs font-semibold text-pink-900 dark:text-pink-300 mb-2 flex items-center gap-1">
                     <Heart className="w-3 h-3" />
                     Recommended Pre-Session Ritual:
                   </p>
-                  <p className="text-sm text-gray-700">{preSessionRitual}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{preSessionRitual}</p>
                 </div>
               )}
 
@@ -1142,10 +1142,10 @@ export default function FocusSession() {
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-6"
               >
-                <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
+                <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-purple-100 dark:border-gray-700">
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-sm font-medium text-gray-600">
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                         Step {currentSubtaskIndex + 1} of {selectedTask.subtasks.length}
                       </span>
                       <div className="flex items-center gap-2">
@@ -1166,28 +1166,28 @@ export default function FocusSession() {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
+                <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-purple-100 dark:border-gray-700">
                   <CardContent className="pt-6">
                     <div className="text-center mb-6">
                       {isBreakTime ? (
                         <>
                           <div className="flex items-center justify-center gap-2 mb-4">
-                            <Coffee className="w-6 h-6 text-teal-500" />
-                            <h3 className="text-lg font-semibold text-gray-700">Break Time!</h3>
+                            <Coffee className="w-6 h-6 text-teal-500 dark:text-teal-400" />
+                            <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">Break Time!</h3>
                           </div>
                           {dynamicBreakSuggestion ? (
-                            <div className="mb-4 p-3 bg-teal-50 rounded-lg border border-teal-200">
-                              <p className="text-sm font-medium text-teal-900 mb-1">Suggested Activity:</p>
-                              <p className="text-sm text-teal-700">{dynamicBreakSuggestion}</p>
+                            <div className="mb-4 p-3 bg-teal-50 dark:bg-teal-900/30 rounded-lg border border-teal-200 dark:border-teal-800">
+                              <p className="text-sm font-medium text-teal-900 dark:text-teal-300 mb-1">Suggested Activity:</p>
+                              <p className="text-sm text-teal-700 dark:text-teal-400">{dynamicBreakSuggestion}</p>
                             </div>
                           ) : (
-                            <p className="text-gray-600 mb-4">Take a short break to recharge</p>
+                            <p className="text-gray-600 dark:text-gray-400 mb-4">Take a short break to recharge</p>
                           )}
                         </>
                       ) : (
                         <>
-                          <h3 className="text-lg font-semibold text-gray-700 mb-2">Current Step:</h3>
-                          <p className="text-xl font-bold text-gray-900 mb-4">{currentSubtask?.title}</p>
+                          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Current Step:</h3>
+                          <p className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">{currentSubtask?.title}</p>
                         </>
                       )}
                       
@@ -1196,7 +1196,7 @@ export default function FocusSession() {
                       </div>
                       <Progress value={focusTechnique === "pomodoro" ? pomodoroProgress : progress} className="h-3 mb-2" />
                       {!isBreakTime && (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           {focusTechnique === "pomodoro" ? `Work: ${workInterval} min` : `Estimated: ${currentSubtask?.estimated_minutes} minutes`}
                         </p>
                       )}
@@ -1213,10 +1213,10 @@ export default function FocusSession() {
                     
                     {/* Goal Progress Indicator */}
                     {sessionGoalType && sessionGoalValue && !isBreakTime && (
-                      <div className="mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                      <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-900/30 rounded-lg border border-orange-200 dark:border-orange-800">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="font-medium text-orange-700">Session Goal</span>
-                          <span className="text-orange-600">
+                          <span className="font-medium text-orange-700 dark:text-orange-300">Session Goal</span>
+                          <span className="text-orange-600 dark:text-orange-400">
                             {sessionGoalType === "subtasks" && `${completedSubtasks.size}/${sessionGoalValue} steps`}
                             {sessionGoalType === "time" && `${sessionStartTime ? Math.round((Date.now() - sessionStartTime) / 60000) : 0}/${sessionGoalValue} min`}
                             {sessionGoalType === "pomodoros" && `${pomodorosCompleted}/${sessionGoalValue} 🍅`}
@@ -1305,9 +1305,9 @@ export default function FocusSession() {
                 </Card>
 
                 {!isBreakTime && (
-                  <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
+                  <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-purple-100 dark:border-gray-700">
                     <CardHeader>
-                      <CardTitle className="text-lg">All Steps</CardTitle>
+                      <CardTitle className="text-lg dark:text-gray-100">All Steps</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
                       {selectedTask.subtasks.map((subtask, index) => {
@@ -1319,10 +1319,10 @@ export default function FocusSession() {
                             key={index}
                             className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
                               isCurrent
-                                ? 'bg-gradient-to-r from-purple-100 to-teal-100 border-2 border-purple-300'
+                                ? 'bg-gradient-to-r from-purple-100 to-teal-100 dark:from-purple-900/40 dark:to-teal-900/40 border-2 border-purple-300 dark:border-purple-600'
                                 : isCompleted
-                                ? 'bg-green-50 border border-green-200'
-                                : 'bg-gray-50 border border-gray-200'
+                                ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800'
+                                : 'bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600'
                             }`}
                           >
                             <Checkbox
@@ -1336,7 +1336,7 @@ export default function FocusSession() {
                               className="mt-1"
                             />
                             <div className="flex-1">
-                              <span className={isCompleted ? "line-through text-gray-400" : "text-gray-700"}>
+                              <span className={isCompleted ? "line-through text-gray-400 dark:text-gray-500" : "text-gray-700 dark:text-gray-200"}>
                                 {subtask.title}
                               </span>
                               {isCurrent && !isCompleted && (
@@ -1361,9 +1361,9 @@ export default function FocusSession() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
               >
-                <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
+                <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-purple-100 dark:border-gray-700">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 dark:text-gray-100">
                       {allStepsComplete ? (
                         <>
                           <CheckCircle className="w-6 h-6 text-green-500" />
@@ -1379,14 +1379,14 @@ export default function FocusSession() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {focusTechnique === "pomodoro" && (
-                      <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
-                        <p className="text-center font-semibold text-orange-700">
+                      <div className="p-4 bg-orange-50 dark:bg-orange-900/30 rounded-lg border border-orange-200 dark:border-orange-800">
+                        <p className="text-center font-semibold text-orange-700 dark:text-orange-300">
                           🍅 You completed {pomodorosCompleted} Pomodoro{pomodorosCompleted !== 1 ? 's' : ''}!
                         </p>
                       </div>
                     )}
                     
-                    <p className="text-gray-700">
+                    <p className="text-gray-700 dark:text-gray-300">
                       {allStepsComplete 
                         ? "Incredible work! You completed all the steps! I'm so proud of you! 🎉" 
                         : "Great job! Ready to continue with the next step?"}

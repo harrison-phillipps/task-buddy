@@ -70,7 +70,7 @@ export default function AmbientSoundPlayer({
 
   if (compact) {
     return (
-      <div className="flex items-center gap-3 p-3 bg-teal-50 rounded-lg">
+      <div className="flex items-center gap-3 p-3 bg-teal-50 dark:bg-teal-900/30 rounded-lg">
         <audio ref={audioRef} loop />
         
         <Button
@@ -84,7 +84,7 @@ export default function AmbientSoundPlayer({
           {isAudioPlaying ? "Sound On" : "Sound Off"}
         </Button>
         
-        <span className="text-sm text-gray-600">
+        <span className="text-sm text-gray-600 dark:text-gray-300">
           {ambientSounds[selectedSound]?.emoji} {ambientSounds[selectedSound]?.name}
         </span>
 
@@ -104,7 +104,7 @@ export default function AmbientSoundPlayer({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
-                className="absolute bottom-full right-0 mb-2 p-3 bg-white rounded-lg shadow-lg border z-10"
+                className="absolute bottom-full right-0 mb-2 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 z-10"
               >
                 <Slider
                   value={[volume]}
@@ -123,13 +123,13 @@ export default function AmbientSoundPlayer({
   }
 
   return (
-    <div className="space-y-4 p-4 bg-teal-50 rounded-lg border border-teal-200">
+    <div className="space-y-4 p-4 bg-teal-50 dark:bg-teal-900/30 rounded-lg border border-teal-200 dark:border-teal-800">
       <audio ref={audioRef} loop />
       
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Volume2 className="w-5 h-5 text-teal-600" />
-          <span className="text-base font-semibold text-gray-800">Ambient Sound</span>
+          <Volume2 className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+          <span className="text-base font-semibold text-gray-800 dark:text-gray-200">Ambient Sound</span>
         </div>
         
         {selectedSound !== "none" && (
@@ -171,7 +171,7 @@ export default function AmbientSoundPlayer({
         ))}
       </div>
       
-      <div className="text-xs text-gray-600 bg-white p-2 rounded">
+      <div className="text-xs text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 p-2 rounded">
         🎵 Ambient sounds help mask distractions and improve focus
       </div>
     </div>
