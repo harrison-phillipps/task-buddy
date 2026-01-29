@@ -30,10 +30,10 @@ function RobotCharacter({ mood, isLarge, currentMood }) {
         className={`relative ${isLarge ? 'w-40 h-40' : 'w-28 h-28'}`}
       >
         {/* Robot body */}
-        <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-28 h-32' : 'w-20 h-24'} bg-gradient-to-br from-slate-600 via-slate-700 to-slate-800 rounded-2xl`}
+        <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-28 h-32' : 'w-20 h-24'} bg-gradient-to-br from-slate-600 via-slate-700 to-slate-800 rounded-[2rem]`}
              style={{ boxShadow: '0 20px 60px -10px rgba(0,0,0,0.5), inset 0 -30px 30px -30px rgba(255,255,255,0.15), inset 0 3px 8px rgba(255,255,255,0.2), inset 0 -3px 8px rgba(0,0,0,0.3)' }}>
           {/* Chest panel with realistic lighting */}
-          <div className={`absolute ${isLarge ? 'top-4' : 'top-2'} left-1/2 -translate-x-1/2 ${isLarge ? 'w-16 h-16' : 'w-12 h-12'} bg-gradient-to-br from-cyan-500 via-blue-600 to-blue-700 rounded-lg border-2 border-slate-800/50`}
+          <div className={`absolute ${isLarge ? 'top-4' : 'top-2'} left-1/2 -translate-x-1/2 ${isLarge ? 'w-16 h-16' : 'w-12 h-12'} bg-gradient-to-br from-cyan-500 via-blue-600 to-blue-700 rounded-2xl border-2 border-slate-800/50`}
                style={{ boxShadow: '0 6px 20px rgba(6,182,212,0.4), inset 0 -12px 12px -12px rgba(255,255,255,0.3), inset 0 2px 4px rgba(255,255,255,0.5), 0 0 30px rgba(34,211,238,0.3)' }}>
             <div className="absolute inset-2 bg-gradient-to-br from-cyan-400/70 to-transparent rounded" 
                  style={{ boxShadow: 'inset 0 0 10px rgba(34,211,238,0.5)' }} />
@@ -58,7 +58,7 @@ function RobotCharacter({ mood, isLarge, currentMood }) {
         </div>
 
         {/* Robot head with metallic finish */}
-        <div className={`absolute top-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-24 h-24' : 'w-18 h-18'} bg-gradient-to-br from-slate-500 via-slate-600 to-slate-700 rounded-xl`}
+        <div className={`absolute top-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-24 h-24' : 'w-18 h-18'} bg-gradient-to-br from-slate-500 via-slate-600 to-slate-700 rounded-3xl`}
              style={{ boxShadow: '0 15px 40px -5px rgba(0,0,0,0.4), inset 0 -20px 20px -20px rgba(255,255,255,0.2), inset 0 3px 6px rgba(255,255,255,0.3), inset 0 -3px 6px rgba(0,0,0,0.3)' }}>
           {/* Antenna */}
           <div className={`absolute ${isLarge ? '-top-5' : '-top-4'} left-1/2 -translate-x-1/2 ${isLarge ? 'w-1.5 h-7' : 'w-1 h-5'} bg-gradient-to-b from-slate-500 to-slate-400`}
@@ -71,7 +71,7 @@ function RobotCharacter({ mood, isLarge, currentMood }) {
           />
           
           {/* Face screen with realistic glass effect */}
-          <div className={`absolute ${isLarge ? 'inset-3' : 'inset-2'} bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-lg flex items-center justify-center overflow-hidden`}
+          <div className={`absolute ${isLarge ? 'inset-3' : 'inset-2'} bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl flex items-center justify-center overflow-hidden`}
                style={{ boxShadow: '0 6px 20px rgba(0,0,0,0.3), inset 0 -15px 15px -15px rgba(34,211,238,0.3), inset 0 2px 4px rgba(255,255,255,0.1), 0 0 20px rgba(34,211,238,0.2)' }}>
             <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 via-transparent to-blue-500/10 rounded-lg" />
             <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-b from-white/10 to-transparent rounded-t-lg" />
@@ -167,7 +167,7 @@ function CatCharacter({ mood, isLarge, currentMood }) {
         className={`relative ${isLarge ? 'w-40 h-40' : 'w-28 h-28'}`}
       >
         {/* Cat body */}
-        <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-32 h-28' : 'w-24 h-20'} bg-gradient-to-br from-yellow-300 via-yellow-350 to-yellow-400 rounded-t-[60px] rounded-b-3xl`}
+        <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-32 h-28' : 'w-24 h-20'} bg-gradient-to-br from-yellow-300 via-yellow-350 to-yellow-400 rounded-t-[80px] rounded-b-[2.5rem]`}
              style={{ boxShadow: '0 15px 40px -10px rgba(0,0,0,0.2), inset 0 -20px 20px -20px rgba(255,255,255,0.3)' }}>
           {/* Stripes with blur for softer look */}
           <div className={`absolute ${isLarge ? 'top-8 left-4 w-6' : 'top-4 left-2 w-4'} h-1 bg-gradient-to-r from-yellow-700/0 via-yellow-700/60 to-yellow-700/0 rounded-full`} />
@@ -181,21 +181,21 @@ function CatCharacter({ mood, isLarge, currentMood }) {
         {/* Cat head */}
         <div className={`absolute top-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-28 h-28' : 'w-20 h-20'} bg-gradient-to-br from-yellow-300 via-yellow-350 to-yellow-400 rounded-full`}
              style={{ boxShadow: '0 10px 30px -5px rgba(0,0,0,0.2), inset 0 -15px 15px -15px rgba(255,255,255,0.4)' }}>
-          {/* Ears */}
-          <div className={`absolute ${isLarge ? '-top-2 left-2 w-8 h-10' : '-top-1 left-1 w-6 h-7'} bg-gradient-to-br from-yellow-300 to-yellow-500`} 
+          {/* Ears - more rounded triangles */}
+          <div className={`absolute ${isLarge ? '-top-2 left-2 w-8 h-10' : '-top-1 left-1 w-6 h-7'} bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-tl-full rounded-tr-full`} 
                style={{ 
-                 clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+                 clipPath: 'polygon(50% 0%, 10% 85%, 90% 85%)',
                  boxShadow: '0 4px 10px rgba(0,0,0,0.15), inset 0 -4px 4px rgba(0,0,0,0.1)'
                }} />
-          <div className={`absolute ${isLarge ? '-top-2 right-2 w-8 h-10' : '-top-1 right-1 w-6 h-7'} bg-gradient-to-br from-yellow-300 to-yellow-500`} 
+          <div className={`absolute ${isLarge ? '-top-2 right-2 w-8 h-10' : '-top-1 right-1 w-6 h-7'} bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-tl-full rounded-tr-full`} 
                style={{ 
-                 clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+                 clipPath: 'polygon(50% 0%, 10% 85%, 90% 85%)',
                  boxShadow: '0 4px 10px rgba(0,0,0,0.15), inset 0 -4px 4px rgba(0,0,0,0.1)'
                }} />
           
-          {/* Inner ears */}
-          <div className={`absolute ${isLarge ? 'top-1 left-4 w-4 h-5' : 'top-1 left-2 w-3 h-3'} bg-pink-200`} style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
-          <div className={`absolute ${isLarge ? 'top-1 right-4 w-4 h-5' : 'top-1 right-2 w-3 h-3'} bg-pink-200`} style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
+          {/* Inner ears - softer pink */}
+          <div className={`absolute ${isLarge ? 'top-1 left-4 w-4 h-5' : 'top-1 left-2 w-3 h-3'} bg-pink-200 rounded-full`} style={{ clipPath: 'polygon(50% 10%, 20% 90%, 80% 90%)' }} />
+          <div className={`absolute ${isLarge ? 'top-1 right-4 w-4 h-5' : 'top-1 right-2 w-3 h-3'} bg-pink-200 rounded-full`} style={{ clipPath: 'polygon(50% 10%, 20% 90%, 80% 90%)' }} />
 
           {/* Face */}
           <div className="absolute inset-0 flex items-center justify-center">
@@ -205,8 +205,9 @@ function CatCharacter({ mood, isLarge, currentMood }) {
               <div className={`${isLarge ? 'w-5 h-2' : 'w-3 h-1.5'} border-b-2 border-gray-800 rounded-full`} />
             </div>
             
-            {/* Nose */}
-            <div className={`absolute ${isLarge ? 'top-14' : 'top-10'} left-1/2 -translate-x-1/2 ${isLarge ? 'w-2 h-2' : 'w-1.5 h-1.5'} bg-pink-400 rounded-sm rotate-45`} />
+            {/* Nose - more rounded */}
+            <div className={`absolute ${isLarge ? 'top-14' : 'top-10'} left-1/2 -translate-x-1/2 ${isLarge ? 'w-2.5 h-2' : 'w-2 h-1.5'} bg-pink-400 rounded-full`} 
+                 style={{ borderRadius: '50% 50% 40% 40%' }} />
             
             {/* Mouth - smile */}
             <div className={`absolute ${isLarge ? 'top-16' : 'top-12'} left-1/2 -translate-x-1/2`}>
@@ -277,7 +278,7 @@ function DogCharacter({ mood, isLarge, currentMood }) {
         className={`relative ${isLarge ? 'w-40 h-40' : 'w-28 h-28'}`}
       >
         {/* Dog body */}
-        <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-32 h-28' : 'w-24 h-20'} bg-gradient-to-br from-amber-400 via-amber-450 to-amber-500 rounded-t-[60px] rounded-b-3xl`}
+        <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-32 h-28' : 'w-24 h-20'} bg-gradient-to-br from-amber-400 via-amber-450 to-amber-500 rounded-t-[80px] rounded-b-[2.5rem]`}
              style={{ boxShadow: '0 15px 40px -10px rgba(0,0,0,0.25), inset 0 -20px 20px -20px rgba(255,255,255,0.3)' }}>
           {/* Spots with softer edges */}
           <div className={`absolute ${isLarge ? 'top-6 left-6 w-6 h-6' : 'top-4 left-4 w-4 h-4'} rounded-full bg-gradient-radial from-amber-700/30 to-amber-700/50 blur-[1px]`} />
@@ -289,18 +290,18 @@ function DogCharacter({ mood, isLarge, currentMood }) {
         {/* Dog head */}
         <div className={`absolute top-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-28 h-28' : 'w-20 h-20'} bg-gradient-to-br from-amber-400 via-amber-450 to-amber-500 rounded-full`}
              style={{ boxShadow: '0 10px 30px -5px rgba(0,0,0,0.25), inset 0 -15px 15px -15px rgba(255,255,255,0.4)' }}>
-          {/* Floppy Ears */}
+          {/* Floppy Ears - more rounded and softer */}
           <motion.div
             animate={{ rotate: [-12, -8, -12] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className={`absolute ${isLarge ? 'top-2 -left-3 w-10 h-16' : 'top-1 -left-2 w-7 h-12'} bg-gradient-to-br from-amber-500 via-amber-550 to-amber-600 rounded-[40%] origin-top`}
-            style={{ boxShadow: '0 8px 20px rgba(0,0,0,0.2), inset 0 -10px 10px -10px rgba(255,255,255,0.2)' }}
+            className={`absolute ${isLarge ? 'top-2 -left-3 w-10 h-16' : 'top-1 -left-2 w-7 h-12'} bg-gradient-to-br from-amber-500 via-amber-550 to-amber-600 rounded-[50%] origin-top`}
+            style={{ boxShadow: '0 8px 20px rgba(0,0,0,0.2), inset 0 -10px 10px -10px rgba(255,255,255,0.2)', borderRadius: '50% 50% 45% 45%' }}
           />
           <motion.div
             animate={{ rotate: [12, 8, 12] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-            className={`absolute ${isLarge ? 'top-2 -right-3 w-10 h-16' : 'top-1 -right-2 w-7 h-12'} bg-gradient-to-br from-amber-500 via-amber-550 to-amber-600 rounded-[40%] origin-top`}
-            style={{ boxShadow: '0 8px 20px rgba(0,0,0,0.2), inset 0 -10px 10px -10px rgba(255,255,255,0.2)' }}
+            className={`absolute ${isLarge ? 'top-2 -right-3 w-10 h-16' : 'top-1 -right-2 w-7 h-12'} bg-gradient-to-br from-amber-500 via-amber-550 to-amber-600 rounded-[50%] origin-top`}
+            style={{ boxShadow: '0 8px 20px rgba(0,0,0,0.2), inset 0 -10px 10px -10px rgba(255,255,255,0.2)', borderRadius: '50% 50% 45% 45%' }}
           />
 
           {/* Face */}
@@ -311,18 +312,20 @@ function DogCharacter({ mood, isLarge, currentMood }) {
               <div className={`${isLarge ? 'w-3 h-3' : 'w-2 h-2'} bg-gray-800 rounded-full`} />
             </div>
             
-            {/* Snout area */}
-            <div className={`absolute ${isLarge ? 'top-13 w-16 h-12' : 'top-9 w-12 h-8'} left-1/2 -translate-x-1/2 bg-gradient-to-b from-amber-300 via-amber-350 to-amber-400 rounded-full`}
+            {/* Snout area - rounder and more prominent */}
+            <div className={`absolute ${isLarge ? 'top-13 w-16 h-12' : 'top-9 w-12 h-8'} left-1/2 -translate-x-1/2 bg-gradient-to-b from-amber-300 via-amber-350 to-amber-400 rounded-[60%]`}
                  style={{ boxShadow: '0 4px 10px rgba(0,0,0,0.1), inset 0 -5px 10px rgba(255,255,255,0.3)' }} />
             
-            {/* Nose */}
-            <div className={`absolute ${isLarge ? 'top-14 w-3 h-3' : 'top-10 w-2 h-2'} left-1/2 -translate-x-1/2 bg-gray-800 rounded-full`} />
+            {/* Nose - bigger and rounder */}
+            <div className={`absolute ${isLarge ? 'top-14 w-4 h-3.5' : 'top-10 w-3 h-2.5'} left-1/2 -translate-x-1/2 bg-gray-800 rounded-[50%]`} 
+                 style={{ borderRadius: '50% 50% 48% 48%' }} />
             
             {/* Mouth - big smile */}
             <div className={`absolute ${isLarge ? 'top-17 w-8 h-3' : 'top-12 w-6 h-2'} left-1/2 -translate-x-1/2 border-b-2 border-gray-800 rounded-b-full`} />
             
-            {/* Tongue */}
-            <div className={`absolute ${isLarge ? 'top-[4.5rem] w-3 h-4' : 'top-[3rem] w-2 h-3'} left-1/2 -translate-x-1/2 bg-pink-400 rounded-b-full`} />
+            {/* Tongue - rounder tip */}
+            <div className={`absolute ${isLarge ? 'top-[4.5rem] w-3 h-4' : 'top-[3rem] w-2 h-3'} left-1/2 -translate-x-1/2 bg-pink-400 rounded-b-[70%]`} 
+                 style={{ borderRadius: '30% 30% 50% 50%' }} />
           </div>
         </div>
 
