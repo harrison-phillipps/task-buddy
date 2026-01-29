@@ -85,6 +85,27 @@ function LayoutContent({ children, currentPageName }) {
   const [showDeepCustomizer, setShowDeepCustomizer] = React.useState(false);
   const [showMoreMenu, setShowMoreMenu] = React.useState(false);
 
+  // Dark mode detection
+  React.useEffect(() => {
+    const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    const updateDarkMode = (e) => {
+      if (e.matches) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    };
+
+    // Initial check
+    updateDarkMode(darkModeQuery);
+
+    // Listen for changes
+    darkModeQuery.addEventListener('change', updateDarkMode);
+    
+    return () => darkModeQuery.removeEventListener('change', updateDarkMode);
+  }, []);
+
   React.useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -164,34 +185,34 @@ function LayoutContent({ children, currentPageName }) {
           --soft-purple: #F3F0FF;
         }
       `}</style>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-purple-50 via-teal-50 to-blue-50 overflow-x-hidden">
-        <Sidebar className="border-r border-purple-100 bg-white/80 backdrop-blur-sm">
-          <SidebarHeader className="border-b border-purple-100 p-6">
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-purple-50 via-teal-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 overflow-x-hidden">
+        <Sidebar className="border-r border-purple-100 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+          <SidebarHeader className="border-b border-purple-100 dark:border-gray-700 p-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="font-bold text-xl text-gray-900">TaskBuddy</h2>
-                <p className="text-xs text-purple-600">Your virtual companion</p>
+                <h2 className="font-bold text-xl text-gray-900 dark:text-gray-100">TaskBuddy</h2>
+                <p className="text-xs text-purple-600 dark:text-purple-400">Your virtual companion</p>
               </div>
             </div>
             
             {/* Points and Level Display */}
             {userProgress && (
-              <div className="mt-4 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border border-yellow-200">
+              <div className="mt-4 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/30 dark:to-orange-900/30 rounded-xl border border-yellow-200 dark:border-yellow-700">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <Award className="w-4 h-4 text-yellow-600" />
-                    <span className="text-sm font-semibold text-gray-700">Level {currentLevel}</span>
+                    <Award className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Level {currentLevel}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-purple-500" />
-                    <span className="text-sm font-bold text-purple-600">{userProgress.total_points} pts</span>
+                    <Sparkles className="w-3 h-3 text-purple-500 dark:text-purple-400" />
+                    <span className="text-sm font-bold text-purple-600 dark:text-purple-400">{userProgress.total_points} pts</span>
                   </div>
                 </div>
                 {userProgress.current_streak > 0 && (
-                  <div className="flex items-center gap-1 text-xs text-orange-600">
+                  <div className="flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400">
                     🔥 <span className="font-semibold">{userProgress.current_streak} day streak!</span>
                   </div>
                 )}
@@ -255,22 +276,22 @@ function LayoutContent({ children, currentPageName }) {
 
             {currentUser?.companion_type && (
               <SidebarGroup>
-                <SidebarGroupLabel className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2 py-2">
+                <SidebarGroupLabel className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-2 py-2">
                   My Companion
                 </SidebarGroupLabel>
                 <SidebarGroupContent>
-                  <div className="mx-3 p-4 bg-gradient-to-br from-purple-100 to-teal-100 rounded-2xl space-y-3">
+                  <div className="mx-3 p-4 bg-gradient-to-br from-purple-100 to-teal-100 dark:from-purple-900/30 dark:to-teal-900/30 rounded-2xl space-y-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md">
+                      <div className="w-12 h-12 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center shadow-md">
                         <span className="text-2xl">
                           {getCompanionEmoji()}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 text-sm">
+                        <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
                           {getCompanionName()}
                         </p>
-                        <p className="text-xs text-gray-600">Working with you</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Working with you</p>
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -307,33 +328,33 @@ function LayoutContent({ children, currentPageName }) {
               </SidebarGroup>
             )}
 
-            <div className="mt-6 mx-3 p-4 bg-gradient-to-br from-purple-100 to-teal-100 rounded-2xl">
-              <p className="text-sm font-medium text-gray-700 mb-2">💜 Remember</p>
-              <p className="text-xs text-gray-600">Progress over perfection. You've got this!</p>
+            <div className="mt-6 mx-3 p-4 bg-gradient-to-br from-purple-100 to-teal-100 dark:from-purple-900/30 dark:to-teal-900/30 rounded-2xl">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">💜 Remember</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Progress over perfection. You've got this!</p>
             </div>
           </SidebarContent>
 
-          <SidebarFooter className="border-t border-purple-100 p-4">
+          <SidebarFooter className="border-t border-purple-100 dark:border-gray-700 p-4">
             <div className="flex items-center gap-3 px-2">
               <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
                 <User className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-900 text-sm">You</p>
-                <p className="text-xs text-gray-500">Doing great today!</p>
+                <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">You</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Doing great today!</p>
               </div>
             </div>
           </SidebarFooter>
         </Sidebar>
 
         <main className="flex-1 flex flex-col min-w-0">
-          <header className="bg-white/70 backdrop-blur-md border-b border-purple-100 px-3 sm:px-6 py-4 sticky top-0 z-10">
+          <header className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border-b border-purple-100 dark:border-gray-700 px-3 sm:px-6 py-4 sticky top-0 z-10">
             <div className="flex items-center justify-between gap-2 sm:gap-4">
               <div className="flex items-center gap-2 sm:gap-4">
-                <SidebarTrigger className="hover:bg-purple-100 p-2 rounded-lg transition-colors duration-200">
-                  <PanelLeft className="w-5 h-5" />
+                <SidebarTrigger className="hover:bg-purple-100 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors duration-200">
+                  <PanelLeft className="w-5 h-5 dark:text-gray-200" />
                 </SidebarTrigger>
-                <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent md:hidden">TaskBuddy</h1>
+                <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 dark:from-purple-400 dark:to-teal-400 bg-clip-text text-transparent md:hidden">TaskBuddy</h1>
               </div>
               <div className="ml-auto">
                 <NotificationBell currentUser={currentUser} />
