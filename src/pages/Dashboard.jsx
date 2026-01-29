@@ -27,6 +27,7 @@ import HabitFormationBot from "../components/ai/HabitFormationBot";
 import ProductivityForecasterBot from "../components/ai/ProductivityForecasterBot";
 import SkillDevelopmentBot from "../components/ai/SkillDevelopmentBot";
 import EnergyManagementBot from "../components/ai/EnergyManagementBot";
+import ProgressInsights from "../components/dashboard/ProgressInsights";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -66,6 +67,12 @@ export default function Dashboard() {
   const { data: calendarEvents = [] } = useQuery({
     queryKey: ['calendarEvents', currentUser?.email],
     queryFn: () => currentUser ? base44.entities.CalendarEvent.filter({ created_by: currentUser.email }, 'start_date') : [],
+    enabled: !!currentUser,
+  });
+
+  const { data: brainDumps = [] } = useQuery({
+    queryKey: ['brainDumps', currentUser?.email],
+    queryFn: () => currentUser ? base44.entities.BrainDump.filter({ created_by: currentUser.email }, '-created_date', 50) : [],
     enabled: !!currentUser,
   });
 
@@ -298,6 +305,20 @@ export default function Dashboard() {
             </Card>
           </Link>
           </motion.div>
+
+        {/* AI Progress Insights */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.32 }}
+        >
+          <ProgressInsights 
+            userProgress={userProgress}
+            tasks={tasks}
+            focusSessions={sessions}
+            brainDumps={brainDumps}
+          />
+        </motion.div>
 
         {/* Goals Progress Visualization */}
         {visibleWidgets.goalsProgress && (
