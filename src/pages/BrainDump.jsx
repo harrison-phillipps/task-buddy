@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, CheckCircle, Brain, Trash2, Clock, Layers, Mic, Repeat } from "lucide-react";
+import { Sparkles, Loader2, CheckCircle, Brain, Trash2, Clock, Layers, Mic, Repeat, Users } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -32,11 +32,26 @@ export default function BrainDump() {
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const [pendingTasks, setPendingTasks] = useState(null);
   const [companionMessage, setCompanionMessage] = useState("");
+  const [selectedTeam, setSelectedTeam] = useState(null);
 
   const { data: brainDumps = [] } = useQuery({
     queryKey: ['brainDumps', currentUser?.email],
     queryFn: () => currentUser ? base44.entities.BrainDump.filter({ created_by: currentUser.email }, '-created_date', 10) : [],
     enabled: !!currentUser,
+  });
+
+  const { data: teams = [] } = useQuery({
+    queryKey: ['teams', currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser) return [];
+      const allTeams = await base44.entities.Team.list();
+      return allTeams.filter(team => 
+        team.owner_id === currentUser.id || 
+        team.member_ids?.includes(currentUser.id) ||
+        team.members?.some(m => m.user_id === currentUser.id)
+      );
+    },
+    enabled: !!currentUser
   });
 
   useEffect(() => {
@@ -184,7 +199,8 @@ IMPORTANT: Only return NEW tasks (skip duplicates), and identify recurring patte
       const savedBrainDump = await base44.entities.BrainDump.create({
         content: brainDumpText,
         tasks_created: 0,
-        encouragement: result.encouragement
+        encouragement: result.encouragement,
+        team_id: selectedTeam || undefined
       });
 
       // Award points for brain dump
@@ -235,7 +251,8 @@ IMPORTANT: Only return NEW tasks (skip duplicates), and identify recurring patte
       status: "not_started",
       is_recurring: task.is_recurring || false,
       recurrence_pattern: task.recurrence_pattern || "none",
-      task_priority: task.task_priority || null
+      task_priority: task.task_priority || null,
+      team_id: selectedTeam || undefined
     }));
 
     // Check for duplicates in non-completed tasks
@@ -495,6 +512,34 @@ IMPORTANT: Only return NEW tasks (skip duplicates), and identify recurring patte
                     💡 Tip: Don't worry about formatting. Just write everything down.
                   </p>
                 </div>
+
+                {teams.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      Create Tasks for Team (optional)
+                    </Label>
+                    <Select value={selectedTeam || ""} onValueChange={(val) => setSelectedTeam(val || null)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Personal tasks" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={null}>Personal tasks</SelectItem>
+                        {teams.map(team => (
+                          <SelectItem key={team.id} value={team.id}>
+                            👥 {team.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500">
+                      {selectedTeam 
+                        ? `Tasks will be created for ${teams.find(t => t.id === selectedTeam)?.name}`
+                        : "Tasks will be created as personal tasks"
+                      }
+                    </p>
+                  </div>
+                )}
 
                 <Button
                   onClick={handleProcess}
