@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Target, Calendar, TrendingUp, Sparkles, MoreVertical, Trash2, CheckCircle } from "lucide-react";
+import { Target, Calendar, TrendingUp, Sparkles, MoreVertical, Trash2, CheckCircle, Brain } from "lucide-react";
 import { motion } from "framer-motion";
 import {
   DropdownMenu,
@@ -27,7 +27,7 @@ const statusColors = {
   completed: "bg-green-100 text-green-700"
 };
 
-export default function GoalCard({ goal, tasks = [], onUpdate, onDelete, onBreakdown }) {
+export default function GoalCard({ goal, tasks = [], onUpdate, onDelete, onBreakdown, onCoach, isCoaching }) {
   const completedTasks = tasks.filter(t => t.status === 'completed').length;
   const totalTasks = tasks.length;
   const taskProgress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
@@ -80,6 +80,10 @@ export default function GoalCard({ goal, tasks = [], onUpdate, onDelete, onBreak
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onCoach}>
+                  <Brain className="w-4 h-4 mr-2" />
+                  {isCoaching ? "Hide AI Coach" : "Get AI Coaching"}
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={onBreakdown}>
                   <Sparkles className="w-4 h-4 mr-2" />
                   AI Breakdown
