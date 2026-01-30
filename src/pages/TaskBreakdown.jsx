@@ -18,6 +18,7 @@ import { generateTaskDescription } from "../components/ai/AIContentGenerator";
 import TaskBreakdownBot from "../components/ai/TaskBreakdownBot";
 import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
 import AITaskBreakdownSuggestion from "../components/tasks/AITaskBreakdownSuggestion";
+import ProactiveCoach from "../components/ai/ProactiveCoach";
 
 export default function TaskBreakdown() {
   const navigate = useNavigate();
@@ -250,16 +251,32 @@ Calculate total time including the prep step.`,
             </motion.div>
 
             {taskInput.title && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <TaskBreakdownBot 
-                  taskTitle={taskInput.title}
-                  taskDescription={taskInput.description}
-                />
-              </motion.div>
+              <>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 }}
+                >
+                  <ProactiveCoach 
+                    userProgress={userProgress}
+                    recentTasks={[]}
+                    recentSessions={[]}
+                    goals={[]}
+                    context="task_breakdown"
+                  />
+                </motion.div>
+                
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <TaskBreakdownBot 
+                    taskTitle={taskInput.title}
+                    taskDescription={taskInput.description}
+                  />
+                </motion.div>
+              </>
             )}
 
             <Card className="bg-white/80 backdrop-blur-sm border-purple-100">

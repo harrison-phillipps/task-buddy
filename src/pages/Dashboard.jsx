@@ -28,6 +28,8 @@ import ProductivityForecasterBot from "../components/ai/ProductivityForecasterBo
 import SkillDevelopmentBot from "../components/ai/SkillDevelopmentBot";
 import EnergyManagementBot from "../components/ai/EnergyManagementBot";
 import ProgressInsights from "../components/dashboard/ProgressInsights";
+import ProactiveCoach from "../components/ai/ProactiveCoach";
+import SmartTaskRecommender from "../components/ai/SmartTaskRecommender";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -305,6 +307,36 @@ export default function Dashboard() {
             </Card>
           </Link>
           </motion.div>
+
+        {/* Proactive AI Coach */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.31 }}
+        >
+          <ProactiveCoach 
+            userProgress={userProgress}
+            recentTasks={tasks}
+            recentSessions={sessions}
+            goals={[]}
+            context="dashboard"
+          />
+        </motion.div>
+
+        {/* Smart Task Recommendations */}
+        {tasks.filter(t => t.status !== 'completed').length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.315 }}
+          >
+            <SmartTaskRecommender 
+              tasks={tasks.filter(t => t.status !== 'completed')}
+              userProgress={userProgress}
+              currentUser={currentUser}
+            />
+          </motion.div>
+        )}
 
         {/* AI Progress Insights */}
         <motion.div
