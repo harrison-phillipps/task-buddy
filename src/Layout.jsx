@@ -60,6 +60,11 @@ const moreItems = [
     icon: Target,
   },
   {
+    title: "Skill Development",
+    url: createPageUrl("SkillDevelopment"),
+    icon: Award,
+  },
+  {
     title: "Calendar",
     url: createPageUrl("CalendarView"),
     icon: Calendar,
