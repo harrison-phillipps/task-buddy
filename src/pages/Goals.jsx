@@ -9,6 +9,7 @@ import GoalCard from "../components/goals/GoalCard";
 import CreateGoalModal from "../components/goals/CreateGoalModal";
 import GoalBreakdownModal from "../components/goals/GoalBreakdownModal";
 import CalendarSyncModal from "../components/calendar/CalendarSyncModal";
+import GoalCoach from "../components/ai/GoalCoach";
 
 export default function GoalsPage() {
   const queryClient = useQueryClient();
@@ -17,12 +18,19 @@ export default function GoalsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [breakdownGoal, setBreakdownGoal] = useState(null);
   const [showCalendarSync, setShowCalendarSync] = useState(false);
+  const [selectedGoalForCoaching, setSelectedGoalForCoaching] = useState(null);
+  const [userProgress, setUserProgress] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const user = await base44.auth.me();
         setCurrentUser(user);
+        
+        const progressList = await base44.entities.UserProgress.filter({ user_id: user.id });
+        if (progressList.length > 0) {
+          setUserProgress(progressList[0]);
+        }
       } catch (error) {
         console.error("Error fetching user:", error);
       }
@@ -149,33 +157,52 @@ export default function GoalsPage() {
             )}
           </motion.div>
         ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-          >
-            {filteredGoals.map((goal, index) => (
+          <>
+            {selectedGoalForCoaching && (
               <motion.div
-                key={goal.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
+                transition={{ delay: 0.15 }}
+                className="mb-6"
               >
-                <GoalCard
-                  goal={goal}
-                  tasks={tasks.filter(t => t.goal_id === goal.id)}
-                  onUpdate={(data) => updateGoalMutation.mutate({ id: goal.id, data })}
-                  onDelete={() => {
-                    if (confirm(`Delete "${goal.title}"?`)) {
-                      deleteGoalMutation.mutate(goal.id);
-                    }
-                  }}
-                  onBreakdown={() => setBreakdownGoal(goal)}
+                <GoalCoach 
+                  goal={selectedGoalForCoaching}
+                  tasks={tasks}
+                  userProgress={userProgress}
                 />
               </motion.div>
-            ))}
-          </motion.div>
+            )}
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+            >
+              {filteredGoals.map((goal, index) => (
+                <motion.div
+                  key={goal.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <GoalCard
+                    goal={goal}
+                    tasks={tasks.filter(t => t.goal_id === goal.id)}
+                    onUpdate={(data) => updateGoalMutation.mutate({ id: goal.id, data })}
+                    onDelete={() => {
+                      if (confirm(`Delete "${goal.title}"?`)) {
+                        deleteGoalMutation.mutate(goal.id);
+                      }
+                    }}
+                    onBreakdown={() => setBreakdownGoal(goal)}
+                    onCoach={() => setSelectedGoalForCoaching(goal)}
+                    isCoaching={selectedGoalForCoaching?.id === goal.id}
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
+          </>
         )}
 
         <CreateGoalModal
