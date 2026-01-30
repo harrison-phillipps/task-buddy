@@ -9,9 +9,12 @@ import { createPageUrl } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Heart, ChevronRight, ChevronLeft } from "lucide-react";
 import CompanionPersonalitySelector from "../components/CompanionPersonalitySelector";
+import AdaptiveOnboardingFlow from "../components/onboarding/AdaptiveOnboardingFlow";
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const [useAdaptiveFlow, setUseAdaptiveFlow] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [gender, setGender] = useState("");
@@ -22,6 +25,7 @@ export default function Onboarding() {
     const checkUser = async () => {
       try {
         const user = await base44.auth.me();
+        setCurrentUser(user);
         // If user already has name set, skip to character selection or dashboard
         if (user.display_name) {
           if (!user.companion_type) {
@@ -36,6 +40,27 @@ export default function Onboarding() {
     };
     checkUser();
   }, [navigate]);
+
+  const handleAdaptiveComplete = async (aiSuggestions) => {
+    // Set companion type based on AI recommendation
+    if (aiSuggestions?.companion_recommendation?.type) {
+      await base44.auth.updateMe({
+        companion_type: aiSuggestions.companion_recommendation.type
+      });
+      navigate(createPageUrl("Dashboard"));
+    } else {
+      navigate(createPageUrl("CharacterSelection"));
+    }
+  };
+
+  if (useAdaptiveFlow) {
+    return (
+      <AdaptiveOnboardingFlow 
+        currentUser={currentUser}
+        onComplete={handleAdaptiveComplete}
+      />
+    );
+  }
 
   const handleNext = () => {
     if (step === 1 && name.trim()) {
