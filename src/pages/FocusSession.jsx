@@ -806,6 +806,17 @@ export default function FocusSession() {
         journeyData={journeyData}
         onTakeBreak={handleAdaptiveBreak}
       />
+      {sessionStarted && selectedTask && (
+        <SessionCoach 
+          task={selectedTask}
+          sessionDuration={focusTechnique === "pomodoro" ? workInterval * 60 : (currentSubtask?.estimated_minutes || 10) * 60}
+          currentProgress={timeLeft}
+          elapsedMinutes={sessionStartTime ? Math.floor((Date.now() - sessionStartTime) / 60000) : 0}
+          mood={moodBefore}
+          pauseCount={pauseCount}
+        />
+      )}
+      
       <RealTimeAICoach
         sessionState={{
           isActive,
