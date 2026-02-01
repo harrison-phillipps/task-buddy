@@ -116,13 +116,13 @@ Make it warm, specific, and actionable. Use their exact challenges and goals in 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
       >
-        <Card className="bg-gradient-to-br from-purple-50 to-teal-50 border-purple-200">
+        <Card className="bg-gradient-to-br from-purple-50 to-teal-50 dark:from-purple-900/20 dark:to-teal-900/20 border-purple-200 dark:border-purple-700">
           <CardContent className="p-6 text-center">
-            <Loader2 className="w-8 h-8 text-purple-600 animate-spin mx-auto mb-3" />
-            <p className="text-sm text-gray-700 font-medium">
+            <Loader2 className="w-8 h-8 text-purple-600 dark:text-purple-400 animate-spin mx-auto mb-3" />
+            <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
               Analyzing your profile...
             </p>
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
               Creating your personalized experience
             </p>
           </CardContent>
@@ -139,43 +139,43 @@ Make it warm, specific, and actionable. Use their exact challenges and goals in 
       animate={{ opacity: 1, y: 0 }}
       className="space-y-4"
     >
-      <Card className="bg-gradient-to-br from-purple-50 to-teal-50 border-purple-200 shadow-lg">
-        <CardContent className="p-6">
-          <div className="flex items-start gap-3 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-teal-500 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-purple-900 mb-2">Your Personalized Plan</h3>
-              <p className="text-sm text-gray-700 leading-relaxed">
-                {analysis.welcome_message}
-              </p>
-            </div>
+      <Card className="bg-gradient-to-br from-purple-50 to-teal-50 dark:from-purple-900/20 dark:to-teal-900/20 border-purple-200 dark:border-purple-700 shadow-lg">
+      <CardContent className="p-6">
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-teal-500 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Sparkles className="w-5 h-5 text-white" />
           </div>
+          <div className="flex-1">
+            <h3 className="font-bold text-purple-900 dark:text-purple-100 mb-2">Your Personalized Plan</h3>
+            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+              {analysis.welcome_message}
+            </p>
+          </div>
+        </div>
 
-          {analysis.key_insights?.length > 0 && (
-            <div className="mb-4 p-3 bg-white rounded-lg border border-purple-100">
-              <h4 className="text-xs font-semibold text-purple-900 uppercase mb-2">
-                Key Insights
-              </h4>
-              <ul className="space-y-1">
-                {analysis.key_insights.map((insight, idx) => (
-                  <li key={idx} className="text-sm text-gray-700 flex items-start gap-2">
-                    <span className="text-purple-500 mt-0.5">✨</span>
-                    {insight}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+        {analysis.key_insights?.length > 0 && (
+          <div className="mb-4 p-3 bg-white dark:bg-gray-800 rounded-lg border border-purple-100 dark:border-purple-700">
+            <h4 className="text-xs font-semibold text-purple-900 dark:text-purple-100 uppercase mb-2">
+              Key Insights
+            </h4>
+            <ul className="space-y-1">
+              {analysis.key_insights.map((insight, idx) => (
+                <li key={idx} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2">
+                  <span className="text-purple-500 dark:text-purple-400 mt-0.5">✨</span>
+                  {insight}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-          {analysis.motivation && (
-            <div className="p-3 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg border border-pink-200">
-              <p className="text-sm text-gray-800 italic">
-                💜 {analysis.motivation}
-              </p>
-            </div>
-          )}
+        {analysis.motivation && (
+          <div className="p-3 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-lg border border-pink-200 dark:border-pink-700">
+            <p className="text-sm text-gray-800 dark:text-gray-200 italic">
+              💜 {analysis.motivation}
+            </p>
+          </div>
+        )}
         </CardContent>
       </Card>
     </motion.div>

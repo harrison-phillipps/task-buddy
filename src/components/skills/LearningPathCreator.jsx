@@ -137,11 +137,11 @@ Make it actionable, specific, and achievable. Include real resources when possib
           </div>
         ) : generatedPath ? (
           <div className="space-y-6">
-            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-              <h3 className="font-semibold text-purple-900 mb-2">
+            <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
+              <h3 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">
                 {generatedPath.path_title}
               </h3>
-              <p className="text-sm text-gray-700 mb-3">
+              <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
                 {generatedPath.path_description}
               </p>
               <div className="flex items-center gap-4 text-sm">
@@ -161,32 +161,32 @@ Make it actionable, specific, and achievable. Include real resources when possib
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.1 }}
-                  className="p-4 bg-white rounded-lg border border-gray-200"
+                  className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
                 >
                   <div className="flex items-start gap-3 mb-3">
                     <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-teal-500 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold text-sm">
                       {idx + 1}
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900">{milestone.title}</h4>
-                      <p className="text-sm text-gray-600 mt-1">{milestone.description}</p>
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">{milestone.title}</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{milestone.description}</p>
                     </div>
                   </div>
 
                   {milestone.resources?.length > 0 && (
                     <div className="ml-11 space-y-2 mb-3">
-                      <p className="text-xs font-semibold text-gray-700 uppercase">Resources:</p>
+                      <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">Resources:</p>
                       {milestone.resources.map((resource, ridx) => (
-                        <div key={ridx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <div key={ridx} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-xs">
                               {resource.type}
                             </Badge>
-                            <span className="text-sm text-gray-900">{resource.title}</span>
+                            <span className="text-sm text-gray-900 dark:text-gray-100">{resource.title}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             {resource.duration && (
-                              <span className="text-xs text-gray-600">{resource.duration}</span>
+                              <span className="text-xs text-gray-600 dark:text-gray-400">{resource.duration}</span>
                             )}
                             {resource.url && (
                               <a 
@@ -206,11 +206,11 @@ Make it actionable, specific, and achievable. Include real resources when possib
 
                   {milestone.practice_tasks?.length > 0 && (
                     <div className="ml-11">
-                      <p className="text-xs font-semibold text-gray-700 uppercase mb-2">Practice:</p>
+                      <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase mb-2">Practice:</p>
                       <ul className="space-y-1">
                         {milestone.practice_tasks.map((task, tidx) => (
-                          <li key={tidx} className="text-sm text-gray-700 flex items-start gap-2">
-                            <span className="text-purple-500 mt-0.5">→</span>
+                          <li key={tidx} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2">
+                            <span className="text-purple-500 dark:text-purple-400 mt-0.5">→</span>
                             {task}
                           </li>
                         ))}

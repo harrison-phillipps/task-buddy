@@ -125,17 +125,17 @@ Focus on skills that align with their actual work and stated goals.`;
   };
 
   return (
-    <Card className="bg-gradient-to-br from-purple-50 to-teal-50 border-purple-200">
+    <Card className="bg-gradient-to-br from-purple-50 to-teal-50 dark:from-purple-900/20 dark:to-teal-900/20 border-purple-200 dark:border-purple-700">
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-teal-500 rounded-xl flex items-center justify-center flex-shrink-0">
             <Brain className="w-6 h-6 text-white" />
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold text-gray-900 mb-1">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
               AI Skill Analysis
             </h3>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               Analyze your tasks and goals to identify skills you're developing and gaps you should fill
             </p>
             <Button
@@ -156,7 +156,7 @@ Focus on skills that align with their actual work and stated goals.`;
               )}
             </Button>
             {tasks.length === 0 && (
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 Complete some tasks first to get skill insights
               </p>
             )}

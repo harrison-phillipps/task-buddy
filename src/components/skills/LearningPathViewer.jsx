@@ -79,15 +79,15 @@ export default function LearningPathViewer() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <Card className="border-purple-200">
+                <Card className="border-purple-200 dark:border-purple-700 dark:bg-gray-800">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <CardTitle className="flex items-center gap-2 text-lg">
-                          <BookOpen className="w-5 h-5 text-purple-600" />
+                          <BookOpen className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                           {path.title}
                         </CardTitle>
-                        <p className="text-sm text-gray-600 mt-1">{path.description}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{path.description}</p>
                       </div>
                     </div>
                     
@@ -108,8 +108,8 @@ export default function LearningPathViewer() {
 
                     <div className="mt-4">
                       <div className="flex items-center justify-between text-sm mb-2">
-                        <span className="text-gray-600">Progress</span>
-                        <span className="font-semibold text-purple-700">
+                        <span className="text-gray-600 dark:text-gray-400">Progress</span>
+                        <span className="font-semibold text-purple-700 dark:text-purple-400">
                           {Math.round(path.progress_percentage || 0)}%
                         </span>
                       </div>
@@ -134,30 +134,30 @@ export default function LearningPathViewer() {
                                   <span className="text-xs font-bold">{idx + 1}</span>
                                 )}
                               </div>
-                              <span className={milestone.completed ? 'line-through text-gray-500' : 'text-gray-900'}>
+                              <span className={milestone.completed ? 'line-through text-gray-500 dark:text-gray-600' : 'text-gray-900 dark:text-gray-100'}>
                                 {milestone.title}
                               </span>
                             </div>
                           </AccordionTrigger>
                           <AccordionContent>
                             <div className="ml-9 space-y-4">
-                              <p className="text-sm text-gray-600">{milestone.description}</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">{milestone.description}</p>
 
                               {milestone.resources?.length > 0 && (
                                 <div>
-                                  <p className="text-xs font-semibold text-gray-700 uppercase mb-2">Resources:</p>
+                                  <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase mb-2">Resources:</p>
                                   <div className="space-y-2">
                                     {milestone.resources.map((resource, ridx) => (
-                                      <div key={ridx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                      <div key={ridx} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
                                         <div className="flex items-center gap-2">
                                           <Badge variant="outline" className="text-xs">
                                             {resource.type}
                                           </Badge>
-                                          <span className="text-sm text-gray-900">{resource.title}</span>
+                                          <span className="text-sm text-gray-900 dark:text-gray-100">{resource.title}</span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                           {resource.duration && (
-                                            <span className="text-xs text-gray-600">{resource.duration}</span>
+                                            <span className="text-xs text-gray-600 dark:text-gray-400">{resource.duration}</span>
                                           )}
                                           {resource.url && (
                                             <a 
@@ -178,11 +178,11 @@ export default function LearningPathViewer() {
 
                               {milestone.practice_tasks?.length > 0 && (
                                 <div>
-                                  <p className="text-xs font-semibold text-gray-700 uppercase mb-2">Practice Tasks:</p>
+                                  <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase mb-2">Practice Tasks:</p>
                                   <ul className="space-y-1">
                                     {milestone.practice_tasks.map((task, tidx) => (
-                                      <li key={tidx} className="text-sm text-gray-700 flex items-start gap-2">
-                                        <span className="text-purple-500 mt-0.5">→</span>
+                                      <li key={tidx} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2">
+                                        <span className="text-purple-500 dark:text-purple-400 mt-0.5">→</span>
                                         {task}
                                       </li>
                                     ))}
@@ -226,15 +226,15 @@ export default function LearningPathViewer() {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {completedPaths.map((path) => (
-              <Card key={path.id} className="border-green-200 bg-green-50/50">
+              <Card key={path.id} className="border-green-200 dark:border-green-700 bg-green-50/50 dark:bg-green-900/20">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
-                    <CheckCircle className="w-8 h-8 text-green-600 flex-shrink-0" />
+                    <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400 flex-shrink-0" />
                     <div>
-                      <h4 className="font-semibold text-gray-900">{path.title}</h4>
-                      <p className="text-sm text-gray-600 mt-1">{path.skill_name}</p>
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">{path.title}</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{path.skill_name}</p>
                       {path.completed_date && (
-                        <p className="text-xs text-gray-500 mt-2">
+                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
                           Completed {new Date(path.completed_date).toLocaleDateString()}
                         </p>
                       )}
@@ -248,11 +248,11 @@ export default function LearningPathViewer() {
       )}
 
       {paths.length === 0 && (
-        <Card className="border-dashed border-2 border-purple-200">
+        <Card className="border-dashed border-2 border-purple-200 dark:border-purple-700">
           <CardContent className="p-8 text-center">
             <BookOpen className="w-12 h-12 text-purple-400 mx-auto mb-3" />
-            <p className="text-gray-700 font-medium mb-2">No learning paths yet</p>
-            <p className="text-sm text-gray-600">
+            <p className="text-gray-700 dark:text-gray-300 font-medium mb-2">No learning paths yet</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Analyze your skills and create personalized learning paths to track your development
             </p>
           </CardContent>

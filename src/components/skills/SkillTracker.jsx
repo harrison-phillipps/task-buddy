@@ -97,11 +97,11 @@ export default function SkillTracker({ onCreatePath }) {
       </div>
 
       {skills.length === 0 ? (
-        <Card className="border-dashed border-2 border-purple-200">
+        <Card className="border-dashed border-2 border-purple-200 dark:border-purple-700">
           <CardContent className="p-8 text-center">
             <Brain className="w-12 h-12 text-purple-400 mx-auto mb-3" />
-            <p className="text-gray-700 font-medium mb-2">No skills tracked yet</p>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-gray-700 dark:text-gray-300 font-medium mb-2">No skills tracked yet</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               AI will automatically identify skills as you work on tasks
             </p>
           </CardContent>
@@ -115,16 +115,16 @@ export default function SkillTracker({ onCreatePath }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
             >
-              <Card className="hover:shadow-lg transition-all duration-200">
+              <Card className="hover:shadow-lg transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">{categoryIcons[skill.category]}</span>
                       <div>
-                        <CardTitle className="text-base font-semibold text-gray-900">
+                        <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">
                           {skill.name}
                         </CardTitle>
-                        <p className="text-xs text-gray-600 capitalize">{skill.category}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 capitalize">{skill.category}</p>
                       </div>
                     </div>
                     {skill.is_ai_suggested && (

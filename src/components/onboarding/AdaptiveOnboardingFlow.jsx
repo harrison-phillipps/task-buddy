@@ -295,17 +295,17 @@ export default function AdaptiveOnboardingFlow({
                   <div className="space-y-4">
                     {/* Recommended Companion */}
                     {aiSuggestions.companion_recommendation && (
-                      <div className="p-4 bg-gradient-to-r from-purple-50 to-teal-50 rounded-xl border border-purple-200">
-                        <h4 className="font-semibold text-purple-900 mb-2">
+                      <div className="p-4 bg-gradient-to-r from-purple-50 to-teal-50 dark:from-purple-900/20 dark:to-teal-900/20 rounded-xl border border-purple-200 dark:border-purple-700">
+                        <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">
                           🤖 Recommended Companion
                         </h4>
-                        <p className="text-sm text-gray-700 mb-2">
+                        <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
                           <strong>{aiSuggestions.companion_recommendation.type === "cat" ? "🐱 Cozy Cat" :
                                    aiSuggestions.companion_recommendation.type === "dog" ? "🐶 Playful Dog" :
                                    aiSuggestions.companion_recommendation.type === "orb" ? "🔮 Magic Orb" :
                                    "🤖 Friendly Robot"}</strong>
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
                           {aiSuggestions.companion_recommendation.reason}
                         </p>
                       </div>
@@ -314,16 +314,16 @@ export default function AdaptiveOnboardingFlow({
                     {/* First Steps */}
                     {aiSuggestions.first_steps?.length > 0 && (
                       <div>
-                        <h4 className="font-semibold text-gray-900 mb-3">Your First Steps:</h4>
+                        <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Your First Steps:</h4>
                         <div className="space-y-2">
                           {aiSuggestions.first_steps.map((step, idx) => (
-                            <div key={idx} className="flex items-start gap-3 p-3 bg-white rounded-lg border border-purple-100">
+                            <div key={idx} className="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-purple-100 dark:border-purple-700">
                               <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-teal-500 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-bold">
                                 {idx + 1}
                               </div>
                               <div className="flex-1">
-                                <p className="text-sm font-medium text-gray-900">{step.action}</p>
-                                <p className="text-xs text-gray-600 mt-1">{step.why}</p>
+                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{step.action}</p>
+                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{step.why}</p>
                               </div>
                             </div>
                           ))}
@@ -332,12 +332,12 @@ export default function AdaptiveOnboardingFlow({
                     )}
 
                     {/* What We're Setting Up */}
-                    <div className="p-4 bg-green-50 rounded-xl border border-green-200">
-                      <h4 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+                    <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-700">
+                      <h4 className="font-semibold text-green-900 dark:text-green-100 mb-3 flex items-center gap-2">
                         <CheckCircle className="w-5 h-5" />
                         What we're setting up for you:
                       </h4>
-                      <ul className="space-y-2 text-sm text-green-800">
+                      <ul className="space-y-2 text-sm text-green-800 dark:text-green-200">
                         {aiSuggestions.starter_tasks?.length > 0 && (
                           <li>✓ {aiSuggestions.starter_tasks.length} starter tasks to get you going</li>
                         )}
