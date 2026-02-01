@@ -64,13 +64,13 @@ import NotificationSettings from './pages/NotificationSettings';
 import Onboarding from './pages/Onboarding';
 import SessionHistory from './pages/SessionHistory';
 import Settings from './pages/Settings';
+import SkillDevelopment from './pages/SkillDevelopment';
 import Subscription from './pages/Subscription';
 import TaskBreakdown from './pages/TaskBreakdown';
 import Tasks from './pages/Tasks';
 import TeamDashboard from './pages/TeamDashboard';
 import TeamFocusSession from './pages/TeamFocusSession';
 import Teams from './pages/Teams';
-import SkillDevelopment from './pages/SkillDevelopment';
 import __Layout from './Layout.jsx';
 
 
@@ -92,13 +92,13 @@ export const PAGES = {
     "Onboarding": Onboarding,
     "SessionHistory": SessionHistory,
     "Settings": Settings,
+    "SkillDevelopment": SkillDevelopment,
     "Subscription": Subscription,
     "TaskBreakdown": TaskBreakdown,
     "Tasks": Tasks,
     "TeamDashboard": TeamDashboard,
     "TeamFocusSession": TeamFocusSession,
     "Teams": Teams,
-    "SkillDevelopment": SkillDevelopment,
 }
 
 export const pagesConfig = {

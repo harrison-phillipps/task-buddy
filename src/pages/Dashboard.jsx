@@ -204,12 +204,12 @@ export default function Dashboard() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2 }}
-                className="level-display inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-full border-2 border-yellow-300"
+                className="level-display inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900/40 dark:to-orange-900/40 rounded-full border-2 border-yellow-300 dark:border-yellow-700"
               >
-                <Sparkles className="w-5 h-5 text-purple-600" />
-                <span className="font-bold text-gray-900">Level {currentLevel}</span>
-                <span className="text-gray-600">•</span>
-                <span className="font-bold text-purple-600">{userProgress.total_points} points</span>
+                <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <span className="font-bold text-gray-900 dark:text-gray-100">Level {currentLevel}</span>
+                <span className="text-gray-600 dark:text-gray-400">•</span>
+                <span className="font-bold text-purple-600 dark:text-purple-400">{userProgress.total_points} points</span>
               </motion.div>
             )}
             <WidgetCustomizer visibleWidgets={visibleWidgets} onToggleWidget={handleToggleWidget} />
@@ -371,42 +371,42 @@ export default function Dashboard() {
             transition={{ delay: 0.4 }}
             className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-6"
           >
-          <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
+          <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-purple-100 dark:border-gray-700">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />
                 Completed Today
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold text-gray-900">{completedToday.length}</p>
-              <p className="text-sm text-gray-500 mt-1">tasks finished</p>
+              <p className="text-4xl font-bold text-gray-900 dark:text-gray-100">{completedToday.length}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">tasks finished</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
+          <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-purple-100 dark:border-gray-700">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-purple-500" />
                 In Progress
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold text-gray-900">{inProgressTasks.length}</p>
-              <p className="text-sm text-gray-500 mt-1">active tasks</p>
+              <p className="text-4xl font-bold text-gray-900 dark:text-gray-100">{inProgressTasks.length}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">active tasks</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
+          <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-purple-100 dark:border-gray-700">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
                 <Clock className="w-4 h-4 text-teal-500" />
                 Time Focused
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold text-gray-900">{totalMinutesWorked}</p>
-              <p className="text-sm text-gray-500 mt-1">minutes total</p>
+              <p className="text-4xl font-bold text-gray-900 dark:text-gray-100">{totalMinutesWorked}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">minutes total</p>
             </CardContent>
           </Card>
 
