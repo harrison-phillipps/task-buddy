@@ -90,6 +90,17 @@ export default function Subscription() {
       try {
         const user = await base44.auth.me();
         setCurrentUser(user);
+        
+        // Check for success/cancel query params
+        const params = new URLSearchParams(window.location.hash.split('?')[1]);
+        if (params.get('success') === 'true') {
+          alert('🎉 Subscription successful! Welcome to your new plan.');
+          // Clean up URL
+          window.history.replaceState({}, '', '#/Subscription');
+        } else if (params.get('cancelled') === 'true') {
+          alert('Checkout cancelled. No charges were made.');
+          window.history.replaceState({}, '', '#/Subscription');
+        }
       } catch (error) {
         console.error("Error fetching user:", error);
       }
@@ -101,33 +112,40 @@ export default function Subscription() {
 
   const handleSelectPlan = async (tier) => {
     if (tier === currentTier) return;
+    if (tier === 'free') return; // Can't "purchase" free tier
     
-    setIsLoading(true);
-    // In a real app, this would redirect to a payment processor
-    // For demo purposes, we'll just update the tier
-    try {
-      await base44.auth.updateMe({ subscription_tier: tier });
-      setCurrentUser({ ...currentUser, subscription_tier: tier });
-      alert(`Successfully upgraded to ${tier}! (Demo mode)`);
-    } catch (error) {
-      console.error("Error updating subscription:", error);
-    }
-    setIsLoading(false);
-  };
-
-  const handleCancelSubscription = async () => {
-    if (!confirm("Are you sure you want to cancel your subscription? You'll be downgraded to the Free plan.")) {
+    // Check if running in iframe (preview mode)
+    if (window.self !== window.top) {
+      alert('💳 Checkout is only available in the published app. Please open your app in a new tab to subscribe.');
       return;
     }
     
+    setIsLoading(true);
     try {
-      await base44.auth.updateMe({ subscription_tier: "free" });
-      setCurrentUser({ ...currentUser, subscription_tier: "free" });
-      alert("Subscription cancelled. You've been moved to the Free plan.");
+      const response = await base44.functions.invoke('createCheckout', {
+        tier,
+        billingPeriod
+      });
+      
+      if (response.data.url) {
+        // Redirect to Stripe checkout
+        window.location.href = response.data.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
     } catch (error) {
-      console.error("Error cancelling subscription:", error);
-      alert("Failed to cancel subscription. Please try again.");
+      console.error("Error creating checkout:", error);
+      alert('Failed to create checkout session. Please try again.');
+      setIsLoading(false);
     }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!confirm("Are you sure you want to cancel your subscription? You'll be downgraded to the Free plan at the end of your billing period.")) {
+      return;
+    }
+    
+    alert("To cancel your subscription, please contact support@taskbuddy.app or manage your subscription in the Stripe customer portal. We'll add self-service cancellation soon!");
   };
 
   const TierIcon = ({ tier }) => {
