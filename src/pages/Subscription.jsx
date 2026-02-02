@@ -34,9 +34,9 @@ const plansData = [
   {
     tier: "pro",
     name: "Pro",
-    priceMonthly: "$14.99",
-    priceYearly: "$149",
-    savingsYearly: "Save $30",
+    priceMonthly: "$9.99",
+    priceYearly: "$99",
+    savingsYearly: "Save $20",
     period: "per month",
     description: "Supercharge your productivity with AI",
     features: [
@@ -58,9 +58,9 @@ const plansData = [
   {
     tier: "premium",
     name: "Premium",
-    priceMonthly: "$29.99",
-    priceYearly: "$299",
-    savingsYearly: "Save $60",
+    priceMonthly: "$19.99",
+    priceYearly: "$199",
+    savingsYearly: "Save $40",
     period: "per month",
     description: "The ultimate productivity experience",
     features: [
