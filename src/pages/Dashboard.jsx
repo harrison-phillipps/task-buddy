@@ -33,6 +33,9 @@ import SmartTaskRecommender from "../components/ai/SmartTaskRecommender";
 import AISmartNudge from "../components/ai/AISmartNudge";
 import AIDailyPlanner from "../components/ai/AIDailyPlanner";
 import AdaptiveDashboard from "../components/dashboard/AdaptiveDashboard";
+import StrategicProgressCoach from "../components/ai/StrategicProgressCoach";
+import EnergyAwareCoach from "../components/ai/EnergyAwareCoach";
+import CoachTrainingCenter from "../components/ai/CoachTrainingCenter";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -469,11 +472,46 @@ export default function Dashboard() {
           </motion.div>
         )}
 
-        {/* AI Coaching Bots */}
+        {/* Strategic & Energy Coaching */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.55 }}
+          className="grid grid-cols-1 lg:grid-cols-2 gap-4"
+        >
+          {tasks.length > 5 && sessions.length > 3 && (
+            <StrategicProgressCoach 
+              tasks={tasks}
+              sessions={sessions}
+              userProgress={userProgress}
+              goals={[]}
+            />
+          )}
+          
+          {sessions.length > 2 && (
+            <EnergyAwareCoach 
+              tasks={tasks}
+              sessions={sessions}
+              currentUser={currentUser}
+              userProgress={userProgress}
+            />
+          )}
+        </motion.div>
+
+        {/* Coach Training Center */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <CoachTrainingCenter currentUser={currentUser} />
+        </motion.div>
+
+        {/* AI Coaching Bots */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.65 }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
         >
           {tasks.filter(t => t.is_recurring || t.parent_recurring_task_id).length > 0 && (
