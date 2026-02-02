@@ -75,6 +75,11 @@ const moreItems = [
     icon: Users,
   },
   {
+    title: "Integrations",
+    url: createPageUrl("Integrations"),
+    icon: Sparkles,
+  },
+  {
     title: "Settings",
     url: createPageUrl("Settings"),
     icon: Settings,
