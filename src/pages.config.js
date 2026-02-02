@@ -59,6 +59,7 @@ import Dashboard from './pages/Dashboard';
 import FocusSession from './pages/FocusSession';
 import Goals from './pages/Goals';
 import Home from './pages/Home';
+import Integrations from './pages/Integrations';
 import LeaderboardPage from './pages/LeaderboardPage';
 import NotificationSettings from './pages/NotificationSettings';
 import Onboarding from './pages/Onboarding';
@@ -71,7 +72,6 @@ import Tasks from './pages/Tasks';
 import TeamDashboard from './pages/TeamDashboard';
 import TeamFocusSession from './pages/TeamFocusSession';
 import Teams from './pages/Teams';
-import Integrations from './pages/Integrations';
 import __Layout from './Layout.jsx';
 
 
@@ -88,6 +88,7 @@ export const PAGES = {
     "FocusSession": FocusSession,
     "Goals": Goals,
     "Home": Home,
+    "Integrations": Integrations,
     "LeaderboardPage": LeaderboardPage,
     "NotificationSettings": NotificationSettings,
     "Onboarding": Onboarding,
@@ -100,7 +101,6 @@ export const PAGES = {
     "TeamDashboard": TeamDashboard,
     "TeamFocusSession": TeamFocusSession,
     "Teams": Teams,
-    "Integrations": Integrations,
 }
 
 export const pagesConfig = {
