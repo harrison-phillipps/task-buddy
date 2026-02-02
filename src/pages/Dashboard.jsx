@@ -30,6 +30,9 @@ import EnergyManagementBot from "../components/ai/EnergyManagementBot";
 import ProgressInsights from "../components/dashboard/ProgressInsights";
 import ProactiveCoach from "../components/ai/ProactiveCoach";
 import SmartTaskRecommender from "../components/ai/SmartTaskRecommender";
+import AISmartNudge from "../components/ai/AISmartNudge";
+import AIDailyPlanner from "../components/ai/AIDailyPlanner";
+import AdaptiveDashboard from "../components/dashboard/AdaptiveDashboard";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -308,11 +311,41 @@ export default function Dashboard() {
           </Link>
           </motion.div>
 
-        {/* Proactive AI Coach */}
+        {/* Adaptive Dashboard Suggestions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <AdaptiveDashboard
+            currentUser={currentUser}
+            tasks={tasks}
+            sessions={sessions}
+            userProgress={userProgress}
+            visibleWidgets={visibleWidgets}
+            onToggleWidget={handleToggleWidget}
+          />
+        </motion.div>
+
+        {/* AI Daily Planner */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.31 }}
+        >
+          <AIDailyPlanner 
+            tasks={tasks}
+            sessions={sessions}
+            userProgress={userProgress}
+            currentUser={currentUser}
+          />
+        </motion.div>
+
+        {/* Proactive AI Coach */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.32 }}
         >
           <ProactiveCoach 
             userProgress={userProgress}
@@ -520,6 +553,14 @@ export default function Dashboard() {
           onOpenChange={setShowProgressReport}
           userProgress={userProgress}
           timeframe="week"
+        />
+
+        {/* AI Smart Nudges */}
+        <AISmartNudge 
+          userProgress={userProgress}
+          tasks={tasks}
+          sessions={sessions}
+          currentUser={currentUser}
         />
         </div>
         </div>
