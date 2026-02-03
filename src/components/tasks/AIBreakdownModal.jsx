@@ -27,6 +27,17 @@ export default function AIBreakdownModal({ task, open, onOpenChange, onSave }) {
 
     setIsGenerating(true);
     try {
+      // Get historical time estimation data
+      let historicalData = null;
+      try {
+        const historyResponse = await base44.functions.invoke('analyzeTaskHistory', {
+          analysisType: 'time_estimation'
+        });
+        historicalData = historyResponse.data;
+      } catch (error) {
+        console.error("Failed to get historical data:", error);
+      }
+
       const result = await base44.integrations.Core.InvokeLLM({
         prompt: `Analyze this task and break it down into smaller, actionable subtasks with estimated time for each:
 
@@ -34,6 +45,13 @@ Task Title: ${task.title}
 Task Description: ${task.description || "No description"}
 Task Category: ${task.category}
 Task Difficulty: ${task.difficulty}
+
+${historicalData ? `Historical Time Estimation Data:
+- Average time for ${task.category} tasks: ${historicalData.category_estimates?.[task.category] || 'unknown'} minutes
+- Difficulty multiplier for ${task.difficulty}: ${historicalData.difficulty_multipliers?.[task.difficulty] || 1}x
+- Insights: ${historicalData.insights}
+
+Use this historical data to provide more accurate time estimates.` : ''}
 
 Please provide:
 1. Subtasks that are specific and actionable
