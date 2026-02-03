@@ -36,6 +36,8 @@ import AdaptiveDashboard from "../components/dashboard/AdaptiveDashboard";
 import StrategicProgressCoach from "../components/ai/StrategicProgressCoach";
 import EnergyAwareCoach from "../components/ai/EnergyAwareCoach";
 import CoachTrainingCenter from "../components/ai/CoachTrainingCenter";
+import OptimalTimeRecommender from "../components/ai/OptimalTimeRecommender";
+import ProductivityReportModal from "../components/analytics/ProductivityReportModal";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -44,6 +46,7 @@ export default function Dashboard() {
   const [showCoachingTip, setShowCoachingTip] = useState(true);
   const [coachingTip, setCoachingTip] = useState(null);
   const [showProgressReport, setShowProgressReport] = useState(false);
+  const [showProductivityReport, setShowProductivityReport] = useState(false);
   const [aiMessage, setAiMessage] = useState(null);
   const [isLoadingMessage, setIsLoadingMessage] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -273,12 +276,12 @@ export default function Dashboard() {
           transition={{ delay: 0.3 }}
           className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4"
           >
-          <div onClick={() => setShowProgressReport(true)}>
+          <div onClick={() => setShowProductivityReport(true)}>
             <Card className="bg-gradient-to-br from-blue-500 to-cyan-500 border-none hover:shadow-2xl transition-all duration-300 cursor-pointer group">
               <CardContent className="p-6 text-white">
                 <FileText className="w-10 h-10 mb-3 group-hover:scale-110 transition-transform" />
-                <h3 className="text-2xl font-bold mb-2">Progress Report</h3>
-                <p className="text-blue-100">AI-powered weekly summary</p>
+                <h3 className="text-2xl font-bold mb-2">Productivity Report</h3>
+                <p className="text-blue-100">AI-powered insights & analytics</p>
               </CardContent>
             </Card>
           </div>
@@ -359,12 +362,23 @@ export default function Dashboard() {
           />
         </motion.div>
 
+        {/* Optimal Time Recommender */}
+        {sessions.length > 5 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.315 }}
+          >
+            <OptimalTimeRecommender />
+          </motion.div>
+        )}
+
         {/* Smart Task Recommendations */}
         {tasks.filter(t => t.status !== 'completed').length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.315 }}
+            transition={{ delay: 0.32 }}
           >
             <SmartTaskRecommender 
               tasks={tasks.filter(t => t.status !== 'completed')}
@@ -591,6 +605,11 @@ export default function Dashboard() {
           onOpenChange={setShowProgressReport}
           userProgress={userProgress}
           timeframe="week"
+        />
+
+        <ProductivityReportModal
+          open={showProductivityReport}
+          onOpenChange={setShowProductivityReport}
         />
 
         {/* AI Smart Nudges */}
