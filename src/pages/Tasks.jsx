@@ -34,6 +34,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import TaskAssignment from "../components/team/TaskAssignment";
 import CollaborativeTaskView from "../components/collaboration/CollaborativeTaskView";
 import AutoScheduleFocusBlock from "../components/calendar/AutoScheduleFocusBlock";
+import AIBreakdownModal from "../components/tasks/AIBreakdownModal";
 
 export default function Tasks() {
   const queryClient = useQueryClient();
@@ -60,6 +61,8 @@ export default function Tasks() {
   const [aiPrioritizedTasks, setAiPrioritizedTasks] = useState(null);
   const [showAIInsights, setShowAIInsights] = useState(false);
   const [aiStrategy, setAiStrategy] = useState("");
+  const [showAIBreakdown, setShowAIBreakdown] = useState(false);
+  const [taskToBreakdown, setTaskToBreakdown] = useState(null);
 
   // Listen for schedule focus events from TaskCard
   useEffect(() => {
@@ -594,6 +597,14 @@ export default function Tasks() {
                               allTasks={tasks}
                               showTeamInfo={selectedTeamId !== "personal" || !!task.team_id}
                               onStart={(task) => window.location.href = createPageUrl("FocusSession") + `?taskId=${task.id}`}
+                              onEdit={(task, action) => {
+                                if (action === 'ai-breakdown') {
+                                  setTaskToBreakdown(task);
+                                  setShowAIBreakdown(true);
+                                } else {
+                                  window.location.href = createPageUrl("TaskBreakdown") + `?editTaskId=${task.id}`;
+                                }
+                              }}
                               onDelete={(task) => {
                                 if (confirm(`Delete "${task.title}"?`)) {
                                   deleteTaskMutation.mutate(task.id);
@@ -749,6 +760,23 @@ export default function Tasks() {
           onScheduled={() => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
             queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
+          }}
+        />
+
+        <AIBreakdownModal
+          task={taskToBreakdown}
+          open={showAIBreakdown}
+          onOpenChange={setShowAIBreakdown}
+          onSave={(data) => {
+            if (taskToBreakdown) {
+              updateTaskMutation.mutate({
+                id: taskToBreakdown.id,
+                data: data
+              });
+              setShowAIBreakdown(false);
+              setTaskToBreakdown(null);
+              toast.success("Subtasks added to task!");
+            }
           }}
         />
       </div>
