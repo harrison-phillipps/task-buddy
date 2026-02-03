@@ -193,6 +193,12 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                 <DropdownMenuItem onClick={() => onEdit?.(task)}>
                   Edit Task
                 </DropdownMenuItem>
+                {task.status !== 'completed' && (!task.subtasks || task.subtasks.length === 0) && (
+                  <DropdownMenuItem onClick={() => onEdit?.(task, 'ai-breakdown')}>
+                    <Sparkles className="w-4 h-4 mr-2 text-purple-600" />
+                    AI Break Down Task
+                  </DropdownMenuItem>
+                )}
                 {onSpread && task.subtasks?.length > 0 && (
                   <DropdownMenuItem onClick={() => onSpread?.(task)}>
                     <CalendarDays className="w-4 h-4 mr-2" />
