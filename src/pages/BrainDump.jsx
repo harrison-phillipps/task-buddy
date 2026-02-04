@@ -122,7 +122,9 @@ export default function BrainDump() {
 Brain Dump:
 ${brainDumpText}
 
-Analyze this brain dump and extract ALL tasks mentioned. For each task:
+CRITICAL: Extract EVERY SINGLE task, to-do item, or action mentioned in the brain dump above. Even if it's just a simple line item, create a full task for it. If the user lists 10 things, you should create 10 tasks.
+
+For each task found:
 1. Create a clear, specific title
 2. Determine the category (work, personal, health, creative, learning, household, or other)
 3. Assess difficulty (easy, medium, or hard)
@@ -137,7 +139,7 @@ Analyze this brain dump and extract ALL tasks mentioned. For each task:
 Be encouraging and supportive. If something seems vague, interpret it generously and break it into concrete steps.
 Calculate total time for each task (sum of subtask times).
 
-Extract ALL tasks from the brain dump - do not skip any. The user will review them before saving.`,
+DO NOT SKIP ANY ITEMS. Extract every single task mentioned. Count them to make sure you got them all.`,
         response_json_schema: {
           type: "object",
           properties: {
