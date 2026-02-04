@@ -122,15 +122,7 @@ export default function BrainDump() {
 Brain Dump:
 ${brainDumpText}
 
-EXISTING TASKS (check for duplicates):
-${existingTasks.map(t => `- ${t.title} (${t.category}${t.is_recurring ? ', recurring: ' + t.recurrence_pattern : ''})`).join('\n')}
-
-Analyze this brain dump and:
-1. SKIP tasks that are duplicates of existing tasks
-2. Identify recurring patterns (daily/weekly routines, regular activities)
-3. Extract distinct NEW tasks only
-
-For each task:
+Analyze this brain dump and extract ALL tasks mentioned. For each task:
 1. Create a clear, specific title
 2. Determine the category (work, personal, health, creative, learning, household, or other)
 3. Assess difficulty (easy, medium, or hard)
@@ -145,7 +137,7 @@ For each task:
 Be encouraging and supportive. If something seems vague, interpret it generously and break it into concrete steps.
 Calculate total time for each task (sum of subtask times).
 
-IMPORTANT: Only return NEW tasks (skip duplicates), and identify recurring patterns.`,
+Extract ALL tasks from the brain dump - do not skip any. The user will review them before saving.`,
         response_json_schema: {
           type: "object",
           properties: {
@@ -186,11 +178,6 @@ IMPORTANT: Only return NEW tasks (skip duplicates), and identify recurring patte
               }
             },
             encouragement: { type: "string" },
-            duplicates_skipped: { type: "number" },
-            duplicates_list: { 
-              type: "array",
-              items: { type: "string" }
-            },
             recurring_detected: { type: "number" }
           }
         }
@@ -230,12 +217,7 @@ IMPORTANT: Only return NEW tasks (skip duplicates), and identify recurring patte
 
       setExtractedTasks({ ...result, brainDumpId: savedBrainDump.id });
 
-      // Show feedback about duplicates and recurring patterns
-      if (result.duplicates_skipped > 0) {
-        toast.info(`Skipped ${result.duplicates_skipped} duplicate task(s)`, {
-          description: result.duplicates_list?.join(', ')
-        });
-      }
+      // Show feedback about recurring patterns
       if (result.recurring_detected > 0) {
         toast.success(`Detected ${result.recurring_detected} recurring pattern(s)! 🔄`);
       }
