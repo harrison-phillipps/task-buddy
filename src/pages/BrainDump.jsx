@@ -102,7 +102,7 @@ export default function BrainDump() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['brainDumps'] });
-      navigate(createPageUrl("TaskList"));
+      navigate(createPageUrl("Tasks"));
     },
   });
 
