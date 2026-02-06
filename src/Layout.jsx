@@ -181,9 +181,11 @@ function LayoutContent({ children, currentPageName }) {
         <Sidebar className="border-r border-purple-100 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
           <SidebarHeader className="border-b border-purple-100 dark:border-gray-700 p-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
+              <img 
+                src="https://images.unsplash.com/photo-1614680376593-902f74cf0d41?w=100&h=100&fit=crop" 
+                alt="TaskBuddy Logo" 
+                className="w-10 h-10 rounded-2xl shadow-lg object-cover"
+              />
               <div>
                 <h2 className="font-bold text-xl text-gray-900 dark:text-gray-100">TaskBuddy</h2>
                 <p className="text-xs text-purple-600 dark:text-purple-400">Your virtual companion</p>
