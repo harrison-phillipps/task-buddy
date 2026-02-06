@@ -182,7 +182,7 @@ function LayoutContent({ children, currentPageName }) {
           <SidebarHeader className="border-b border-purple-100 dark:border-gray-700 p-6">
             <div className="flex items-center gap-3">
               <img 
-                src="https://images.unsplash.com/photo-1614680376593-902f74cf0d41?w=100&h=100&fit=crop" 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68ff06728f59128717455ed3/947e987fc_Screenshot2025-12-08at84335AM.png" 
                 alt="TaskBuddy Logo" 
                 className="w-10 h-10 rounded-2xl shadow-lg object-cover"
               />
