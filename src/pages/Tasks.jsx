@@ -78,6 +78,34 @@ export default function Tasks() {
     onSyncComplete: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
 
+  // Persist view mode and strategy in localStorage + user profile
+  const handleViewModeChange = async (mode) => {
+    setViewMode(mode);
+    localStorage.setItem('tasks_view_mode', mode);
+    if (mode === "ai" && !aiPrioritizedTasks) {
+      handleAIPrioritization();
+    }
+    if (currentUser) {
+      base44.auth.updateMe({ tasks_view_mode: mode }).catch(() => {});
+    }
+  };
+
+  const handleStrategyChange = async (key) => {
+    setAiStrategyKey(key);
+    localStorage.setItem('tasks_ai_strategy', key);
+    if (currentUser) {
+      base44.auth.updateMe({ tasks_ai_strategy: key }).catch(() => {});
+    }
+  };
+
+  const handleTogglePin = (taskId) => {
+    setPinnedTaskIds(prev => {
+      const next = prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId];
+      localStorage.setItem('pinned_task_ids', JSON.stringify(next));
+      return next;
+    });
+  };
+
   // Listen for schedule focus events from TaskCard
   useEffect(() => {
     const handleScheduleFocus = (e) => {
