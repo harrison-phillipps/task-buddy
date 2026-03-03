@@ -38,6 +38,9 @@ import SmartTimerRecommendations from "../components/focus/SmartTimerRecommendat
 import CalendarFocusBlocker from "../components/focus/CalendarFocusBlocker";
 import SessionCoach from "../components/ai/SessionCoach";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { enqueueOp, upsertCachedEntity, cacheEntities, getCachedEntities } from "../components/offlineStore";
+import { useOfflineSync } from "../components/useOfflineSync";
+import OfflineIndicator from "../components/OfflineIndicator";
 
 // Dynamic encouragement based on user progress
 const getEncouragementMessages = (userProgress) => {
