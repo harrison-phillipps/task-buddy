@@ -4,10 +4,10 @@ import Stripe from 'npm:stripe@17.5.0';
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY"));
 
 const PRICE_IDS = {
-  pro_monthly: "price_1SwE0OGWwMNXSBYQu2NSZgQh",
-  pro_yearly: "price_1SwE0OGWwMNXSBYQUg2Ol7ry",
-  premium_monthly: "price_1SwE0OGWwMNXSBYQIbGaXrLA",
-  premium_yearly: "price_1SwE0OGWwMNXSBYQCfZqO7ZR"
+  pro_monthly: "price_1T6iTfGYED6zM9vpCKGLX8Ob",
+  pro_yearly: "price_1T6iTfGYED6zM9vpKUMgxgf5",
+  premium_monthly: "price_1T6iTfGYED6zM9vp3b8Ff9MZ",
+  premium_yearly: "price_1T6iTfGYED6zM9vpZ0iaEzIc"
 };
 
 Deno.serve(async (req) => {
