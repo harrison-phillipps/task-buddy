@@ -136,6 +136,13 @@ export default function FocusSession() {
   const audioRef = useRef(null);
   const encouragementTimers = useRef([]);
 
+  const { isOnline, pendingCount, isSyncing, flushQueue, refreshPendingCount } = useOfflineSync({
+    onSyncComplete: () => {
+      queryClient.invalidateQueries({ queryKey: ['focusSessionTasks'] });
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+    },
+  });
+
   // Check notification permission on mount
   useEffect(() => {
     requestNotificationPermission().then(granted => {
