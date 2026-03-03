@@ -109,8 +109,22 @@ export default function Tasks() {
     queryKey: ['tasks', currentUser?.email, selectedTeamId],
     queryFn: async () => {
       if (!currentUser) return [];
+
+      // If offline, serve from IndexedDB cache
+      if (!navigator.onLine) {
+        const cached = await getCachedEntities('Task');
+        if (selectedTeamId === 'personal') {
+          return cached.filter(t =>
+            (!t.team_id && t.created_by === currentUser.email) ||
+            t.assigned_to === currentUser.id ||
+            t.assigned_to_users?.some(u => u.user_id === currentUser.id)
+          );
+        }
+        return cached.filter(t => t.team_id === selectedTeamId);
+      }
+
+      let fetched = [];
       if (selectedTeamId === "personal") {
-        // Get personal tasks AND assigned team tasks
         const personalTasks = await base44.entities.Task.filter({ 
           created_by: currentUser.email, 
           team_id: null 
@@ -118,20 +132,24 @@ export default function Tasks() {
         const assignedTeamTasks = await base44.entities.Task.filter({ 
           assigned_to: currentUser.id 
         }, '-created_date');
-        // Get tasks where user is in assigned_to_users array
         const allTeamTasks = await base44.entities.Task.list();
         const multiAssignedTasks = allTeamTasks.filter(task => 
           task.assigned_to_users?.some(u => u.user_id === currentUser.id)
         );
-        // Combine and deduplicate
         const allTasks = [...personalTasks, ...assignedTeamTasks, ...multiAssignedTasks];
-        return allTasks.filter((task, index, self) => 
+        fetched = allTasks.filter((task, index, self) => 
           index === self.findIndex(t => t.id === task.id)
         );
+      } else {
+        fetched = await base44.entities.Task.filter({ team_id: selectedTeamId }, '-created_date');
       }
-      return base44.entities.Task.filter({ team_id: selectedTeamId }, '-created_date');
+
+      // Update cache
+      if (fetched.length > 0) await cacheEntities('Task', fetched);
+      return fetched;
     },
     enabled: !!currentUser,
+    staleTime: isOnline ? 0 : Infinity,
   });
 
   // Use AI prioritized tasks if available, otherwise use raw tasks
