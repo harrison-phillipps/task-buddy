@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Calendar, Link as LinkIcon, ChevronDown, ChevronRight, CheckCircle2, Sparkles, RefreshCw } from "lucide-react";
+import { Plus, Calendar, Link as LinkIcon, ChevronDown, ChevronRight, CheckCircle2, Sparkles, RefreshCw, Pin } from "lucide-react";
 import { toast } from "sonner";
 import { analyzeTaskPriority } from "../components/ai/TaskPrioritizer";
 import {
