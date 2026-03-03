@@ -62,14 +62,14 @@ export const TIER_INFO = {
     icon: Sparkles,
     color: "text-purple-600",
     bgColor: "bg-purple-100",
-    price: "$9.99/mo"
+    price: "A$9.99/mo"
   },
   premium: {
     name: "Premium",
     icon: Crown,
     color: "text-yellow-600",
     bgColor: "bg-yellow-100",
-    price: "$19.99/mo"
+    price: "A$19.99/mo"
   }
 };
 
