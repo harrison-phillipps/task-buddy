@@ -34,9 +34,9 @@ const plansData = [
   {
     tier: "pro",
     name: "Pro",
-    priceMonthly: "$9.99",
-    priceYearly: "$99",
-    savingsYearly: "Save $20",
+    priceMonthly: "A$9.99",
+    priceYearly: "A$99",
+    savingsYearly: "Save A$20",
     period: "per month",
     description: "Supercharge your productivity with AI",
     features: [
