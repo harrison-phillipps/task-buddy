@@ -36,6 +36,7 @@ import AdaptiveBreakSuggestion from "../components/focus/AdaptiveBreakSuggestion
 import GuidedBreakFlow from "../components/focus/GuidedBreakFlow";
 import SmartTimerRecommendations from "../components/focus/SmartTimerRecommendations";
 import CalendarFocusBlocker from "../components/focus/CalendarFocusBlocker";
+import SessionCoach from "../components/ai/SessionCoach";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Dynamic encouragement based on user progress
