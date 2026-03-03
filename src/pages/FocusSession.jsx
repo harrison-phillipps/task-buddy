@@ -240,7 +240,17 @@ export default function FocusSession() {
   }, []);
 
   const updateTaskMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      if (!navigator.onLine) {
+        await enqueueOp({ entity: 'Task', type: 'update', id, data });
+        await upsertCachedEntity('Task', id, { ...tasks.find(t => t.id === id), ...data, id });
+        await refreshPendingCount();
+        return { id, ...data };
+      }
+      const updated = await base44.entities.Task.update(id, data);
+      await upsertCachedEntity('Task', id, updated);
+      return updated;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['focusSessionTasks'] });
@@ -248,7 +258,16 @@ export default function FocusSession() {
   });
 
   const createSessionMutation = useMutation({
-    mutationFn: (sessionData) => base44.entities.FocusSession.create(sessionData),
+    mutationFn: async (sessionData) => {
+      if (!navigator.onLine) {
+        const tempId = `local_${Date.now()}`;
+        await enqueueOp({ entity: 'FocusSession', type: 'create', id: tempId, data: sessionData });
+        await upsertCachedEntity('FocusSession', tempId, { ...sessionData, id: tempId });
+        await refreshPendingCount();
+        return { ...sessionData, id: tempId };
+      }
+      return base44.entities.FocusSession.create(sessionData);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
     },
