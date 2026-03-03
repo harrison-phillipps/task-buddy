@@ -65,8 +65,14 @@ export default function Tasks() {
   const [aiPrioritizedTasks, setAiPrioritizedTasks] = useState(null);
   const [showAIInsights, setShowAIInsights] = useState(false);
   const [aiStrategy, setAiStrategy] = useState("");
+  const [aiRecommendedFocus, setAiRecommendedFocus] = useState("");
   const [showAIBreakdown, setShowAIBreakdown] = useState(false);
   const [taskToBreakdown, setTaskToBreakdown] = useState(null);
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('tasks_view_mode') || "manual");
+  const [aiStrategyKey, setAiStrategyKey] = useState(() => localStorage.getItem('tasks_ai_strategy') || "balanced");
+  const [pinnedTaskIds, setPinnedTaskIds] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('pinned_task_ids') || '[]'); } catch { return []; }
+  });
 
   const { isOnline, pendingCount, isSyncing, flushQueue, refreshPendingCount } = useOfflineSync({
     onSyncComplete: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
