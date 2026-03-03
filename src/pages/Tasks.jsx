@@ -425,6 +425,12 @@ export default function Tasks() {
 
   return (
     <div className="min-h-screen p-4 md:p-8">
+      <OfflineIndicator
+        isOnline={isOnline}
+        pendingCount={pendingCount}
+        isSyncing={isSyncing}
+        onRetry={flushQueue}
+      />
       <AnimatePresence>
         {showCelebration && (
           <motion.div
