@@ -365,39 +365,23 @@ export default function Tasks() {
 
   const handleAIPrioritization = async () => {
     if (!currentUser) return;
-    
     setIsAnalyzingPriority(true);
     try {
-      // Get AI prioritization preferences from user data
       const preferences = currentUser.ai_prioritization_preferences || {};
-      
-      // Get all tasks for history analysis
-      const allUserTasks = await base44.entities.Task.filter({ 
-        created_by: currentUser.email 
-      }, '-updated_date', 200);
-
+      const allUserTasks = await base44.entities.Task.filter({ created_by: currentUser.email }, '-updated_date', 200);
       const activeTasks = rawTasks.filter(t => t.status !== 'completed');
-      
-      const result = await analyzeTaskPriority(activeTasks, allUserTasks, preferences);
-      
+      const strategyHint = STRATEGY_PROMPTS[aiStrategyKey] || "";
+      const result = await analyzeTaskPriority(activeTasks, allUserTasks, preferences, strategyHint);
       setAiPrioritizedTasks(result.tasks);
       setAiStrategy(result.strategy);
+      setAiRecommendedFocus(result.recommended_focus);
       setShowAIInsights(true);
-      
-      toast.success("AI prioritization complete! ✨", {
-        description: result.recommended_focus
-      });
+      toast.success("AI prioritization complete! ✨", { description: result.recommended_focus });
     } catch (error) {
       console.error("AI prioritization error:", error);
       toast.error("Failed to analyze priorities");
     }
     setIsAnalyzingPriority(false);
-  };
-
-  const clearAIPrioritization = () => {
-    setAiPrioritizedTasks(null);
-    setShowAIInsights(false);
-    toast.info("AI prioritization cleared");
   };
 
   const filteredTasks = tasks.filter(task => {
