@@ -199,14 +199,33 @@ export default function Tasks() {
   };
 
   const deleteTaskMutation = useMutation({
-    mutationFn: (taskId) => base44.entities.Task.delete(taskId),
+    mutationFn: async (taskId) => {
+      if (!navigator.onLine) {
+        await enqueueOp({ entity: 'Task', type: 'delete', id: taskId, data: null });
+        await removeCachedEntity('Task', taskId);
+        await refreshPendingCount();
+        return;
+      }
+      await base44.entities.Task.delete(taskId);
+      await removeCachedEntity('Task', taskId);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
 
   const updateTaskMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      if (!navigator.onLine) {
+        await enqueueOp({ entity: 'Task', type: 'update', id, data });
+        await upsertCachedEntity('Task', id, { ...rawTasks.find(t => t.id === id), ...data, id });
+        await refreshPendingCount();
+        return { id, ...data };
+      }
+      const updated = await base44.entities.Task.update(id, data);
+      await upsertCachedEntity('Task', id, updated);
+      return updated;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['focusSessionTasks'] });
@@ -214,12 +233,18 @@ export default function Tasks() {
   });
 
   const quickCompleteMutation = useMutation({
-    mutationFn: (task) => {
+    mutationFn: async (task) => {
       const completedSubtasks = task.subtasks?.map(st => ({ ...st, completed: true })) || [];
-      return base44.entities.Task.update(task.id, {
-        status: 'completed',
-        subtasks: completedSubtasks
-      });
+      const updateData = { status: 'completed', subtasks: completedSubtasks };
+      if (!navigator.onLine) {
+        await enqueueOp({ entity: 'Task', type: 'update', id: task.id, data: updateData });
+        await upsertCachedEntity('Task', task.id, { ...task, ...updateData });
+        await refreshPendingCount();
+        return task;
+      }
+      const updated = await base44.entities.Task.update(task.id, updateData);
+      await upsertCachedEntity('Task', task.id, updated);
+      return task;
     },
     onSuccess: (data, task) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
