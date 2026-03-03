@@ -1,6 +1,6 @@
 import { base44 } from "@/api/base44Client";
 
-export async function analyzeTaskPriority(tasks, userHistory, preferences = {}) {
+export async function analyzeTaskPriority(tasks, userHistory, preferences = {}, strategyHint = "") {
   const {
     considerDeadlines = true,
     considerDependencies = true,
