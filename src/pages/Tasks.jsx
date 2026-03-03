@@ -35,6 +35,9 @@ import TaskAssignment from "../components/team/TaskAssignment";
 import CollaborativeTaskView from "../components/collaboration/CollaborativeTaskView";
 import AutoScheduleFocusBlock from "../components/calendar/AutoScheduleFocusBlock";
 import AIBreakdownModal from "../components/tasks/AIBreakdownModal";
+import { enqueueOp, upsertCachedEntity, removeCachedEntity, cacheEntities, getCachedEntities } from "../components/offlineStore";
+import { useOfflineSync } from "../components/useOfflineSync";
+import OfflineIndicator from "../components/OfflineIndicator";
 
 export default function Tasks() {
   const queryClient = useQueryClient();
@@ -63,6 +66,10 @@ export default function Tasks() {
   const [aiStrategy, setAiStrategy] = useState("");
   const [showAIBreakdown, setShowAIBreakdown] = useState(false);
   const [taskToBreakdown, setTaskToBreakdown] = useState(null);
+
+  const { isOnline, pendingCount, isSyncing, flushQueue, refreshPendingCount } = useOfflineSync({
+    onSyncComplete: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+  });
 
   // Listen for schedule focus events from TaskCard
   useEffect(() => {
