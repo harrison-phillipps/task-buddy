@@ -73,6 +73,7 @@ Be brief, warm, and action-focused.`;
     };
 
     // Generate tip at key moments: start, 25%, 50%, 75%, near end
+    const progressPercent = sessionDuration > 0 ? (elapsedMinutes / sessionDuration) * 100 : 0;
     const timeSinceLastTip = Date.now() - lastTipTime;
     const shouldGenerateTip = 
       elapsedMinutes === 1 || // Start
