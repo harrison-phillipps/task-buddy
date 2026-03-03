@@ -154,26 +154,32 @@ export default function FocusSession() {
     queryKey: ['focusSessionTasks', currentUser?.id],
     queryFn: async () => {
       if (!currentUser) return [];
-      // Get all tasks
+
+      if (!navigator.onLine) {
+        const cached = await getCachedEntities('Task');
+        return cached.filter(task => {
+          if (!task.team_id && task.created_by === currentUser.email) return true;
+          if (task.team_id && (
+            task.assigned_to === currentUser.id ||
+            task.assigned_to_users?.some(u => u.user_id === currentUser.id)
+          )) return true;
+          return false;
+        });
+      }
+
       const allTasks = await base44.entities.Task.list('-created_date');
-      
-      // Filter for personal tasks and assigned team tasks
+      await cacheEntities('Task', allTasks);
       return allTasks.filter(task => {
-        // Personal tasks (no team_id)
-        if (!task.team_id && task.created_by === currentUser.email) {
-          return true;
-        }
-        // Team tasks assigned to user
+        if (!task.team_id && task.created_by === currentUser.email) return true;
         if (task.team_id && (
           task.assigned_to === currentUser.id || 
           task.assigned_to_users?.some(u => u.user_id === currentUser.id)
-        )) {
-          return true;
-        }
+        )) return true;
         return false;
       });
     },
     enabled: !!currentUser,
+    staleTime: isOnline ? 0 : Infinity,
   });
 
   const { data: sessions = [] } = useQuery({
