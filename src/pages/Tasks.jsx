@@ -201,8 +201,11 @@ export default function Tasks() {
     staleTime: isOnline ? 0 : Infinity,
   });
 
-  // Use AI prioritized tasks if available, otherwise use raw tasks
-  const tasks = aiPrioritizedTasks || rawTasks;
+  // Merge AI scores into raw tasks if available
+  const tasks = rawTasks.map(t => {
+    const aiTask = aiPrioritizedTasks?.find(a => a.id === t.id);
+    return aiTask ? { ...t, ...aiTask } : t;
+  });
 
   const { data: teams = [] } = useQuery({
     queryKey: ['teams', currentUser?.id],
