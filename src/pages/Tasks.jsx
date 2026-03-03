@@ -116,6 +116,20 @@ export default function Tasks() {
     return () => window.removeEventListener('scheduleFocusBlock', handleScheduleFocus);
   }, []);
 
+  // Load persisted view prefs from user profile on mount
+  useEffect(() => {
+    if (currentUser) {
+      if (currentUser.tasks_view_mode) {
+        setViewMode(currentUser.tasks_view_mode);
+        localStorage.setItem('tasks_view_mode', currentUser.tasks_view_mode);
+      }
+      if (currentUser.tasks_ai_strategy) {
+        setAiStrategyKey(currentUser.tasks_ai_strategy);
+        localStorage.setItem('tasks_ai_strategy', currentUser.tasks_ai_strategy);
+      }
+    }
+  }, [currentUser?.id]);
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
