@@ -38,6 +38,7 @@ import AIBreakdownModal from "../components/tasks/AIBreakdownModal";
 import { enqueueOp, upsertCachedEntity, removeCachedEntity, cacheEntities, getCachedEntities } from "../components/offlineStore";
 import { useOfflineSync } from "../components/useOfflineSync";
 import OfflineIndicator from "../components/OfflineIndicator";
+import { AIPriorityViewToggle, AIStrategyBanner, AIPriorityScoreBadge, PinButton, AIStrategySelector, STRATEGY_PROMPTS } from "../components/tasks/AIPriorityEngine";
 
 export default function Tasks() {
   const queryClient = useQueryClient();
