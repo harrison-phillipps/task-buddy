@@ -21,7 +21,9 @@ export async function analyzeTaskPriority(tasks, userHistory, preferences = {}, 
     difficultySuccess: getDifficultySuccessRates(completedTasks)
   };
 
-  const prompt = `You are an expert task prioritization assistant helping someone with ADHD optimize their workflow.
+  const strategyLine = strategyHint ? `\nSTRATEGY INSTRUCTION: ${strategyHint}\n` : "";
+
+  const prompt = `You are an expert task prioritization assistant helping someone with ADHD optimize their workflow.${strategyLine}
 
 ACTIVE TASKS:
 ${tasks.map(t => `
