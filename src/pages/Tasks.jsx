@@ -624,109 +624,178 @@ export default function Tasks() {
             transition={{ delay: 0.2 }}
             className="space-y-4"
           >
-            <Accordion type="multiple" defaultValue={Object.keys(groupedTasks)} className="space-y-4">
-              {Object.entries(groupedTasks).map(([category, categoryTasks]) => (
-                <AccordionItem 
-                  key={category} 
-                  value={category}
-                  className={`bg-gradient-to-br ${categoryColors[category]} border rounded-lg overflow-hidden`}
-                >
-                  <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                    <div className="flex items-center justify-between w-full pr-4">
-                      <span className="text-lg font-semibold text-gray-800">
-                        {categoryLabels[category] || category}
-                      </span>
-                      <span className="text-sm font-medium text-gray-600 bg-white px-3 py-1 rounded-full">
-                        {categoryTasks.length} {categoryTasks.length === 1 ? 'task' : 'tasks'}
-                      </span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
-                      {categoryTasks.map((task, index) => (
-                        <motion.div
-                          key={task.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.03 }}
-                        >
-                          <div className="space-y-3">
-                            <TaskCard
-                              task={task}
-                              allTasks={tasks}
-                              showTeamInfo={selectedTeamId !== "personal" || !!task.team_id}
-                              onStart={(task) => window.location.href = createPageUrl("FocusSession") + `?taskId=${task.id}`}
-                              onEdit={(task, action) => {
-                                if (action === 'ai-breakdown') {
-                                  setTaskToBreakdown(task);
-                                  setShowAIBreakdown(true);
-                                } else {
-                                  window.location.href = createPageUrl("TaskBreakdown") + `?editTaskId=${task.id}`;
-                                }
-                              }}
-                              onDelete={(task) => {
-                                if (confirm(`Delete "${task.title}"?`)) {
-                                  deleteTaskMutation.mutate(task.id);
-                                }
-                              }}
-                              onSpread={(task) => setSpreadTask(task)}
-                              onSubtaskToggle={handleSubtaskToggle}
-                              onSetDependency={(task) => {
-                                setSelectedDependencyTask(task);
-                                setShowDependencyModal(true);
-                              }}
-                              onSetRecurring={(task) => {
-                                setSelectedRecurringTask(task);
-                                setShowRecurringModal(true);
-                              }}
-                              onOpenCollabView={(task) => {
-                                setCollabTask(task);
-                                setShowCollabView(true);
-                              }}
-                              onQuickComplete={handleQuickComplete}
-                              onChangePriority={handleChangePriority}
+            {viewMode === "ai" ? (
+              // AI VIEW: flat sorted list with priority scores
+              <div className="space-y-3">
+                {filteredTasks.map((task, index) => (
+                  <motion.div
+                    key={task.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.03 }}
+                    className="relative"
+                  >
+                    <div className="flex items-start gap-2">
+                      {/* Rank number */}
+                      <div className="flex-shrink-0 w-7 h-7 mt-3 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-500 dark:text-gray-400">
+                        {index + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <PinButton isPinned={pinnedTaskIds.includes(task.id)} onToggle={() => handleTogglePin(task.id)} />
+                          <AIPriorityScoreBadge task={task} showRationale />
+                          {pinnedTaskIds.includes(task.id) && (
+                            <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">📌 Pinned</span>
+                          )}
+                        </div>
+                        <TaskCard
+                          task={task}
+                          allTasks={tasks}
+                          showTeamInfo={selectedTeamId !== "personal" || !!task.team_id}
+                          onStart={(task) => window.location.href = createPageUrl("FocusSession") + `?taskId=${task.id}`}
+                          onEdit={(task, action) => {
+                            if (action === 'ai-breakdown') {
+                              setTaskToBreakdown(task);
+                              setShowAIBreakdown(true);
+                            } else {
+                              window.location.href = createPageUrl("TaskBreakdown") + `?editTaskId=${task.id}`;
+                            }
+                          }}
+                          onDelete={(task) => { if (confirm(`Delete "${task.title}"?`)) deleteTaskMutation.mutate(task.id); }}
+                          onSpread={(task) => setSpreadTask(task)}
+                          onSubtaskToggle={handleSubtaskToggle}
+                          onSetDependency={(task) => { setSelectedDependencyTask(task); setShowDependencyModal(true); }}
+                          onSetRecurring={(task) => { setSelectedRecurringTask(task); setShowRecurringModal(true); }}
+                          onOpenCollabView={(task) => { setCollabTask(task); setShowCollabView(true); }}
+                          onQuickComplete={handleQuickComplete}
+                          onChangePriority={handleChangePriority}
+                        />
+                        {task.team_id && (
+                          <div className="ml-4 mt-2">
+                            <TaskAssignment task={task} teamMembers={getTeamMembers(task)}
+                              onAssign={(data) => updateTaskMutation.mutate({ id: task.id, data })}
                             />
-                            {task.team_id && (
-                              <div className="ml-4">
-                                <TaskAssignment
-                                  task={task}
-                                  teamMembers={getTeamMembers(task)}
-                                  onAssign={(data) => {
-                                    updateTaskMutation.mutate({ id: task.id, data }, {
-                                      onSuccess: async () => {
-                                        // Create notification for task assignment
-                                        if (data.assigned_to || data.assigned_to_users?.length > 0) {
-                                          try {
-                                            await base44.entities.TeamNotification.create({
-                                              team_id: task.team_id,
-                                              type: "task_assigned",
-                                              title: `Task assigned: "${task.title}"`,
-                                              message: data.assigned_to_users?.length > 1 
-                                                ? `Task assigned to ${data.assigned_to_users.length} team members`
-                                                : `Task assigned to ${data.assigned_to_name}`,
-                                              priority: "medium",
-                                              related_id: task.id,
-                                              created_by: currentUser?.id
-                                            });
-                                            queryClient.invalidateQueries({ queryKey: ['teamNotifications'] });
-                                          } catch (error) {
-                                            console.error("Error creating notification:", error);
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              // MANUAL VIEW: category-grouped accordion
+              <Accordion type="multiple" defaultValue={Object.keys(groupedTasks)} className="space-y-4">
+                {Object.entries(groupedTasks).map(([category, categoryTasks]) => (
+                  <AccordionItem 
+                    key={category} 
+                    value={category}
+                    className={`bg-gradient-to-br ${categoryColors[category]} border rounded-lg overflow-hidden`}
+                  >
+                    <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                      <div className="flex items-center justify-between w-full pr-4">
+                        <span className="text-lg font-semibold text-gray-800">
+                          {categoryLabels[category] || category}
+                        </span>
+                        <span className="text-sm font-medium text-gray-600 bg-white px-3 py-1 rounded-full">
+                          {categoryTasks.length} {categoryTasks.length === 1 ? 'task' : 'tasks'}
+                        </span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+                        {categoryTasks.map((task, index) => (
+                          <motion.div
+                            key={task.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.03 }}
+                          >
+                            <div className="space-y-3">
+                              {pinnedTaskIds.includes(task.id) && (
+                                <div className="flex items-center gap-1 text-xs text-purple-600 font-medium ml-1">
+                                  <Pin className="w-3 h-3" />
+                                  Pinned
+                                </div>
+                              )}
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <PinButton isPinned={pinnedTaskIds.includes(task.id)} onToggle={() => handleTogglePin(task.id)} />
+                              </div>
+                              <TaskCard
+                                task={task}
+                                allTasks={tasks}
+                                showTeamInfo={selectedTeamId !== "personal" || !!task.team_id}
+                                onStart={(task) => window.location.href = createPageUrl("FocusSession") + `?taskId=${task.id}`}
+                                onEdit={(task, action) => {
+                                  if (action === 'ai-breakdown') {
+                                    setTaskToBreakdown(task);
+                                    setShowAIBreakdown(true);
+                                  } else {
+                                    window.location.href = createPageUrl("TaskBreakdown") + `?editTaskId=${task.id}`;
+                                  }
+                                }}
+                                onDelete={(task) => {
+                                  if (confirm(`Delete "${task.title}"?`)) {
+                                    deleteTaskMutation.mutate(task.id);
+                                  }
+                                }}
+                                onSpread={(task) => setSpreadTask(task)}
+                                onSubtaskToggle={handleSubtaskToggle}
+                                onSetDependency={(task) => {
+                                  setSelectedDependencyTask(task);
+                                  setShowDependencyModal(true);
+                                }}
+                                onSetRecurring={(task) => {
+                                  setSelectedRecurringTask(task);
+                                  setShowRecurringModal(true);
+                                }}
+                                onOpenCollabView={(task) => {
+                                  setCollabTask(task);
+                                  setShowCollabView(true);
+                                }}
+                                onQuickComplete={handleQuickComplete}
+                                onChangePriority={handleChangePriority}
+                              />
+                              {task.team_id && (
+                                <div className="ml-4">
+                                  <TaskAssignment
+                                    task={task}
+                                    teamMembers={getTeamMembers(task)}
+                                    onAssign={(data) => {
+                                      updateTaskMutation.mutate({ id: task.id, data }, {
+                                        onSuccess: async () => {
+                                          if (data.assigned_to || data.assigned_to_users?.length > 0) {
+                                            try {
+                                              await base44.entities.TeamNotification.create({
+                                                team_id: task.team_id,
+                                                type: "task_assigned",
+                                                title: `Task assigned: "${task.title}"`,
+                                                message: data.assigned_to_users?.length > 1 
+                                                  ? `Task assigned to ${data.assigned_to_users.length} team members`
+                                                  : `Task assigned to ${data.assigned_to_name}`,
+                                                priority: "medium",
+                                                related_id: task.id,
+                                                created_by: currentUser?.id
+                                              });
+                                              queryClient.invalidateQueries({ queryKey: ['teamNotifications'] });
+                                            } catch (error) {
+                                              console.error("Error creating notification:", error);
+                                            }
                                           }
                                         }
-                                      }
-                                    });
-                                  }}
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+                                      });
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            )}
           </motion.div>
         )}
 
