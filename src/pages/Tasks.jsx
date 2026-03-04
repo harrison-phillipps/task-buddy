@@ -387,28 +387,31 @@ export default function Tasks() {
     setIsAnalyzingPriority(false);
   };
 
-  const filteredTasks = tasks.filter(task => {
-    // Don't show recurring templates in the task list (they're just templates)
-    if (task.is_recurring && !task.parent_recurring_task_id && !task.due_date) {
-      return false;
-    }
-    
-    // Status filter
-    let statusMatch = false;
-    if (filter === "all") {
-      statusMatch = task.status !== 'completed'; // All = active tasks only
+  const filteredTasks = (() => {
+    let result = tasks.filter(task => {
+      if (task.is_recurring && !task.parent_recurring_task_id && !task.due_date) return false;
+      let statusMatch = filter === "all" ? task.status !== 'completed' : task.status === filter;
+      let priorityMatch = priorityFilter === "all" || task.task_priority === priorityFilter;
+      return statusMatch && priorityMatch;
+    });
+
+    if (viewMode === "ai" && aiPrioritizedTasks) {
+      result = [...result].sort((a, b) => {
+        const aPinned = pinnedTaskIds.includes(a.id);
+        const bPinned = pinnedTaskIds.includes(b.id);
+        if (aPinned !== bPinned) return aPinned ? -1 : 1;
+        return (b.ai_priority_score || 0) - (a.ai_priority_score || 0);
+      });
     } else {
-      statusMatch = task.status === filter;
+      result = [...result].sort((a, b) => {
+        const aPinned = pinnedTaskIds.includes(a.id);
+        const bPinned = pinnedTaskIds.includes(b.id);
+        if (aPinned !== bPinned) return aPinned ? -1 : 1;
+        return 0;
+      });
     }
-    
-    // Priority filter
-    let priorityMatch = true;
-    if (priorityFilter !== "all") {
-      priorityMatch = task.task_priority === priorityFilter;
-    }
-    
-    return statusMatch && priorityMatch;
-  });
+    return result;
+  })();
 
   const statusCounts = {
     all: tasks.length,
