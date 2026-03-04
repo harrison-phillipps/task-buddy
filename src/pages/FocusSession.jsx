@@ -1177,6 +1177,19 @@ export default function FocusSession() {
               </div>
             </TabsContent>
 
+            <TabsContent value="pomodoro">
+              <div className="space-y-4">
+                <PomodoroTimer
+                  isActive={isActive && sessionStarted}
+                  onCycleComplete={(cycles) => {
+                    setPomodorosCompleted(cycles);
+                    toast.success(`🍅 Pomodoro #${cycles} complete!`);
+                  }}
+                />
+                <DistractionBlocker isSessionActive={sessionStarted && isActive} />
+              </div>
+            </TabsContent>
+
             <TabsContent value="templates">
               <FocusSessionTemplates 
                 onSelectTemplate={handleApplyTemplate}
@@ -1184,10 +1197,11 @@ export default function FocusSession() {
               />
             </TabsContent>
 
-            <TabsContent value="analysis">
-              <SessionHistoryAnalyzer
+            <TabsContent value="metrics">
+              <SessionMetrics
                 sessions={sessions}
-                currentUser={currentUser}
+                currentSessionMinutes={sessionStarted && sessionStartTime ? Math.round((Date.now() - sessionStartTime) / 60000) : 0}
+                isActive={sessionStarted && isActive}
               />
             </TabsContent>
           </Tabs>
