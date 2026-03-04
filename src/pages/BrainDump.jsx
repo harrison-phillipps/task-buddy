@@ -111,120 +111,90 @@ export default function BrainDump() {
 
     setIsProcessing(true);
     try {
-      // Get existing tasks for duplicate detection
-      const existingTasks = await base44.entities.Task.filter({ 
-        created_by: currentUser.email 
-      }, '-created_date', 100);
-
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are a supportive ADHD coach helping someone organize their thoughts into actionable tasks.
+      // Run LLM + save brain dump + update points all in parallel
+      const [result, savedBrainDump] = await Promise.all([
+        base44.integrations.Core.InvokeLLM({
+          prompt: `You are an ADHD coach. Extract ALL tasks from this brain dump into structured data.
 
 Brain Dump:
 ${brainDumpText}
 
-CRITICAL: Extract EVERY SINGLE task, to-do item, or action mentioned in the brain dump above. Even if it's just a simple line item, create a full task for it. If the user lists 10 things, you should create 10 tasks.
-
-For each task found:
-1. Create a clear, specific title
-2. Determine the category (work, personal, health, creative, learning, household, or other)
-3. Assess difficulty (easy, medium, or hard)
-4. Determine energy level needed (low, medium, or high)
-5. Categorize using MoSCoW priority: must_do (critical/urgent), should_do (important), could_do (nice to have)
-6. Break it down into 3-7 actionable subtasks
-7. For each subtask, estimate realistic time in minutes (5-30 minutes each)
-8. Add a brief description if helpful
-9. Mark if recurring and suggest pattern (daily, weekly, biweekly, monthly)
-10. Provide reason for recurring suggestion
-
-Be encouraging and supportive. If something seems vague, interpret it generously and break it into concrete steps.
-Calculate total time for each task (sum of subtask times).
-
-DO NOT SKIP ANY ITEMS. Extract every single task mentioned. Count them to make sure you got them all.`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            tasks: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  title: { type: "string" },
-                  description: { type: "string" },
-                  category: { type: "string" },
-                  difficulty: { type: "string" },
-                  energy_level_needed: { type: "string" },
-                  task_priority: { 
-                    type: "string",
-                    enum: ["must_do", "should_do", "could_do"]
-                  },
-                  estimated_minutes: { type: "number" },
-                  is_recurring: { type: "boolean" },
-                  recurrence_pattern: { 
-                    type: "string",
-                    enum: ["none", "daily", "weekly", "biweekly", "monthly"]
-                  },
-                  recurrence_reason: { type: "string" },
-                  subtasks: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        title: { type: "string" },
-                        order: { type: "number" },
-                        estimated_minutes: { type: "number" },
-                        completed: { type: "boolean" }
+Rules:
+- Extract EVERY item (if 10 items listed → 10 tasks)
+- For each task: clear title, category (work/personal/health/creative/learning/household/other), difficulty (easy/medium/hard), energy_level_needed (low/medium/high), task_priority (must_do/should_do/could_do), 3-5 subtasks with time estimates, is_recurring + pattern if applicable
+- Keep subtask titles concise
+- estimated_minutes = sum of subtask times
+- encouragement: one short upbeat sentence`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              tasks: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    description: { type: "string" },
+                    category: { type: "string" },
+                    difficulty: { type: "string" },
+                    energy_level_needed: { type: "string" },
+                    task_priority: { type: "string", enum: ["must_do", "should_do", "could_do"] },
+                    estimated_minutes: { type: "number" },
+                    is_recurring: { type: "boolean" },
+                    recurrence_pattern: { type: "string", enum: ["none", "daily", "weekly", "biweekly", "monthly"] },
+                    recurrence_reason: { type: "string" },
+                    subtasks: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          title: { type: "string" },
+                          order: { type: "number" },
+                          estimated_minutes: { type: "number" },
+                          completed: { type: "boolean" }
+                        }
                       }
                     }
                   }
                 }
-              }
-            },
-            encouragement: { type: "string" },
-            recurring_detected: { type: "number" }
+              },
+              encouragement: { type: "string" },
+              recurring_detected: { type: "number" }
+            }
           }
-        }
-      });
+        }),
+        base44.entities.BrainDump.create({
+          content: brainDumpText,
+          tasks_created: 0,
+          team_id: selectedTeam || undefined
+        })
+      ]);
 
-      const savedBrainDump = await base44.entities.BrainDump.create({
-        content: brainDumpText,
-        tasks_created: 0,
-        encouragement: result.encouragement,
-        team_id: selectedTeam || undefined
-      });
-
-      // Award points for brain dump
-      try {
-        const user = await base44.auth.me();
-        const progressList = await base44.entities.UserProgress.filter({ user_id: user.id });
-        
-        if (progressList.length > 0) {
-          const userProgress = progressList[0];
-          await base44.entities.UserProgress.update(userProgress.id, {
-            total_points: userProgress.total_points + POINTS_SYSTEM.BRAIN_DUMP_CREATED,
-            brain_dumps_created: (userProgress.brain_dumps_created || 0) + 1
-          });
-        } else {
-            // If no progress entry exists, create one (this shouldn't happen if user creation is handled well, but as a fallback)
-            await base44.entities.UserProgress.create({
-                user_id: user.id,
-                total_points: POINTS_SYSTEM.BRAIN_DUMP_CREATED,
-                brain_dumps_created: 1,
-                tasks_completed: 0,
-                // other default values for achievements if needed
-            });
-        }
-      } catch (error) {
-        console.error("Error updating progress:", error);
-      }
+      // Update encouragement on saved dump + update points in parallel (non-blocking)
+      Promise.all([
+        base44.entities.BrainDump.update(savedBrainDump.id, { encouragement: result.encouragement }),
+        (async () => {
+          try {
+            const progressList = await base44.entities.UserProgress.filter({ user_id: currentUser.id });
+            if (progressList.length > 0) {
+              const up = progressList[0];
+              await base44.entities.UserProgress.update(up.id, {
+                total_points: up.total_points + POINTS_SYSTEM.BRAIN_DUMP_CREATED,
+                brain_dumps_created: (up.brain_dumps_created || 0) + 1
+              });
+            }
+          } catch (e) { console.error("Error updating progress:", e); }
+        })()
+      ]);
 
       setExtractedTasks({ ...result, brainDumpId: savedBrainDump.id });
 
-      // Show feedback about recurring patterns
       if (result.recurring_detected > 0) {
         toast.success(`Detected ${result.recurring_detected} recurring pattern(s)! 🔄`);
       }
     } catch (error) {
       console.error("Error processing brain dump:", error);
+      toast.error("Something went wrong, please try again.");
     }
     setIsProcessing(false);
   };
