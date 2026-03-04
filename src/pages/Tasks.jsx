@@ -420,12 +420,10 @@ export default function Tasks() {
     completed: tasks.filter(t => t.status === "completed").length,
   };
 
-  // Group tasks by category
+  // Group tasks by category (only used in manual view)
   const groupedTasks = filteredTasks.reduce((acc, task) => {
     const category = task.category || 'other';
-    if (!acc[category]) {
-      acc[category] = [];
-    }
+    if (!acc[category]) acc[category] = [];
     acc[category].push(task);
     return acc;
   }, {});
