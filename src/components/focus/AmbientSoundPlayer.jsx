@@ -11,6 +11,8 @@ const SOUND_URLS = {
   ocean: "https://cdn.freesound.org/previews/527/527604_2524422-lq.mp3",
   white_noise: "https://cdn.freesound.org/previews/133/133099_2337290-lq.mp3",
   brown_noise: "https://cdn.freesound.org/previews/560/560615_7648543-lq.mp3",
+  fireplace: "https://cdn.freesound.org/previews/412/412015_5121236-lq.mp3",
+  thunderstorm: "https://cdn.freesound.org/previews/446/446753_9159316-lq.mp3",
 };
 
 const ambientSounds = {
