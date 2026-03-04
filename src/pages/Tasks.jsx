@@ -514,8 +514,18 @@ export default function Tasks() {
             </Select>
           </div>
           <div className="flex gap-2 flex-wrap items-center">
+            <AIPriorityViewToggle
+              viewMode={viewMode}
+              onToggle={handleViewModeChange}
+              isAnalyzing={isAnalyzingPriority}
+              hasAIData={!!aiPrioritizedTasks}
+              onRunAI={handleAIPrioritization}
+            />
+            {viewMode === "ai" && (
+              <AIStrategySelector value={aiStrategyKey} onChange={handleStrategyChange} />
+            )}
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-full sm:w-48">
+              <SelectTrigger className="w-full sm:w-44">
                 <SelectValue placeholder="Filter by priority" />
               </SelectTrigger>
               <SelectContent>
@@ -525,38 +535,6 @@ export default function Tasks() {
                 <SelectItem value="could_do">🟢 Could Do</SelectItem>
               </SelectContent>
             </Select>
-            {aiPrioritizedTasks ? (
-              <Button 
-                variant="outline"
-                onClick={clearAIPrioritization}
-                className="border-purple-200 bg-purple-50 hover:bg-purple-100 flex-1 sm:flex-none"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Clear AI Sort</span>
-                <span className="sm:hidden">Clear AI</span>
-              </Button>
-            ) : (
-              <Button 
-                variant="outline"
-                onClick={handleAIPrioritization}
-                disabled={isAnalyzingPriority || rawTasks.length === 0}
-                className="border-purple-200 hover:bg-purple-50 flex-1 sm:flex-none"
-              >
-                {isAnalyzingPriority ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    <span className="hidden sm:inline">Analyzing...</span>
-                    <span className="sm:hidden">...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    <span className="hidden sm:inline">AI Prioritize</span>
-                    <span className="sm:hidden">AI Sort</span>
-                  </>
-                )}
-              </Button>
-            )}
             <Button 
               variant="outline"
               onClick={() => setShowCalendarSync(true)}
