@@ -23,6 +23,8 @@ const ambientSounds = {
   ocean: { name: "Ocean", emoji: "🌊" },
   white_noise: { name: "White Noise", emoji: "📻" },
   brown_noise: { name: "Brown Noise", emoji: "🎵" },
+  fireplace: { name: "Fireplace", emoji: "🔥" },
+  thunderstorm: { name: "Thunder", emoji: "⛈️" },
 };
 
 export default function AmbientSoundPlayer({ 
