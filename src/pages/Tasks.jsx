@@ -553,26 +553,12 @@ export default function Tasks() {
           </div>
         </motion.div>
 
-        {showAIInsights && aiStrategy && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-purple-100 to-teal-100 border border-purple-200 rounded-xl p-4"
-          >
-            <div className="flex items-start gap-3">
-              <Sparkles className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 mb-1">AI Strategy Recommendation</h3>
-                <p className="text-sm text-gray-700">{aiStrategy}</p>
-              </div>
-              <button
-                onClick={() => setShowAIInsights(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            </div>
-          </motion.div>
+        {showAIInsights && viewMode === "ai" && (
+          <AIStrategyBanner
+            strategy={aiStrategy}
+            recommendedFocus={aiRecommendedFocus}
+            onDismiss={() => setShowAIInsights(false)}
+          />
         )}
 
         <motion.div
