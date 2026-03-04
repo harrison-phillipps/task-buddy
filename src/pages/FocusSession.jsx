@@ -947,11 +947,12 @@ export default function FocusSession() {
           />
         ) : !sessionStarted ? (
           <Tabs defaultValue="setup" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 dark:bg-gray-800">
-              <TabsTrigger value="setup" className="dark:data-[state=active]:bg-gray-700">Setup</TabsTrigger>
-              <TabsTrigger value="dynamic" className="dark:data-[state=active]:bg-gray-700">AI Dynamic</TabsTrigger>
-              <TabsTrigger value="templates" className="dark:data-[state=active]:bg-gray-700">Templates</TabsTrigger>
-              <TabsTrigger value="analysis" className="dark:data-[state=active]:bg-gray-700">Analysis</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-5 dark:bg-gray-800">
+              <TabsTrigger value="setup" className="dark:data-[state=active]:bg-gray-700 text-xs sm:text-sm">Setup</TabsTrigger>
+              <TabsTrigger value="pomodoro" className="dark:data-[state=active]:bg-gray-700 text-xs sm:text-sm">🍅 Timer</TabsTrigger>
+              <TabsTrigger value="dynamic" className="dark:data-[state=active]:bg-gray-700 text-xs sm:text-sm">AI</TabsTrigger>
+              <TabsTrigger value="templates" className="dark:data-[state=active]:bg-gray-700 text-xs sm:text-sm">Templates</TabsTrigger>
+              <TabsTrigger value="metrics" className="dark:data-[state=active]:bg-gray-700 text-xs sm:text-sm">📊 Metrics</TabsTrigger>
             </TabsList>
 
             <TabsContent value="setup">
