@@ -1281,6 +1281,9 @@ export default function FocusSession() {
                         compact
                       />
                     )}
+                    {!isBreakTime && (
+                      <DistractionBlocker isSessionActive={isActive} />
+                    )}
                     
                     {/* Goal Progress Indicator */}
                     {sessionGoalType && sessionGoalValue && !isBreakTime && (
