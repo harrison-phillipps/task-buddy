@@ -93,52 +93,34 @@ export default function Dashboard() {
         const user = await base44.auth.me();
         setCurrentUser(user);
         
-        // Check onboarding first
-        if (!user.display_name) {
-          navigate(createPageUrl("Onboarding"));
-          return;
-        }
+        if (!user.display_name) { navigate(createPageUrl("Onboarding")); return; }
+        if (!user.companion_type) { navigate(createPageUrl("CharacterSelection")); return; }
         
-        if (!user.companion_type) {
-          navigate(createPageUrl("CharacterSelection"));
-          return;
-        }
-        
-        // Fetch progress
-        const progressList = await base44.entities.UserProgress.filter({ user_id: user.id });
+        // Fetch progress + run recurring tasks check in parallel
+        const today = new Date().toISOString().split('T')[0];
+        const [progressList] = await Promise.all([
+          base44.entities.UserProgress.filter({ user_id: user.id }),
+          localStorage.getItem('last_recurring_check') !== today
+            ? processRecurringTasks(user.email).then(() => localStorage.setItem('last_recurring_check', today))
+            : Promise.resolve()
+        ]);
+
         if (progressList.length > 0) {
           setUserProgress(progressList[0]);
         } else {
-          // Initialize progress for new users
           const newProgress = await base44.entities.UserProgress.create({
-            user_id: user.id,
-            total_points: 0,
-            level: 1,
-            tasks_completed: 0,
-            focus_sessions_completed: 0,
-            total_focus_minutes: 0,
-            brain_dumps_created: 0,
-            current_streak: 0,
-            longest_streak: 0
+            user_id: user.id, total_points: 0, level: 1,
+            tasks_completed: 0, focus_sessions_completed: 0,
+            total_focus_minutes: 0, brain_dumps_created: 0,
+            current_streak: 0, longest_streak: 0
           });
           setUserProgress(newProgress);
         }
-
-        // Process recurring tasks once per day
-        const lastCheck = localStorage.getItem('last_recurring_check');
-        const today = new Date().toISOString().split('T')[0];
-        if (lastCheck !== today) {
-          processRecurringTasks(user.email).then(() => {
-            localStorage.setItem('last_recurring_check', today);
-          });
-        }
       } catch (error) {
         console.error("Error fetching user:", error);
-        // Still set a basic user object so the app doesn't break
         setCurrentUser({ id: 'error', email: 'error@example.com' });
       }
     };
-
     checkUser();
   }, [navigate]);
 
