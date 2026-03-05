@@ -103,17 +103,12 @@ function LayoutContent({ children, currentPageName }) {
       try {
         const user = await base44.auth.me();
         setCurrentUser(user);
-        
-        // Fetch user progress
-        const progressList = await base44.entities.UserProgress.filter({ user_id: user.id });
-        if (progressList.length > 0) {
-          setUserProgress(progressList[0]);
-        } else {
-          setUserProgress(null);
-        }
+        // Fetch progress in parallel after we have the user id
+        base44.entities.UserProgress.filter({ user_id: user.id }).then(list => {
+          setUserProgress(list.length > 0 ? list[0] : null);
+        }).catch(() => setUserProgress(null));
       } catch (error) {
         console.error("Error fetching user or user progress:", error);
-        // Don't block the app if user fetch fails
         setCurrentUser(null);
         setUserProgress(null);
       }
