@@ -17,6 +17,7 @@ import { POINTS_SYSTEM } from "@/components/achievementsData";
 import { getPersonalizedMessage } from "@/components/companionUtils";
 import VoiceToText from "../components/VoiceToText";
 import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
+import VoiceSchedulePrompt from "../components/braindump/VoiceSchedulePrompt";
 
 export default function BrainDump() {
   const navigate = useNavigate();
