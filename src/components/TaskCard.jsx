@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Circle, Clock, Zap, Play, MoreVertical, Calendar, CalendarDays, Lock, RefreshCw, Link as LinkIcon, UserCircle, Users, Sparkles, Info } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Zap, Play, MoreVertical, Calendar, CalendarDays, Lock, RefreshCw, Link as LinkIcon, UserCircle, Users, Sparkles, Info, HeartCrack } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import SubtaskTracker from "./tasks/SubtaskTracker";
 import RecurringTaskBadge from "./tasks/RecurringTaskBadge";
