@@ -662,6 +662,13 @@ Rules:
                                 userProgress={userProgress}
                               />
 
+              <VoiceSchedulePrompt
+                tasks={extractedTasks.tasks}
+                visible={showSchedulePrompt}
+                onSchedule={handleScheduleTask}
+                onDismiss={() => setShowSchedulePrompt(false)}
+              />
+
               <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
                 <CardHeader>
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
