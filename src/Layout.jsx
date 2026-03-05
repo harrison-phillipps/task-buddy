@@ -45,6 +45,11 @@ const navigationItems = [
 
 const moreItems = [
   {
+    title: "Focus Mode",
+    url: createPageUrl("FocusMode"),
+    icon: Maximize2,
+  },
+  {
     title: "Brain Dump",
     url: createPageUrl("BrainDump"),
     icon: Brain,
