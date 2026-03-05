@@ -256,7 +256,27 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                 )}
               </Button>
             )}
-
+            {!isCompleted && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowBreakdown(prev => !prev)}
+                className="w-full text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-xs"
+              >
+                <HeartCrack className="w-3.5 h-3.5 mr-1.5" />
+                Feeling overwhelmed? Break it down
+              </Button>
+            )}
+            {showBreakdown && !isCompleted && (
+              <OverwhelmedBreakdown
+                task={task}
+                onApply={(newSubtasks) => {
+                  onUpdateTask?.(task.id, { subtasks: newSubtasks });
+                  setShowBreakdown(false);
+                }}
+                onClose={() => setShowBreakdown(false)}
+              />
+            )}
           </div>
         </CardContent>
       </Card>
