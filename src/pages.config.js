@@ -72,6 +72,7 @@ import Tasks from './pages/Tasks';
 import TeamDashboard from './pages/TeamDashboard';
 import TeamFocusSession from './pages/TeamFocusSession';
 import Teams from './pages/Teams';
+import FocusMode from './pages/FocusMode';
 import __Layout from './Layout.jsx';
 
 
@@ -101,6 +102,7 @@ export const PAGES = {
     "TeamDashboard": TeamDashboard,
     "TeamFocusSession": TeamFocusSession,
     "Teams": Teams,
+    "FocusMode": FocusMode,
 }
 
 export const pagesConfig = {
