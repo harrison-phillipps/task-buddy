@@ -206,13 +206,13 @@ export default function Tasks() {
   const { data: teams = [] } = useQuery({
     queryKey: ['teams', currentUser?.id],
     queryFn: async () => {
-      if (!currentUser) return [];
       const allTeams = await base44.entities.Team.list();
       return allTeams.filter(team => 
         team.owner_id === currentUser.id || team.member_ids?.includes(currentUser.id)
       );
     },
     enabled: !!currentUser,
+    staleTime: 5 * 60_000,
   });
 
   const currentTeam = teams.find(t => t.id === selectedTeamId);
