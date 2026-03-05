@@ -34,6 +34,8 @@ export default function BrainDump() {
   const [pendingTasks, setPendingTasks] = useState(null);
   const [companionMessage, setCompanionMessage] = useState("");
   const [selectedTeam, setSelectedTeam] = useState(null);
+  const [isVoiceActive, setIsVoiceActive] = useState(false);
+  const [showSchedulePrompt, setShowSchedulePrompt] = useState(false);
 
   const { data: brainDumps = [] } = useQuery({
     queryKey: ['brainDumps', currentUser?.email],
