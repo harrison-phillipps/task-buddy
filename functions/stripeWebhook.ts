@@ -63,12 +63,21 @@ Deno.serve(async (req) => {
           const status = subscription.status;
           console.log(`Subscription updated for user ${userId}: ${status}`);
           
-          // If subscription is cancelled or past_due, downgrade to free
-          if (status === 'canceled' || status === 'past_due') {
+          if (status === 'canceled' || status === 'past_due' || status === 'unpaid') {
             await base44.asServiceRole.entities.User.update(userId, {
               subscription_tier: 'free'
             });
-            console.log(`Downgraded user ${userId} to free`);
+            console.log(`Downgraded user ${userId} to free (status: ${status})`);
+          } else if (status === 'active') {
+            // Re-activate if previously downgraded (e.g. payment recovered after past_due)
+            const tier = subscription.metadata.tier;
+            if (tier) {
+              await base44.asServiceRole.entities.User.update(userId, {
+                subscription_tier: tier,
+                stripe_subscription_id: subscription.id
+              });
+              console.log(`Re-activated user ${userId} to ${tier}`);
+            }
           }
         }
         break;
@@ -81,10 +90,36 @@ Deno.serve(async (req) => {
         if (userId) {
           console.log(`Subscription cancelled for user ${userId}`);
           await base44.asServiceRole.entities.User.update(userId, {
-            subscription_tier: 'free'
+            subscription_tier: 'free',
+            stripe_subscription_id: null
           });
           console.log(`Downgraded user ${userId} to free`);
         }
+        break;
+      }
+
+      case 'invoice.paid': {
+        // Confirm tier on successful renewal
+        const invoice = event.data.object;
+        const subscriptionId = invoice.subscription;
+        if (subscriptionId) {
+          const sub = await stripe.subscriptions.retrieve(subscriptionId);
+          const userId = sub.metadata.user_id;
+          const tier = sub.metadata.tier;
+          if (userId && tier) {
+            await base44.asServiceRole.entities.User.update(userId, {
+              subscription_tier: tier
+            });
+            console.log(`Confirmed renewal for user ${userId}, tier: ${tier}`);
+          }
+        }
+        break;
+      }
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object;
+        console.log(`Payment failed for invoice ${invoice.id}, customer: ${invoice.customer}`);
+        // Stripe will retry and eventually fire subscription.updated with past_due — no action needed here
         break;
       }
 
