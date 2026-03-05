@@ -575,7 +575,8 @@ Rules:
                   <div className="flex items-center justify-between">
                     <Label htmlFor="braindump">Write freely - no structure needed!</Label>
                     <VoiceToText 
-                      onTranscript={(text) => setBrainDumpText(prev => prev + text)}
+                      onTranscript={(text) => { setBrainDumpText(prev => prev + text); setIsVoiceActive(true); }}
+                      onDictationEnd={handleVoiceDictationEnd}
                     />
                   </div>
                   <Textarea
