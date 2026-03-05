@@ -50,6 +50,11 @@ const moreItems = [
     icon: Maximize2,
   },
   {
+    title: "Voice to Tasks",
+    url: createPageUrl("VoiceTask"),
+    icon: Mic,
+  },
+  {
     title: "Brain Dump",
     url: createPageUrl("BrainDump"),
     icon: Brain,
