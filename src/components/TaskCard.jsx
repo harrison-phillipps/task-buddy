@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, Clock, Zap, Play, MoreVertical, Calendar, CalendarDays, Lock, RefreshCw, Link as LinkIcon, UserCircle, Users, Sparkles, Info, HeartCrack } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import SubtaskTracker from "./tasks/SubtaskTracker";
+import OverwhelmedBreakdown from "./tasks/OverwhelmedBreakdown";
+import { useState } from "react";
 import RecurringTaskBadge from "./tasks/RecurringTaskBadge";
 import { getAIPriorityColor, getAIPriorityLabel, getUrgencyIcon } from "./ai/TaskPrioritizer";
 import {
