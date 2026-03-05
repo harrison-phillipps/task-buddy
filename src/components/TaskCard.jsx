@@ -38,7 +38,8 @@ const difficultyIcons = {
   hard: { icon: Zap, color: "text-red-500 dark:text-red-400" }
 };
 
-export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, onSubtaskToggle, onSetDependency, onSetRecurring, onOpenCollabView, onStartCollab, onQuickComplete, onChangePriority, allTasks = [], compact = false, showTeamInfo = false }) {
+export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, onSubtaskToggle, onSetDependency, onSetRecurring, onOpenCollabView, onStartCollab, onQuickComplete, onChangePriority, onUpdateTask, allTasks = [], compact = false, showTeamInfo = false }) {
+  const [showBreakdown, setShowBreakdown] = useState(false);
   const completedSubtasks = task.subtasks?.filter(st => st.completed).length || 0;
   const totalSubtasks = task.subtasks?.length || 0;
   const progress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
