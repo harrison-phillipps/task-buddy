@@ -643,26 +643,27 @@ export default function Tasks() {
                           )}
                         </div>
                         <TaskCard
-                          task={task}
-                          allTasks={tasks}
-                          showTeamInfo={selectedTeamId !== "personal" || !!task.team_id}
-                          onStart={(task) => window.location.href = createPageUrl("FocusSession") + `?taskId=${task.id}`}
-                          onEdit={(task, action) => {
-                            if (action === 'ai-breakdown') {
-                              setTaskToBreakdown(task);
-                              setShowAIBreakdown(true);
-                            } else {
-                              window.location.href = createPageUrl("TaskBreakdown") + `?editTaskId=${task.id}`;
-                            }
-                          }}
-                          onDelete={(task) => { if (confirm(`Delete "${task.title}"?`)) deleteTaskMutation.mutate(task.id); }}
-                          onSpread={(task) => setSpreadTask(task)}
-                          onSubtaskToggle={handleSubtaskToggle}
-                          onSetDependency={(task) => { setSelectedDependencyTask(task); setShowDependencyModal(true); }}
-                          onSetRecurring={(task) => { setSelectedRecurringTask(task); setShowRecurringModal(true); }}
-                          onOpenCollabView={(task) => { setCollabTask(task); setShowCollabView(true); }}
-                          onQuickComplete={handleQuickComplete}
-                          onChangePriority={handleChangePriority}
+                         task={task}
+                         allTasks={tasks}
+                         showTeamInfo={selectedTeamId !== "personal" || !!task.team_id}
+                         onStart={(task) => window.location.href = createPageUrl("FocusSession") + `?taskId=${task.id}`}
+                         onEdit={(task, action) => {
+                           if (action === 'ai-breakdown') {
+                             setTaskToBreakdown(task);
+                             setShowAIBreakdown(true);
+                           } else {
+                             window.location.href = createPageUrl("TaskBreakdown") + `?editTaskId=${task.id}`;
+                           }
+                         }}
+                         onDelete={(task) => { if (confirm(`Delete "${task.title}"?`)) deleteTaskMutation.mutate(task.id); }}
+                         onSpread={(task) => setSpreadTask(task)}
+                         onSubtaskToggle={handleSubtaskToggle}
+                         onSetDependency={(task) => { setSelectedDependencyTask(task); setShowDependencyModal(true); }}
+                         onSetRecurring={(task) => { setSelectedRecurringTask(task); setShowRecurringModal(true); }}
+                         onOpenCollabView={(task) => { setCollabTask(task); setShowCollabView(true); }}
+                         onQuickComplete={handleQuickComplete}
+                         onChangePriority={handleChangePriority}
+                         onUpdateTask={(id, data) => updateTaskMutation.mutate({ id, data })}
                         />
                         {task.team_id && (
                           <div className="ml-4 mt-2">
@@ -715,39 +716,40 @@ export default function Tasks() {
                                 <PinButton isPinned={pinnedTaskIds.includes(task.id)} onToggle={() => handleTogglePin(task.id)} />
                               </div>
                               <TaskCard
-                                task={task}
-                                allTasks={tasks}
-                                showTeamInfo={selectedTeamId !== "personal" || !!task.team_id}
-                                onStart={(task) => window.location.href = createPageUrl("FocusSession") + `?taskId=${task.id}`}
-                                onEdit={(task, action) => {
-                                  if (action === 'ai-breakdown') {
-                                    setTaskToBreakdown(task);
-                                    setShowAIBreakdown(true);
-                                  } else {
-                                    window.location.href = createPageUrl("TaskBreakdown") + `?editTaskId=${task.id}`;
-                                  }
-                                }}
-                                onDelete={(task) => {
-                                  if (confirm(`Delete "${task.title}"?`)) {
-                                    deleteTaskMutation.mutate(task.id);
-                                  }
-                                }}
-                                onSpread={(task) => setSpreadTask(task)}
-                                onSubtaskToggle={handleSubtaskToggle}
-                                onSetDependency={(task) => {
-                                  setSelectedDependencyTask(task);
-                                  setShowDependencyModal(true);
-                                }}
-                                onSetRecurring={(task) => {
-                                  setSelectedRecurringTask(task);
-                                  setShowRecurringModal(true);
-                                }}
-                                onOpenCollabView={(task) => {
-                                  setCollabTask(task);
-                                  setShowCollabView(true);
-                                }}
-                                onQuickComplete={handleQuickComplete}
-                                onChangePriority={handleChangePriority}
+                               task={task}
+                               allTasks={tasks}
+                               showTeamInfo={selectedTeamId !== "personal" || !!task.team_id}
+                               onStart={(task) => window.location.href = createPageUrl("FocusSession") + `?taskId=${task.id}`}
+                               onEdit={(task, action) => {
+                                 if (action === 'ai-breakdown') {
+                                   setTaskToBreakdown(task);
+                                   setShowAIBreakdown(true);
+                                 } else {
+                                   window.location.href = createPageUrl("TaskBreakdown") + `?editTaskId=${task.id}`;
+                                 }
+                               }}
+                               onDelete={(task) => {
+                                 if (confirm(`Delete "${task.title}"?`)) {
+                                   deleteTaskMutation.mutate(task.id);
+                                 }
+                               }}
+                               onSpread={(task) => setSpreadTask(task)}
+                               onSubtaskToggle={handleSubtaskToggle}
+                               onSetDependency={(task) => {
+                                 setSelectedDependencyTask(task);
+                                 setShowDependencyModal(true);
+                               }}
+                               onSetRecurring={(task) => {
+                                 setSelectedRecurringTask(task);
+                                 setShowRecurringModal(true);
+                               }}
+                               onOpenCollabView={(task) => {
+                                 setCollabTask(task);
+                                 setShowCollabView(true);
+                               }}
+                               onQuickComplete={handleQuickComplete}
+                               onChangePriority={handleChangePriority}
+                               onUpdateTask={(id, data) => updateTaskMutation.mutate({ id, data })}
                               />
                               {task.team_id && (
                                 <div className="ml-4">
