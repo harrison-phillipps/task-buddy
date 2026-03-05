@@ -579,15 +579,23 @@ Rules:
                       onDictationEnd={handleVoiceDictationEnd}
                     />
                   </div>
-                  <Textarea
-                    id="braindump"
-                    placeholder="Example:&#10;- Need to clean my room&#10;- Email boss about deadline&#10;- Call mom&#10;&#10;Just type everything..."
-                    value={brainDumpText}
-                    onChange={(e) => setBrainDumpText(e.target.value)}
-                    className="min-h-[300px] text-base resize-none"
-                  />
+                  <div className="relative">
+                    <Textarea
+                      id="braindump"
+                      placeholder="Example:&#10;- Need to clean my room&#10;- Email boss about deadline&#10;- Call mom&#10;&#10;Just type everything... or use Voice Input above!"
+                      value={brainDumpText}
+                      onChange={(e) => setBrainDumpText(e.target.value)}
+                      className={`min-h-[300px] text-base resize-none transition-all ${isVoiceActive ? 'border-red-400 ring-2 ring-red-100' : ''}`}
+                    />
+                    {isVoiceActive && (
+                      <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-full px-3 py-1 text-xs text-red-600 font-medium">
+                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                        Live transcription
+                      </div>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-500">
-                    💡 Tip: Don't worry about formatting. Just write everything down.
+                    💡 Tip: Use <strong>Voice Input</strong> to speak your tasks — they'll be auto-categorized when you stop.
                   </p>
                 </div>
 
