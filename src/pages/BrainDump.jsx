@@ -202,6 +202,126 @@ Rules:
     setIsProcessing(false);
   };
 
+  const handleVoiceDictationEnd = async () => {
+    setIsVoiceActive(false);
+    if (!brainDumpText.trim()) return;
+
+    // Auto-process the brain dump after dictation ends
+    setIsProcessing(true);
+    try {
+      const [result, savedBrainDump] = await Promise.all([
+        base44.integrations.Core.InvokeLLM({
+          prompt: `You are an ADHD coach. Extract ALL tasks from this brain dump into structured data.
+
+Brain Dump:
+${brainDumpText}
+
+Rules:
+- Extract EVERY item (if 10 items listed → 10 tasks)
+- For each task: clear title, category (work/personal/health/creative/learning/household/other), difficulty (easy/medium/hard), energy_level_needed (low/medium/high), task_priority (must_do/should_do/could_do), 3-5 subtasks with time estimates, is_recurring + pattern if applicable
+- Keep subtask titles concise
+- estimated_minutes = sum of subtask times
+- encouragement: one short upbeat sentence`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              tasks: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    description: { type: "string" },
+                    category: { type: "string" },
+                    difficulty: { type: "string" },
+                    energy_level_needed: { type: "string" },
+                    task_priority: { type: "string", enum: ["must_do", "should_do", "could_do"] },
+                    estimated_minutes: { type: "number" },
+                    is_recurring: { type: "boolean" },
+                    recurrence_pattern: { type: "string", enum: ["none", "daily", "weekly", "biweekly", "monthly"] },
+                    recurrence_reason: { type: "string" },
+                    subtasks: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          title: { type: "string" },
+                          order: { type: "number" },
+                          estimated_minutes: { type: "number" },
+                          completed: { type: "boolean" }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              encouragement: { type: "string" },
+              recurring_detected: { type: "number" }
+            }
+          }
+        }),
+        base44.entities.BrainDump.create({
+          content: brainDumpText,
+          tasks_created: 0,
+          team_id: selectedTeam || undefined
+        })
+      ]);
+
+      Promise.all([
+        base44.entities.BrainDump.update(savedBrainDump.id, { encouragement: result.encouragement }),
+        (async () => {
+          try {
+            const progressList = await base44.entities.UserProgress.filter({ user_id: currentUser.id });
+            if (progressList.length > 0) {
+              const up = progressList[0];
+              await base44.entities.UserProgress.update(up.id, {
+                total_points: up.total_points + POINTS_SYSTEM.BRAIN_DUMP_CREATED,
+                brain_dumps_created: (up.brain_dumps_created || 0) + 1
+              });
+            }
+          } catch (e) { console.error("Error updating progress:", e); }
+        })()
+      ]);
+
+      setExtractedTasks({ ...result, brainDumpId: savedBrainDump.id });
+      setShowSchedulePrompt(true); // Show the schedule prompt after voice dictation
+    } catch (error) {
+      console.error("Error processing brain dump:", error);
+      toast.error("Something went wrong, please try again.");
+    }
+    setIsProcessing(false);
+  };
+
+  const handleScheduleTask = async (task) => {
+    setShowSchedulePrompt(false);
+    // Save all tasks first, then navigate to focus session
+    const tasksToCreate = extractedTasks.tasks.map(t => ({
+      ...t,
+      status: "not_started",
+      is_recurring: t.is_recurring || false,
+      recurrence_pattern: t.recurrence_pattern || "none",
+      task_priority: t.task_priority || null,
+      team_id: selectedTeam || undefined
+    }));
+
+    try {
+      const createdTasks = await Promise.all(tasksToCreate.map(t => base44.entities.Task.create(t)));
+      await base44.entities.BrainDump.update(extractedTasks.brainDumpId, {
+        task_ids: createdTasks.map(t => t.id),
+        tasks_created: createdTasks.length
+      });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['brainDumps'] });
+
+      // Find the saved version of the selected task
+      const savedTask = createdTasks.find(t => t.title === task.title) || createdTasks[0];
+      navigate(createPageUrl(`FocusSession?taskId=${savedTask.id}`));
+    } catch (error) {
+      console.error("Error saving tasks before focus session:", error);
+      toast.error("Failed to save tasks. Please try again.");
+    }
+  };
+
   const handleSaveAll = async () => {
     const tasksToCreate = extractedTasks.tasks.map(task => ({
       ...task,
