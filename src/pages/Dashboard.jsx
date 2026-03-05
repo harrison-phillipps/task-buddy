@@ -65,26 +65,30 @@ export default function Dashboard() {
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks', currentUser?.email],
-    queryFn: () => currentUser ? base44.entities.Task.filter({ created_by: currentUser.email }, '-created_date') : [],
+    queryFn: () => base44.entities.Task.filter({ created_by: currentUser.email }, '-created_date'),
     enabled: !!currentUser,
+    staleTime: 60_000, // 1 min — avoids redundant refetches
   });
 
   const { data: sessions = [] } = useQuery({
     queryKey: ['sessions', currentUser?.email],
-    queryFn: () => currentUser ? base44.entities.FocusSession.filter({ created_by: currentUser.email }, '-created_date', 10) : [],
+    queryFn: () => base44.entities.FocusSession.filter({ created_by: currentUser.email }, '-created_date', 10),
     enabled: !!currentUser,
+    staleTime: 60_000,
   });
 
   const { data: calendarEvents = [] } = useQuery({
     queryKey: ['calendarEvents', currentUser?.email],
-    queryFn: () => currentUser ? base44.entities.CalendarEvent.filter({ created_by: currentUser.email }, 'start_date') : [],
+    queryFn: () => base44.entities.CalendarEvent.filter({ created_by: currentUser.email }, 'start_date'),
     enabled: !!currentUser,
+    staleTime: 5 * 60_000, // calendar changes less often
   });
 
   const { data: brainDumps = [] } = useQuery({
     queryKey: ['brainDumps', currentUser?.email],
-    queryFn: () => currentUser ? base44.entities.BrainDump.filter({ created_by: currentUser.email }, '-created_date', 50) : [],
+    queryFn: () => base44.entities.BrainDump.filter({ created_by: currentUser.email }, '-created_date', 50),
     enabled: !!currentUser,
+    staleTime: 5 * 60_000,
   });
 
   useEffect(() => {
