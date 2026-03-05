@@ -194,7 +194,7 @@ export default function Tasks() {
       return fetched;
     },
     enabled: !!currentUser,
-    staleTime: isOnline ? 0 : Infinity,
+    staleTime: isOnline ? 30_000 : Infinity, // 30s cache when online
   });
 
   // Merge AI scores into raw tasks if available
