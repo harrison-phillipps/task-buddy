@@ -174,21 +174,17 @@ export default function Tasks() {
 
       let fetched = [];
       if (selectedTeamId === "personal") {
-        const personalTasks = await base44.entities.Task.filter({ 
-          created_by: currentUser.email, 
-          team_id: null 
-        }, '-created_date');
-        const assignedTeamTasks = await base44.entities.Task.filter({ 
-          assigned_to: currentUser.id 
-        }, '-created_date');
-        const allTeamTasks = await base44.entities.Task.list();
-        const multiAssignedTasks = allTeamTasks.filter(task => 
-          task.assigned_to_users?.some(u => u.user_id === currentUser.id)
-        );
-        const allTasks = [...personalTasks, ...assignedTeamTasks, ...multiAssignedTasks];
-        fetched = allTasks.filter((task, index, self) => 
-          index === self.findIndex(t => t.id === task.id)
-        );
+        // Run both filters in parallel
+        const [personalTasks, assignedTasks] = await Promise.all([
+          base44.entities.Task.filter({ created_by: currentUser.email, team_id: null }, '-created_date'),
+          base44.entities.Task.filter({ assigned_to: currentUser.id }, '-created_date'),
+        ]);
+        const seen = new Set();
+        fetched = [...personalTasks, ...assignedTasks].filter(t => {
+          if (seen.has(t.id)) return false;
+          seen.add(t.id);
+          return true;
+        });
       } else {
         fetched = await base44.entities.Task.filter({ team_id: selectedTeamId }, '-created_date');
       }
