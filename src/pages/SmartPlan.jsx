@@ -18,7 +18,9 @@ export default function SmartPlan() {
   const [isAddingAll, setIsAddingAll] = useState(false);
 
   useEffect(() => {
-    base44.entities.Task.list().then(all => {
+    base44.auth.me().then(user => {
+      return base44.entities.Task.filter({ created_by: user.email });
+    }).then(all => {
       setTasks(all.filter(t => t.status !== "completed").slice(0, 25));
     }).catch(console.error);
   }, []);
