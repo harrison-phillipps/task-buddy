@@ -74,6 +74,7 @@ import TeamDashboard from './pages/TeamDashboard';
 import TeamFocusSession from './pages/TeamFocusSession';
 import Teams from './pages/Teams';
 import VoiceTask from './pages/VoiceTask';
+import SmartPlan from './pages/SmartPlan';
 import __Layout from './Layout.jsx';
 
 
@@ -105,6 +106,7 @@ export const PAGES = {
     "TeamFocusSession": TeamFocusSession,
     "Teams": Teams,
     "VoiceTask": VoiceTask,
+    "SmartPlan": SmartPlan,
 }
 
 export const pagesConfig = {
