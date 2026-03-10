@@ -45,6 +45,11 @@ const navigationItems = [
 
 const moreItems = [
   {
+    title: "Smart Plan",
+    url: createPageUrl("SmartPlan"),
+    icon: CalendarDays,
+  },
+  {
     title: "Focus Mode",
     url: createPageUrl("FocusMode"),
     icon: Maximize2,
