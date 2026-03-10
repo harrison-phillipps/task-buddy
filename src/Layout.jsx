@@ -182,7 +182,7 @@ function LayoutContent({ children, currentPageName }) {
           --soft-purple: #F3F0FF;
         }
       `}</style>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-purple-50 via-teal-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 overflow-x-hidden">
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-purple-50 via-teal-50 to-blue-50 dark:from-[#1a1025] dark:via-[#0f1a1f] dark:to-[#0d1220] overflow-x-hidden">
         <Sidebar className="border-r border-purple-100 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
           <SidebarHeader className="border-b border-purple-100 dark:border-gray-700 p-6">
             <div className="flex items-center gap-3">

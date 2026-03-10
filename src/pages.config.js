@@ -56,6 +56,7 @@ import CalendarCallback from './pages/CalendarCallback';
 import CalendarView from './pages/CalendarView';
 import CharacterSelection from './pages/CharacterSelection';
 import Dashboard from './pages/Dashboard';
+import FocusMode from './pages/FocusMode';
 import FocusSession from './pages/FocusSession';
 import Goals from './pages/Goals';
 import Home from './pages/Home';
@@ -72,7 +73,6 @@ import Tasks from './pages/Tasks';
 import TeamDashboard from './pages/TeamDashboard';
 import TeamFocusSession from './pages/TeamFocusSession';
 import Teams from './pages/Teams';
-import FocusMode from './pages/FocusMode';
 import VoiceTask from './pages/VoiceTask';
 import __Layout from './Layout.jsx';
 
@@ -87,6 +87,7 @@ export const PAGES = {
     "CalendarView": CalendarView,
     "CharacterSelection": CharacterSelection,
     "Dashboard": Dashboard,
+    "FocusMode": FocusMode,
     "FocusSession": FocusSession,
     "Goals": Goals,
     "Home": Home,
@@ -103,7 +104,6 @@ export const PAGES = {
     "TeamDashboard": TeamDashboard,
     "TeamFocusSession": TeamFocusSession,
     "Teams": Teams,
-    "FocusMode": FocusMode,
     "VoiceTask": VoiceTask,
 }
 
