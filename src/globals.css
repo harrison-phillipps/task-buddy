@@ -1,0 +1,41 @@
+/* Smooth theme transitions — applied globally */
+*, *::before, *::after {
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Dark mode: deep, comfortable backgrounds */
+.dark body {
+  background-color: #0f0f14 !important;
+}
+
+/* Override the layout's light gradient in dark mode */
+.dark .min-h-screen {
+  background: linear-gradient(to bottom right, #1a1025, #0f1a1f, #0d1220) !important;
+}
+
+/* Make white cards dark */
+.dark .bg-white\/80,
+.dark .bg-white\/90,
+.dark .bg-white {
+  background-color: rgba(30, 27, 44, 0.85) !important;
+}
+
+/* Soft purple/teal light backgrounds → deep dark equivalents */
+.dark .from-purple-50 { --tw-gradient-from: #1a1025 !important; }
+.dark .to-teal-50    { --tw-gradient-to:   #0f1a1f !important; }
+.dark .from-blue-50  { --tw-gradient-from: #0d1220 !important; }
+.dark .to-blue-50    { --tw-gradient-to:   #0d1220 !important; }
+.dark .bg-purple-50  { background-color: #1a1025 !important; }
+.dark .bg-teal-50    { background-color: #0f1a1f !important; }
+.dark .bg-gray-50    { background-color: #18161f !important; }
+.dark .bg-orange-50  { background-color: #1f1510 !important; }
+.dark .bg-green-50   { background-color: #0f1a12 !important; }
+.dark .bg-red-50     { background-color: #1f1015 !important; }
+.dark .bg-yellow-50  { background-color: #1f1c10 !important; }
+.dark .bg-pink-50    { background-color: #1f101a !important; }
+
+/* Scrollbars */
+.dark ::-webkit-scrollbar { width: 6px; height: 6px; }
+.dark ::-webkit-scrollbar-track { background: #1e1b2c; }
+.dark ::-webkit-scrollbar-thumb { background: #4C1D95; border-radius: 3px; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #6D28D9; }
