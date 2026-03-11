@@ -2,118 +2,39 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Check, Link, Loader2 } from "lucide-react";
+import { Calendar, Check, RefreshCw, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
 export default function CalendarIntegrations() {
   const [currentUser, setCurrentUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [backendEnabled, setBackendEnabled] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSynced, setLastSynced] = useState(null);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const user = await base44.auth.me();
-        setCurrentUser(user);
-        
-        // Check if backend functions are enabled
-        try {
-          const result = await base44.functions.google_calendar.get_auth_url({ redirect_uri: 'test' });
-          setBackendEnabled(result.success !== false || !result.message?.includes('Backend functions'));
-        } catch (error) {
-          setBackendEnabled(false);
-        }
-      } catch (error) {
-        console.error("Error fetching user:", error);
-      }
-    };
-    fetchUser();
+    base44.auth.me().then(setCurrentUser).catch(console.error);
   }, []);
 
-  const handleConnectGoogle = async () => {
-    if (!backendEnabled) {
-      toast.error("Please enable backend functions in app settings first");
-      return;
-    }
-
-    setIsLoading(true);
+  const handleSyncGoogle = async () => {
+    setIsSyncing(true);
     try {
-      const redirectUri = `${window.location.origin}/CalendarCallback`;
-      const result = await base44.functions.google_calendar.get_auth_url({
-        redirect_uri: redirectUri
-      });
-      
-      if (result.success && result.auth_url) {
-        window.location.href = result.auth_url;
+      const res = await base44.functions.invoke('fetchCalendarEvents', {});
+      if (res.data?.success) {
+        toast.success(`Synced ${res.data.events_synced} events from Google Calendar`);
+        setLastSynced(new Date());
+        setCurrentUser(u => ({ ...u, calendar_connected: true, calendar_provider: "google" }));
       } else {
-        toast.error("Failed to initiate Google Calendar connection");
+        toast.error(res.data?.error || "Sync failed");
       }
     } catch (error) {
-      console.error("Error connecting Google Calendar:", error);
-      toast.error("Error connecting to Google Calendar");
+      console.error(error);
+      toast.error("Failed to sync Google Calendar");
     } finally {
-      setIsLoading(false);
+      setIsSyncing(false);
     }
   };
 
-  const handleDisconnectGoogle = async () => {
-    try {
-      await base44.auth.updateMe({
-        google_calendar_connected: false,
-        google_calendar_access_token: null,
-        google_calendar_refresh_token: null
-      });
-      setCurrentUser({
-        ...currentUser,
-        google_calendar_connected: false
-      });
-      toast.success("Google Calendar disconnected");
-    } catch (error) {
-      console.error("Error disconnecting:", error);
-      toast.error("Failed to disconnect");
-    }
-  };
-
-  const calendars = [
-    {
-      id: "google",
-      name: "Google Calendar",
-      icon: "📅",
-      color: "from-blue-500 to-blue-600",
-      borderColor: "border-blue-200",
-      bgColor: "bg-blue-50",
-      description: "Sync tasks with your Google Calendar",
-      connected: currentUser?.google_calendar_connected,
-      available: backendEnabled,
-      onConnect: handleConnectGoogle,
-      onDisconnect: handleDisconnectGoogle
-    },
-    {
-      id: "apple",
-      name: "Apple Calendar",
-      icon: "🍎",
-      color: "from-gray-500 to-gray-600",
-      borderColor: "border-gray-200",
-      bgColor: "bg-gray-50",
-      description: "Sync tasks with iCloud Calendar",
-      connected: currentUser?.apple_calendar_connected,
-      available: false,
-      comingSoon: true
-    },
-    {
-      id: "outlook",
-      name: "Outlook Calendar",
-      icon: "📧",
-      color: "from-indigo-500 to-indigo-600",
-      borderColor: "border-indigo-200",
-      bgColor: "bg-indigo-50",
-      description: "Sync tasks with Microsoft Outlook",
-      connected: currentUser?.outlook_calendar_connected,
-      available: false,
-      comingSoon: true
-    }
-  ];
+  const isGoogleConnected = currentUser?.calendar_provider === "google" && currentUser?.calendar_connected;
 
   return (
     <div className="space-y-6">
@@ -124,91 +45,81 @@ export default function CalendarIntegrations() {
             Calendar Integrations
           </CardTitle>
           <p className="text-sm text-gray-600">
-            Connect your calendar to sync tasks and events
+            Connect your calendar so the AI planner can schedule around existing commitments
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          {!backendEnabled && (
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-yellow-800">
-                ⚠️ Backend functions must be enabled for calendar integrations. Contact your administrator to enable this feature.
-              </p>
-            </div>
-          )}
 
-          {calendars.map((calendar) => (
-            <Card key={calendar.id} className={`${calendar.bgColor} border-2 ${calendar.borderColor}`}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className="text-4xl">{calendar.icon}</div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-gray-900">{calendar.name}</h3>
-                        {calendar.connected && (
-                          <Badge className="bg-green-100 text-green-700 border-green-200">
-                            <Check className="w-3 h-3 mr-1" />
-                            Connected
-                          </Badge>
-                        )}
-                        {calendar.comingSoon && (
-                          <Badge variant="outline" className="text-gray-600">
-                            Coming Soon
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600">{calendar.description}</p>
-                    </div>
-                  </div>
-
+          {/* Google Calendar */}
+          <Card className="bg-blue-50 border-2 border-blue-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <span className="text-4xl">📅</span>
                   <div>
-                    {calendar.available && !calendar.connected && (
-                      <Button
-                        onClick={calendar.onConnect}
-                        disabled={isLoading}
-                        className={`bg-gradient-to-r ${calendar.color} text-white`}
-                      >
-                        {isLoading ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Connecting...
-                          </>
-                        ) : (
-                          <>
-                            <Link className="w-4 h-4 mr-2" />
-                            Connect
-                          </>
-                        )}
-                      </Button>
-                    )}
-                    {calendar.available && calendar.connected && (
-                      <Button
-                        onClick={calendar.onDisconnect}
-                        variant="outline"
-                        className="border-red-200 text-red-600 hover:bg-red-50"
-                      >
-                        Disconnect
-                      </Button>
-                    )}
-                    {calendar.comingSoon && (
-                      <Button disabled variant="outline">
-                        Coming Soon
-                      </Button>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-gray-900">Google Calendar</h3>
+                      {isGoogleConnected && (
+                        <Badge className="bg-green-100 text-green-700 border-green-200">
+                          <Check className="w-3 h-3 mr-1" />
+                          Connected
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600">Imports your upcoming events for the next 7 days</p>
+                    {lastSynced && (
+                      <p className="text-xs text-gray-400 mt-1">Last synced: {lastSynced.toLocaleTimeString()}</p>
                     )}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+                <Button
+                  onClick={handleSyncGoogle}
+                  disabled={isSyncing}
+                  className={isGoogleConnected
+                    ? "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                    : "bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700"
+                  }
+                  variant={isGoogleConnected ? "outline" : "default"}
+                >
+                  {isSyncing ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Syncing...</>
+                  ) : isGoogleConnected ? (
+                    <><RefreshCw className="w-4 h-4 mr-2" />Sync Now</>
+                  ) : (
+                    <>Connect & Sync</>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Outlook - Coming Soon */}
+          <Card className="bg-indigo-50 border-2 border-indigo-200 opacity-60">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-4xl">📧</span>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-gray-900">Outlook Calendar</h3>
+                      <Badge variant="outline" className="text-gray-500">Coming Soon</Badge>
+                    </div>
+                    <p className="text-sm text-gray-600">Sync tasks with Microsoft Outlook</p>
+                  </div>
+                </div>
+                <Button disabled variant="outline">Coming Soon</Button>
+              </div>
+            </CardContent>
+          </Card>
+
         </CardContent>
       </Card>
 
       <Card className="bg-gradient-to-r from-purple-50 to-teal-50 border-purple-200">
         <CardContent className="p-4">
-          <h4 className="font-semibold text-gray-900 mb-2">💡 Pro Tip</h4>
+          <h4 className="font-semibold text-gray-900 mb-2">💡 How it works</h4>
           <p className="text-sm text-gray-700">
-            Connect your calendar to automatically sync your tasks and see them alongside your meetings and events. 
-            This helps you plan your day more effectively and never miss a deadline!
+            Syncing imports your upcoming calendar events into TaskBuddy. The AI planner (Smart Plan) will automatically schedule your tasks around these existing commitments so you're never double-booked.
           </p>
         </CardContent>
       </Card>
