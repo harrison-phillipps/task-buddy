@@ -434,31 +434,37 @@ export default function Dashboard() {
           </motion.div>
         )}
 
-        {/* Strategic & Energy Coaching */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.55 }}
-          className="grid grid-cols-1 lg:grid-cols-2 gap-4"
-        >
-          {tasks.length > 5 && sessions.length > 3 && (
-            <StrategicProgressCoach 
-              tasks={tasks}
-              sessions={sessions}
-              userProgress={userProgress}
-              goals={[]}
-            />
-          )}
-          
-          {sessions.length > 2 && (
-            <EnergyAwareCoach 
-              tasks={tasks}
-              sessions={sessions}
-              currentUser={currentUser}
-              userProgress={userProgress}
-            />
-          )}
-        </motion.div>
+        {/* Strategic & Energy Coaching — only rendered when there's enough data */}
+        {(tasks.length > 5 || sessions.length > 2) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55 }}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-4"
+          >
+            {tasks.length > 5 && sessions.length > 3 && (
+              <StrategicProgressCoach
+                tasks={tasks}
+                sessions={sessions}
+                userProgress={userProgress}
+                goals={[]}
+              />
+            )}
+            {sessions.length > 2 && (
+              <EnergyAwareCoach
+                tasks={tasks}
+                sessions={sessions}
+                currentUser={currentUser}
+                userProgress={userProgress}
+              />
+            )}
+            {sessions.length > 5 && (
+              <div className="lg:col-span-2">
+                <OptimalTimeRecommender />
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* AI Coaching Bots - collapsible */}
         {(tasks.length > 3 || sessions.length > 2) && (
