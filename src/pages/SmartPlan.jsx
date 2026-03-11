@@ -6,6 +6,7 @@ import { Sparkles, Loader2, CalendarPlus, Clock, Target, Zap, RefreshCw, Calenda
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import ScheduleBlock from "@/components/smartplan/ScheduleBlock";
+import CalendarConnectionStatus from "@/components/calendar/CalendarConnectionStatus";
 
 export default function SmartPlan() {
   const [tasks, setTasks] = useState([]);
