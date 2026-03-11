@@ -116,17 +116,14 @@ Choose the most relevant coaching type and provide specific advice.`;
 
         setCoachingTip(result);
         setIsVisible(true);
+        sessionStorage.setItem(sessionKey, '1');
       } catch (error) {
         console.error("Error generating coaching tip:", error);
       }
     };
 
-    // Generate tip on mount and every 5 minutes
     generateCoachingTip();
-    const interval = setInterval(generateCoachingTip, 5 * 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, [userProgress, recentTasks, recentSessions, goals, context, isDismissed]);
+  }, [userProgress, isDismissed]);
 
   const getIcon = () => {
     if (!coachingTip) return Sparkles;
