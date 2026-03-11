@@ -162,6 +162,24 @@ Afternoon sessions: ${afternoonMood.length}
 Peak productivity time: ${morningMood.length > afternoonMood.length ? 'Morning' : 'Afternoon'}`;
   };
 
+  if (!plan && !loading) {
+    return (
+      <Card className="border-purple-200 dark:border-purple-700 dark:bg-gray-800">
+        <CardContent className="p-6 text-center">
+          <Calendar className="w-8 h-8 text-purple-400 mx-auto mb-3" />
+          <p className="text-gray-700 dark:text-gray-200 font-semibold mb-1">AI Daily / Weekly Planner</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Generate a smart plan based on your tasks and energy patterns.</p>
+          <Button
+            onClick={generatePlan}
+            className="bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white gap-2"
+          >
+            <Sparkles className="w-4 h-4" /> Generate Plan
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (loading) {
     return (
       <Card className="border-purple-200 dark:border-purple-700 dark:bg-gray-800">
@@ -177,8 +195,6 @@ Peak productivity time: ${morningMood.length > afternoonMood.length ? 'Morning' 
       </Card>
     );
   }
-
-  if (!plan) return null;
 
   return (
     <Card className="border-purple-200 dark:border-purple-700 dark:bg-gray-800">
