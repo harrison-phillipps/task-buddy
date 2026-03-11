@@ -208,6 +208,15 @@ Return JSON:
           </p>
         </div>
 
+        {/* Calendar connection status */}
+        <div className="mb-4">
+          <CalendarConnectionStatus
+            currentUser={currentUser}
+            onSync={handleCalendarSync}
+            isSyncing={isSyncing}
+          />
+        </div>
+
         {/* Settings row */}
         <Card className="mb-6 border-purple-100 dark:border-gray-700 dark:bg-gray-800/60">
           <CardContent className="p-4">
