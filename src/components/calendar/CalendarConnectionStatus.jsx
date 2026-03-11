@@ -2,59 +2,42 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, CheckCircle, ExternalLink, Settings } from "lucide-react";
+import { CheckCircle, RefreshCw, Calendar } from "lucide-react";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import { motion } from "framer-motion";
 
-export default function CalendarConnectionStatus({ isConnected, onConnect, backendEnabled = false }) {
-  if (!backendEnabled) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <Card className="border-orange-200 bg-orange-50">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="font-medium text-orange-900 mb-1">Calendar Sync Requires Backend Functions</p>
-                <p className="text-sm text-orange-700 mb-3">
-                  To sync with external calendars, you need to enable backend functions in your app settings.
-                </p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-orange-300 text-orange-700 hover:bg-orange-100"
-                  onClick={() => window.location.href = "/Settings"}
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Go to Settings
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-    );
-  }
+export default function CalendarConnectionStatus({ currentUser, onSync, isSyncing }) {
+  const isConnected = currentUser?.calendar_connected;
+  const provider = currentUser?.calendar_provider;
 
   if (isConnected) {
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-      >
-        <Card className="border-green-200 bg-green-50">
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+        <Card className="border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-green-600" />
                 <div>
-                  <p className="font-medium text-green-900">Google Calendar Connected</p>
-                  <p className="text-sm text-green-700">Your tasks can sync to your calendar</p>
+                  <p className="font-medium text-green-900 dark:text-green-300 capitalize">
+                    {provider === "google" ? "Google Calendar" : provider} Connected
+                  </p>
+                  <p className="text-sm text-green-700 dark:text-green-400">
+                    External events are included in your AI plan
+                  </p>
                 </div>
               </div>
-              <Badge className="bg-green-100 text-green-800">Active</Badge>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">Active</Badge>
+                {onSync && (
+                  <Button size="sm" variant="outline" onClick={onSync} disabled={isSyncing}
+                    className="border-green-300 text-green-700 hover:bg-green-100">
+                    <RefreshCw className={`w-3 h-3 mr-1 ${isSyncing ? "animate-spin" : ""}`} />
+                    Sync
+                  </Button>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -63,29 +46,24 @@ export default function CalendarConnectionStatus({ isConnected, onConnect, backe
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-    >
-      <Card className="border-blue-200 bg-blue-50">
+    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+      <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800">
         <CardContent className="p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <svg viewBox="0 0 24 24" className="w-10 h-10 flex-shrink-0">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
+              <Calendar className="w-5 h-5 text-blue-600" />
               <div>
-                <p className="font-medium text-blue-900">Connect Google Calendar</p>
-                <p className="text-sm text-blue-700">Sync your tasks and view your schedule</p>
+                <p className="font-medium text-blue-900 dark:text-blue-300">Connect your calendar</p>
+                <p className="text-sm text-blue-700 dark:text-blue-400">
+                  Import existing events so AI avoids scheduling conflicts
+                </p>
               </div>
             </div>
-            <Button onClick={onConnect} className="bg-blue-600 hover:bg-blue-700">
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Connect
-            </Button>
+            <Link to={createPageUrl("Integrations")}>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white" size="sm">
+                Connect
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>
