@@ -10,8 +10,10 @@ import CalendarConnectionStatus from "@/components/calendar/CalendarConnectionSt
 
 export default function SmartPlan() {
   const [tasks, setTasks] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
   const [schedule, setSchedule] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [addedKeys, setAddedKeys] = useState(new Set());
   const [workStart, setWorkStart] = useState("09:00");
   const [workEnd, setWorkEnd] = useState("17:00");
@@ -20,11 +22,26 @@ export default function SmartPlan() {
 
   useEffect(() => {
     base44.auth.me().then(user => {
+      setCurrentUser(user);
       return base44.entities.Task.filter({ created_by: user.email });
     }).then(all => {
       setTasks(all.filter(t => t.status !== "completed").slice(0, 25));
     }).catch(console.error);
   }, []);
+
+  const handleCalendarSync = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await base44.functions.invoke('fetchCalendarEvents', {});
+      if (res.data?.success) {
+        setCurrentUser(u => ({ ...u, calendar_connected: true, calendar_provider: "google" }));
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const blockKey = (block) => `${block.start_time}|${block.title}`;
 
