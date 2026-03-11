@@ -67,6 +67,7 @@ import Onboarding from './pages/Onboarding';
 import SessionHistory from './pages/SessionHistory';
 import Settings from './pages/Settings';
 import SkillDevelopment from './pages/SkillDevelopment';
+import SmartPlan from './pages/SmartPlan';
 import Subscription from './pages/Subscription';
 import TaskBreakdown from './pages/TaskBreakdown';
 import Tasks from './pages/Tasks';
@@ -74,7 +75,6 @@ import TeamDashboard from './pages/TeamDashboard';
 import TeamFocusSession from './pages/TeamFocusSession';
 import Teams from './pages/Teams';
 import VoiceTask from './pages/VoiceTask';
-import SmartPlan from './pages/SmartPlan';
 import __Layout from './Layout.jsx';
 
 
@@ -99,6 +99,7 @@ export const PAGES = {
     "SessionHistory": SessionHistory,
     "Settings": Settings,
     "SkillDevelopment": SkillDevelopment,
+    "SmartPlan": SmartPlan,
     "Subscription": Subscription,
     "TaskBreakdown": TaskBreakdown,
     "Tasks": Tasks,
@@ -106,7 +107,6 @@ export const PAGES = {
     "TeamFocusSession": TeamFocusSession,
     "Teams": Teams,
     "VoiceTask": VoiceTask,
-    "SmartPlan": SmartPlan,
 }
 
 export const pagesConfig = {

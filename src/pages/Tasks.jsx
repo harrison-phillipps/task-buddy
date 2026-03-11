@@ -22,7 +22,6 @@ import CalendarSyncModal from "../components/calendar/CalendarSyncModal";
 import TaskDependencies from "../components/tasks/TaskDependencies";
 import RecurringTaskModal from "../components/tasks/RecurringTaskModal";
 import RecurringTaskBadge from "../components/tasks/RecurringTaskBadge";
-import { processRecurringTasks } from "../components/tasks/RecurringTaskProcessor";
 import {
   Dialog,
   DialogContent,
@@ -136,17 +135,7 @@ export default function Tasks() {
         const user = await base44.auth.me();
         setCurrentUser(user);
         
-        // Process recurring tasks on page load
-        const lastCheck = localStorage.getItem('last_recurring_check');
-        const today = new Date().toISOString().split('T')[0];
-        if (lastCheck !== today) {
-          processRecurringTasks(user.email).then(created => {
-            if (created > 0) {
-              queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            }
-            localStorage.setItem('last_recurring_check', today);
-          });
-        }
+
       } catch (error) {
         console.error("Error fetching user:", error);
       }

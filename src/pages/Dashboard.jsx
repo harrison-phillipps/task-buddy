@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, TrendingUp, Clock, CheckCircle, Brain } from "lucide-react";
+import { Sparkles, TrendingUp, Clock, CheckCircle, Brain, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import VirtualCompanion from "../components/VirtualCompanion";
 import { generateCompanionMessage } from "../components/ai/CompanionAI";
@@ -22,7 +22,6 @@ import QuickAddTask from "../components/dashboard/QuickAddTask";
 import GoalsProgress from "../components/dashboard/GoalsProgress";
 import WidgetCustomizer from "../components/dashboard/WidgetCustomizer";
 import OnboardingTour from "../components/onboarding/OnboardingTour";
-import { processRecurringTasks } from "../components/tasks/RecurringTaskProcessor";
 import HabitFormationBot from "../components/ai/HabitFormationBot";
 import ProductivityForecasterBot from "../components/ai/ProductivityForecasterBot";
 import SkillDevelopmentBot from "../components/ai/SkillDevelopmentBot";
@@ -31,11 +30,8 @@ import ProgressInsights from "../components/dashboard/ProgressInsights";
 import ProactiveCoach from "../components/ai/ProactiveCoach";
 import SmartTaskRecommender from "../components/ai/SmartTaskRecommender";
 import AISmartNudge from "../components/ai/AISmartNudge";
-import AIDailyPlanner from "../components/ai/AIDailyPlanner";
-import AdaptiveDashboard from "../components/dashboard/AdaptiveDashboard";
 import StrategicProgressCoach from "../components/ai/StrategicProgressCoach";
 import EnergyAwareCoach from "../components/ai/EnergyAwareCoach";
-import CoachTrainingCenter from "../components/ai/CoachTrainingCenter";
 import OptimalTimeRecommender from "../components/ai/OptimalTimeRecommender";
 import ProductivityReportModal from "../components/analytics/ProductivityReportModal";
 
@@ -47,6 +43,7 @@ export default function Dashboard() {
   const [coachingTip, setCoachingTip] = useState(null);
   const [showProgressReport, setShowProgressReport] = useState(false);
   const [showProductivityReport, setShowProductivityReport] = useState(false);
+  const [showAIBots, setShowAIBots] = useState(false);
   const [aiMessage, setAiMessage] = useState(null);
   const [isLoadingMessage, setIsLoadingMessage] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -100,14 +97,7 @@ export default function Dashboard() {
         if (!user.display_name) { navigate(createPageUrl("Onboarding")); return; }
         if (!user.companion_type) { navigate(createPageUrl("CharacterSelection")); return; }
         
-        // Fetch progress + run recurring tasks check in parallel
-        const today = new Date().toISOString().split('T')[0];
-        const [progressList] = await Promise.all([
-          base44.entities.UserProgress.filter({ user_id: user.id }),
-          localStorage.getItem('last_recurring_check') !== today
-            ? processRecurringTasks(user.email).then(() => localStorage.setItem('last_recurring_check', today))
-            : Promise.resolve()
-        ]);
+        const progressList = await base44.entities.UserProgress.filter({ user_id: user.id });
 
         if (progressList.length > 0) {
           setUserProgress(progressList[0]);
@@ -303,35 +293,7 @@ export default function Dashboard() {
           </Link>
           </motion.div>
 
-        {/* Adaptive Dashboard Suggestions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <AdaptiveDashboard
-            currentUser={currentUser}
-            tasks={tasks}
-            sessions={sessions}
-            userProgress={userProgress}
-            visibleWidgets={visibleWidgets}
-            onToggleWidget={handleToggleWidget}
-          />
-        </motion.div>
 
-        {/* AI Daily Planner */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.31 }}
-        >
-          <AIDailyPlanner 
-            tasks={tasks}
-            sessions={sessions}
-            userProgress={userProgress}
-            currentUser={currentUser}
-          />
-        </motion.div>
 
         {/* Proactive AI Coach */}
         <motion.div
@@ -498,53 +460,56 @@ export default function Dashboard() {
           )}
         </motion.div>
 
-        {/* Coach Training Center */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-        >
-          <CoachTrainingCenter currentUser={currentUser} />
-        </motion.div>
-
-        {/* AI Coaching Bots */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.65 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-        >
-          {tasks.filter(t => t.is_recurring || t.parent_recurring_task_id).length > 0 && (
-            <HabitFormationBot 
-              recurringTasks={tasks.filter(t => t.is_recurring || t.parent_recurring_task_id)}
-              userProgress={userProgress}
-            />
-          )}
-          
-          {tasks.length > 5 && (
-            <ProductivityForecasterBot 
-              tasks={tasks}
-              sessions={sessions}
-              userProgress={userProgress}
-            />
-          )}
-          
-          {tasks.length > 3 && (
-            <SkillDevelopmentBot 
-              tasks={tasks}
-              sessions={sessions}
-              userProgress={userProgress}
-            />
-          )}
-          
-          {sessions.length > 2 && (
-            <EnergyManagementBot 
-              tasks={tasks}
-              sessions={sessions}
-              userProgress={userProgress}
-            />
-          )}
-        </motion.div>
+        {/* AI Coaching Bots - collapsible */}
+        {(tasks.length > 3 || sessions.length > 2) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <button
+              onClick={() => setShowAIBots(v => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-white/70 dark:bg-gray-800/70 border border-purple-100 dark:border-gray-700 rounded-xl hover:bg-purple-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-500" />
+                <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm">AI Coaching Tools</span>
+              </div>
+              {showAIBots ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+            </button>
+            {showAIBots && (
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {tasks.filter(t => t.is_recurring || t.parent_recurring_task_id).length > 0 && (
+                  <HabitFormationBot
+                    recurringTasks={tasks.filter(t => t.is_recurring || t.parent_recurring_task_id)}
+                    userProgress={userProgress}
+                  />
+                )}
+                {tasks.length > 5 && (
+                  <ProductivityForecasterBot
+                    tasks={tasks}
+                    sessions={sessions}
+                    userProgress={userProgress}
+                  />
+                )}
+                {tasks.length > 3 && (
+                  <SkillDevelopmentBot
+                    tasks={tasks}
+                    sessions={sessions}
+                    userProgress={userProgress}
+                  />
+                )}
+                {sessions.length > 2 && (
+                  <EnergyManagementBot
+                    tasks={tasks}
+                    sessions={sessions}
+                    userProgress={userProgress}
+                  />
+                )}
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* AI Prioritization */}
         {visibleWidgets.aiPrioritization && tasks.filter(t => t.status !== 'completed').length > 0 && (
