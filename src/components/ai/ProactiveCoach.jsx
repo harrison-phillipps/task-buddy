@@ -27,6 +27,10 @@ export default function ProactiveCoach({
   useEffect(() => {
     if (!userProgress || isDismissed) return;
 
+    // Only generate once per session
+    const sessionKey = 'proactive_coach_shown_' + new Date().toDateString();
+    if (sessionStorage.getItem(sessionKey)) return;
+
     const generateCoachingTip = async () => {
       try {
         const now = new Date();
