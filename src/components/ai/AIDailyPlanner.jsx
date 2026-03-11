@@ -34,9 +34,7 @@ export default function AIDailyPlanner({ tasks, sessions, userProgress, currentU
   const [loading, setLoading] = useState(false);
   const [planType, setPlanType] = useState('daily'); // 'daily' or 'weekly'
 
-  useEffect(() => {
-    generatePlan();
-  }, []);
+  // Plan is generated on-demand only (user clicks button)
 
   const generatePlan = async () => {
     if (!currentUser || loading) return;
