@@ -331,9 +331,9 @@ export default function CalendarView() {
 
         {/* Calendar Connection Status */}
         <CalendarConnectionStatus
-          isConnected={currentUser?.google_calendar_connected}
-          onConnect={handleConnect}
-          backendEnabled={backendEnabled}
+          currentUser={currentUser}
+          onSync={handleRefreshCalendar}
+          isSyncing={isRefreshing}
         />
 
         {/* Week Navigation */}
