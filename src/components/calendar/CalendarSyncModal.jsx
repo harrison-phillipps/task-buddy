@@ -126,84 +126,56 @@ export default function CalendarSyncModal({
     
     const results = { success: [], failed: [] };
     
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
     // Sync tasks
     for (const taskId of selectedTasks) {
       const task = tasks.find(t => t.id === taskId);
       const settings = syncSettings[`task-${taskId}`];
-      
       if (!task || !settings) continue;
       
       try {
-        const tokenResult = await base44.functions.google_calendar.refresh_access_token({
-          refresh_token: currentUser.google_calendar_refresh_token
-        });
-        
-        if (tokenResult.error) {
-          results.failed.push({ item: task, type: 'task', error: "Token refresh failed" });
-          continue;
-        }
-        
-        const syncResult = await base44.functions.google_calendar.sync_task_to_calendar({
-          access_token: tokenResult.access_token,
-          task: task,
+        const res = await base44.functions.invoke('syncTaskToGoogleCalendar', {
+          task,
           scheduled_date: settings.date,
           scheduled_time: settings.time,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          timezone: tz,
           recurring: settings.recurring || 'none',
-          recurrence_end: settings.recurrenceEnd || null
+          recurrence_end: settings.recurrenceEnd || null,
         });
-        
-        if (syncResult.success) {
+        const syncResult = res.data;
+        if (syncResult?.success) {
           results.success.push({ item: task, type: 'task', event_id: syncResult.event_id, link: syncResult.html_link });
-          
-          await base44.entities.Task.update(taskId, {
-            calendar_event_id: syncResult.event_id,
-            calendar_synced: true
-          });
+          await base44.entities.Task.update(taskId, { calendar_event_id: syncResult.event_id, calendar_synced: true });
         } else {
-          results.failed.push({ item: task, type: 'task', error: syncResult.error });
+          results.failed.push({ item: task, type: 'task', error: syncResult?.error || 'Unknown error' });
         }
       } catch (error) {
         results.failed.push({ item: task, type: 'task', error: error.message });
       }
     }
     
-    // Sync goals
+    // Sync goals (as calendar events)
     for (const goalId of selectedGoals) {
       const goal = goals.find(g => g.id === goalId);
       const settings = syncSettings[`goal-${goalId}`];
-      
       if (!goal || !settings) continue;
       
       try {
-        const tokenResult = await base44.functions.google_calendar.refresh_access_token({
-          refresh_token: currentUser.google_calendar_refresh_token
-        });
-        
-        if (tokenResult.error) {
-          results.failed.push({ item: goal, type: 'goal', error: "Token refresh failed" });
-          continue;
-        }
-        
-        const syncResult = await base44.functions.google_calendar.sync_goal_to_calendar({
-          access_token: tokenResult.access_token,
-          goal: goal,
+        const res = await base44.functions.invoke('syncTaskToGoogleCalendar', {
+          task: { title: goal.title, description: goal.description, estimated_minutes: 60 },
           scheduled_date: settings.date,
           scheduled_time: settings.time,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          timezone: tz,
           recurring: settings.recurring || 'none',
-          recurrence_end: settings.recurrenceEnd || null
+          recurrence_end: settings.recurrenceEnd || null,
         });
-        
-        if (syncResult.success) {
+        const syncResult = res.data;
+        if (syncResult?.success) {
           results.success.push({ item: goal, type: 'goal', event_id: syncResult.event_id, link: syncResult.html_link });
-          
-          await base44.entities.Goal.update(goalId, {
-            calendar_event_id: syncResult.event_id,
-            calendar_synced: true
-          });
+          await base44.entities.Goal.update(goalId, { calendar_event_id: syncResult.event_id, calendar_synced: true });
         } else {
-          results.failed.push({ item: goal, type: 'goal', error: syncResult.error });
+          results.failed.push({ item: goal, type: 'goal', error: syncResult?.error || 'Unknown error' });
         }
       } catch (error) {
         results.failed.push({ item: goal, type: 'goal', error: error.message });
