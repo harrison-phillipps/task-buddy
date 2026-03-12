@@ -8,9 +8,6 @@ import {
   CheckCircle, 
   ExternalLink, 
   Zap,
-  Settings,
-  MessageSquare,
-  Trello,
   Clock
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -22,10 +19,9 @@ const integrations = [
     description: "Sync your tasks and focus blocks with Google Calendar",
     icon: Calendar,
     color: "from-blue-500 to-blue-600",
-    category: "calendar",
     status: "available",
     features: ["Two-way sync", "Deadline reminders", "Focus block scheduling"],
-    requiresBackend: true
+    fnName: "fetchCalendarEvents",
   },
   {
     id: "outlook-calendar",
@@ -33,62 +29,10 @@ const integrations = [
     description: "Connect your Microsoft Outlook calendar for seamless scheduling",
     icon: Calendar,
     color: "from-blue-600 to-indigo-600",
-    category: "calendar",
-    status: "coming-soon",
-    features: ["Event sync", "Meeting integration", "Deadline tracking"],
-    requiresBackend: true
-  },
-  {
-    id: "slack",
-    name: "Slack",
-    description: "Get task notifications and updates in your Slack workspace",
-    icon: MessageSquare,
-    color: "from-purple-500 to-purple-600",
-    category: "communication",
     status: "available",
-    features: ["Task notifications", "Daily summaries", "Team updates"],
-    requiresBackend: true
+    features: ["Event sync", "Meeting integration", "Deadline tracking"],
+    fnName: "fetchOutlookCalendarEvents",
   },
-  {
-    id: "discord",
-    name: "Discord",
-    description: "Receive productivity updates and reminders in Discord",
-    icon: MessageSquare,
-    color: "from-indigo-500 to-purple-600",
-    category: "communication",
-    status: "coming-soon",
-    features: ["Bot notifications", "Progress updates", "Team coordination"],
-    requiresBackend: true
-  },
-  {
-    id: "trello",
-    name: "Trello",
-    description: "Import boards and sync tasks between Trello and TaskBuddy",
-    icon: Trello,
-    color: "from-blue-400 to-blue-500",
-    category: "project-management",
-    status: "coming-soon",
-    features: ["Board import", "Card sync", "Checklist integration"],
-    requiresBackend: true
-  },
-  {
-    id: "asana",
-    name: "Asana",
-    description: "Sync your Asana projects and tasks with TaskBuddy",
-    icon: CheckCircle,
-    color: "from-pink-500 to-red-500",
-    category: "project-management",
-    status: "coming-soon",
-    features: ["Project sync", "Task import", "Status updates"],
-    requiresBackend: true
-  }
-];
-
-const categories = [
-  { id: "all", name: "All Integrations", icon: Zap },
-  { id: "calendar", name: "Calendar", icon: Calendar },
-  { id: "communication", name: "Communication", icon: MessageSquare },
-  { id: "project-management", name: "Project Management", icon: CheckCircle }
 ];
 
 export default function Integrations() {
