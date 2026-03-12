@@ -33,64 +33,30 @@ export default function CalendarSyncModal({
   const [syncType, setSyncType] = useState("tasks");
 
   useEffect(() => {
-    // Check if user has calendar connected
-    if (currentUser?.google_calendar_connected) {
-      setIsConnected(true);
+    // Check connection via fetchCalendarEvents function (uses app connector)
+    if (open) {
+      checkConnection();
     }
-  }, [currentUser]);
-
-  const handleConnectGoogle = async () => {
-    setIsConnecting(true);
-    try {
-      const redirectUri = `${window.location.origin}/CalendarCallback`;
-      const result = await base44.functions.google_calendar.get_auth_url({ redirect_uri: redirectUri });
-      
-      if (result.auth_url) {
-        // Open OAuth flow in popup
-        const width = 500;
-        const height = 600;
-        const left = window.screenX + (window.outerWidth - width) / 2;
-        const top = window.screenY + (window.outerHeight - height) / 2;
-        
-        const popup = window.open(
-          result.auth_url,
-          'Google Calendar Authorization',
-          `width=${width},height=${height},left=${left},top=${top}`
-        );
-        
-        // Listen for callback
-        const checkPopup = setInterval(() => {
-          if (popup.closed) {
-            clearInterval(checkPopup);
-            setIsConnecting(false);
-            // Check if connection was successful
-            checkConnection();
-          }
-        }, 500);
-      }
-    } catch (error) {
-      console.error("Error connecting to Google:", error);
-      setIsConnecting(false);
-    }
-  };
+  }, [open]);
 
   const checkConnection = async () => {
+    setIsConnecting(true);
     try {
-      const user = await base44.auth.me();
-      if (user?.google_calendar_connected) {
+      const res = await base44.functions.invoke('fetchCalendarEvents', {});
+      if (res.data?.success || res.data?.events_synced !== undefined) {
         setIsConnected(true);
       }
     } catch (error) {
-      console.error("Error checking connection:", error);
+      console.error("Calendar connector not available:", error);
+      setIsConnected(false);
+    } finally {
+      setIsConnecting(false);
     }
   };
 
   const handleDisconnect = async () => {
     try {
-      await base44.auth.updateMe({
-        google_calendar_connected: false,
-        google_calendar_refresh_token: null
-      });
+      await base44.auth.updateMe({ calendar_connected: false, calendar_provider: null });
       setIsConnected(false);
     } catch (error) {
       console.error("Error disconnecting:", error);
