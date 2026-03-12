@@ -39,11 +39,22 @@ export default function Integrations() {
   const [connectingId, setConnectingId] = useState(null);
   const [connectedIds, setConnectedIds] = useState([]);
 
+  useEffect(() => {
+    base44.auth.me().then(user => {
+      if (user?.calendar_connected && user?.calendar_provider) {
+        const id = user.calendar_provider === "google" ? "google-calendar" : "outlook-calendar";
+        setConnectedIds([id]);
+      }
+    }).catch(() => {});
+  }, []);
+
   const handleConnect = async (integration) => {
     setConnectingId(integration.id);
     try {
       const res = await base44.functions.invoke(integration.fnName, {});
       if (res.data?.success) {
+        const provider = integration.id === "google-calendar" ? "google" : "outlook";
+        await base44.auth.updateMe({ calendar_connected: true, calendar_provider: provider });
         setConnectedIds(prev => [...prev, integration.id]);
       } else {
         alert(`Failed to sync ${integration.name}. Please try again.`);
