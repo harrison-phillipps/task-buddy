@@ -85,6 +85,11 @@ const moreItems = [
     icon: Calendar,
   },
   {
+    title: "Gap Filler",
+    url: createPageUrl("CalendarGapFiller"),
+    icon: Zap,
+  },
+  {
     title: "Teams",
     url: createPageUrl("Teams"),
     icon: Users,
