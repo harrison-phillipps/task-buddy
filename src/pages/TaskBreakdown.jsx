@@ -408,6 +408,13 @@ Calculate total time including the prep step.`,
                   </div>
                 )}
 
+                {taskInput.title && (
+                  <AITimeEstimator
+                    task={taskInput}
+                    onApplyEstimate={(minutes) => setTaskInput(prev => ({ ...prev, estimated_minutes: minutes }))}
+                  />
+                )}
+
                 <AITaskBreakdownSuggestion
                   taskTitle={taskInput.title}
                   taskDescription={taskInput.description}
