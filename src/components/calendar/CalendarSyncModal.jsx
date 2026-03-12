@@ -246,23 +246,20 @@ export default function CalendarSyncModal({
                   </div>
                 </div>
                 
-                {isConnected ? (
+                {isConnecting ? (
+                  <Button disabled className="bg-blue-600">
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Checking...
+                  </Button>
+                ) : isConnected ? (
                   <Button variant="outline" size="sm" onClick={handleDisconnect}>
                     <Unlink className="w-4 h-4 mr-2" />
                     Disconnect
                   </Button>
                 ) : (
-                  <Button 
-                    onClick={handleConnectGoogle}
-                    disabled={isConnecting}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    {isConnecting ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                    )}
-                    Connect
+                  <Button onClick={checkConnection} className="bg-blue-600 hover:bg-blue-700">
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Retry
                   </Button>
                 )}
               </div>
