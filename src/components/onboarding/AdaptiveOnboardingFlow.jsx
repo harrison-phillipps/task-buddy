@@ -45,8 +45,10 @@ export default function AdaptiveOnboardingFlow({
   const [aiSuggestions, setAiSuggestions] = useState(null);
   const [isCreatingProfile, setIsCreatingProfile] = useState(false);
 
-  const totalSteps = 5;
+  const totalSteps = 6;
   const progress = (step / totalSteps) * 100;
+  const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
+  const [calendarSynced, setCalendarSynced] = useState(null); // null | "google" | "outlook" | "skipped"
 
   const handleNext = () => {
     if (step < totalSteps) {
