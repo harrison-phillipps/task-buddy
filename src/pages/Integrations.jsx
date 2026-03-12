@@ -36,44 +36,13 @@ const integrations = [
 ];
 
 export default function Integrations() {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState("all");
   const [connectingId, setConnectingId] = useState(null);
   const [connectedIds, setConnectedIds] = useState([]);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const user = await base44.auth.me();
-        setCurrentUser(user);
-      } catch (error) {
-        console.error("Error fetching user:", error);
-      }
-    };
-    fetchUser();
-  }, []);
-
-  const filteredIntegrations = selectedCategory === "all" 
-    ? integrations 
-    : integrations.filter(i => i.category === selectedCategory);
-
   const handleConnect = async (integration) => {
-    if (integration.status === "coming-soon") {
-      alert(`${integration.name} integration is coming soon! Stay tuned for updates.`);
-      return;
-    }
-
-    const fnMap = {
-      "google-calendar": "fetchCalendarEvents",
-      "outlook-calendar": "fetchOutlookCalendarEvents",
-    };
-
-    const fnName = fnMap[integration.id];
-    if (!fnName) return;
-
     setConnectingId(integration.id);
     try {
-      const res = await base44.functions.invoke(fnName, {});
+      const res = await base44.functions.invoke(integration.fnName, {});
       if (res.data?.success) {
         setConnectedIds(prev => [...prev, integration.id]);
       } else {
