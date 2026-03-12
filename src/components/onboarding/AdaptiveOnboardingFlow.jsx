@@ -205,7 +205,8 @@ export default function AdaptiveOnboardingFlow({
                   {step === 2 && "🎯 What are your main goals?"}
                   {step === 3 && "💭 What's your biggest challenge?"}
                   {step === 4 && "⚡ How do you prefer to work?"}
-                  {step === 5 && "✨ Your Personalized Setup"}
+                  {step === 5 && "📅 Sync your calendar (optional)"}
+                  {step === 6 && "✨ Your Personalized Setup"}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
