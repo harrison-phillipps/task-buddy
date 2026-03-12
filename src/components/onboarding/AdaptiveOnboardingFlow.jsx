@@ -181,7 +181,7 @@ export default function AdaptiveOnboardingFlow({
         </motion.div>
 
         {/* AI Assistant */}
-        {step >= 3 && (
+        {step >= 3 && step < 6 && (
           <AIOnboardingAssistant
             userResponses={responses}
             currentStep={step}
