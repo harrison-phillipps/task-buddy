@@ -167,21 +167,7 @@ export default function Integrations() {
           </p>
         </motion.div>
 
-        {/* Backend Functions Warning */}
-        {!backendEnabled && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Alert className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20">
-              <AlertCircle className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-              <AlertDescription className="text-orange-800 dark:text-orange-200">
-                <strong>Backend functions required:</strong> To use integrations, you need to enable backend functions in your app settings. 
-                This allows secure OAuth connections with external services.
-              </AlertDescription>
-            </Alert>
-          </motion.div>
-        )}
+
 
         {/* Category Filters */}
         <motion.div
