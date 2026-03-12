@@ -217,10 +217,10 @@ export default function CalendarSyncModal({
           </DialogTitle>
           <DialogDescription>
             {selectedTeamId === "personal" 
-              ? "Sync your personal tasks to Google Calendar"
+              ? `Sync your personal tasks to ${calendarName}`
               : selectedTeamId
-              ? "Sync team tasks to Google Calendar"
-              : "Sync your tasks to Google Calendar for better time blocking"}
+              ? `Sync team tasks to ${calendarName}`
+              : `Sync your tasks to ${calendarName} for better time blocking`}
           </DialogDescription>
         </DialogHeader>
 
