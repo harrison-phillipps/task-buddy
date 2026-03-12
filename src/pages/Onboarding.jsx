@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Heart, ChevronRight, ChevronLeft } from "lucide-react";
 import CompanionPersonalitySelector from "../components/CompanionPersonalitySelector";
 import AdaptiveOnboardingFlow from "../components/onboarding/AdaptiveOnboardingFlow";
+import CalendarOnboarding from "../components/onboarding/CalendarOnboarding";
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -20,13 +21,14 @@ export default function Onboarding() {
   const [gender, setGender] = useState("");
   const [personality, setPersonality] = useState("motivational");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCalendarStep, setShowCalendarStep] = useState(false);
+  const [pendingDestination, setPendingDestination] = useState(null);
 
   useEffect(() => {
     const checkUser = async () => {
       try {
         const user = await base44.auth.me();
         setCurrentUser(user);
-        // If user already has name set, skip to character selection or dashboard
         if (user.display_name) {
           if (!user.companion_type) {
             navigate(createPageUrl("CharacterSelection"));
@@ -42,20 +44,41 @@ export default function Onboarding() {
   }, [navigate]);
 
   const handleAdaptiveComplete = async (aiSuggestions) => {
-    // Set companion type based on AI recommendation
+    let destination = "CharacterSelection";
     if (aiSuggestions?.companion_recommendation?.type) {
       await base44.auth.updateMe({
-        companion_type: aiSuggestions.companion_recommendation.type
+        companion_type: aiSuggestions.companion_recommendation.type,
       });
-      navigate(createPageUrl("Dashboard"));
-    } else {
-      navigate(createPageUrl("CharacterSelection"));
+      destination = "Dashboard";
     }
+    setPendingDestination(destination);
+    setShowCalendarStep(true);
   };
+
+  const handleCalendarDone = () => {
+    navigate(createPageUrl(pendingDestination ?? "Dashboard"));
+  };
+
+  if (showCalendarStep) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-teal-50 to-blue-50 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md"
+        >
+          <CalendarOnboarding
+            onComplete={handleCalendarDone}
+            onSkip={handleCalendarDone}
+          />
+        </motion.div>
+      </div>
+    );
+  }
 
   if (useAdaptiveFlow) {
     return (
-      <AdaptiveOnboardingFlow 
+      <AdaptiveOnboardingFlow
         currentUser={currentUser}
         onComplete={handleAdaptiveComplete}
       />
@@ -63,26 +86,21 @@ export default function Onboarding() {
   }
 
   const handleNext = () => {
-    if (step === 1 && name.trim()) {
-      setStep(2);
-    }
+    if (step === 1 && name.trim()) setStep(2);
   };
 
   const handleBack = () => {
-    if (step === 2) {
-      setStep(1);
-    }
+    if (step === 2) setStep(1);
   };
 
   const handleSubmit = async () => {
     if (!name.trim()) return;
-    
     setIsSubmitting(true);
     try {
       await base44.auth.updateMe({
         display_name: name.trim(),
         gender: gender || "neutral",
-        companion_personality: personality
+        companion_personality: personality,
       });
       navigate(createPageUrl("CharacterSelection"));
     } catch (error) {
@@ -95,7 +113,7 @@ export default function Onboarding() {
     { value: "female", label: "She/Her", emoji: "👩" },
     { value: "male", label: "He/Him", emoji: "👨" },
     { value: "neutral", label: "They/Them", emoji: "🧑" },
-    { value: "skip", label: "Prefer not to say", emoji: "✨" }
+    { value: "skip", label: "Prefer not to say", emoji: "✨" },
   ];
 
   return (
@@ -145,11 +163,8 @@ export default function Onboarding() {
                       className="text-lg py-6"
                     />
                   </div>
-
                   <div className="space-y-3">
-                    <Label className="text-gray-700 font-medium">
-                      Your pronouns (optional)
-                    </Label>
+                    <Label className="text-gray-700 font-medium">Your pronouns (optional)</Label>
                     <p className="text-xs text-gray-500">
                       This helps your companion use the right words when cheering you on!
                     </p>
@@ -171,14 +186,12 @@ export default function Onboarding() {
                       ))}
                     </div>
                   </div>
-
                   <Button
                     onClick={handleNext}
                     disabled={!name.trim()}
                     className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold py-6 text-lg shadow-lg"
                   >
-                    Next
-                    <ChevronRight className="w-5 h-5 ml-2" />
+                    Next <ChevronRight className="w-5 h-5 ml-2" />
                   </Button>
                 </motion.div>
               ) : (
@@ -202,36 +215,22 @@ export default function Onboarding() {
                       compact
                     />
                   </div>
-
                   <div className="flex gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={handleBack}
-                      className="flex-1 py-6"
-                    >
-                      <ChevronLeft className="w-5 h-5 mr-2" />
-                      Back
+                    <Button variant="outline" onClick={handleBack} className="flex-1 py-6">
+                      <ChevronLeft className="w-5 h-5 mr-2" /> Back
                     </Button>
                     <Button
                       onClick={handleSubmit}
                       disabled={isSubmitting}
                       className="flex-1 bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold py-6 text-lg shadow-lg"
                     >
-                      {isSubmitting ? (
-                        "Saving..."
-                      ) : (
-                        <>
-                          <Sparkles className="w-5 h-5 mr-2" />
-                          Continue
-                        </>
-                      )}
+                      {isSubmitting ? "Saving..." : <><Sparkles className="w-5 h-5 mr-2" />Continue</>}
                     </Button>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Step indicators */}
             <div className="flex justify-center gap-2 pt-2">
               <div className={`w-2 h-2 rounded-full transition-all ${step === 1 ? "bg-purple-500 w-6" : "bg-gray-300"}`} />
               <div className={`w-2 h-2 rounded-full transition-all ${step === 2 ? "bg-purple-500 w-6" : "bg-gray-300"}`} />

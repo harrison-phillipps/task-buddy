@@ -53,6 +53,7 @@ import Analytics from './pages/Analytics';
 import BrainDump from './pages/BrainDump';
 import BrainDumpHistory from './pages/BrainDumpHistory';
 import CalendarCallback from './pages/CalendarCallback';
+import CalendarGapFiller from './pages/CalendarGapFiller';
 import CalendarView from './pages/CalendarView';
 import CharacterSelection from './pages/CharacterSelection';
 import Dashboard from './pages/Dashboard';
@@ -75,7 +76,6 @@ import TeamDashboard from './pages/TeamDashboard';
 import TeamFocusSession from './pages/TeamFocusSession';
 import Teams from './pages/Teams';
 import VoiceTask from './pages/VoiceTask';
-import CalendarGapFiller from './pages/CalendarGapFiller';
 import __Layout from './Layout.jsx';
 
 
@@ -86,6 +86,7 @@ export const PAGES = {
     "BrainDump": BrainDump,
     "BrainDumpHistory": BrainDumpHistory,
     "CalendarCallback": CalendarCallback,
+    "CalendarGapFiller": CalendarGapFiller,
     "CalendarView": CalendarView,
     "CharacterSelection": CharacterSelection,
     "Dashboard": Dashboard,
@@ -108,7 +109,6 @@ export const PAGES = {
     "TeamFocusSession": TeamFocusSession,
     "Teams": Teams,
     "VoiceTask": VoiceTask,
-    "CalendarGapFiller": CalendarGapFiller,
 }
 
 export const pagesConfig = {
