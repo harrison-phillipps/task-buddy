@@ -132,14 +132,18 @@ export default function AdaptiveOnboardingFlow({
 
   const syncCalendar = async (provider) => {
     setIsSyncingCalendar(true);
+    setCalendarSyncError(null);
     const fnName = provider === "google" ? "fetchCalendarEvents" : "fetchOutlookCalendarEvents";
     try {
       const res = await base44.functions.invoke(fnName, {});
       if (res.data?.success) {
         setCalendarSynced(provider);
+      } else {
+        setCalendarSyncError("Sync failed. Make sure your calendar is connected in Settings > Integrations.");
       }
     } catch (e) {
       console.error(e);
+      setCalendarSyncError("Could not connect. Please link your calendar in Settings > Integrations first.");
     } finally {
       setIsSyncingCalendar(false);
     }
