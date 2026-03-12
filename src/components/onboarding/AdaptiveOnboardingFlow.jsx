@@ -49,6 +49,7 @@ export default function AdaptiveOnboardingFlow({
   const progress = (step / totalSteps) * 100;
   const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
   const [calendarSynced, setCalendarSynced] = useState(null); // null | "google" | "outlook" | "skipped"
+  const [calendarSyncError, setCalendarSyncError] = useState(null);
 
   const handleNext = () => {
     if (step < totalSteps) {
