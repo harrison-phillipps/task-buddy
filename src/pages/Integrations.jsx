@@ -115,19 +115,34 @@ export default function Integrations() {
     ? integrations 
     : integrations.filter(i => i.category === selectedCategory);
 
-  const handleConnect = (integration) => {
-    if (!backendEnabled) {
-      alert("Backend functions must be enabled to use integrations. Please enable them in your app settings.");
-      return;
-    }
-
+  const handleConnect = async (integration) => {
     if (integration.status === "coming-soon") {
       alert(`${integration.name} integration is coming soon! Stay tuned for updates.`);
       return;
     }
 
-    // For available integrations, guide user to connection process
-    alert(`To connect ${integration.name}:\n1. Enable backend functions in app settings\n2. Return here to authorize the connection\n3. Configure your sync preferences`);
+    const fnMap = {
+      "google-calendar": "fetchCalendarEvents",
+      "outlook-calendar": "fetchOutlookCalendarEvents",
+    };
+
+    const fnName = fnMap[integration.id];
+    if (!fnName) return;
+
+    setConnectingId(integration.id);
+    try {
+      const res = await base44.functions.invoke(fnName, {});
+      if (res.data?.success) {
+        setConnectedIds(prev => [...prev, integration.id]);
+      } else {
+        alert(`Failed to sync ${integration.name}. Please try again.`);
+      }
+    } catch (e) {
+      console.error(e);
+      alert(`Error connecting ${integration.name}: ${e.message}`);
+    } finally {
+      setConnectingId(null);
+    }
   };
 
   return (
