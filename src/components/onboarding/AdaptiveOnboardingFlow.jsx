@@ -361,6 +361,10 @@ export default function AdaptiveOnboardingFlow({
                           )}
                         </button>
 
+                        {calendarSyncError && (
+                          <p className="text-sm text-red-500 text-center px-2">{calendarSyncError}</p>
+                        )}
+
                         <button
                           onClick={() => setCalendarSynced("skipped")}
                           className="w-full text-center text-sm text-gray-400 hover:text-gray-600 py-2 transition-colors"
