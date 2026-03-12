@@ -44,7 +44,8 @@ export default function CalendarSyncModal({
   const checkConnection = async () => {
     setIsConnecting(true);
     try {
-      const res = await base44.functions.invoke('fetchCalendarEvents', {});
+      const fnName = (currentUser?.calendar_provider === 'outlook') ? 'fetchOutlookCalendarEvents' : 'fetchCalendarEvents';
+      const res = await base44.functions.invoke(fnName, {});
       if (res.data?.success || res.data?.events_synced !== undefined) {
         setIsConnected(true);
       }
