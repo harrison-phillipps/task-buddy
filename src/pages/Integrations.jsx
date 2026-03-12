@@ -96,7 +96,8 @@ const categories = [
 export default function Integrations() {
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [backendEnabled, setBackendEnabled] = useState(false);
+  const [connectingId, setConnectingId] = useState(null);
+  const [connectedIds, setConnectedIds] = useState([]);
 
   useEffect(() => {
     const fetchUser = async () => {
