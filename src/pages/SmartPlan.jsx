@@ -31,10 +31,12 @@ export default function SmartPlan() {
 
   const handleCalendarSync = async () => {
     setIsSyncing(true);
+    const provider = currentUser?.calendar_provider || "google";
+    const fnName = provider === "outlook" ? "fetchOutlookCalendarEvents" : "fetchCalendarEvents";
     try {
-      const res = await base44.functions.invoke('fetchCalendarEvents', {});
+      const res = await base44.functions.invoke(fnName, {});
       if (res.data?.success) {
-        setCurrentUser(u => ({ ...u, calendar_connected: true, calendar_provider: "google" }));
+        setCurrentUser(u => ({ ...u, calendar_connected: true, calendar_provider: provider }));
       }
     } catch (e) {
       console.error(e);
