@@ -31,6 +31,8 @@ export default function CalendarSyncModal({
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncResults, setSyncResults] = useState(null);
   const [syncType, setSyncType] = useState("tasks");
+  const provider = currentUser?.calendar_provider || 'google';
+  const calendarName = provider === 'outlook' ? 'Outlook Calendar' : 'Google Calendar';
 
   useEffect(() => {
     // Check connection via fetchCalendarEvents function (uses app connector)
