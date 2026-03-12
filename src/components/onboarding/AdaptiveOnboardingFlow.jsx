@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ChevronRight, ChevronLeft, Sparkles, CheckCircle } from "lucide-react";
+import { ChevronRight, ChevronLeft, Sparkles, CheckCircle, Calendar, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AIOnboardingAssistant from "./AIOnboardingAssistant";
 
