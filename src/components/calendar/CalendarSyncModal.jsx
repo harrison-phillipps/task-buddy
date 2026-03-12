@@ -241,7 +241,7 @@ export default function CalendarSyncModal({
                     </svg>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">Google Calendar</p>
+                    <p className="font-medium text-gray-900">{calendarName}</p>
                     <p className="text-sm text-gray-500">
                       {isConnected ? "Connected" : "Not connected"}
                     </p>
