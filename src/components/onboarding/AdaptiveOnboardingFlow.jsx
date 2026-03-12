@@ -303,8 +303,72 @@ export default function AdaptiveOnboardingFlow({
                   </div>
                 )}
 
-                {/* Step 5: Summary */}
-                {step === 5 && aiSuggestions && (
+                {/* Step 5: Calendar Sync */}
+                {step === 5 && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600">
+                      Connect your calendar so the AI Smart Plan can schedule tasks around your existing commitments. You can skip this and connect later in Settings.
+                    </p>
+
+                    {calendarSynced && calendarSynced !== "skipped" ? (
+                      <div className="p-4 bg-green-50 rounded-xl border-2 border-green-300 flex items-center gap-3">
+                        <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
+                        <div>
+                          <p className="font-semibold text-green-900">
+                            {calendarSynced === "google" ? "Google Calendar" : "Outlook Calendar"} connected!
+                          </p>
+                          <p className="text-sm text-green-700">Your events will be used in Smart Plan scheduling.</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <button
+                          onClick={() => syncCalendar("google")}
+                          disabled={isSyncingCalendar}
+                          className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-blue-200 bg-blue-50 hover:bg-blue-100 transition-all disabled:opacity-60"
+                        >
+                          <span className="text-3xl">📅</span>
+                          <div className="flex-1 text-left">
+                            <p className="font-semibold text-gray-900">Google Calendar</p>
+                            <p className="text-sm text-gray-600">Connect your Google account</p>
+                          </div>
+                          {isSyncingCalendar ? (
+                            <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+                          ) : (
+                            <ChevronRight className="w-5 h-5 text-blue-400" />
+                          )}
+                        </button>
+
+                        <button
+                          onClick={() => syncCalendar("outlook")}
+                          disabled={isSyncingCalendar}
+                          className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 transition-all disabled:opacity-60"
+                        >
+                          <span className="text-3xl">📧</span>
+                          <div className="flex-1 text-left">
+                            <p className="font-semibold text-gray-900">Outlook / Microsoft 365</p>
+                            <p className="text-sm text-gray-600">Connect your Microsoft account</p>
+                          </div>
+                          {isSyncingCalendar ? (
+                            <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
+                          ) : (
+                            <ChevronRight className="w-5 h-5 text-indigo-400" />
+                          )}
+                        </button>
+
+                        <button
+                          onClick={() => setCalendarSynced("skipped")}
+                          className="w-full text-center text-sm text-gray-400 hover:text-gray-600 py-2 transition-colors"
+                        >
+                          Skip for now
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Step 6: Summary */}
+                {step === 6 && aiSuggestions && (
                   <div className="space-y-4">
                     {/* Recommended Companion */}
                     {aiSuggestions.companion_recommendation && (
