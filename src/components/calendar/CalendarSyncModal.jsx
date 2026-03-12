@@ -137,7 +137,8 @@ export default function CalendarSyncModal({
       if (!task || !settings) continue;
       
       try {
-        const res = await base44.functions.invoke('syncTaskToGoogleCalendar', {
+        const fnName = provider === 'outlook' ? 'syncTaskToOutlook' : 'syncTaskToGoogleCalendar';
+        const res = await base44.functions.invoke(fnName, {
           task,
           scheduled_date: settings.date,
           scheduled_time: settings.time,
