@@ -129,20 +129,30 @@ export default function AdaptiveOnboardingFlow({
     setIsCreatingProfile(false);
   };
 
+  const syncCalendar = async (provider) => {
+    setIsSyncingCalendar(true);
+    const fnName = provider === "google" ? "fetchCalendarEvents" : "fetchOutlookCalendarEvents";
+    try {
+      const res = await base44.functions.invoke(fnName, {});
+      if (res.data?.success) {
+        setCalendarSynced(provider);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSyncingCalendar(false);
+    }
+  };
+
   const canProceed = () => {
     switch (step) {
-      case 1:
-        return responses.displayName?.trim().length > 0;
-      case 2:
-        return responses.primaryGoals?.length > 0;
-      case 3:
-        return responses.mainChallenge;
-      case 4:
-        return responses.workStyle;
-      case 5:
-        return true;
-      default:
-        return false;
+      case 1: return responses.displayName?.trim().length > 0;
+      case 2: return responses.primaryGoals?.length > 0;
+      case 3: return responses.mainChallenge;
+      case 4: return responses.workStyle;
+      case 5: return true; // calendar step is optional
+      case 6: return true;
+      default: return false;
     }
   };
 
