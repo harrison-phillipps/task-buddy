@@ -19,6 +19,7 @@ import TaskBreakdownBot from "../components/ai/TaskBreakdownBot";
 import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
 import AITaskBreakdownSuggestion from "../components/tasks/AITaskBreakdownSuggestion";
 import ProactiveCoach from "../components/ai/ProactiveCoach";
+import AITimeEstimator from "../components/tasks/AITimeEstimator";
 
 export default function TaskBreakdown() {
   const navigate = useNavigate();
