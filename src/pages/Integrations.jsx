@@ -3,13 +3,11 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   Calendar, 
   CheckCircle, 
   ExternalLink, 
   Zap,
-  AlertCircle,
   Settings,
   MessageSquare,
   Trello,
