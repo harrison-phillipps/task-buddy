@@ -243,22 +243,20 @@ export default function Integrations() {
                       </div>
                       <Button 
                         onClick={() => handleConnect(integration)}
-                        disabled={integration.status !== "available"}
+                        disabled={integration.status !== "available" || connectingId === integration.id}
                         className={integration.status === "available" 
                           ? `w-full bg-gradient-to-r ${integration.color} text-white hover:opacity-90` 
                           : "w-full"}
                         variant={integration.status === "available" ? "default" : "outline"}
                       >
-                        {integration.status === "available" ? (
-                          <>
-                            <ExternalLink className="w-4 h-4 mr-2" />
-                            Connect
-                          </>
+                        {connectingId === integration.id ? (
+                          <><Clock className="w-4 h-4 mr-2 animate-spin" />Syncing...</>
+                        ) : connectedIds.includes(integration.id) ? (
+                          <><CheckCircle className="w-4 h-4 mr-2" />Synced!</>
+                        ) : integration.status === "available" ? (
+                          <><ExternalLink className="w-4 h-4 mr-2" />Connect</>
                         ) : (
-                          <>
-                            <Clock className="w-4 h-4 mr-2" />
-                            Coming Soon
-                          </>
+                          <><Clock className="w-4 h-4 mr-2" />Coming Soon</>
                         )}
                       </Button>
                     </div>
