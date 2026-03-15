@@ -294,7 +294,7 @@ function LayoutContent({ children, currentPageName }) {
                   <div className="mx-3 p-4 bg-gradient-to-br from-purple-100 to-teal-100 dark:from-purple-900/30 dark:to-teal-900/30 rounded-2xl space-y-3">
                     <div className="flex items-center gap-3">
                       <div className="w-16 h-16 flex items-center justify-center">
-                        {(currentUser?.companion_type === 'dog' || currentUser?.companion_type === 'cat') ? (
+                        {(currentUser?.companion_type === 'dog' || currentUser?.companion_type === 'cat' || currentUser?.companion_type === 'robot') ? (
                           <AnimatedCompanion 
                             type={currentUser.companion_type} 
                             size={80}
@@ -302,7 +302,7 @@ function LayoutContent({ children, currentPageName }) {
                           />
                         ) : (
                           <Companion3D 
-                            type={currentUser?.companion_type || 'robot'} 
+                            type={currentUser?.companion_type || 'orb'} 
                             size={80}
                           />
                         )}

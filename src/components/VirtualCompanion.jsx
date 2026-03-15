@@ -645,7 +645,7 @@ export default function VirtualCompanion({
             ))}
           </>
         )}
-        {(characterType === "dog" || characterType === "cat") ? (
+        {(characterType === "dog" || characterType === "cat" || characterType === "robot") ? (
           <AnimatedCompanion 
             type={characterType}
             size={isLarge ? 200 : 120}

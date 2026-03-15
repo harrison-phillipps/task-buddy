@@ -237,23 +237,23 @@ const CatCompanion = ({ size, mood }) => {
         {/* White/cream facial markings - common in orange cats */}
         <ellipse cx="100" cy="78" rx="25" ry="18" fill="#FED7AA" />
         
-        {/* Distinctive cat eyes - almond shaped with slit pupils */}
+        {/* Distinctive cat eyes - smaller almond shaped with slit pupils */}
         {!isBlinking ? (
           <>
             {/* Outer eye color - bright green */}
-            <ellipse cx="82" cy="68" rx="10" ry="13" fill="#10B981" />
-            <ellipse cx="118" cy="68" rx="10" ry="13" fill="#10B981" />
+            <ellipse cx="82" cy="68" rx="8" ry="11" fill="#10B981" />
+            <ellipse cx="118" cy="68" rx="8" ry="11" fill="#10B981" />
             {/* Slit pupils - characteristic cat feature */}
-            <ellipse cx="82" cy="68" rx="2" ry="10" fill="#1F2937" />
-            <ellipse cx="118" cy="68" rx="2" ry="10" fill="#1F2937" />
+            <ellipse cx="82" cy="68" rx="1.5" ry="8" fill="#1F2937" />
+            <ellipse cx="118" cy="68" rx="1.5" ry="8" fill="#1F2937" />
             {/* Highlights */}
-            <circle cx="83" cy="64" r="2" fill="white" />
-            <circle cx="119" cy="64" r="2" fill="white" />
+            <circle cx="83" cy="64" r="1.5" fill="white" />
+            <circle cx="119" cy="64" r="1.5" fill="white" />
           </>
         ) : (
           <>
-            <path d="M 75 68 Q 82 70 89 68" stroke="#1F2937" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-            <path d="M 111 68 Q 118 70 125 68" stroke="#1F2937" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            <path d="M 76 68 Q 82 70 88 68" stroke="#1F2937" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            <path d="M 112 68 Q 118 70 124 68" stroke="#1F2937" strokeWidth="2.5" fill="none" strokeLinecap="round" />
           </>
         )}
         
@@ -313,6 +313,153 @@ const CatCompanion = ({ size, mood }) => {
   );
 };
 
+const RobotCompanion = ({ size, mood }) => {
+  const [isBlinking, setIsBlinking] = useState(false);
+  const [antennaGlow, setAntennaGlow] = useState(0);
+
+  useEffect(() => {
+    // Random blinking
+    const blinkInterval = setInterval(() => {
+      setIsBlinking(true);
+      setTimeout(() => setIsBlinking(false), 100);
+    }, 4000 + Math.random() * 2000);
+
+    // Antenna pulse
+    const glowInterval = setInterval(() => {
+      setAntennaGlow(prev => (prev + 1) % 2);
+    }, 1000);
+
+    return () => {
+      clearInterval(blinkInterval);
+      clearInterval(glowInterval);
+    };
+  }, []);
+
+  const processing = mood === "working";
+  const excited = mood === "celebrating";
+
+  return (
+    <motion.svg
+      width={size}
+      height={size}
+      viewBox="0 0 200 200"
+      animate={{ y: [0, -6, 0] }}
+      transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+    >
+      {/* Body */}
+      <rect x="60" y="110" width="80" height="70" rx="8" fill="#6B7280" />
+      <rect x="65" y="115" width="70" height="60" rx="5" fill="#9CA3AF" />
+      
+      {/* Chest panel */}
+      <rect x="85" y="130" width="30" height="35" rx="3" fill="#4B5563" />
+      <circle cx="100" cy="147" r="8" fill={processing ? "#3B82F6" : "#10B981"} opacity={processing ? 0.8 : 0.6} />
+      <motion.circle
+        cx="100" cy="147" r="8"
+        fill={processing ? "#3B82F6" : "#10B981"}
+        animate={{ opacity: processing ? [0.3, 1, 0.3] : 0.6 }}
+        transition={{ duration: 1, repeat: Infinity }}
+      />
+      
+      {/* Head */}
+      <motion.g
+        animate={excited ? { rotate: [0, -8, 8, 0] } : {}}
+        transition={{ duration: 1.5, repeat: Infinity }}
+        style={{ transformOrigin: '100px 70px' }}
+      >
+        <rect x="70" y="45" width="60" height="60" rx="10" fill="#6B7280" />
+        <rect x="75" y="50" width="50" height="50" rx="8" fill="#9CA3AF" />
+        
+        {/* Antenna */}
+        <rect x="97" y="35" width="6" height="15" rx="3" fill="#4B5563" />
+        <motion.circle
+          cx="100" cy="30" r="5"
+          fill="#EF4444"
+          animate={{ opacity: antennaGlow === 0 ? [0.5, 1, 0.5] : 0.5 }}
+          transition={{ duration: 1 }}
+        />
+        
+        {/* Eyes - screen-like */}
+        {!isBlinking ? (
+          <>
+            <rect x="80" y="65" width="15" height="12" rx="2" fill="#3B82F6" />
+            <rect x="105" y="65" width="15" height="12" rx="2" fill="#3B82F6" />
+            {processing && (
+              <>
+                <motion.rect
+                  x="80" y="65" width="15" height="12" rx="2"
+                  fill="#60A5FA"
+                  animate={{ opacity: [0, 1, 0] }}
+                  transition={{ duration: 0.5, repeat: Infinity }}
+                />
+                <motion.rect
+                  x="105" y="65" width="15" height="12" rx="2"
+                  fill="#60A5FA"
+                  animate={{ opacity: [0, 1, 0] }}
+                  transition={{ duration: 0.5, repeat: Infinity, delay: 0.25 }}
+                />
+              </>
+            )}
+            <circle cx="85" cy="69" r="2" fill="#DBEAFE" />
+            <circle cx="110" cy="69" r="2" fill="#DBEAFE" />
+          </>
+        ) : (
+          <>
+            <line x1="80" y1="71" x2="95" y2="71" stroke="#3B82F6" strokeWidth="2" />
+            <line x1="105" y1="71" x2="120" y2="71" stroke="#3B82F6" strokeWidth="2" />
+          </>
+        )}
+        
+        {/* Mouth - LED display style */}
+        <rect x="82" y="85" width="36" height="8" rx="2" fill="#4B5563" />
+        {excited ? (
+          <path d="M 85 89 L 90 87 L 95 89 L 100 87 L 105 89 L 110 87 L 115 89" 
+            stroke="#10B981" strokeWidth="2" fill="none" strokeLinecap="round" />
+        ) : (
+          <line x1="85" y1="89" x2="115" y2="89" stroke="#10B981" strokeWidth="2" strokeLinecap="round" />
+        )}
+      </motion.g>
+      
+      {/* Arms */}
+      <motion.rect
+        x="45" y="120" width="15" height="40" rx="7" fill="#6B7280"
+        animate={excited ? { rotate: [-15, 15, -15] } : {}}
+        transition={{ duration: 1, repeat: Infinity }}
+        style={{ transformOrigin: '52px 120px' }}
+      />
+      <motion.rect
+        x="140" y="120" width="15" height="40" rx="7" fill="#6B7280"
+        animate={excited ? { rotate: [15, -15, 15] } : {}}
+        transition={{ duration: 1, repeat: Infinity }}
+        style={{ transformOrigin: '147px 120px' }}
+      />
+      
+      {/* Hands */}
+      <circle cx="52" cy="160" r="8" fill="#9CA3AF" />
+      <circle cx="147" cy="160" r="8" fill="#9CA3AF" />
+      
+      {/* Legs */}
+      <rect x="75" y="180" width="18" height="15" rx="4" fill="#6B7280" />
+      <rect x="107" y="180" width="18" height="15" rx="4" fill="#6B7280" />
+      
+      {/* Celebration sparkles */}
+      {excited && (
+        <>
+          <motion.text
+            x="140" y="50" fontSize="20"
+            animate={{ y: [50, 35, 50], opacity: [0, 1, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >⚡</motion.text>
+          <motion.text
+            x="45" y="50" fontSize="20"
+            animate={{ y: [50, 35, 50], opacity: [0, 1, 0] }}
+            transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+          >⚡</motion.text>
+        </>
+      )}
+    </motion.svg>
+  );
+};
+
 export default function AnimatedCompanion({ type, size = 120, mood = "supportive" }) {
   if (type === "dog") {
     return <DogCompanion size={size} mood={mood} />;
@@ -320,6 +467,10 @@ export default function AnimatedCompanion({ type, size = 120, mood = "supportive
   
   if (type === "cat") {
     return <CatCompanion size={size} mood={mood} />;
+  }
+  
+  if (type === "robot") {
+    return <RobotCompanion size={size} mood={mood} />;
   }
   
   return null;
