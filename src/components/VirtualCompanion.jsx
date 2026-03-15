@@ -16,6 +16,7 @@ const activities = [
 ];
 
 function RobotCharacter({ mood, isLarge, currentMood }) {
+  const size = isLarge ? 160 : 112;
   return (
     <div className={`relative ${isLarge ? 'w-48 h-56' : 'w-28 sm:w-32 h-36 sm:h-40'} flex items-center justify-center flex-shrink-0`}>
       <motion.div
@@ -29,104 +30,121 @@ function RobotCharacter({ mood, isLarge, currentMood }) {
         }}
         className={`relative ${isLarge ? 'w-40 h-40' : 'w-28 h-28'}`}
       >
-        {/* Robot body */}
-        <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-28 h-32' : 'w-20 h-24'} bg-gradient-to-br from-slate-600 via-slate-700 to-slate-800 rounded-[2rem]`}
-             style={{ boxShadow: '0 20px 60px -10px rgba(0,0,0,0.5), inset 0 -30px 30px -30px rgba(255,255,255,0.15), inset 0 3px 8px rgba(255,255,255,0.2), inset 0 -3px 8px rgba(0,0,0,0.3)' }}>
-          {/* Chest panel with realistic lighting */}
-          <div className={`absolute ${isLarge ? 'top-4' : 'top-2'} left-1/2 -translate-x-1/2 ${isLarge ? 'w-16 h-16' : 'w-12 h-12'} bg-gradient-to-br from-cyan-500 via-blue-600 to-blue-700 rounded-2xl border-2 border-slate-800/50`}
-               style={{ boxShadow: '0 6px 20px rgba(6,182,212,0.4), inset 0 -12px 12px -12px rgba(255,255,255,0.3), inset 0 2px 4px rgba(255,255,255,0.5), 0 0 30px rgba(34,211,238,0.3)' }}>
-            <div className="absolute inset-2 bg-gradient-to-br from-cyan-400/70 to-transparent rounded" 
-                 style={{ boxShadow: 'inset 0 0 10px rgba(34,211,238,0.5)' }} />
-            <motion.div 
-              animate={{ opacity: [0.6, 1, 0.6], scale: [0.95, 1, 0.95] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="absolute inset-3 bg-cyan-300/40 rounded blur-[2px]" 
-            />
-            <div className="absolute top-1 left-1 w-3 h-3 bg-white/60 rounded-full blur-sm" />
-          </div>
-          {/* Buttons */}
-          <div className={`absolute ${isLarge ? 'bottom-4' : 'bottom-2'} left-1/2 -translate-x-1/2 flex gap-2`}>
-            <motion.div 
-              animate={{ opacity: [0.6, 1, 0.6] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              className={`${isLarge ? 'w-2 h-2' : 'w-1.5 h-1.5'} bg-green-400 rounded-full`}
-              style={{ boxShadow: '0 0 8px rgba(74,222,128,0.6)' }}
-            />
-            <div className={`${isLarge ? 'w-2 h-2' : 'w-1.5 h-1.5'} bg-yellow-400 rounded-full`} />
-            <div className={`${isLarge ? 'w-2 h-2' : 'w-1.5 h-1.5'} bg-red-400 rounded-full`} />
-          </div>
-        </div>
-
-        {/* Robot head with metallic finish */}
-        <div className={`absolute top-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-24 h-24' : 'w-18 h-18'} bg-gradient-to-br from-slate-500 via-slate-600 to-slate-700 rounded-3xl`}
-             style={{ boxShadow: '0 15px 40px -5px rgba(0,0,0,0.4), inset 0 -20px 20px -20px rgba(255,255,255,0.2), inset 0 3px 6px rgba(255,255,255,0.3), inset 0 -3px 6px rgba(0,0,0,0.3)' }}>
+        <svg 
+          width={size} 
+          height={size} 
+          viewBox="0 0 160 160" 
+          fill="none" 
+          xmlns="http://www.w3.org/2000/svg"
+          className="drop-shadow-2xl"
+        >
+          <defs>
+            <linearGradient id="robotBody" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#64748b" />
+              <stop offset="50%" stopColor="#475569" />
+              <stop offset="100%" stopColor="#334155" />
+            </linearGradient>
+            <linearGradient id="robotHead" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#94a3b8" />
+              <stop offset="50%" stopColor="#64748b" />
+              <stop offset="100%" stopColor="#475569" />
+            </linearGradient>
+            <linearGradient id="screenGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#06b6d4" />
+              <stop offset="50%" stopColor="#0284c7" />
+              <stop offset="100%" stopColor="#0369a1" />
+            </linearGradient>
+            <filter id="softGlow">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          
+          {/* Body */}
+          <rect x="46" y="80" width="68" height="70" rx="20" fill="url(#robotBody)"/>
+          <ellipse cx="80" cy="80" rx="34" ry="10" fill="#1e293b" opacity="0.3"/>
+          
+          {/* Chest Screen */}
+          <rect x="62" y="92" width="36" height="36" rx="8" fill="url(#screenGlow)" filter="url(#softGlow)"/>
+          <rect x="66" y="96" width="28" height="28" rx="6" fill="#22d3ee" opacity="0.3"/>
+          <circle cx="70" cy="100" r="4" fill="#ffffff" opacity="0.7"/>
+          
+          {/* Status Lights */}
+          <motion.circle 
+            cx="72" cy="138" r="3" fill="#4ade80"
+            animate={{ opacity: [0.6, 1, 0.6] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          />
+          <circle cx="80" cy="138" r="3" fill="#fbbf24"/>
+          <circle cx="88" cy="138" r="3" fill="#f87171"/>
+          
+          {/* Head */}
+          <rect x="56" y="30" width="48" height="50" rx="16" fill="url(#robotHead)"/>
+          
           {/* Antenna */}
-          <div className={`absolute ${isLarge ? '-top-5' : '-top-4'} left-1/2 -translate-x-1/2 ${isLarge ? 'w-1.5 h-7' : 'w-1 h-5'} bg-gradient-to-b from-slate-500 to-slate-400`}
-               style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.2)' }} />
-          <motion.div 
+          <line x1="80" y1="30" x2="80" y2="18" stroke="#94a3b8" strokeWidth="3" strokeLinecap="round"/>
+          <motion.circle 
+            cx="80" cy="15" r="5" fill="#ef4444"
             animate={{ scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8] }}
             transition={{ duration: 1.5, repeat: Infinity }}
-            className={`absolute ${isLarge ? '-top-6' : '-top-5'} left-1/2 -translate-x-1/2 ${isLarge ? 'w-3 h-3' : 'w-2 h-2'} bg-red-500 rounded-full`}
-            style={{ boxShadow: '0 0 12px rgba(239,68,68,0.8)' }}
           />
           
-          {/* Face screen with realistic glass effect */}
-          <div className={`absolute ${isLarge ? 'inset-3' : 'inset-2'} bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl flex items-center justify-center overflow-hidden`}
-               style={{ boxShadow: '0 6px 20px rgba(0,0,0,0.3), inset 0 -15px 15px -15px rgba(34,211,238,0.3), inset 0 2px 4px rgba(255,255,255,0.1), 0 0 20px rgba(34,211,238,0.2)' }}>
-            <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 via-transparent to-blue-500/10 rounded-lg" />
-            <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-b from-white/10 to-transparent rounded-t-lg" />
-            {/* Eyes with LED glow effect */}
-            <div className={`absolute top-1/3 left-1/2 -translate-x-1/2 flex ${isLarge ? 'gap-3' : 'gap-2'} z-10`}>
-              <motion.div 
-                animate={{ 
-                  scaleY: mood === "celebrating" ? [1, 0.3, 1] : 1,
-                  opacity: [0.9, 1, 0.9]
-                }}
-                transition={{ 
-                  scaleY: { duration: 0.3, repeat: mood === "celebrating" ? Infinity : 0, repeatDelay: 2 },
-                  opacity: { duration: 1.5, repeat: Infinity }
-                }}
-                className={`${isLarge ? 'w-3 h-3' : 'w-2 h-2'} bg-cyan-400 rounded-full`}
-                style={{ boxShadow: '0 0 12px rgba(34,211,238,0.9), inset 0 -1px 3px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.8)' }}
-              />
-              <motion.div 
-                animate={{ 
-                  scaleY: mood === "celebrating" ? [1, 0.3, 1] : 1,
-                  opacity: [0.9, 1, 0.9]
-                }}
-                transition={{ 
-                  scaleY: { duration: 0.3, repeat: mood === "celebrating" ? Infinity : 0, repeatDelay: 2 },
-                  opacity: { duration: 1.5, repeat: Infinity }
-                }}
-                className={`${isLarge ? 'w-3 h-3' : 'w-2 h-2'} bg-cyan-400 rounded-full`}
-                style={{ boxShadow: '0 0 12px rgba(34,211,238,0.9), inset 0 -1px 3px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.8)' }}
-              />
-            </div>
-            {/* Smile with glow */}
-            <div className={`absolute bottom-1/4 left-1/2 -translate-x-1/2 ${isLarge ? 'w-8 h-2' : 'w-6 h-1.5'} border-b-2 border-cyan-400 rounded-b-full z-10`}
-                 style={{ boxShadow: '0 0 8px rgba(34,211,238,0.6)' }} />
-          </div>
+          {/* Face Screen */}
+          <rect x="62" y="38" width="36" height="34" rx="8" fill="#1e293b"/>
+          <rect x="64" y="40" width="32" height="30" rx="6" fill="#0f172a"/>
           
-          {/* Ears/Side panels */}
-          <div className={`absolute top-1/3 ${isLarge ? '-left-2 w-3 h-6' : '-left-1.5 w-2 h-5'} bg-gradient-to-l from-slate-400 to-slate-500 rounded-l-full`}
-               style={{ boxShadow: '0 3px 8px rgba(0,0,0,0.2)' }} />
-          <div className={`absolute top-1/3 ${isLarge ? '-right-2 w-3 h-6' : '-right-1.5 w-2 h-5'} bg-gradient-to-r from-slate-400 to-slate-500 rounded-r-full`}
-               style={{ boxShadow: '0 3px 8px rgba(0,0,0,0.2)' }} />
-        </div>
-
-        {/* Arms with realistic metallic shading */}
-        <motion.div
-          animate={{ rotate: [-5, 5, -5] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          className={`absolute ${isLarge ? 'top-28 -left-5 w-4 h-16' : 'top-20 -left-3 w-3 h-12'} bg-gradient-to-b from-slate-600 via-slate-700 to-slate-800 rounded-full origin-top`}
-          style={{ boxShadow: '0 8px 20px rgba(0,0,0,0.4), inset 0 -10px 10px -10px rgba(255,255,255,0.15), inset 2px 0 4px rgba(255,255,255,0.2), inset -2px 0 4px rgba(0,0,0,0.3)' }}
-        />
-        <motion.div
-          animate={{ rotate: [5, -5, 5] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-          className={`absolute ${isLarge ? 'top-28 -right-5 w-4 h-16' : 'top-20 -right-3 w-3 h-12'} bg-gradient-to-b from-slate-600 via-slate-700 to-slate-800 rounded-full origin-top`}
-          style={{ boxShadow: '0 8px 20px rgba(0,0,0,0.4), inset 0 -10px 10px -10px rgba(255,255,255,0.15), inset -2px 0 4px rgba(255,255,255,0.2), inset 2px 0 4px rgba(0,0,0,0.3)' }}
-        />
+          {/* Eyes */}
+          <motion.circle 
+            cx="72" cy="52" r="4" fill="#22d3ee"
+            animate={{ 
+              scaleY: mood === "celebrating" ? [1, 0.3, 1] : 1,
+              opacity: [0.9, 1, 0.9]
+            }}
+            transition={{ 
+              scaleY: { duration: 0.3, repeat: mood === "celebrating" ? Infinity : 0, repeatDelay: 2 },
+              opacity: { duration: 1.5, repeat: Infinity }
+            }}
+            filter="url(#softGlow)"
+          />
+          <motion.circle 
+            cx="88" cy="52" r="4" fill="#22d3ee"
+            animate={{ 
+              scaleY: mood === "celebrating" ? [1, 0.3, 1] : 1,
+              opacity: [0.9, 1, 0.9]
+            }}
+            transition={{ 
+              scaleY: { duration: 0.3, repeat: mood === "celebrating" ? Infinity : 0, repeatDelay: 2 },
+              opacity: { duration: 1.5, repeat: Infinity }
+            }}
+            filter="url(#softGlow)"
+          />
+          
+          {/* Smile */}
+          <path d="M 70 60 Q 80 66 90 60" stroke="#22d3ee" strokeWidth="2" fill="none" strokeLinecap="round" filter="url(#softGlow)"/>
+          
+          {/* Ear Panels */}
+          <ellipse cx="54" cy="52" rx="4" ry="10" fill="#94a3b8"/>
+          <ellipse cx="106" cy="52" rx="4" ry="10" fill="#94a3b8"/>
+          
+          {/* Arms */}
+          <motion.rect 
+            x="34" y="86" width="8" height="40" rx="4" fill="url(#robotBody)"
+            animate={{ rotate: [-5, 5, -5] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            style={{ transformOrigin: '38px 86px' }}
+          />
+          <motion.rect 
+            x="118" y="86" width="8" height="40" rx="4" fill="url(#robotBody)"
+            animate={{ rotate: [5, -5, 5] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+            style={{ transformOrigin: '122px 86px' }}
+          />
+          <circle cx="38" cy="126" r="5" fill="#475569"/>
+          <circle cx="122" cy="126" r="5" fill="#475569"/>
+        </svg>
 
         {mood === "celebrating" && (
           <>
@@ -152,6 +170,7 @@ function RobotCharacter({ mood, isLarge, currentMood }) {
 }
 
 function CatCharacter({ mood, isLarge, currentMood }) {
+  const size = isLarge ? 160 : 112;
   return (
     <div className={`relative ${isLarge ? 'w-48 h-56' : 'w-28 sm:w-32 h-36 sm:h-40'} flex items-center justify-center flex-shrink-0`}>
       <motion.div
@@ -166,78 +185,89 @@ function CatCharacter({ mood, isLarge, currentMood }) {
         }}
         className={`relative ${isLarge ? 'w-40 h-40' : 'w-28 h-28'}`}
       >
-        {/* Cat body */}
-        <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-32 h-28' : 'w-24 h-20'} bg-gradient-to-br from-yellow-300 via-yellow-350 to-yellow-400 rounded-t-[80px] rounded-b-[2.5rem]`}
-             style={{ boxShadow: '0 15px 40px -10px rgba(0,0,0,0.2), inset 0 -20px 20px -20px rgba(255,255,255,0.3)' }}>
-          {/* Stripes with blur for softer look */}
-          <div className={`absolute ${isLarge ? 'top-8 left-4 w-6' : 'top-4 left-2 w-4'} h-1 bg-gradient-to-r from-yellow-700/0 via-yellow-700/60 to-yellow-700/0 rounded-full`} />
-          <div className={`absolute ${isLarge ? 'top-12 left-6 w-8' : 'top-7 left-4 w-6'} h-1 bg-gradient-to-r from-yellow-700/0 via-yellow-700/60 to-yellow-700/0 rounded-full`} />
-          <div className={`absolute ${isLarge ? 'top-8 right-4 w-6' : 'top-4 right-2 w-4'} h-1 bg-gradient-to-r from-yellow-700/0 via-yellow-700/60 to-yellow-700/0 rounded-full`} />
-          <div className={`absolute ${isLarge ? 'top-12 right-6 w-8' : 'top-7 right-4 w-6'} h-1 bg-gradient-to-r from-yellow-700/0 via-yellow-700/60 to-yellow-700/0 rounded-full`} />
-          {/* Soft belly highlight */}
-          <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 ${isLarge ? 'w-16 h-16' : 'w-12 h-12'} bg-yellow-200/40 rounded-full blur-lg`} />
-        </div>
-
-        {/* Cat head */}
-        <div className={`absolute top-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-28 h-28' : 'w-20 h-20'} bg-gradient-to-br from-yellow-300 via-yellow-350 to-yellow-400 rounded-full`}
-             style={{ boxShadow: '0 10px 30px -5px rgba(0,0,0,0.2), inset 0 -15px 15px -15px rgba(255,255,255,0.4)' }}>
-          {/* Ears - more rounded triangles */}
-          <div className={`absolute ${isLarge ? '-top-2 left-2 w-8 h-10' : '-top-1 left-1 w-6 h-7'} bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-tl-full rounded-tr-full`} 
-               style={{ 
-                 clipPath: 'polygon(50% 0%, 10% 85%, 90% 85%)',
-                 boxShadow: '0 4px 10px rgba(0,0,0,0.15), inset 0 -4px 4px rgba(0,0,0,0.1)'
-               }} />
-          <div className={`absolute ${isLarge ? '-top-2 right-2 w-8 h-10' : '-top-1 right-1 w-6 h-7'} bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-tl-full rounded-tr-full`} 
-               style={{ 
-                 clipPath: 'polygon(50% 0%, 10% 85%, 90% 85%)',
-                 boxShadow: '0 4px 10px rgba(0,0,0,0.15), inset 0 -4px 4px rgba(0,0,0,0.1)'
-               }} />
+        <svg 
+          width={size} 
+          height={size} 
+          viewBox="0 0 160 160" 
+          fill="none" 
+          xmlns="http://www.w3.org/2000/svg"
+          className="drop-shadow-2xl"
+        >
+          <defs>
+            <linearGradient id="catFur" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#fde68a" />
+              <stop offset="50%" stopColor="#fbbf24" />
+              <stop offset="100%" stopColor="#f59e0b" />
+            </linearGradient>
+            <radialGradient id="catBelly">
+              <stop offset="0%" stopColor="#fef3c7" />
+              <stop offset="100%" stopColor="#fde68a" />
+            </radialGradient>
+            <filter id="softShadow">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
           
-          {/* Inner ears - softer pink */}
-          <div className={`absolute ${isLarge ? 'top-1 left-4 w-4 h-5' : 'top-1 left-2 w-3 h-3'} bg-pink-200 rounded-full`} style={{ clipPath: 'polygon(50% 10%, 20% 90%, 80% 90%)' }} />
-          <div className={`absolute ${isLarge ? 'top-1 right-4 w-4 h-5' : 'top-1 right-2 w-3 h-3'} bg-pink-200 rounded-full`} style={{ clipPath: 'polygon(50% 10%, 20% 90%, 80% 90%)' }} />
-
-          {/* Face */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            {/* Eyes - happy closed eyes */}
-            <div className={`absolute ${isLarge ? 'top-10' : 'top-7'} left-1/2 -translate-x-1/2 ${isLarge ? 'gap-4' : 'gap-3'} flex`}>
-              <div className={`${isLarge ? 'w-5 h-2' : 'w-3 h-1.5'} border-b-2 border-gray-800 rounded-full`} />
-              <div className={`${isLarge ? 'w-5 h-2' : 'w-3 h-1.5'} border-b-2 border-gray-800 rounded-full`} />
-            </div>
-            
-            {/* Nose - more rounded */}
-            <div className={`absolute ${isLarge ? 'top-14' : 'top-10'} left-1/2 -translate-x-1/2 ${isLarge ? 'w-2.5 h-2' : 'w-2 h-1.5'} bg-pink-400 rounded-full`} 
-                 style={{ borderRadius: '50% 50% 40% 40%' }} />
-            
-            {/* Mouth - smile */}
-            <div className={`absolute ${isLarge ? 'top-16' : 'top-12'} left-1/2 -translate-x-1/2`}>
-              <div className={`flex ${isLarge ? 'gap-3' : 'gap-2'}`}>
-                <div className={`${isLarge ? 'w-3 h-2' : 'w-2 h-1.5'} border-b-2 border-gray-800 rounded-b-full`} />
-                <div className={`${isLarge ? 'w-3 h-2' : 'w-2 h-1.5'} border-b-2 border-gray-800 rounded-b-full`} />
-              </div>
-            </div>
-
-            {/* Whiskers */}
-            <div className={`absolute ${isLarge ? 'top-12 -left-2 w-8' : 'top-8 -left-1 w-6'} h-0.5 bg-gray-600`} />
-            <div className={`absolute ${isLarge ? 'top-14 -left-2 w-8' : 'top-10 -left-1 w-6'} h-0.5 bg-gray-600`} />
-            <div className={`absolute ${isLarge ? 'top-12 -right-2 w-8' : 'top-8 -right-1 w-6'} h-0.5 bg-gray-600`} />
-            <div className={`absolute ${isLarge ? 'top-14 -right-2 w-8' : 'top-10 -right-1 w-6'} h-0.5 bg-gray-600`} />
-          </div>
-        </div>
-
-        {/* Tail - wagging animation */}
-        <motion.div
-          animate={{
-            rotate: [45, 60, 45],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          className={`absolute ${isLarge ? 'bottom-4 -right-6 w-16 h-6' : 'bottom-2 -right-4 w-12 h-4'} bg-gradient-to-r from-yellow-400 via-yellow-350 to-yellow-300 rounded-full origin-left`}
-          style={{ boxShadow: '0 5px 15px rgba(0,0,0,0.2), inset 0 -3px 6px rgba(255,255,255,0.3)' }}
-        />
+          {/* Body */}
+          <ellipse cx="80" cy="105" rx="40" ry="35" fill="url(#catFur)" filter="url(#softShadow)"/>
+          <ellipse cx="80" cy="110" rx="30" ry="25" fill="url(#catBelly)" opacity="0.6"/>
+          
+          {/* Stripes */}
+          <path d="M 65 95 Q 75 97 85 95" stroke="#b45309" strokeWidth="2" opacity="0.4" strokeLinecap="round"/>
+          <path d="M 60 105 Q 70 108 80 105" stroke="#b45309" strokeWidth="2" opacity="0.4" strokeLinecap="round"/>
+          <path d="M 75 95 Q 85 97 95 95" stroke="#b45309" strokeWidth="2" opacity="0.4" strokeLinecap="round"/>
+          <path d="M 80 105 Q 90 108 100 105" stroke="#b45309" strokeWidth="2" opacity="0.4" strokeLinecap="round"/>
+          
+          {/* Head */}
+          <circle cx="80" cy="60" r="32" fill="url(#catFur)" filter="url(#softShadow)"/>
+          
+          {/* Ears */}
+          <path d="M 56 42 L 48 25 L 62 38 Z" fill="url(#catFur)" filter="url(#softShadow)"/>
+          <path d="M 104 42 L 112 25 L 98 38 Z" fill="url(#catFur)" filter="url(#softShadow)"/>
+          <path d="M 56 38 L 52 28 L 60 36 Z" fill="#fbcfe8" opacity="0.8"/>
+          <path d="M 104 38 L 108 28 L 100 36 Z" fill="#fbcfe8" opacity="0.8"/>
+          
+          {/* Face Details */}
+          <ellipse cx="68" cy="56" rx="3" ry="1.5" fill="#1f2937"/>
+          <ellipse cx="92" cy="56" rx="3" ry="1.5" fill="#1f2937"/>
+          
+          {/* Nose */}
+          <ellipse cx="80" cy="64" r="4" fill="#f472b6"/>
+          <path d="M 80 64 L 78 68 L 80 67 L 82 68 Z" fill="#1f2937" opacity="0.3"/>
+          
+          {/* Mouth */}
+          <path d="M 76 68 Q 76 72 74 74" stroke="#1f2937" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+          <path d="M 84 68 Q 84 72 86 74" stroke="#1f2937" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+          
+          {/* Whiskers */}
+          <line x1="45" y1="62" x2="62" y2="60" stroke="#64748b" strokeWidth="1.5" opacity="0.7" strokeLinecap="round"/>
+          <line x1="45" y1="66" x2="62" y2="65" stroke="#64748b" strokeWidth="1.5" opacity="0.7" strokeLinecap="round"/>
+          <line x1="115" y1="62" x2="98" y2="60" stroke="#64748b" strokeWidth="1.5" opacity="0.7" strokeLinecap="round"/>
+          <line x1="115" y1="66" x2="98" y2="65" stroke="#64748b" strokeWidth="1.5" opacity="0.7" strokeLinecap="round"/>
+          
+          {/* Cheek Blush */}
+          <ellipse cx="62" cy="66" rx="6" ry="4" fill="#f472b6" opacity="0.2"/>
+          <ellipse cx="98" cy="66" rx="6" ry="4" fill="#f472b6" opacity="0.2"/>
+          
+          {/* Paws */}
+          <ellipse cx="65" cy="135" rx="8" ry="6" fill="#f59e0b"/>
+          <ellipse cx="95" cy="135" rx="8" ry="6" fill="#f59e0b"/>
+          
+          {/* Tail */}
+          <motion.path
+            d="M 115 110 Q 130 105 135 115 Q 140 125 135 130"
+            fill="none"
+            stroke="url(#catFur)"
+            strokeWidth="12"
+            strokeLinecap="round"
+            animate={{ d: ["M 115 110 Q 130 105 135 115 Q 140 125 135 130", "M 115 110 Q 130 100 138 112 Q 143 122 138 128", "M 115 110 Q 130 105 135 115 Q 140 125 135 130"] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </svg>
 
         {mood === "celebrating" && (
           <>
@@ -263,6 +293,7 @@ function CatCharacter({ mood, isLarge, currentMood }) {
 }
 
 function DogCharacter({ mood, isLarge, currentMood }) {
+  const size = isLarge ? 160 : 112;
   return (
     <div className={`relative ${isLarge ? 'w-48 h-56' : 'w-28 sm:w-32 h-36 sm:h-40'} flex items-center justify-center flex-shrink-0`}>
       <motion.div
@@ -277,59 +308,105 @@ function DogCharacter({ mood, isLarge, currentMood }) {
         }}
         className={`relative ${isLarge ? 'w-40 h-40' : 'w-28 h-28'}`}
       >
-        {/* Dog body */}
-        <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-32 h-28' : 'w-24 h-20'} bg-gradient-to-br from-amber-400 via-amber-450 to-amber-500 rounded-t-[80px] rounded-b-[2.5rem]`}
-             style={{ boxShadow: '0 15px 40px -10px rgba(0,0,0,0.25), inset 0 -20px 20px -20px rgba(255,255,255,0.3)' }}>
-          {/* Spots with softer edges */}
-          <div className={`absolute ${isLarge ? 'top-6 left-6 w-6 h-6' : 'top-4 left-4 w-4 h-4'} rounded-full bg-gradient-radial from-amber-700/30 to-amber-700/50 blur-[1px]`} />
-          <div className={`absolute ${isLarge ? 'top-12 right-8 w-5 h-5' : 'top-8 right-6 w-3 h-3'} rounded-full bg-gradient-radial from-amber-700/30 to-amber-700/50 blur-[1px]`} />
-          {/* Chest highlight */}
-          <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 ${isLarge ? 'w-16 h-16' : 'w-12 h-12'} bg-amber-200/40 rounded-full blur-lg`} />
-        </div>
-
-        {/* Dog head */}
-        <div className={`absolute top-0 left-1/2 -translate-x-1/2 ${isLarge ? 'w-28 h-28' : 'w-20 h-20'} bg-gradient-to-br from-amber-400 via-amber-450 to-amber-500 rounded-full`}
-             style={{ boxShadow: '0 10px 30px -5px rgba(0,0,0,0.25), inset 0 -15px 15px -15px rgba(255,255,255,0.4)' }}>
-          {/* Floppy Ears - more rounded and softer */}
-          <motion.div
+        <svg 
+          width={size} 
+          height={size} 
+          viewBox="0 0 160 160" 
+          fill="none" 
+          xmlns="http://www.w3.org/2000/svg"
+          className="drop-shadow-2xl"
+        >
+          <defs>
+            <linearGradient id="dogFur" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#fbbf24" />
+              <stop offset="50%" stopColor="#f59e0b" />
+              <stop offset="100%" stopColor="#d97706" />
+            </linearGradient>
+            <linearGradient id="dogMuzzle" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#fef3c7" />
+              <stop offset="100%" stopColor="#fde68a" />
+            </linearGradient>
+            <radialGradient id="dogBelly">
+              <stop offset="0%" stopColor="#fef3c7" />
+              <stop offset="100%" stopColor="#fde68a" />
+            </radialGradient>
+            <filter id="fluffyShadow">
+              <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          
+          {/* Body */}
+          <ellipse cx="80" cy="105" rx="42" ry="36" fill="url(#dogFur)" filter="url(#fluffyShadow)"/>
+          <ellipse cx="80" cy="115" rx="32" ry="26" fill="url(#dogBelly)" opacity="0.5"/>
+          
+          {/* Spots */}
+          <ellipse cx="65" cy="95" rx="10" ry="8" fill="#d97706" opacity="0.3"/>
+          <ellipse cx="100" cy="100" rx="8" ry="7" fill="#d97706" opacity="0.3"/>
+          
+          {/* Head */}
+          <circle cx="80" cy="55" r="34" fill="url(#dogFur)" filter="url(#fluffyShadow)"/>
+          
+          {/* Ears */}
+          <motion.ellipse
+            cx="50" cy="52" rx="12" ry="28" fill="#f59e0b" filter="url(#fluffyShadow)"
             animate={{ rotate: [-12, -8, -12] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className={`absolute ${isLarge ? 'top-2 -left-3 w-10 h-16' : 'top-1 -left-2 w-7 h-12'} bg-gradient-to-br from-amber-500 via-amber-550 to-amber-600 rounded-[50%] origin-top`}
-            style={{ boxShadow: '0 8px 20px rgba(0,0,0,0.2), inset 0 -10px 10px -10px rgba(255,255,255,0.2)', borderRadius: '50% 50% 45% 45%' }}
+            style={{ transformOrigin: '50px 40px' }}
           />
-          <motion.div
+          <motion.ellipse
+            cx="110" cy="52" rx="12" ry="28" fill="#f59e0b" filter="url(#fluffyShadow)"
             animate={{ rotate: [12, 8, 12] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-            className={`absolute ${isLarge ? 'top-2 -right-3 w-10 h-16' : 'top-1 -right-2 w-7 h-12'} bg-gradient-to-br from-amber-500 via-amber-550 to-amber-600 rounded-[50%] origin-top`}
-            style={{ boxShadow: '0 8px 20px rgba(0,0,0,0.2), inset 0 -10px 10px -10px rgba(255,255,255,0.2)', borderRadius: '50% 50% 45% 45%' }}
+            style={{ transformOrigin: '110px 40px' }}
           />
-
-          {/* Face */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            {/* Eyes - big happy eyes */}
-            <div className={`absolute ${isLarge ? 'top-9' : 'top-6'} left-1/2 -translate-x-1/2 ${isLarge ? 'gap-4' : 'gap-3'} flex`}>
-              <div className={`${isLarge ? 'w-3 h-3' : 'w-2 h-2'} bg-gray-800 rounded-full`} />
-              <div className={`${isLarge ? 'w-3 h-3' : 'w-2 h-2'} bg-gray-800 rounded-full`} />
-            </div>
-            
-            {/* Snout area - rounder and more prominent */}
-            <div className={`absolute ${isLarge ? 'top-13 w-16 h-12' : 'top-9 w-12 h-8'} left-1/2 -translate-x-1/2 bg-gradient-to-b from-amber-300 via-amber-350 to-amber-400 rounded-[60%]`}
-                 style={{ boxShadow: '0 4px 10px rgba(0,0,0,0.1), inset 0 -5px 10px rgba(255,255,255,0.3)' }} />
-            
-            {/* Nose - bigger and rounder */}
-            <div className={`absolute ${isLarge ? 'top-14 w-4 h-3.5' : 'top-10 w-3 h-2.5'} left-1/2 -translate-x-1/2 bg-gray-800 rounded-[50%]`} 
-                 style={{ borderRadius: '50% 50% 48% 48%' }} />
-            
-            {/* Mouth - big smile */}
-            <div className={`absolute ${isLarge ? 'top-17 w-8 h-3' : 'top-12 w-6 h-2'} left-1/2 -translate-x-1/2 border-b-2 border-gray-800 rounded-b-full`} />
-            
-            {/* Tongue - rounder tip */}
-            <div className={`absolute ${isLarge ? 'top-[4.5rem] w-3 h-4' : 'top-[3rem] w-2 h-3'} left-1/2 -translate-x-1/2 bg-pink-400 rounded-b-[70%]`} 
-                 style={{ borderRadius: '30% 30% 50% 50%' }} />
-          </div>
-        </div>
-
-
+          
+          {/* Inner Ears */}
+          <ellipse cx="50" cy="52" rx="6" ry="18" fill="#fde68a" opacity="0.6"/>
+          <ellipse cx="110" cy="52" rx="6" ry="18" fill="#fde68a" opacity="0.6"/>
+          
+          {/* Eyes */}
+          <circle cx="68" cy="50" r="5" fill="#1f2937"/>
+          <circle cx="92" cy="50" r="5" fill="#1f2937"/>
+          <circle cx="70" cy="48" r="2" fill="#ffffff" opacity="0.8"/>
+          <circle cx="94" cy="48" r="2" fill="#ffffff" opacity="0.8"/>
+          
+          {/* Muzzle */}
+          <ellipse cx="80" cy="65" rx="20" ry="16" fill="url(#dogMuzzle)" filter="url(#fluffyShadow)"/>
+          
+          {/* Nose */}
+          <ellipse cx="80" cy="62" rx="6" ry="5" fill="#1f2937"/>
+          <ellipse cx="78" cy="60" rx="2" ry="2" fill="#ffffff" opacity="0.5"/>
+          
+          {/* Mouth */}
+          <path d="M 80 62 L 80 70" stroke="#1f2937" strokeWidth="2" strokeLinecap="round"/>
+          <path d="M 70 70 Q 80 76 90 70" stroke="#1f2937" strokeWidth="2" fill="none" strokeLinecap="round"/>
+          
+          {/* Tongue */}
+          <ellipse cx="80" cy="76" rx="6" ry="8" fill="#f472b6"/>
+          <path d="M 80 68 Q 80 72 80 76" stroke="#f472b6" strokeWidth="4" opacity="0.7" strokeLinecap="round"/>
+          
+          {/* Paws */}
+          <ellipse cx="62" cy="136" rx="10" ry="7" fill="#f59e0b"/>
+          <ellipse cx="98" cy="136" rx="10" ry="7" fill="#f59e0b"/>
+          
+          {/* Tail - wagging */}
+          <motion.path
+            d="M 118 105 Q 135 100 145 110"
+            fill="none"
+            stroke="#f59e0b"
+            strokeWidth="14"
+            strokeLinecap="round"
+            filter="url(#fluffyShadow)"
+            animate={{ 
+              d: ["M 118 105 Q 135 100 145 110", "M 118 105 Q 135 90 148 105", "M 118 105 Q 135 100 145 110"] 
+            }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </svg>
 
         {mood === "celebrating" && (
           <>
