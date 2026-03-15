@@ -1025,9 +1025,9 @@ export default function FocusSession() {
                       <Slider
                         value={[workInterval]}
                         onValueChange={(value) => setWorkInterval(value[0])}
-                        min={10}
-                        max={60}
-                        step={5}
+                        min={5}
+                        max={90}
+                        step={1}
                         className="w-full"
                       />
                     </div>
@@ -1036,8 +1036,8 @@ export default function FocusSession() {
                       <Slider
                         value={[breakInterval]}
                         onValueChange={(value) => setBreakInterval(value[0])}
-                        min={3}
-                        max={15}
+                        min={1}
+                        max={30}
                         step={1}
                         className="w-full"
                       />
