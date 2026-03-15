@@ -2,8 +2,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Sparkles, ListTodo, Play, LayoutDashboard, User, RefreshCw, Brain, Award, Trophy, MessageSquare, Calendar, Users, Target, Settings, PanelLeftClose, PanelLeft, ChevronDown, ChevronUp, Maximize2, Mic, CalendarDays, Zap } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import Companion3D from "@/components/companion/Companion3D";
-import AnimatedCompanion from "@/components/companion/AnimatedCompanion";
 import {
   Sidebar,
   SidebarContent,
@@ -293,19 +291,10 @@ function LayoutContent({ children, currentPageName }) {
                 <SidebarGroupContent>
                   <div className="mx-3 p-4 bg-gradient-to-br from-purple-100 to-teal-100 dark:from-purple-900/30 dark:to-teal-900/30 rounded-2xl space-y-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-16 h-16 flex items-center justify-center">
-                        {(currentUser?.companion_type === 'dog' || currentUser?.companion_type === 'cat' || currentUser?.companion_type === 'robot') ? (
-                          <AnimatedCompanion 
-                            type={currentUser.companion_type} 
-                            size={80}
-                            mood="supportive"
-                          />
-                        ) : (
-                          <Companion3D 
-                            type={currentUser?.companion_type || 'orb'} 
-                            size={80}
-                          />
-                        )}
+                      <div className="w-12 h-12 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center shadow-md">
+                        <span className="text-2xl">
+                          {getCompanionEmoji()}
+                        </span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">

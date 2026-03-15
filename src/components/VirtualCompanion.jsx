@@ -3,8 +3,6 @@ import { Sparkles, BookOpen, Coffee, Music, Palette, Code, Dumbbell, Heart, Crow
 import { useState, useEffect } from "react";
 import { getCompanionUpgrades } from "@/components/companionUtils";
 import MessageFeedback from "./companion/MessageFeedback";
-import Companion3D from "./companion/Companion3D";
-import AnimatedCompanion from "./companion/AnimatedCompanion";
 
 const activities = [
   { text: "organizing my notes", icon: BookOpen, emoji: "📝" },
@@ -645,16 +643,28 @@ export default function VirtualCompanion({
             ))}
           </>
         )}
-        {(characterType === "dog" || characterType === "cat" || characterType === "robot") ? (
-          <AnimatedCompanion 
-            type={characterType}
-            size={isLarge ? 200 : 120}
-            mood={mood}
+        {characterType === "robot" ? (
+          <RobotCharacter 
+            mood={mood} 
+            isLarge={isLarge}
+            currentMood={currentMood}
+          />
+        ) : characterType === "dog" ? (
+          <DogCharacter 
+            mood={mood} 
+            isLarge={isLarge}
+            currentMood={currentMood}
+          />
+        ) : characterType === "orb" ? (
+          <OrbCharacter 
+            mood={mood} 
+            isLarge={isLarge}
           />
         ) : (
-          <Companion3D 
-            type={characterType} 
-            size={isLarge ? 200 : 120}
+          <CatCharacter 
+            mood={mood} 
+            isLarge={isLarge}
+            currentMood={currentMood}
           />
         )}
 
