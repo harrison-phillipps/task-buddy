@@ -101,7 +101,7 @@ export default function SessionGoals({
                   onValueChange={(value) => setGoalValue(value[0])}
                   min={5}
                   max={90}
-                  step={1}
+                  step={5}
                   className="w-full"
                 />
               </div>
