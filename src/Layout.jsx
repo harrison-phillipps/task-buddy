@@ -3,6 +3,7 @@ import { createPageUrl } from "@/utils";
 import { Sparkles, ListTodo, Play, LayoutDashboard, User, RefreshCw, Brain, Award, Trophy, MessageSquare, Calendar, Users, Target, Settings, PanelLeftClose, PanelLeft, ChevronDown, ChevronUp, Maximize2, Mic, CalendarDays, Zap } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import Companion3D from "@/components/companion/Companion3D";
+import CompanionImage from "@/components/companion/CompanionImage";
 import {
   Sidebar,
   SidebarContent,
@@ -293,10 +294,17 @@ function LayoutContent({ children, currentPageName }) {
                   <div className="mx-3 p-4 bg-gradient-to-br from-purple-100 to-teal-100 dark:from-purple-900/30 dark:to-teal-900/30 rounded-2xl space-y-3">
                     <div className="flex items-center gap-3">
                       <div className="w-16 h-16 flex items-center justify-center">
-                        <Companion3D 
-                          type={currentUser?.companion_type || 'robot'} 
-                          size={80}
-                        />
+                        {(currentUser?.companion_type === 'dog' || currentUser?.companion_type === 'cat') ? (
+                          <CompanionImage 
+                            type={currentUser.companion_type} 
+                            size={80}
+                          />
+                        ) : (
+                          <Companion3D 
+                            type={currentUser?.companion_type || 'robot'} 
+                            size={80}
+                          />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { getCompanionUpgrades } from "@/components/companionUtils";
 import MessageFeedback from "./companion/MessageFeedback";
 import Companion3D from "./companion/Companion3D";
+import CompanionImage from "./companion/CompanionImage";
 
 const activities = [
   { text: "organizing my notes", icon: BookOpen, emoji: "📝" },
@@ -644,10 +645,18 @@ export default function VirtualCompanion({
             ))}
           </>
         )}
-        <Companion3D 
-          type={characterType} 
-          size={isLarge ? 200 : 120}
-        />
+        {(characterType === "dog" || characterType === "cat") ? (
+          <CompanionImage 
+            type={characterType}
+            size={isLarge ? 200 : 120}
+            mood={mood}
+          />
+        ) : (
+          <Companion3D 
+            type={characterType} 
+            size={isLarge ? 200 : 120}
+          />
+        )}
 
         {/* Activity indicator */}
         {showActivity && (
