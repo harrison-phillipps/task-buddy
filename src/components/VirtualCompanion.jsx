@@ -393,16 +393,36 @@ function DogCharacter({ mood, isLarge, currentMood }) {
           <ellipse cx="62" cy="136" rx="10" ry="7" fill="#f59e0b"/>
           <ellipse cx="98" cy="136" rx="10" ry="7" fill="#f59e0b"/>
           
-          {/* Tail - wagging */}
+          {/* Tail - behind the body, curling upward */}
           <motion.path
-            d="M 118 105 Q 135 100 145 110"
+            d="M 112 120 Q 130 125 138 112 Q 144 100 135 92"
+            fill="none"
+            stroke="#d97706"
+            strokeWidth="13"
+            strokeLinecap="round"
+            opacity="0.7"
+            animate={{ 
+              d: [
+                "M 112 120 Q 130 125 138 112 Q 144 100 135 92",
+                "M 112 120 Q 132 122 142 108 Q 150 94 140 86",
+                "M 112 120 Q 130 125 138 112 Q 144 100 135 92"
+              ] 
+            }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.path
+            d="M 112 120 Q 130 125 138 112 Q 144 100 135 92"
             fill="none"
             stroke="#f59e0b"
-            strokeWidth="14"
+            strokeWidth="9"
             strokeLinecap="round"
-            filter="url(#fluffyShadow)"
+            opacity="0.6"
             animate={{ 
-              d: ["M 118 105 Q 135 100 145 110", "M 118 105 Q 135 90 148 105", "M 118 105 Q 135 100 145 110"] 
+              d: [
+                "M 112 120 Q 130 125 138 112 Q 144 100 135 92",
+                "M 112 120 Q 132 122 142 108 Q 150 94 140 86",
+                "M 112 120 Q 130 125 138 112 Q 144 100 135 92"
+              ] 
             }}
             transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
           />
