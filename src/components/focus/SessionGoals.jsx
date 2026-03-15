@@ -1,6 +1,7 @@
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { Target, Clock, CheckSquare, Zap } from "lucide-react";
 
 const goalTypes = [
