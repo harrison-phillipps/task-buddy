@@ -476,82 +476,72 @@ const RobotCompanion = ({ size, mood }) => {
 };
 
 const OrbCompanion = ({ size, mood }) => {
-  const moodColors = {
-    supportive: "from-purple-500 via-teal-500 to-blue-500",
-    celebrating: "from-yellow-400 via-pink-500 to-purple-500",
-    working: "from-teal-500 via-blue-500 to-purple-500",
-    calm: "from-blue-400 via-purple-400 to-teal-400"
-  };
-
-  const currentColor = moodColors[mood] || moodColors.supportive;
-
   return (
     <motion.svg
       width={size}
       height={size}
       viewBox="0 0 200 200"
-      animate={{ y: [0, -8, 0], scale: [1, 1.05, 1] }}
+      animate={{ y: [0, -8, 0] }}
       transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
     >
-      {/* Glow effect */}
-      <motion.ellipse
-        cx="100" cy="100" rx="50" ry="50"
-        fill="url(#glowGradient)"
-        opacity="0.5"
-        animate={{ opacity: [0.4, 0.6, 0.4], scale: [1, 1.1, 1] }}
+      {/* Outer glow */}
+      <motion.circle
+        cx="100" cy="100" r="55"
+        fill="#A78BFA"
+        opacity="0.3"
+        animate={{ opacity: [0.2, 0.4, 0.2], scale: [1, 1.1, 1] }}
         transition={{ duration: 2, repeat: Infinity }}
-        style={{ filter: 'blur(20px)' }}
+        style={{ filter: 'blur(15px)', transformOrigin: 'center' }}
       />
       
-      {/* Main orb */}
-      <circle cx="100" cy="100" r="50" fill="url(#orbGradient)" />
+      {/* Main orb - solid gradient */}
+      <circle cx="100" cy="100" r="45" fill="#8B5CF6" />
       
-      {/* Inner glow layers */}
-      <ellipse cx="100" cy="100" rx="40" ry="40" fill="url(#innerGlow1)" opacity="0.4" />
-      <ellipse cx="100" cy="100" rx="35" ry="35" fill="url(#innerGlow2)" opacity="0.3" />
+      {/* Subtle highlight */}
+      <ellipse cx="85" cy="85" rx="20" ry="25" fill="white" opacity="0.15" />
       
       {/* Face */}
-      <g transform="translate(100, 100)">
+      <g>
         {/* Eyes */}
         <motion.circle
-          cx="-10" cy="-5" r="4" fill="white"
-          animate={{ scaleY: mood === "celebrating" ? [1, 0.3, 1] : 1 }}
+          cx="88" cy="95" r="4.5" fill="white"
+          animate={{ scaleY: mood === "celebrating" ? [1, 0.2, 1] : 1 }}
           transition={{ duration: 0.3, repeat: mood === "celebrating" ? Infinity : 0, repeatDelay: 2 }}
         />
         <motion.circle
-          cx="10" cy="-5" r="4" fill="white"
-          animate={{ scaleY: mood === "celebrating" ? [1, 0.3, 1] : 1 }}
+          cx="112" cy="95" r="4.5" fill="white"
+          animate={{ scaleY: mood === "celebrating" ? [1, 0.2, 1] : 1 }}
           transition={{ duration: 0.3, repeat: mood === "celebrating" ? Infinity : 0, repeatDelay: 2 }}
         />
         {/* Smile */}
-        <path d="M -12 5 Q 0 12 12 5" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+        <path d="M 88 108 Q 100 116 112 108" stroke="white" strokeWidth="3" fill="none" strokeLinecap="round" />
       </g>
       
-      {/* Sparkle effects */}
+      {/* Small sparkles on surface */}
       <motion.circle
-        cx="130" cy="75" r="3" fill="white"
-        animate={{ opacity: [0.6, 1, 0.6] }}
+        cx="125" cy="80" r="2.5" fill="white" opacity="0.8"
+        animate={{ opacity: [0.5, 1, 0.5] }}
         transition={{ duration: 1.5, repeat: Infinity }}
       />
       <motion.circle
-        cx="140" cy="90" r="2" fill="white"
-        animate={{ opacity: [0.4, 0.8, 0.4] }}
+        cx="135" cy="95" r="1.5" fill="white" opacity="0.6"
+        animate={{ opacity: [0.3, 0.7, 0.3] }}
         transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
       />
       
-      {/* Floating particles */}
+      {/* Floating particles around orb */}
       <motion.circle
-        cx="85" cy="80" r="4" fill="#A78BFA" opacity="0.7"
+        cx="70" cy="75" r="3.5" fill="#C4B5FD" opacity="0.7"
         animate={{ y: [-5, 5, -5], x: [-2, 2, -2] }}
         transition={{ duration: 3, repeat: Infinity }}
       />
       <motion.circle
-        cx="115" cy="125" r="3" fill="#5EEAD4" opacity="0.7"
+        cx="130" cy="125" r="3" fill="#C4B5FD" opacity="0.6"
         animate={{ y: [3, -3, 3], x: [2, -2, 2] }}
         transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
       />
       <motion.circle
-        cx="125" cy="100" r="3" fill="#60A5FA" opacity="0.7"
+        cx="140" cy="105" r="2.5" fill="#DDD6FE" opacity="0.7"
         animate={{ y: [2, -4, 2] }}
         transition={{ duration: 2, repeat: Infinity, delay: 1 }}
       />
@@ -571,27 +561,6 @@ const OrbCompanion = ({ size, mood }) => {
           >✨</motion.text>
         </>
       )}
-      
-      <defs>
-        <radialGradient id="glowGradient">
-          <stop offset="0%" stopColor="#A78BFA" />
-          <stop offset="50%" stopColor="#5EEAD4" />
-          <stop offset="100%" stopColor="#60A5FA" />
-        </radialGradient>
-        <radialGradient id="orbGradient">
-          <stop offset="0%" stopColor="#A78BFA" />
-          <stop offset="50%" stopColor="#5EEAD4" />
-          <stop offset="100%" stopColor="#60A5FA" />
-        </radialGradient>
-        <radialGradient id="innerGlow1">
-          <stop offset="0%" stopColor="white" />
-          <stop offset="100%" stopColor="transparent" />
-        </radialGradient>
-        <radialGradient id="innerGlow2">
-          <stop offset="0%" stopColor="white" />
-          <stop offset="100%" stopColor="transparent" />
-        </radialGradient>
-      </defs>
     </motion.svg>
   );
 };
