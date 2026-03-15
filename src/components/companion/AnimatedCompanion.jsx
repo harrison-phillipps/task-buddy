@@ -211,72 +211,85 @@ const CatCompanion = ({ size, mood }) => {
         transition={{ duration: 2, repeat: Infinity }}
         style={{ transformOrigin: '100px 70px' }}
       >
-        {/* Rounder cat face */}
-        <circle cx="100" cy="72" r="42" fill="#F97316" />
+        {/* Rounder, cuter cat face - brown color */}
+        <circle cx="100" cy="72" r="42" fill="#A0826D" />
         
-        {/* Distinctive pointy cat ears - larger and more prominent */}
+        {/* Softer, rounder pointy ears - warm brown */}
         <motion.path
-          d="M 65 45 L 55 15 L 75 50 Z"
-          fill="#F97316"
-          animate={playful ? { rotate: [-3, 3, -3] } : {}}
-          transition={{ duration: 2, repeat: Infinity }}
-          style={{ transformOrigin: '65px 45px' }}
+          d="M 68 48 L 60 22 L 78 52 Z"
+          fill="#A0826D"
+          animate={playful ? { rotate: [-2, 2, -2] } : {}}
+          transition={{ duration: 2.5, repeat: Infinity }}
+          style={{ transformOrigin: '68px 48px' }}
         />
         <motion.path
-          d="M 135 45 L 145 15 L 125 50 Z"
-          fill="#F97316"
-          animate={playful ? { rotate: [3, -3, 3] } : {}}
-          transition={{ duration: 2, repeat: Infinity, delay: 0.3 }}
-          style={{ transformOrigin: '135px 45px' }}
+          d="M 132 48 L 140 22 L 122 52 Z"
+          fill="#A0826D"
+          animate={playful ? { rotate: [2, -2, 2] } : {}}
+          transition={{ duration: 2.5, repeat: Infinity, delay: 0.3 }}
+          style={{ transformOrigin: '132px 48px' }}
         />
         
-        {/* Pink inner ears - distinctive cat feature */}
-        <path d="M 65 45 L 60 25 L 72 47 Z" fill="#FB7185" />
-        <path d="M 135 45 L 140 25 L 128 47 Z" fill="#FB7185" />
+        {/* Softer pink inner ears */}
+        <path d="M 68 48 L 64 30 L 74 50 Z" fill="#FDB8B8" />
+        <path d="M 132 48 L 136 30 L 126 50 Z" fill="#FDB8B8" />
         
-        {/* White/cream facial markings - common in orange cats */}
-        <ellipse cx="100" cy="78" rx="25" ry="18" fill="#FED7AA" />
+        {/* Cream facial markings - rounder and softer */}
+        <ellipse cx="100" cy="78" rx="28" ry="20" fill="#EDD5C8" />
         
-        {/* Distinctive cat eyes - smaller almond shaped with slit pupils */}
+        {/* Forehead marking - cute M shape */}
+        <path d="M 88 60 Q 92 58 96 60 Q 100 57 104 60 Q 108 58 112 60" 
+          stroke="#8B6F5C" strokeWidth="2" fill="none" strokeLinecap="round" />
+        
+        {/* Big, cute round eyes - similar to dog */}
         {!isBlinking ? (
           <>
-            {/* Outer eye color - bright green */}
-            <ellipse cx="82" cy="68" rx="8" ry="11" fill="#10B981" />
-            <ellipse cx="118" cy="68" rx="8" ry="11" fill="#10B981" />
-            {/* Slit pupils - characteristic cat feature */}
-            <ellipse cx="82" cy="68" rx="1.5" ry="8" fill="#1F2937" />
-            <ellipse cx="118" cy="68" rx="1.5" ry="8" fill="#1F2937" />
-            {/* Highlights */}
-            <circle cx="83" cy="64" r="1.5" fill="white" />
-            <circle cx="119" cy="64" r="1.5" fill="white" />
+            {/* Outer eye - warm amber */}
+            <circle cx="85" cy="70" r="9" fill="#D97706" />
+            <circle cx="115" cy="70" r="9" fill="#D97706" />
+            {/* Inner eye - lighter amber */}
+            <circle cx="85" cy="70" r="7" fill="#F59E0B" />
+            <circle cx="115" cy="70" r="7" fill="#F59E0B" />
+            {/* Small pupils for cute look */}
+            <circle cx="85" cy="70" r="3" fill="#1F2937" />
+            <circle cx="115" cy="70" r="3" fill="#1F2937" />
+            {/* Big sparkly highlights */}
+            <circle cx="87" cy="68" r="2.5" fill="white" />
+            <circle cx="117" cy="68" r="2.5" fill="white" />
+            <circle cx="84" cy="72" r="1" fill="white" opacity="0.6" />
+            <circle cx="114" cy="72" r="1" fill="white" opacity="0.6" />
           </>
         ) : (
           <>
-            <path d="M 76 68 Q 82 70 88 68" stroke="#1F2937" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-            <path d="M 112 68 Q 118 70 124 68" stroke="#1F2937" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            <path d="M 78 70 Q 85 73 92 70" stroke="#1F2937" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            <path d="M 108 70 Q 115 73 122 70" stroke="#1F2937" strokeWidth="2.5" fill="none" strokeLinecap="round" />
           </>
         )}
         
-        {/* Small pink nose - triangular cat nose */}
-        <path d="M 100 80 L 96 84 L 100 85 L 104 84 Z" fill="#FB7185" />
+        {/* Cute pink nose - rounder */}
+        <ellipse cx="100" cy="83" rx="4" ry="3.5" fill="#F8A5C2" />
         
-        {/* Prominent whiskers - key cat feature */}
-        <line x1="55" y1="76" x2="30" y2="73" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" />
-        <line x1="55" y1="80" x2="30" y2="82" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" />
-        <line x1="55" y1="84" x2="30" y2="88" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" />
-        <line x1="145" y1="76" x2="170" y2="73" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" />
-        <line x1="145" y1="80" x2="170" y2="82" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" />
-        <line x1="145" y1="84" x2="170" y2="88" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" />
+        {/* Delicate whiskers - softer appearance */}
+        <line x1="60" y1="78" x2="35" y2="75" stroke="#6B5A4D" strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
+        <line x1="60" y1="82" x2="35" y2="84" stroke="#6B5A4D" strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
+        <line x1="60" y1="86" x2="35" y2="90" stroke="#6B5A4D" strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
+        <line x1="140" y1="78" x2="165" y2="75" stroke="#6B5A4D" strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
+        <line x1="140" y1="82" x2="165" y2="84" stroke="#6B5A4D" strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
+        <line x1="140" y1="86" x2="165" y2="90" stroke="#6B5A4D" strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
         
-        {/* Mouth - small cat smile */}
-        <line x1="100" y1="85" x2="100" y2="88" stroke="#1F2937" strokeWidth="1.5" />
+        {/* Sweet gentle smile - similar to dog friendliness */}
+        <line x1="100" y1="83" x2="100" y2="87" stroke="#6B5A4D" strokeWidth="2" strokeLinecap="round" />
         <path
-          d="M 92 88 Q 100 91 108 88"
-          stroke="#1F2937"
-          strokeWidth="1.5"
+          d="M 90 87 Q 100 92 110 87"
+          stroke="#6B5A4D"
+          strokeWidth="2"
           fill="none"
           strokeLinecap="round"
         />
+        
+        {/* Rosy cheeks for extra cuteness */}
+        <circle cx="75" cy="80" r="6" fill="#F8A5C2" opacity="0.3" />
+        <circle cx="125" cy="80" r="6" fill="#F8A5C2" opacity="0.3" />
       </motion.g>
       
       {/* Front paws */}
