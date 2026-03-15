@@ -186,13 +186,14 @@ const CatCompanion = ({ size, mood }) => {
       animate={{ y: [0, -5, 0] }}
       transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
     >
-      {/* Body */}
-      <ellipse cx="100" cy="120" rx="45" ry="50" fill="#F97316" />
+      {/* Body - warm brown */}
+      <ellipse cx="100" cy="120" rx="45" ry="50" fill="#A0826D" />
+      <ellipse cx="100" cy="125" rx="30" ry="35" fill="#EDD5C8" />
       
-      {/* Tail */}
+      {/* Tail - brown */}
       <motion.path
         d="M 140 110 Q 160 100 165 80 Q 168 60 160 50"
-        stroke="#F97316"
+        stroke="#A0826D"
         strokeWidth="14"
         fill="none"
         strokeLinecap="round"
@@ -292,11 +293,17 @@ const CatCompanion = ({ size, mood }) => {
         <circle cx="125" cy="80" r="6" fill="#F8A5C2" opacity="0.3" />
       </motion.g>
       
-      {/* Front paws */}
-      <ellipse cx="85" cy="165" rx="10" ry="8" fill="#F97316" />
-      <ellipse cx="115" cy="165" rx="10" ry="8" fill="#F97316" />
-      <ellipse cx="85" cy="167" rx="7" ry="5" fill="#FED7AA" />
-      <ellipse cx="115" cy="167" rx="7" ry="5" fill="#FED7AA" />
+      {/* Front paws - brown */}
+      <ellipse cx="85" cy="165" rx="10" ry="8" fill="#A0826D" />
+      <ellipse cx="115" cy="165" rx="10" ry="8" fill="#A0826D" />
+      <ellipse cx="85" cy="167" rx="7" ry="5" fill="#EDD5C8" />
+      <ellipse cx="115" cy="167" rx="7" ry="5" fill="#EDD5C8" />
+      
+      {/* Toe beans for extra cuteness */}
+      <circle cx="82" cy="168" r="1.5" fill="#F8A5C2" />
+      <circle cx="88" cy="168" r="1.5" fill="#F8A5C2" />
+      <circle cx="112" cy="168" r="1.5" fill="#F8A5C2" />
+      <circle cx="118" cy="168" r="1.5" fill="#F8A5C2" />
       
       {/* Purring heart */}
       {purr && (
