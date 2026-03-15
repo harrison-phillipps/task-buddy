@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 
 const DogCompanion = ({ size, mood }) => {
   const [isBlinking, setIsBlinking] = useState(false);
-  const [tailWag, setTailWag] = useState(0);
+  const [tongueOut, setTongueOut] = useState(true);
 
   useEffect(() => {
     // Random blinking
@@ -12,47 +12,46 @@ const DogCompanion = ({ size, mood }) => {
       setTimeout(() => setIsBlinking(false), 150);
     }, 3000 + Math.random() * 2000);
 
-    // Tail wagging based on mood
-    const wagInterval = setInterval(() => {
-      setTailWag(Math.random() > 0.5 ? 1 : -1);
-      setTimeout(() => setTailWag(0), 300);
-    }, mood === "celebrating" ? 500 : 2000);
+    // Tongue panting
+    const tongueInterval = setInterval(() => {
+      setTongueOut(prev => !prev);
+    }, 500);
 
     return () => {
       clearInterval(blinkInterval);
-      clearInterval(wagInterval);
+      clearInterval(tongueInterval);
     };
-  }, [mood]);
+  }, []);
 
-  const headBob = mood === "celebrating" ? { y: [0, -10, 0] } : { y: [0, -3, 0] };
-  const tongueOut = mood === "celebrating" || mood === "working";
+  const excited = mood === "celebrating";
+  const happy = mood === "supportive" || mood === "calm";
 
   return (
     <motion.svg
       width={size}
       height={size}
       viewBox="0 0 200 200"
-      animate={headBob}
+      animate={{ y: [0, -8, 0] }}
       transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
     >
       {/* Body */}
-      <ellipse cx="100" cy="130" rx="50" ry="45" fill="#F59E0B" />
+      <ellipse cx="100" cy="130" rx="40" ry="45" fill="#F59E0B" />
       
-      {/* Tail */}
+      {/* Tail - wagging */}
       <motion.path
-        d="M 145 120 Q 165 110 170 95"
+        d="M 135 120 Q 155 110 160 90"
         stroke="#F59E0B"
         strokeWidth="12"
         fill="none"
         strokeLinecap="round"
-        animate={{ rotate: tailWag * 15 }}
-        transition={{ duration: 0.3 }}
-        style={{ transformOrigin: '145px 120px' }}
+        animate={{ rotate: excited ? [-20, 20, -20] : [-10, 10, -10] }}
+        transition={{ duration: excited ? 0.3 : 0.8, repeat: Infinity }}
+        style={{ transformOrigin: '135px 120px' }}
       />
       
       {/* Head */}
       <motion.g
-        animate={mood === "celebrating" ? { rotate: [0, -5, 5, 0] } : {}}
+        animate={excited ? { rotate: [0, -5, 5, 0] } : {}}
         transition={{ duration: 1, repeat: Infinity }}
         style={{ transformOrigin: '100px 75px' }}
       >
@@ -126,25 +125,21 @@ const DogCompanion = ({ size, mood }) => {
         />
       </motion.g>
       
-      {/* Legs */}
-      <rect x="75" y="160" width="12" height="30" rx="6" fill="#F59E0B" />
-      <rect x="113" y="160" width="12" height="30" rx="6" fill="#F59E0B" />
-      
-      {/* Paws */}
-      <ellipse cx="81" cy="185" rx="8" ry="6" fill="#FCD34D" />
-      <ellipse cx="119" cy="185" rx="8" ry="6" fill="#FCD34D" />
+      {/* Front legs */}
+      <rect x="80" y="165" width="12" height="25" rx="6" fill="#F59E0B" />
+      <rect x="108" y="165" width="12" height="25" rx="6" fill="#F59E0B" />
       
       {/* Celebration sparkles */}
-      {mood === "celebrating" && (
+      {excited && (
         <>
           <motion.text
-            x="140" y="50" fontSize="24"
-            animate={{ y: [50, 30, 50], opacity: [0, 1, 0] }}
+            x="140" y="50" fontSize="20"
+            animate={{ y: [50, 35, 50], opacity: [0, 1, 0] }}
             transition={{ duration: 2, repeat: Infinity }}
           >✨</motion.text>
           <motion.text
-            x="50" y="50" fontSize="24"
-            animate={{ y: [50, 30, 50], opacity: [0, 1, 0] }}
+            x="45" y="50" fontSize="20"
+            animate={{ y: [50, 35, 50], opacity: [0, 1, 0] }}
             transition={{ duration: 2, repeat: Infinity, delay: 1 }}
           >✨</motion.text>
         </>
@@ -480,6 +475,127 @@ const RobotCompanion = ({ size, mood }) => {
   );
 };
 
+const OrbCompanion = ({ size, mood }) => {
+  const moodColors = {
+    supportive: "from-purple-500 via-teal-500 to-blue-500",
+    celebrating: "from-yellow-400 via-pink-500 to-purple-500",
+    working: "from-teal-500 via-blue-500 to-purple-500",
+    calm: "from-blue-400 via-purple-400 to-teal-400"
+  };
+
+  const currentColor = moodColors[mood] || moodColors.supportive;
+
+  return (
+    <motion.svg
+      width={size}
+      height={size}
+      viewBox="0 0 200 200"
+      animate={{ y: [0, -8, 0], scale: [1, 1.05, 1] }}
+      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+    >
+      {/* Glow effect */}
+      <motion.ellipse
+        cx="100" cy="100" rx="50" ry="50"
+        fill="url(#glowGradient)"
+        opacity="0.5"
+        animate={{ opacity: [0.4, 0.6, 0.4], scale: [1, 1.1, 1] }}
+        transition={{ duration: 2, repeat: Infinity }}
+        style={{ filter: 'blur(20px)' }}
+      />
+      
+      {/* Main orb */}
+      <circle cx="100" cy="100" r="50" fill="url(#orbGradient)" />
+      
+      {/* Inner glow layers */}
+      <ellipse cx="100" cy="100" rx="40" ry="40" fill="url(#innerGlow1)" opacity="0.4" />
+      <ellipse cx="100" cy="100" rx="35" ry="35" fill="url(#innerGlow2)" opacity="0.3" />
+      
+      {/* Face */}
+      <g transform="translate(100, 100)">
+        {/* Eyes */}
+        <motion.circle
+          cx="-10" cy="-5" r="4" fill="white"
+          animate={{ scaleY: mood === "celebrating" ? [1, 0.3, 1] : 1 }}
+          transition={{ duration: 0.3, repeat: mood === "celebrating" ? Infinity : 0, repeatDelay: 2 }}
+        />
+        <motion.circle
+          cx="10" cy="-5" r="4" fill="white"
+          animate={{ scaleY: mood === "celebrating" ? [1, 0.3, 1] : 1 }}
+          transition={{ duration: 0.3, repeat: mood === "celebrating" ? Infinity : 0, repeatDelay: 2 }}
+        />
+        {/* Smile */}
+        <path d="M -12 5 Q 0 12 12 5" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+      </g>
+      
+      {/* Sparkle effects */}
+      <motion.circle
+        cx="130" cy="75" r="3" fill="white"
+        animate={{ opacity: [0.6, 1, 0.6] }}
+        transition={{ duration: 1.5, repeat: Infinity }}
+      />
+      <motion.circle
+        cx="140" cy="90" r="2" fill="white"
+        animate={{ opacity: [0.4, 0.8, 0.4] }}
+        transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+      />
+      
+      {/* Floating particles */}
+      <motion.circle
+        cx="85" cy="80" r="4" fill="#A78BFA" opacity="0.7"
+        animate={{ y: [-5, 5, -5], x: [-2, 2, -2] }}
+        transition={{ duration: 3, repeat: Infinity }}
+      />
+      <motion.circle
+        cx="115" cy="125" r="3" fill="#5EEAD4" opacity="0.7"
+        animate={{ y: [3, -3, 3], x: [2, -2, 2] }}
+        transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
+      />
+      <motion.circle
+        cx="125" cy="100" r="3" fill="#60A5FA" opacity="0.7"
+        animate={{ y: [2, -4, 2] }}
+        transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+      />
+
+      {/* Celebration sparkles */}
+      {mood === "celebrating" && (
+        <>
+          <motion.text
+            x="135" y="60" fontSize="20"
+            animate={{ y: [60, 45, 60], rotate: [0, 180, 360], opacity: [0, 1, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >✨</motion.text>
+          <motion.text
+            x="50" y="60" fontSize="20"
+            animate={{ y: [60, 45, 60], rotate: [360, 180, 0], opacity: [0, 1, 0] }}
+            transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+          >✨</motion.text>
+        </>
+      )}
+      
+      <defs>
+        <radialGradient id="glowGradient">
+          <stop offset="0%" stopColor="#A78BFA" />
+          <stop offset="50%" stopColor="#5EEAD4" />
+          <stop offset="100%" stopColor="#60A5FA" />
+        </radialGradient>
+        <radialGradient id="orbGradient">
+          <stop offset="0%" stopColor="#A78BFA" />
+          <stop offset="50%" stopColor="#5EEAD4" />
+          <stop offset="100%" stopColor="#60A5FA" />
+        </radialGradient>
+        <radialGradient id="innerGlow1">
+          <stop offset="0%" stopColor="white" />
+          <stop offset="100%" stopColor="transparent" />
+        </radialGradient>
+        <radialGradient id="innerGlow2">
+          <stop offset="0%" stopColor="white" />
+          <stop offset="100%" stopColor="transparent" />
+        </radialGradient>
+      </defs>
+    </motion.svg>
+  );
+};
+
 export default function AnimatedCompanion({ type, size = 120, mood = "supportive" }) {
   if (type === "dog") {
     return <DogCompanion size={size} mood={mood} />;
@@ -491,6 +607,10 @@ export default function AnimatedCompanion({ type, size = 120, mood = "supportive
   
   if (type === "robot") {
     return <RobotCompanion size={size} mood={mood} />;
+  }
+  
+  if (type === "orb") {
+    return <OrbCompanion size={size} mood={mood} />;
   }
   
   return null;
