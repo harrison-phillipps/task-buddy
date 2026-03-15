@@ -92,19 +92,19 @@ export default function SessionGoals({
               </>
             )}
             {selectedGoal === "time" && (
-              <>
-                {[15, 30, 45, 60, 90].map(mins => (
-                  <Button
-                    key={mins}
-                    variant={goalValue === mins ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setGoalValue(mins)}
-                    className={goalValue === mins ? "bg-teal-500" : ""}
-                  >
-                    {mins}m
-                  </Button>
-                ))}
-              </>
+              <div className="w-full space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{goalValue || 30} minutes</span>
+                </div>
+                <Slider
+                  value={[goalValue || 30]}
+                  onValueChange={(value) => setGoalValue(value[0])}
+                  min={5}
+                  max={90}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
             )}
             {selectedGoal === "pomodoros" && (
               <>
