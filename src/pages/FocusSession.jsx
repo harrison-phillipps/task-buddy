@@ -1056,6 +1056,8 @@ export default function FocusSession() {
                 isPlaying={false}
               />
 
+              <SpotifyPlayer isSessionActive={false} />
+
               <SmartTimerRecommendations
                 currentMood={moodBefore}
                 energyLevel={selectedTask?.energy_level_needed}
