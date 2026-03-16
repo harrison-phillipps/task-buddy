@@ -524,8 +524,8 @@ export default function FocusSession() {
           showNotification('Focus Session Started', `Working on: ${selectedTask.title}`);
         }
       });
-    } else {
-      showNotification('Focus Session Started', `Working on: ${selectedTask.title}`);
+    } else if (getNotifPrefs().sessionStart !== false) {
+      showRichNotification('Focus Session Started 🎯', `Working on: ${selectedTask.title}`, { tag: 'session-start' });
     }
   };
 
