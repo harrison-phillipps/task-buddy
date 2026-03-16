@@ -360,6 +360,12 @@ export default function FocusSession() {
         setIsBreakTime(true);
         setTimeLeft(breakInterval * 60);
         setShowBreakPrompt(true);
+        if (notificationsEnabled && getNotifPrefs().breakReminder !== false) {
+          showRichNotification('Break Time! ☕', `${breakInterval} min break — stretch, hydrate, breathe.`, {
+            tag: 'break-start',
+            requireInteraction: false,
+          });
+        }
       }
       
       if (notificationsEnabled && getNotifPrefs().pomodoroComplete !== false) {
