@@ -302,9 +302,8 @@ export default function FocusSession() {
       setCurrentEncouragement(randomMessage);
       setShowEncouragement(true);
       
-      // Show notification if app is in background
-      if (document.hidden && notificationsEnabled) {
-        showNotification('Keep Going! 💪', randomMessage);
+      if (document.hidden && notificationsEnabled && getNotifPrefs().encouragements !== false) {
+        showRichNotification('Keep Going! 💪', randomMessage, { tag: 'encouragement' });
       }
       
       setTimeout(() => setShowEncouragement(false), 5000);
@@ -315,9 +314,8 @@ export default function FocusSession() {
       setCurrentEncouragement(randomMessage);
       setShowEncouragement(true);
       
-      // Show notification if app is in background
-      if (document.hidden && notificationsEnabled) {
-        showNotification('Keep Going! 💪', randomMessage);
+      if (document.hidden && notificationsEnabled && getNotifPrefs().encouragements !== false) {
+        showRichNotification('Keep Going! 💪', randomMessage, { tag: 'encouragement' });
       }
       
       setTimeout(() => setShowEncouragement(false), 5000);
