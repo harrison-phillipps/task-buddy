@@ -520,8 +520,8 @@ export default function FocusSession() {
     if (!notificationsEnabled) {
       requestNotificationPermission().then(granted => {
         setNotificationsEnabled(granted);
-        if (granted) {
-          showNotification('Focus Session Started', `Working on: ${selectedTask.title}`);
+        if (granted && getNotifPrefs().sessionStart !== false) {
+          showRichNotification('Focus Session Started 🎯', `Working on: ${selectedTask.title}`, { tag: 'session-start' });
         }
       });
     } else if (getNotifPrefs().sessionStart !== false) {
