@@ -148,8 +148,14 @@ export default function FocusSession() {
     },
   });
 
-  // Check notification permission on mount
+  // Helper to read notification prefs
+  const getNotifPrefs = () => {
+    try { return JSON.parse(localStorage.getItem('focus_notification_prefs') || '{}'); } catch { return {}; }
+  };
+
+  // Check notification permission + register SW on mount
   useEffect(() => {
+    registerServiceWorker();
     requestNotificationPermission().then(granted => {
       setNotificationsEnabled(granted);
     });
