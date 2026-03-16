@@ -1071,6 +1071,10 @@ export default function FocusSession() {
 
               <SpotifyPlayer isSessionActive={false} />
 
+              <FocusNotificationSettings
+                onPermissionChange={(granted) => setNotificationsEnabled(granted)}
+              />
+
               <SmartTimerRecommendations
                 currentMood={moodBefore}
                 energyLevel={selectedTask?.energy_level_needed}
