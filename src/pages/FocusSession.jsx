@@ -1285,6 +1285,9 @@ export default function FocusSession() {
                       />
                     )}
                     {!isBreakTime && (
+                      <SpotifyPlayer isSessionActive={isActive} compact />
+                    )}
+                    {!isBreakTime && (
                       <DistractionBlocker isSessionActive={isActive} />
                     )}
                     
