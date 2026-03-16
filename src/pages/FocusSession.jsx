@@ -44,6 +44,7 @@ import OfflineIndicator from "../components/OfflineIndicator";
 import PomodoroTimer from "../components/focus/PomodoroTimer";
 import DistractionBlocker from "../components/focus/DistractionBlocker";
 import SessionMetrics from "../components/focus/SessionMetrics";
+import SpotifyPlayer from "../components/focus/SpotifyPlayer";
 
 // Dynamic encouragement based on user progress
 const getEncouragementMessages = (userProgress) => {
