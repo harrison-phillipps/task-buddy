@@ -362,8 +362,12 @@ export default function FocusSession() {
         setShowBreakPrompt(true);
       }
       
-      if (notificationsEnabled) {
-        showNotification('Pomodoro Complete! 🍅', 'Time for a break!');
+      if (notificationsEnabled && getNotifPrefs().pomodoroComplete !== false) {
+        showRichNotification('Pomodoro Complete! 🍅', 'Time for a break! Great work.', {
+          tag: 'pomodoro',
+          requireInteraction: true,
+          actions: [{ action: 'start_break', title: '☕ Start Break' }, { action: 'skip_break', title: '⏩ Skip Break' }]
+        });
       }
     } else {
       setIsBreakTime(false);
