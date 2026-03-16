@@ -395,8 +395,12 @@ export default function FocusSession() {
       setAllStepsComplete(true);
       setShowBreakPrompt(true);
 
-      if (notificationsEnabled) {
-        showNotification('All Steps Complete! 🎉', 'Amazing work!');
+      if (notificationsEnabled && getNotifPrefs().sessionEnd !== false) {
+        showRichNotification('All Steps Complete! 🎉', 'Amazing work! Session finished.', {
+          tag: 'session-end',
+          requireInteraction: true,
+          vibrate: [200, 100, 200, 100, 400],
+        });
       }
     } else {
       const nextIndex = currentSubtaskIndex + 1;
