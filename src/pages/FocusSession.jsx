@@ -380,6 +380,14 @@ export default function FocusSession() {
     } else {
       setIsBreakTime(false);
       setShowBreakPrompt(false);
+      // Schedule next Pomodoro-complete notification
+      if (notificationsEnabled && getNotifPrefs().pomodoroComplete !== false) {
+        sendSWMessage({
+          type: 'SCHEDULE_POMODORO_COMPLETE',
+          completesAt: Date.now() + workInterval * 60 * 1000,
+          body: `Pomodoro #${pomodorosCompleted + 1} done! Time for a ${breakInterval}m break.`,
+        });
+      }
       handleSubtaskComplete();
     }
   };
