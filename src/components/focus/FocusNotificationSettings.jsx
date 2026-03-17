@@ -1,86 +1,146 @@
 import { useState, useEffect } from "react";
-import { Bell, BellOff, Watch, Smartphone, CheckCircle2, AlertCircle } from "lucide-react";
+import { Bell, Watch, Smartphone, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { requestNotificationPermission } from "./BackgroundTimer";
 
-export function registerServiceWorker() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+// ─── Service Worker Registration ─────────────────────────────────────────────
+
+export async function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return null;
+  try {
+    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    await navigator.serviceWorker.ready;
+    return reg;
+  } catch (e) {
+    console.warn('SW registration failed:', e);
+    return null;
   }
 }
 
+// ─── Send message to active SW ───────────────────────────────────────────────
+
 export function sendSWMessage(data) {
-  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage(data);
+  if (!('serviceWorker' in navigator)) return;
+  const controller = navigator.serviceWorker.controller;
+  if (controller) {
+    controller.postMessage(data);
+  } else {
+    // SW not yet controlling — wait for it
+    navigator.serviceWorker.ready.then((reg) => {
+      if (reg.active) reg.active.postMessage(data);
+    });
   }
 }
+
+// ─── Rich notification via SW (with fallback) ────────────────────────────────
 
 export function showRichNotification(title, body, options = {}) {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
-  const { tag = 'focus', actions = [], data = {}, requireInteraction = false, vibrate = [200, 100, 200] } = options;
+  const payload = {
+    type: 'SCHEDULE_NOTIFICATION',
+    id: options.tag || 'focus',
+    delay: options.delay || 0,
+    title,
+    body,
+    tag: options.tag || 'focus',
+    vibrate: options.vibrate || [200, 100, 200],
+    requireInteraction: options.requireInteraction || false,
+    actions: options.actions || [],
+    data: options.data || {},
+  };
 
-  // Use service worker for rich notifications with actions (better watch support)
-  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-    sendSWMessage({
-      type: 'SCHEDULE_NOTIFICATION',
-      delay: 0,
-      title,
-      body,
-      tag,
-      actions,
-      data,
-    });
+  if ('serviceWorker' in navigator) {
+    sendSWMessage(payload);
   } else {
-    // Fallback to basic notification
+    // Fallback: basic Notification API
     try {
-      const n = new Notification(title, { body, icon: '/favicon.ico', badge: '/favicon.ico', tag, vibrate, requireInteraction, ...options });
+      const n = new Notification(title, {
+        body,
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+        tag: payload.tag,
+        vibrate: payload.vibrate,
+        requireInteraction: payload.requireInteraction,
+      });
       n.onclick = () => { window.focus(); n.close(); };
-      setTimeout(() => n.close(), requireInteraction ? 30000 : 8000);
-    } catch {}
+      setTimeout(() => n.close(), payload.requireInteraction ? 30000 : 8000);
+    } catch (_) {}
   }
 }
 
+// ─── Schedule a notification at a future timestamp ───────────────────────────
+
+export function scheduleNotificationAt(type, endsAt, extras = {}) {
+  sendSWMessage({ type, endsAt, startsAt: endsAt, completesAt: endsAt, ...extras });
+}
+
+export function cancelNotification(id) {
+  sendSWMessage({ type: 'CANCEL_NOTIFICATION', id });
+}
+
+export function cancelAllNotifications() {
+  sendSWMessage({ type: 'CANCEL_ALL' });
+}
+
+// ─── Notification Preferences ─────────────────────────────────────────────────
+
+const PREFS_KEY = 'focus_notification_prefs';
+const DEFAULT_PREFS = {
+  sessionStart: true,
+  pomodoroComplete: true,
+  breakReminder: true,
+  sessionEnd: true,
+  encouragements: false,
+};
+
+export function getNotifPrefs() {
+  try {
+    const stored = localStorage.getItem(PREFS_KEY);
+    return stored ? { ...DEFAULT_PREFS, ...JSON.parse(stored) } : DEFAULT_PREFS;
+  } catch {
+    return DEFAULT_PREFS;
+  }
+}
+
+function saveNotifPref(key, value) {
+  const current = getNotifPrefs();
+  localStorage.setItem(PREFS_KEY, JSON.stringify({ ...current, [key]: value }));
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export default function FocusNotificationSettings({ onPermissionChange }) {
-  const [permission, setPermission] = useState(Notification.permission || 'default');
-  const [sessionStart, setSessionStart] = useState(true);
-  const [pomodoroComplete, setPomodoroComplete] = useState(true);
-  const [sessionEnd, setSessionEnd] = useState(true);
-  const [breakReminder, setBreakReminder] = useState(true);
-  const [encouragements, setEncouragements] = useState(false);
+  const [permission, setPermission] = useState(() =>
+    typeof Notification !== 'undefined' ? Notification.permission : 'default'
+  );
+  const [prefs, setPrefs] = useState(getNotifPrefs);
 
-  // Save prefs to localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem('focus_notification_prefs');
-    if (stored) {
-      const prefs = JSON.parse(stored);
-      setSessionStart(prefs.sessionStart ?? true);
-      setPomodoroComplete(prefs.pomodoroComplete ?? true);
-      setSessionEnd(prefs.sessionEnd ?? true);
-      setBreakReminder(prefs.breakReminder ?? true);
-      setEncouragements(prefs.encouragements ?? false);
-    }
-  }, []);
-
-  const savePrefs = (key, value) => {
-    const stored = JSON.parse(localStorage.getItem('focus_notification_prefs') || '{}');
-    localStorage.setItem('focus_notification_prefs', JSON.stringify({ ...stored, [key]: value }));
+  // Keep prefs in sync with localStorage
+  const updatePref = (key, value) => {
+    const next = { ...prefs, [key]: value };
+    setPrefs(next);
+    saveNotifPref(key, value);
   };
 
   const handleRequestPermission = async () => {
     const granted = await requestNotificationPermission();
-    const newPermission = granted ? 'granted' : 'denied';
-    setPermission(newPermission);
+    const newPerm = granted ? 'granted' : 'denied';
+    setPermission(newPerm);
     onPermissionChange?.(granted);
 
     if (granted) {
-      registerServiceWorker();
-      showRichNotification('🎯 TaskBuddy Notifications On', 'You\'ll get focus session alerts — including on your smartwatch!', {
-        tag: 'test',
-        requireInteraction: false,
-      });
+      await registerServiceWorker();
+      // Send a test notification to confirm it works
+      setTimeout(() => {
+        showRichNotification(
+          '🎯 TaskBuddy Notifications Active',
+          'Focus alerts will appear here — including on your smartwatch!',
+          { tag: 'test', requireInteraction: false }
+        );
+      }, 500);
     }
   };
 
@@ -98,6 +158,14 @@ export default function FocusNotificationSettings({ onPermissionChange }) {
     );
   }
 
+  const items = [
+    { label: "Session starts 🎯", key: "sessionStart" },
+    { label: "Pomodoro cycle completes 🍅", key: "pomodoroComplete" },
+    { label: "Break time begins ☕", key: "breakReminder" },
+    { label: "Session ends 🎉", key: "sessionEnd" },
+    { label: "Encouragement messages 💪", key: "encouragements" },
+  ];
+
   return (
     <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-purple-100 dark:border-gray-700 overflow-hidden shadow-sm">
       <div className="p-4">
@@ -109,14 +177,18 @@ export default function FocusNotificationSettings({ onPermissionChange }) {
             <div>
               <p className="font-semibold text-sm text-gray-800 dark:text-gray-100">Focus Notifications</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                <Watch className="w-3 h-3" /> Mirrors to Apple Watch & Wear OS
+                <Watch className="w-3 h-3" /> Mirrors to Apple Watch &amp; Wear OS
               </p>
             </div>
           </div>
           {permission === 'granted' ? (
             <CheckCircle2 className="w-5 h-5 text-green-500" />
           ) : (
-            <Button size="sm" onClick={handleRequestPermission} className="bg-purple-600 hover:bg-purple-700 text-white text-xs h-8">
+            <Button
+              size="sm"
+              onClick={handleRequestPermission}
+              className="bg-purple-600 hover:bg-purple-700 text-white text-xs h-8"
+            >
               Enable
             </Button>
           )}
@@ -124,19 +196,15 @@ export default function FocusNotificationSettings({ onPermissionChange }) {
 
         {permission === 'granted' && (
           <div className="space-y-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Notify me when…</p>
-            {[
-              { label: "Session starts", key: "sessionStart", value: sessionStart, set: setSessionStart },
-              { label: "Pomodoro cycle completes 🍅", key: "pomodoroComplete", value: pomodoroComplete, set: setPomodoroComplete },
-              { label: "Break time begins ☕", key: "breakReminder", value: breakReminder, set: setBreakReminder },
-              { label: "Session ends 🎉", key: "sessionEnd", value: sessionEnd, set: setSessionEnd },
-              { label: "Encouragement messages 💪", key: "encouragements", value: encouragements, set: setEncouragements },
-            ].map(({ label, key, value, set }) => (
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Notify me when…
+            </p>
+            {items.map(({ label, key }) => (
               <div key={key} className="flex items-center justify-between">
                 <Label className="text-sm text-gray-700 dark:text-gray-300 font-normal">{label}</Label>
                 <Switch
-                  checked={value}
-                  onCheckedChange={(v) => { set(v); savePrefs(key, v); }}
+                  checked={prefs[key]}
+                  onCheckedChange={(v) => updatePref(key, v)}
                 />
               </div>
             ))}
