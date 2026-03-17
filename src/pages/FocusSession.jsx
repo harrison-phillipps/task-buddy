@@ -45,7 +45,14 @@ import PomodoroTimer from "../components/focus/PomodoroTimer";
 import DistractionBlocker from "../components/focus/DistractionBlocker";
 import SessionMetrics from "../components/focus/SessionMetrics";
 import SpotifyPlayer from "../components/focus/SpotifyPlayer";
-import FocusNotificationSettings, { showRichNotification, registerServiceWorker } from "../components/focus/FocusNotificationSettings";
+import FocusNotificationSettings, {
+  showRichNotification,
+  registerServiceWorker,
+  scheduleNotificationAt,
+  cancelAllNotifications,
+  getNotifPrefs,
+  sendSWMessage,
+} from "../components/focus/FocusNotificationSettings";
 
 // Dynamic encouragement based on user progress
 const getEncouragementMessages = (userProgress) => {
