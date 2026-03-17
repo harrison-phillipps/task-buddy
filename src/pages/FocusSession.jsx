@@ -516,7 +516,19 @@ export default function FocusSession() {
       : (firstSubtask?.estimated_minutes || 10) * 60;
     
     setTimeLeft(initialTime);
-    
+
+    // Schedule a SW-based session-end notification at the exact timestamp
+    if (notificationsEnabled && getNotifPrefs().sessionEnd !== false) {
+      const totalMs = selectedTask.subtasks?.reduce((s, st) => s + (st.estimated_minutes || 0) * 60000, 0) || initialTime * 1000;
+      sendSWMessage({
+        type: 'SCHEDULE_SESSION_END',
+        endsAt: Date.now() + totalMs,
+        title: '⏱ Session Complete!',
+        body: `You finished working on: ${selectedTask.title}`,
+        taskId: selectedTask.id,
+      });
+    }
+
     if (selectedTask?.status === 'not_started') {
       updateTaskMutation.mutate({
         id: selectedTask.id,
