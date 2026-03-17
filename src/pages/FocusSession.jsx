@@ -518,14 +518,26 @@ export default function FocusSession() {
     setTimeLeft(initialTime);
 
     // Schedule a SW-based session-end notification at the exact timestamp
-    if (notificationsEnabled && getNotifPrefs().sessionEnd !== false) {
-      const totalMs = selectedTask.subtasks?.reduce((s, st) => s + (st.estimated_minutes || 0) * 60000, 0) || initialTime * 1000;
+    const prefs = getNotifPrefs();
+    const totalMs = selectedTask.subtasks?.reduce((s, st) => s + (st.estimated_minutes || 0) * 60000, 0) || initialTime * 1000;
+
+    // Schedule SW-based session-end notification
+    if (notificationsEnabled && prefs.sessionEnd !== false) {
       sendSWMessage({
         type: 'SCHEDULE_SESSION_END',
         endsAt: Date.now() + totalMs,
         title: '⏱ Session Complete!',
-        body: `You finished working on: ${selectedTask.title}`,
+        body: `You finished: ${selectedTask.title}`,
         taskId: selectedTask.id,
+      });
+    }
+
+    // Schedule first Pomodoro-complete (if pomodoro mode)
+    if (focusTechnique === 'pomodoro' && notificationsEnabled && prefs.pomodoroComplete !== false) {
+      sendSWMessage({
+        type: 'SCHEDULE_POMODORO_COMPLETE',
+        completesAt: Date.now() + workInterval * 60 * 1000,
+        body: `Pomodoro #1 done! Time for a ${breakInterval}m break.`,
       });
     }
 
