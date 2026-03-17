@@ -830,6 +830,9 @@ export default function FocusSession() {
     if (sessionId) {
       localStorage.removeItem(`focus_session_${sessionId}`);
     }
+
+    // Cancel all pending SW notifications
+    cancelAllNotifications();
   };
 
   const formatTime = (seconds) => {
