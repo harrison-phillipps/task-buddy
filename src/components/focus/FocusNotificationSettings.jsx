@@ -21,16 +21,26 @@ export async function registerServiceWorker() {
 
 // ─── Send message to active SW ───────────────────────────────────────────────
 
-export function sendSWMessage(data) {
+export async function sendSWMessage(data) {
   if (!('serviceWorker' in navigator)) return;
-  const controller = navigator.serviceWorker.controller;
-  if (controller) {
-    controller.postMessage(data);
+
+  // Always wait for ready first — this resolves immediately if already active
+  const reg = await navigator.serviceWorker.ready;
+
+  // controller is the SW actually controlling this page
+  // active is the SW that is installed (may not control yet on first load)
+  const target = navigator.serviceWorker.controller || reg.active;
+
+  if (target) {
+    target.postMessage(data);
   } else {
-    // SW not yet controlling — wait for it
-    navigator.serviceWorker.ready.then((reg) => {
-      if (reg.active) reg.active.postMessage(data);
-    });
+    // SW installed but not yet controlling — claim it, then send
+    reg.active?.postMessage({ type: '__CLAIM__' });
+    // Re-try once after a short delay to let claim complete
+    setTimeout(() => {
+      const t = navigator.serviceWorker.controller || reg.active;
+      if (t) t.postMessage(data);
+    }, 300);
   }
 }
 
