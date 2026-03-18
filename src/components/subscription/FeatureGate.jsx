@@ -122,7 +122,9 @@ export function UpgradeModal({ open, onOpenChange, feature, requiredTier = "pro"
       "Google Calendar Sync",
       "Advanced Analytics",
       "Unlimited Tasks",
-      "Ambient Focus Sounds"
+      "Ambient Focus Sounds",
+      "Spotify Focus Music",
+      "Smartwatch & Cross-Device Notifications"
     ],
     premium: [
       "Everything in Pro",
