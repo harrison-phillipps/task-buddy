@@ -47,6 +47,7 @@ import DistractionBlocker from "../components/focus/DistractionBlocker";
 import SessionMetrics from "../components/focus/SessionMetrics";
 import SpotifyPlayer from "../components/focus/SpotifyPlayer";
 import { hasFeatureAccess, UpgradePrompt } from "../components/subscription/FeatureGate";
+import VoiceCommandListener from "../components/focus/VoiceCommandListener";
 import FocusNotificationSettings, {
   showRichNotification,
   registerServiceWorker,
