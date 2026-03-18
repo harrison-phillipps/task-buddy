@@ -46,6 +46,7 @@ import PomodoroTimer from "../components/focus/PomodoroTimer";
 import DistractionBlocker from "../components/focus/DistractionBlocker";
 import SessionMetrics from "../components/focus/SessionMetrics";
 import SpotifyPlayer from "../components/focus/SpotifyPlayer";
+import { hasFeatureAccess, UpgradePrompt } from "../components/subscription/FeatureGate";
 import FocusNotificationSettings, {
   showRichNotification,
   registerServiceWorker,
