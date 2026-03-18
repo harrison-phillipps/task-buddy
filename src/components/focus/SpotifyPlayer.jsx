@@ -12,11 +12,12 @@ const PLAYLISTS = [
 ];
 
 export default function SpotifyPlayer({ isSessionActive = false, compact = false }) {
-  const [isOpen, setIsOpen] = useState(!compact);
+  // Keep isOpen stable — don't re-initialize from `compact` on re-render
+  const [isOpen, setIsOpen] = useState(true);
   const [selectedPlaylist, setSelectedPlaylist] = useState(PLAYLISTS[0]);
-  const [volume, setVolume] = useState(isSessionActive ? 30 : 80);
+  const [volume, setVolume] = useState(80);
 
-  // Auto-dim volume when session is active
+  // effectiveVolume only used for display hints — iframe volume is controlled inside Spotify
   const effectiveVolume = isSessionActive ? Math.min(volume, 40) : volume;
 
   return (
