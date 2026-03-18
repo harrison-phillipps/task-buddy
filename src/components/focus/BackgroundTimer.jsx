@@ -149,29 +149,42 @@ export async function requestNotificationPermission() {
   return false;
 }
 
-export function showNotification(title, body, options = {}) {
+export async function showNotification(title, body, options = {}) {
   if (!('Notification' in window) || Notification.permission !== 'granted') {
     return;
   }
 
+  // Prefer SW-based notification (works when app is backgrounded / on smartwatch)
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification(title, {
+        body,
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+        vibrate: options.vibrate || [200, 100, 200],
+        tag: options.tag || 'focus-session',
+        requireInteraction: options.requireInteraction || false,
+        silent: false,
+        renotify: true,
+        ...options,
+      });
+      return;
+    }
+  } catch (_) {}
+
+  // Fallback: basic Notification API
   try {
     const notification = new Notification(title, {
       body,
       icon: '/favicon.ico',
       badge: '/favicon.ico',
       vibrate: [200, 100, 200],
-      tag: 'focus-session',
-      requireInteraction: false,
-      ...options
+      tag: options.tag || 'focus-session',
+      requireInteraction: options.requireInteraction || false,
     });
-
-    notification.onclick = () => {
-      window.focus();
-      notification.close();
-    };
-
-    // Auto-close after 5 seconds
-    setTimeout(() => notification.close(), 5000);
+    notification.onclick = () => { window.focus(); notification.close(); };
+    setTimeout(() => notification.close(), 8000);
   } catch (error) {
     console.error('Failed to show notification:', error);
   }
