@@ -40,6 +40,7 @@ import SessionCoach from "../components/ai/SessionCoach";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { enqueueOp, upsertCachedEntity, cacheEntities, getCachedEntities } from "../components/offlineStore";
 import { useOfflineSync } from "../components/useOfflineSync";
+import { useActiveSessionSync } from "../hooks/useActiveSessionSync";
 import OfflineIndicator from "../components/OfflineIndicator";
 import PomodoroTimer from "../components/focus/PomodoroTimer";
 import DistractionBlocker from "../components/focus/DistractionBlocker";
