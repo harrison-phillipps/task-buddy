@@ -61,10 +61,32 @@ export async function sendSWMessage(data) {
 
 // ─── Rich notification via SW (with fallback) ────────────────────────────────
 
-export function showRichNotification(title, body, options = {}) {
+export async function showRichNotification(title, body, options = {}) {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
-  const payload = {
+  // Primary: use SW registration.showNotification() — this is what mirrors to Apple Watch / Wear OS
+  // and works even when the page is hidden.
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification(title, {
+        body,
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+        tag: options.tag || 'focus',
+        vibrate: options.vibrate || [200, 100, 200],
+        requireInteraction: options.requireInteraction || false,
+        actions: options.actions || [],
+        data: options.data || {},
+        silent: false,
+        renotify: true,
+      });
+      return;
+    }
+  } catch (_) {}
+
+  // Fallback: post to SW message channel (for scheduled future notifications)
+  sendSWMessage({
     type: 'SCHEDULE_NOTIFICATION',
     id: options.tag || 'focus',
     delay: options.delay || 0,
@@ -75,25 +97,7 @@ export function showRichNotification(title, body, options = {}) {
     requireInteraction: options.requireInteraction || false,
     actions: options.actions || [],
     data: options.data || {},
-  };
-
-  if ('serviceWorker' in navigator) {
-    sendSWMessage(payload);
-  } else {
-    // Fallback: basic Notification API
-    try {
-      const n = new Notification(title, {
-        body,
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
-        tag: payload.tag,
-        vibrate: payload.vibrate,
-        requireInteraction: payload.requireInteraction,
-      });
-      n.onclick = () => { window.focus(); n.close(); };
-      setTimeout(() => n.close(), payload.requireInteraction ? 30000 : 8000);
-    } catch (_) {}
-  }
+  });
 }
 
 // ─── Schedule a notification at a future timestamp ───────────────────────────
