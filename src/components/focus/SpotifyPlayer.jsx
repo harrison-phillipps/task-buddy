@@ -69,24 +69,18 @@ export default function SpotifyPlayer({ isSessionActive = false, compact = false
                 ))}
               </div>
 
-              {/* Spotify Embed — no `key` prop so it never remounts mid-session */}
-              <div className="rounded-xl overflow-hidden">
-                <iframe
-                  src={`https://open.spotify.com/embed/playlist/${selectedPlaylist.id}?utm_source=generator&theme=0`}
-                  width="100%"
-                  height="152"
-                  frameBorder="0"
-                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                  loading="lazy"
-                  className="rounded-xl"
-                />
-              </div>
-
-              {/* Volume hint when session active */}
-              {isSessionActive && (
-                <p className="text-xs text-center text-gray-400 dark:text-gray-500">
-                  💡 Tip: Use Spotify's volume control above. Music dims automatically during focus.
-                </p>
+              {/* Spotify Embed — only rendered after user clicks to load */}
+              {iframeLoaded && (
+                <div className="rounded-xl overflow-hidden">
+                  <iframe
+                    src={`https://open.spotify.com/embed/playlist/${selectedPlaylist.id}?utm_source=generator&theme=0`}
+                    width="100%"
+                    height="152"
+                    frameBorder="0"
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    className="rounded-xl"
+                  />
+                </div>
               )}
 
               <a
