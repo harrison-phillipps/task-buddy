@@ -33,9 +33,9 @@ export default function SpotifyPlayer({ isSessionActive = false, compact = false
             <p className="font-semibold text-sm text-gray-800 dark:text-gray-100">Focus Music</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">{selectedPlaylist.emoji} {selectedPlaylist.name}</p>
           </div>
-          {isSessionActive && (
-            <span className="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 rounded-full">
-              🔉 Auto-dimmed
+          {!iframeLoaded && (
+            <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-full">
+              Click to load
             </span>
           )}
         </div>
