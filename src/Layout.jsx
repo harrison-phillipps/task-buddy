@@ -393,6 +393,7 @@ function LayoutContent({ children, currentPageName }) {
           onUpdate={refreshUser}
           />
 
+          <CrossDeviceSessionSync currentUser={currentUser} />
           <DevModeIndicator />
           </>
           );
