@@ -73,10 +73,9 @@ export default function SpotifyPlayer({ isSessionActive = false, compact = false
                 ))}
               </div>
 
-              {/* Spotify Embed */}
+              {/* Spotify Embed — no `key` prop so it never remounts mid-session */}
               <div className="rounded-xl overflow-hidden">
                 <iframe
-                  key={selectedPlaylist.id}
                   src={`https://open.spotify.com/embed/playlist/${selectedPlaylist.id}?utm_source=generator&theme=0`}
                   width="100%"
                   height="152"
