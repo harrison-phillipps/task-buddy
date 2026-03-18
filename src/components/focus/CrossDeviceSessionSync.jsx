@@ -22,7 +22,9 @@ export default function CrossDeviceSessionSync({ currentUser }) {
   const navigate = useNavigate();
   const location = useLocation();
   const userRef = useRef(currentUser);
+  const locationRef = useRef(location);
   userRef.current = currentUser;
+  locationRef.current = location;
 
   useEffect(() => {
     if (!currentUser) return;
