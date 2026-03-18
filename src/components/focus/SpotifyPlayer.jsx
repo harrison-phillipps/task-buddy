@@ -20,8 +20,8 @@ export default function SpotifyPlayer({ isSessionActive = false, compact = false
     <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-green-100 dark:border-green-900/40 overflow-hidden shadow-sm">
       {/* Header */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-4 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+      onClick={() => { setIsOpen(!isOpen); setIframeLoaded(true); }}
+      className="w-full flex items-center justify-between p-4 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
       >
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
