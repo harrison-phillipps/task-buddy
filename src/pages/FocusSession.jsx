@@ -1392,7 +1392,7 @@ export default function FocusSession() {
                         compact
                       />
                     )}
-                    {!isBreakTime && (
+                    {!isBreakTime && hasFeatureAccess(currentUser?.subscription_tier, "spotify_player") && (
                       <SpotifyPlayer isSessionActive={isActive} compact />
                     )}
                     {!isBreakTime && (
