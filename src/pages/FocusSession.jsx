@@ -157,39 +157,6 @@ export default function FocusSession() {
     },
   });
 
-  // Real-time cross-device session sync
-  const { clearSession: clearSyncSession } = useActiveSessionSync({
-    currentUser,
-    isController,
-    enabled: sessionStarted,
-    sessionState: {
-      taskId: selectedTaskId,
-      taskTitle: selectedTask?.title,
-      isActive,
-      isBreakTime,
-      timeLeft,
-      currentSubtaskIndex,
-      focusTechnique,
-      workInterval,
-      breakInterval,
-      pomodorosCompleted,
-    },
-    onRemoteState: (remote) => {
-      // Only apply remote state if we're a follower (not the controller)
-      if (isController) return;
-      setSelectedTaskId(remote.taskId);
-      setIsActive(remote.isActive);
-      setIsBreakTime(remote.isBreakTime);
-      setTimeLeft(remote.timeLeft);
-      setCurrentSubtaskIndex(remote.currentSubtaskIndex);
-      setFocusTechnique(remote.focusTechnique);
-      setWorkInterval(remote.workInterval);
-      setBreakInterval(remote.breakInterval);
-      setPomodorosCompleted(remote.pomodorosCompleted);
-      if (!sessionStarted) setSessionStarted(true);
-    },
-  });
-
   // Check notification permission + register SW on mount
   useEffect(() => {
     registerServiceWorker();
