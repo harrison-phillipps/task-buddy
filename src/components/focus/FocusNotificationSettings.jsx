@@ -10,7 +10,22 @@ import { requestNotificationPermission } from "./BackgroundTimer";
 export async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return null;
   try {
-    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    // Always update the SW so the latest version is active
+    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' });
+    // Force the waiting SW to activate immediately if an update is found
+    if (reg.waiting) {
+      reg.waiting.postMessage({ type: '__CLAIM__' });
+    }
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      if (newWorker) {
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            newWorker.postMessage({ type: '__CLAIM__' });
+          }
+        });
+      }
+    });
     await navigator.serviceWorker.ready;
     return reg;
   } catch (e) {
