@@ -46,7 +46,7 @@ export default function CrossDeviceSessionSync({ currentUser }) {
       if (age > 15000) return;
 
       // If we're not already on the FocusSession page, navigate there
-      if (!location.pathname.includes("FocusSession")) {
+      if (!locationRef.current.pathname.includes("FocusSession")) {
         navigate("/FocusSession");
       }
     });
