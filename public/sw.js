@@ -60,9 +60,13 @@ async function clearAllPending() {
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
-self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('install', (e) => {
+  // Skip waiting so the new SW activates immediately without needing a page refresh
+  self.skipWaiting();
+});
 
 self.addEventListener('activate', (e) => {
+  // Claim all open clients immediately — no page reload needed
   e.waitUntil(
     self.clients.claim().then(() => restoreFromDB())
   );
@@ -73,12 +77,12 @@ async function restoreFromDB() {
   const items = await getAllPending();
   const now = Date.now();
   for (const item of items) {
-    const delay = Math.max(0, item.fireAt - now);
     if (item.fireAt < now - 60000) {
       // More than 1 min stale — drop it
       await removePending(item.id);
       continue;
     }
+    const delay = Math.max(0, item.fireAt - now);
     scheduleTimeout(item, delay);
   }
 }
@@ -107,6 +111,12 @@ async function schedule(id, fireAt, title, body, options = {}) {
 self.addEventListener('message', (event) => {
   const msg = event.data;
   if (!msg || !msg.type) return;
+
+  // Allow pages to force immediate activation
+  if (msg.type === 'SKIP_WAITING' || msg.type === '__CLAIM__') {
+    self.skipWaiting();
+    return;
+  }
 
   switch (msg.type) {
 
@@ -211,7 +221,7 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// ── Notification click ────────────────────────────────────────────────────────
+// ── Notification click — open/focus the app ───────────────────────────────────
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
