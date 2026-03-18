@@ -1481,6 +1481,24 @@ export default function FocusSession() {
                     </div>
 
                     {!isBreakTime && (
+                      <div className="mt-4 flex justify-center">
+                        <VoiceCommandListener
+                          isSessionActive={sessionStarted}
+                          isActive={isActive}
+                          onStart={() => setIsActive(true)}
+                          onPause={togglePause}
+                          onSkip={skipToNextStep}
+                          onComplete={handleCompleteEarly}
+                          onAddTime={handleNeedMoreTime}
+                          onEndSession={() => {
+                            setAllStepsComplete(false);
+                            setShowBreakPrompt(true);
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    {!isBreakTime && (
                       <div className="mt-6 space-y-2">
                         <Label>Session notes (optional)</Label>
                         <Textarea
