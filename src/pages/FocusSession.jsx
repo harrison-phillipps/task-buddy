@@ -1152,11 +1152,19 @@ export default function FocusSession() {
                 isPlaying={false}
               />
 
-              <SpotifyPlayer isSessionActive={false} />
+              {hasFeatureAccess(currentUser?.subscription_tier, "spotify_player") ? (
+                <SpotifyPlayer isSessionActive={false} />
+              ) : (
+                <UpgradePrompt feature="Spotify Focus Music" requiredTier="pro" compact />
+              )}
 
-              <FocusNotificationSettings
-                onPermissionChange={(granted) => setNotificationsEnabled(granted)}
-              />
+              {hasFeatureAccess(currentUser?.subscription_tier, "cross_device_notifications") ? (
+                <FocusNotificationSettings
+                  onPermissionChange={(granted) => setNotificationsEnabled(granted)}
+                />
+              ) : (
+                <UpgradePrompt feature="Smartwatch & Cross-Device Notifications" requiredTier="pro" compact />
+              )}
 
               <SmartTimerRecommendations
                 currentMood={moodBefore}
