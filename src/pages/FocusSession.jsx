@@ -212,6 +212,39 @@ export default function FocusSession() {
   const selectedTask = tasks.find(t => t.id === selectedTaskId);
   const currentSubtask = selectedTask?.subtasks?.[currentSubtaskIndex];
 
+  // Real-time cross-device session sync (must be after selectedTask is defined)
+  const onRemoteState = useCallback((remote) => {
+    setSelectedTaskId(remote.taskId);
+    setIsActive(remote.isActive);
+    setIsBreakTime(remote.isBreakTime);
+    setTimeLeft(remote.timeLeft);
+    setCurrentSubtaskIndex(remote.currentSubtaskIndex);
+    setFocusTechnique(remote.focusTechnique);
+    setWorkInterval(remote.workInterval);
+    setBreakInterval(remote.breakInterval);
+    setPomodorosCompleted(remote.pomodorosCompleted);
+    setSessionStarted(true);
+  }, []);
+
+  const { clearSession: clearSyncSession } = useActiveSessionSync({
+    currentUser,
+    isController,
+    enabled: sessionStarted,
+    sessionState: {
+      taskId: selectedTaskId,
+      taskTitle: selectedTask?.title,
+      isActive,
+      isBreakTime,
+      timeLeft,
+      currentSubtaskIndex,
+      focusTechnique,
+      workInterval,
+      breakInterval,
+      pomodorosCompleted,
+    },
+    onRemoteState,
+  });
+
   // Timer effect
   useEffect(() => {
     let interval = null;
