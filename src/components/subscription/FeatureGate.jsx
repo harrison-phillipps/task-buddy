@@ -22,6 +22,8 @@ export const FEATURE_ACCESS = {
   advanced_analytics: ["pro", "premium"],
   unlimited_tasks: ["pro", "premium"],
   ambient_sounds: ["pro", "premium"],
+  spotify_player: ["pro", "premium"],
+  cross_device_notifications: ["pro", "premium"],
   
   // Premium features
   ai_task_breakdown: ["premium"],
