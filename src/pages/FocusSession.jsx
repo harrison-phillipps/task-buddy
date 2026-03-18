@@ -889,6 +889,9 @@ export default function FocusSession() {
 
     // Cancel all pending SW notifications
     cancelAllNotifications();
+    // Clear cross-device sync record
+    setIsController(false);
+    clearSyncSession();
   };
 
   const formatTime = (seconds) => {
