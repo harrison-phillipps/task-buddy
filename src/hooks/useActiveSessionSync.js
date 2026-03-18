@@ -106,9 +106,11 @@ export function useActiveSessionSync({
   }, [enabled, isController]);
 
   // ── FOLLOWER: subscribe to real-time updates ──────────────────────────────
+  // NOTE: Follower subscribes regardless of `enabled` so it can receive state
+  // from the controlling device and auto-join the session.
 
   useEffect(() => {
-    if (!enabled || isController || !currentUser || !onRemoteState) return;
+    if (isController || !currentUser || !onRemoteState) return;
 
     const unsubscribe = base44.entities.ActiveSession.subscribe((event) => {
       if (event.type === "delete") return;
