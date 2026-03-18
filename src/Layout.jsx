@@ -24,6 +24,7 @@ import NotificationBell from "@/components/notifications/NotificationBell";
 import DeepPersonalityCustomizer from "@/components/companion/DeepPersonalityCustomizer";
 import DevModeIndicator from "@/components/DevModeIndicator";
 import ThemeToggle from "@/components/ThemeToggle";
+import CrossDeviceSessionSync from "@/components/focus/CrossDeviceSessionSync";
 
 const navigationItems = [
   {
