@@ -1,71 +1,12 @@
-// TaskBuddy Service Worker v2
-// Handles push notifications, scheduled alerts, and PWA caching
+// TaskBuddy Service Worker — handles scheduled focus notifications
+// These fire even when the tab is backgrounded, and mirror to Apple Watch / Wear OS
 
-const CACHE_NAME = 'taskbuddy-v2';
-const ICON_URL = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68ff06728f59128717455ed3/947e987fc_Screenshot2025-12-08at84335AM.png';
+const PENDING = new Map(); // id → timeoutId
 
-// ─── Install & Activate ───────────────────────────────────────────────────────
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 
-self.addEventListener('install', (event) => {
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
-  );
-});
-
-// ─── Scheduled Notification Store ────────────────────────────────────────────
-// Map of timerId -> setTimeout handle (for cancellation)
-const scheduledTimers = new Map();
-
-function scheduleNotification(id, delayMs, title, body, options = {}) {
-  // Cancel any existing timer with the same id
-  if (scheduledTimers.has(id)) {
-    clearTimeout(scheduledTimers.get(id));
-    scheduledTimers.delete(id);
-  }
-
-  if (delayMs <= 0) {
-    showNotification(title, body, options);
-    return;
-  }
-
-  const handle = setTimeout(() => {
-    scheduledTimers.delete(id);
-    showNotification(title, body, options);
-  }, delayMs);
-
-  scheduledTimers.set(id, handle);
-}
-
-function cancelScheduledNotification(id) {
-  if (scheduledTimers.has(id)) {
-    clearTimeout(scheduledTimers.get(id));
-    scheduledTimers.delete(id);
-  }
-}
-
-function showNotification(title, body, options = {}) {
-  const opts = {
-    body,
-    icon: ICON_URL,
-    badge: ICON_URL,
-    vibrate: options.vibrate || [200, 100, 200],
-    tag: options.tag || 'taskbuddy',
-    data: options.data || {},
-    requireInteraction: options.requireInteraction || false,
-    silent: false,
-    ...(options.actions ? { actions: options.actions } : {}),
-  };
-
-  return self.registration.showNotification(title, opts);
-}
-
-// ─── Message Handler (from app) ───────────────────────────────────────────────
+// ── Message handler ──────────────────────────────────────────────────────────
 self.addEventListener('message', (event) => {
   const msg = event.data;
   if (!msg || !msg.type) return;
@@ -73,127 +14,150 @@ self.addEventListener('message', (event) => {
   switch (msg.type) {
 
     // Immediate or delayed notification
-    case 'SCHEDULE_NOTIFICATION':
-      scheduleNotification(
-        msg.id || msg.tag || 'default',
-        msg.delay || 0,
-        msg.title,
-        msg.body,
-        {
-          tag: msg.tag,
-          vibrate: msg.vibrate,
-          requireInteraction: msg.requireInteraction,
-          actions: msg.actions,
-          data: msg.data,
-        }
-      );
+    case 'SCHEDULE_NOTIFICATION': {
+      const delay = msg.delay || 0;
+      clearExisting(msg.id || msg.tag || 'focus');
+      const tid = setTimeout(() => {
+        fireNotification(msg.title, msg.body, {
+          tag: msg.tag || 'focus',
+          vibrate: msg.vibrate || [200, 100, 200],
+          requireInteraction: msg.requireInteraction || false,
+          actions: msg.actions || [],
+          data: msg.data || {},
+        });
+      }, delay);
+      PENDING.set(msg.id || msg.tag || 'focus', tid);
       break;
+    }
 
-    // Schedule a session-end notification at a future timestamp
-    case 'SCHEDULE_SESSION_END':
-      {
-        const delay = msg.endsAt - Date.now();
-        scheduleNotification('session-end', Math.max(0, delay), msg.title, msg.body, {
+    // Session-end notification at exact timestamp
+    case 'SCHEDULE_SESSION_END': {
+      clearExisting('session-end');
+      const delay = Math.max(0, (msg.endsAt || 0) - Date.now());
+      const tid = setTimeout(() => {
+        fireNotification(msg.title || '⏱ Session Complete!', msg.body || 'Great work — session finished!', {
           tag: 'session-end',
-          requireInteraction: true,
           vibrate: [200, 100, 200, 100, 400],
-          actions: [
-            { action: 'complete', title: '✅ Mark Complete' },
-            { action: 'extend', title: '⏱ +5 min' },
-          ],
-          data: { action: 'session-end', taskId: msg.taskId },
-        });
-      }
-      break;
-
-    // Schedule a break-start notification
-    case 'SCHEDULE_BREAK':
-      {
-        const delay = msg.startsAt - Date.now();
-        scheduleNotification('break-start', Math.max(0, delay), '☕ Break Time!', msg.body || 'Time to stretch and recharge.', {
-          tag: 'break-start',
-          requireInteraction: false,
-          vibrate: [300, 100, 300],
-          actions: [
-            { action: 'start_break', title: '☕ Take Break' },
-            { action: 'skip_break', title: '⏩ Skip' },
-          ],
-          data: { action: 'break-start' },
-        });
-      }
-      break;
-
-    // Schedule a Pomodoro-complete notification
-    case 'SCHEDULE_POMODORO_COMPLETE':
-      {
-        const delay = msg.completesAt - Date.now();
-        scheduleNotification('pomodoro', Math.max(0, delay), '🍅 Pomodoro Complete!', msg.body || 'Great focus! Time for a short break.', {
-          tag: 'pomodoro',
           requireInteraction: true,
-          vibrate: [100, 50, 100, 50, 300],
+          actions: [
+            { action: 'mark_done', title: '✅ Mark Complete' },
+            { action: 'more_time', title: '⏰ +5 min' },
+          ],
+          data: { taskId: msg.taskId, url: '/FocusSession' },
+        });
+      }, delay);
+      PENDING.set('session-end', tid);
+      break;
+    }
+
+    // Break-start notification at exact timestamp
+    case 'SCHEDULE_BREAK': {
+      clearExisting('break-start');
+      const delay = Math.max(0, (msg.startsAt || 0) - Date.now());
+      const tid = setTimeout(() => {
+        fireNotification('Break Time! ☕', msg.body || 'Stretch, hydrate, or just breathe.', {
+          tag: 'break-start',
+          vibrate: [300, 150, 300],
+          requireInteraction: true,
           actions: [
             { action: 'start_break', title: '☕ Start Break' },
             { action: 'skip_break', title: '⏩ Skip Break' },
           ],
-          data: { action: 'pomodoro-complete' },
+          data: { url: '/FocusSession' },
         });
-      }
+      }, delay);
+      PENDING.set('break-start', tid);
       break;
+    }
 
-    // Schedule encouragement mid-session
-    case 'SCHEDULE_ENCOURAGEMENT':
-      scheduleNotification(
-        `encouragement-${msg.id || Date.now()}`,
-        msg.delay || 0,
-        msg.title || '💪 Keep Going!',
-        msg.body,
-        { tag: 'encouragement', requireInteraction: false, vibrate: [100, 50, 100] }
-      );
+    // Pomodoro-cycle-complete notification at exact timestamp
+    case 'SCHEDULE_POMODORO_COMPLETE': {
+      clearExisting('pomodoro');
+      const delay = Math.max(0, (msg.completesAt || 0) - Date.now());
+      const tid = setTimeout(() => {
+        fireNotification('Pomodoro Complete! 🍅', msg.body || 'Time for a break! Great work.', {
+          tag: 'pomodoro',
+          vibrate: [200, 100, 200],
+          requireInteraction: true,
+          actions: [
+            { action: 'start_break', title: '☕ Start Break' },
+            { action: 'skip_break', title: '⏩ Skip Break' },
+          ],
+          data: { url: '/FocusSession' },
+        });
+      }, delay);
+      PENDING.set('pomodoro', tid);
       break;
+    }
 
-    // Cancel a scheduled notification
-    case 'CANCEL_NOTIFICATION':
-      cancelScheduledNotification(msg.id || msg.tag || 'default');
+    // Encouragement notification at exact timestamp
+    case 'SCHEDULE_ENCOURAGEMENT': {
+      clearExisting('encouragement');
+      const delay = Math.max(0, (msg.endsAt || 0) - Date.now());
+      const tid = setTimeout(() => {
+        fireNotification('Keep Going! 💪', msg.body || "You're doing amazing!", {
+          tag: 'encouragement',
+          vibrate: [100, 50, 100],
+          requireInteraction: false,
+          data: { url: '/FocusSession' },
+        });
+      }, delay);
+      PENDING.set('encouragement', tid);
       break;
+    }
 
-    // Cancel ALL scheduled notifications (e.g. on session stop)
-    case 'CANCEL_ALL':
-      scheduledTimers.forEach((handle) => clearTimeout(handle));
-      scheduledTimers.clear();
+    case 'CANCEL_NOTIFICATION': {
+      clearExisting(msg.id);
       break;
+    }
+
+    case 'CANCEL_ALL': {
+      for (const tid of PENDING.values()) clearTimeout(tid);
+      PENDING.clear();
+      break;
+    }
   }
 });
 
-// ─── Notification Click Handler ───────────────────────────────────────────────
+// ── Notification click — open/focus the app ──────────────────────────────────
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-
   const action = event.action;
   const data = event.notification.data || {};
+  const targetUrl = data.url || '/FocusSession';
 
+  // Post the action back to any open clients
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-      // Find an open tab
-      const existing = clients.find((c) => c.url.includes(self.location.origin));
-
-      const navigateTo = action === 'extend' ? '/FocusSession?extend=5' : '/FocusSession';
-
-      if (existing) {
-        existing.focus();
-        existing.postMessage({ type: 'NOTIFICATION_ACTION', action, data });
-      } else {
-        self.clients.openWindow(navigateTo);
+      if (action) {
+        clients.forEach(c => c.postMessage({ type: 'NOTIFICATION_ACTION', action, data }));
       }
+      const focused = clients.find(c => c.url.includes(targetUrl) && 'focus' in c);
+      if (focused) return focused.focus();
+      if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
     })
   );
 });
 
-// ─── Push Event (Web Push API — future use) ───────────────────────────────────
-self.addEventListener('push', (event) => {
-  if (!event.data) return;
-  let payload;
-  try { payload = event.data.json(); } catch { payload = { title: 'TaskBuddy', body: event.data.text() }; }
-  event.waitUntil(
-    showNotification(payload.title || 'TaskBuddy', payload.body || '', payload.options || {})
-  );
-});
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function clearExisting(id) {
+  if (PENDING.has(id)) {
+    clearTimeout(PENDING.get(id));
+    PENDING.delete(id);
+  }
+}
+
+async function fireNotification(title, body, options = {}) {
+  if (self.registration.showNotification) {
+    await self.registration.showNotification(title, {
+      body,
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: options.tag || 'focus',
+      vibrate: options.vibrate || [200, 100, 200],
+      requireInteraction: options.requireInteraction || false,
+      actions: options.actions || [],
+      data: options.data || {},
+    });
+  }
+}
