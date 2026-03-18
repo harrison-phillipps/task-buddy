@@ -546,6 +546,7 @@ export default function FocusSession() {
     const newSessionId = `session_${Date.now()}`;
     setSessionId(newSessionId);
     
+    setIsController(true); // This device owns/controls the session
     setSessionStarted(true);
     setIsActive(true);
     setSessionStartTime(Date.now());
