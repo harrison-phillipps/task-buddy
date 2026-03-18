@@ -145,6 +145,7 @@ export default function FocusSession() {
   const [showMoodReflection, setShowMoodReflection] = useState(false);
   const [adaptiveBreakConfig, setAdaptiveBreakConfig] = useState(null);
   const [showGuidedBreak, setShowGuidedBreak] = useState(false);
+  const [isController, setIsController] = useState(false);
   
   const audioRef = useRef(null);
   const encouragementTimers = useRef([]);
