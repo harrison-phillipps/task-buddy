@@ -1374,11 +1374,11 @@ export default function FocusSession() {
                     )}
 
                     <div className="space-y-3">
-                      <div className="flex gap-3 justify-center">
+                      <div className="flex flex-col gap-2">
                         <Button
                           onClick={togglePause}
                           size="lg"
-                          className="bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white"
+                          className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white"
                         >
                           {isActive ? <Pause className="w-5 h-5 mr-2" /> : <Play className="w-5 h-5 mr-2" />}
                           {isActive ? "Pause" : "Resume"}
@@ -1388,12 +1388,13 @@ export default function FocusSession() {
                             onClick={skipBreak} 
                             variant="outline" 
                             size="lg"
+                            className="w-full"
                           >
                             Skip Break
                           </Button>
                         )}
                         {!isBreakTime && (
-                          <>
+                          <div className="grid grid-cols-2 gap-2">
                             <Button 
                               onClick={handleCompleteEarly}
                               variant="outline"
@@ -1401,7 +1402,7 @@ export default function FocusSession() {
                               className="border-green-200 text-green-700 hover:bg-green-50"
                             >
                               <CheckCircle className="w-5 h-5 mr-2" />
-                              Complete Now
+                              Complete
                             </Button>
                             <Button 
                               onClick={handleNeedMoreTime}
@@ -1412,7 +1413,7 @@ export default function FocusSession() {
                               <Clock className="w-5 h-5 mr-2" />
                               +More Time
                             </Button>
-                          </>
+                          </div>
                         )}
                       </div>
                       {!isBreakTime && currentSubtaskIndex < selectedTask.subtasks.length - 1 && (
