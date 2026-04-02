@@ -65,7 +65,7 @@ export default function WeeklyOverview({ tasks }) {
   const totalWeekTasks = weekDays.reduce((sum, day) => sum + getDayStats(day).subtasks, 0);
 
   return (
-    <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
+    <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-purple-100 dark:border-gray-700">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -99,20 +99,20 @@ export default function WeeklyOverview({ tasks }) {
             </Button>
           </div>
         </div>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           {format(weekStart, 'MMM d')} - {format(addDays(weekStart, 6), 'MMM d, yyyy')}
         </p>
       </CardHeader>
       <CardContent>
         {/* Week summary */}
-        <div className="flex gap-4 mb-4 p-3 bg-gradient-to-r from-purple-50 to-teal-50 rounded-lg">
+        <div className="flex gap-4 mb-4 p-3 bg-gradient-to-r from-purple-50 to-teal-50 dark:from-purple-900/20 dark:to-teal-900/20 rounded-lg">
           <div className="text-center">
-            <p className="text-2xl font-bold text-purple-600">{totalWeekTasks}</p>
-            <p className="text-xs text-gray-500">Steps</p>
+            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{totalWeekTasks}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400">Steps</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-teal-600">{Math.round(totalWeekMinutes / 60)}h</p>
-            <p className="text-xs text-gray-500">Planned</p>
+            <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">{Math.round(totalWeekMinutes / 60)}h</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400">Planned</p>
           </div>
         </div>
 
@@ -134,20 +134,20 @@ export default function WeeklyOverview({ tasks }) {
                   isCurrentDay 
                     ? 'bg-gradient-to-br from-purple-500 to-teal-500 text-white shadow-lg' 
                     : isPastDay
-                    ? 'bg-gray-50 text-gray-400'
-                    : 'bg-gray-50 hover:bg-purple-50'
+                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                    : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-purple-50 dark:hover:bg-purple-900/20'
                 }`}
               >
-                <p className={`text-xs font-medium ${isCurrentDay ? 'text-purple-100' : 'text-gray-500'}`}>
+                <p className={`text-xs font-medium ${isCurrentDay ? 'text-purple-100' : 'text-gray-600 dark:text-gray-400'}`}>
                   {format(day, 'EEE')}
                 </p>
-                <p className={`text-lg font-bold ${isCurrentDay ? 'text-white' : ''}`}>
+                <p className={`text-lg font-bold ${isCurrentDay ? 'text-white' : 'text-gray-800 dark:text-gray-200'}`}>
                   {format(day, 'd')}
                 </p>
                 
                 {stats.subtasks > 0 ? (
                   <div className="mt-1">
-                    <div className={`text-xs ${isCurrentDay ? 'text-purple-100' : 'text-gray-500'}`}>
+                    <div className={`text-xs ${isCurrentDay ? 'text-purple-100' : 'text-gray-600 dark:text-gray-400'}`}>
                       {stats.completedSubtasks}/{stats.subtasks}
                     </div>
                     <div className="w-full h-1 bg-white/30 rounded-full mt-1 overflow-hidden">
@@ -158,7 +158,7 @@ export default function WeeklyOverview({ tasks }) {
                     </div>
                   </div>
                 ) : (
-                  <div className={`text-xs mt-1 ${isCurrentDay ? 'text-purple-200' : 'text-gray-400'}`}>
+                  <div className={`text-xs mt-1 ${isCurrentDay ? 'text-purple-200' : 'text-gray-500 dark:text-gray-500'}`}>
                     —
                   </div>
                 )}
@@ -169,8 +169,8 @@ export default function WeeklyOverview({ tasks }) {
 
         {/* Today's tasks detail */}
         {getSubtasksForDay(new Date()).length > 0 && (
-          <div className="mt-4 pt-4 border-t border-purple-100">
-            <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+          <div className="mt-4 pt-4 border-t border-purple-100 dark:border-gray-700">
+            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
               <Clock className="w-4 h-4 text-purple-500" />
               Today's Steps
             </h4>
@@ -179,7 +179,7 @@ export default function WeeklyOverview({ tasks }) {
                 <div 
                   key={idx}
                   className={`flex items-center justify-between p-2 rounded-lg text-sm ${
-                    subtask.completed ? 'bg-green-50' : 'bg-purple-50'
+                    subtask.completed ? 'bg-green-50 dark:bg-green-900/20' : 'bg-purple-50 dark:bg-purple-900/20'
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -189,10 +189,10 @@ export default function WeeklyOverview({ tasks }) {
                       <div className="w-4 h-4 rounded-full border-2 border-purple-300" />
                     )}
                     <div>
-                      <p className={subtask.completed ? 'line-through text-gray-400' : 'text-gray-700'}>
+                      <p className={subtask.completed ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-200'}>
                         {subtask.title}
                       </p>
-                      <p className="text-xs text-gray-500">{subtask.taskTitle}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{subtask.taskTitle}</p>
                     </div>
                   </div>
                   {subtask.estimated_minutes && (

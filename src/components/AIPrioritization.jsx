@@ -264,7 +264,7 @@ For each task, provide:
   }
 
   return (
-    <Card className="bg-white/80 backdrop-blur-sm border-purple-100 shadow-lg">
+    <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-purple-100 dark:border-gray-700 shadow-lg">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -280,7 +280,7 @@ For each task, provide:
                 checked={autoReprioritize}
                 onCheckedChange={setAutoReprioritize}
               />
-              <Label htmlFor="auto-reprioritize" className="text-xs text-gray-600">
+              <Label htmlFor="auto-reprioritize" className="text-xs text-gray-600 dark:text-gray-400">
                 Auto-daily
               </Label>
             </div>
@@ -301,7 +301,7 @@ For each task, provide:
         </div>
         
         {lastAnalyzed && (
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
             Last analyzed: {format(parseISO(lastAnalyzed), 'h:mm a')} • {analysisReason}
           </p>
         )}
@@ -327,8 +327,8 @@ For each task, provide:
                   <Sparkles className="w-6 h-6 text-purple-600" />
                 </motion.div>
               </div>
-              <p className="text-sm text-gray-600 mt-4">Analyzing your tasks...</p>
-              <p className="text-xs text-gray-400">Considering deadlines, energy, and progress</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-4">Analyzing your tasks...</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">Considering deadlines, energy, and progress</p>
             </motion.div>
           ) : prioritizedTasks.length === 0 ? (
             <motion.div
@@ -338,8 +338,8 @@ For each task, provide:
               className="text-center py-8"
             >
               <Target className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-              <p className="text-gray-500">No tasks to prioritize</p>
-              <p className="text-xs text-gray-400 mt-1">Create some tasks to get AI recommendations</p>
+              <p className="text-gray-500 dark:text-gray-400">No tasks to prioritize</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Create some tasks to get AI recommendations</p>
             </motion.div>
           ) : (
             <motion.div
@@ -353,7 +353,7 @@ For each task, provide:
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="relative p-4 bg-gradient-to-r from-purple-50 to-teal-50 rounded-xl border-2 border-purple-200 overflow-hidden"
+                  className="relative p-4 bg-gradient-to-r from-purple-50 to-teal-50 dark:from-purple-900/30 dark:to-teal-900/30 rounded-xl border-2 border-purple-200 dark:border-purple-700 overflow-hidden"
                 >
                   <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-200/30 to-teal-200/30 rounded-full blur-3xl" />
                   <div className="flex items-center gap-2 mb-2 relative z-10">
@@ -365,10 +365,10 @@ For each task, provide:
                       priority={getAIPriorityLevel(prioritizedTasks[0].urgencyScore, 1)} 
                     />
                   </div>
-                  <h3 className="font-bold text-gray-900 text-lg mb-1 relative z-10">
+                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg mb-1 relative z-10">
                     {prioritizedTasks[0].title}
                   </h3>
-                  <p className="text-sm text-gray-600 mb-3 relative z-10">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 relative z-10">
                     💡 {prioritizedTasks[0].aiReason}
                   </p>
                   <div className="flex items-center gap-2 mb-3 flex-wrap relative z-10">
@@ -408,7 +408,7 @@ For each task, provide:
               {/* Rest of the list */}
               {showFullList && prioritizedTasks.length > 1 && (
                 <div className="space-y-2 mt-4">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                     Up Next
                   </p>
                   {prioritizedTasks.slice(1, 6).map((task, index) => {
@@ -420,7 +420,7 @@ For each task, provide:
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className="flex items-center gap-3 p-3 bg-white rounded-lg border-2 border-gray-200 hover:border-purple-300 hover:shadow-md transition-all group cursor-pointer relative"
+                        className="flex items-center gap-3 p-3 bg-white dark:bg-gray-700 rounded-lg border-2 border-gray-200 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-500 hover:shadow-md transition-all group cursor-pointer relative"
                         onClick={() => startTask(task)}
                         style={{
                           borderLeftWidth: '4px',
@@ -430,31 +430,26 @@ For each task, provide:
                             priorityLevel === 'medium' ? '#eab308' : '#22c55e'
                         }}
                       >
-                        <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-purple-100 to-teal-100 text-sm font-bold text-purple-700 shadow-sm">
+                        <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-purple-100 to-teal-100 dark:from-purple-900/50 dark:to-teal-900/50 text-sm font-bold text-purple-700 dark:text-purple-300 shadow-sm">
                           {index + 2}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                            <p className="font-medium text-gray-900 truncate">{task.title}</p>
-                            <PriorityIndicator priority={priorityLevel} compact />
-                          </div>
-                          <p className="text-xs text-gray-500 truncate">
-                            {task.aiReason}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">
-                            <Clock className="w-3 h-3 mr-1" />
-                            {task.estimated_minutes || 30}m
-                          </Badge>
-                          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-purple-500 transition-colors" />
-                        </div>
-                      </motion.div>
+                           <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{task.title}</p>
+                           <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{task.aiReason}</p>
+                         </div>
+                         <div className="flex items-center gap-2">
+                           <Badge variant="outline" className="text-xs">
+                             <Clock className="w-3 h-3 mr-1" />
+                             {task.estimated_minutes || 30}m
+                           </Badge>
+                           <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-purple-500 transition-colors" />
+                         </div>
+                        </motion.div>
                     );
                   })}
                   
                   {prioritizedTasks.length > 6 && (
-                    <p className="text-xs text-gray-400 text-center pt-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center pt-2">
                       +{prioritizedTasks.length - 6} more tasks
                     </p>
                   )}

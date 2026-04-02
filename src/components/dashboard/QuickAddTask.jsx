@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,6 @@ export default function QuickAddTask({ currentUser }) {
   const handleQuickAdd = async () => {
     if (!taskTitle.trim()) return;
 
-    // Check for duplicates first
     const existingTasks = await base44.entities.Task.filter({ 
       created_by: currentUser.email 
     }, '-created_date');
@@ -63,16 +62,12 @@ export default function QuickAddTask({ currentUser }) {
     });
 
     if (duplicates.length > 0) {
-      setDuplicateCheck({
-        duplicates: duplicates,
-        newTaskTitle: taskTitle
-      });
+      setDuplicateCheck({ duplicates, newTaskTitle: taskTitle });
       setPendingTaskTitle(taskTitle);
       setShowDuplicateDialog(true);
       return;
     }
 
-    // Simple quick add
     createTaskMutation.mutate({
       title: taskTitle,
       status: "not_started",
@@ -104,7 +99,6 @@ export default function QuickAddTask({ currentUser }) {
   const handleSmartAdd = async () => {
     if (!taskTitle.trim()) return;
     setIsGenerating(true);
-
     try {
       const result = await base44.integrations.Core.InvokeLLM({
         prompt: `Break down this task into subtasks: "${taskTitle}". Return JSON with: title (refined title), estimated_minutes (total time), difficulty (easy/medium/hard), category (work/personal/health/creative/learning/household/other), subtasks (array of {title, estimated_minutes, order, completed: false}).`,
@@ -131,7 +125,6 @@ export default function QuickAddTask({ currentUser }) {
           }
         }
       });
-
       setBreakdownResult(result);
       setEditingSubtasks(result.subtasks || []);
     } catch (error) {
@@ -182,14 +175,14 @@ export default function QuickAddTask({ currentUser }) {
 
   if (breakdownResult && editingSubtasks) {
     return (
-      <Card className="bg-white/80 backdrop-blur-sm border-purple-200">
+      <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-purple-200 dark:border-gray-700">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-green-500" />
               Review Your Task
             </span>
-            <span className="text-sm font-normal text-gray-600 flex items-center gap-1">
+            <span className="text-sm font-normal text-gray-600 dark:text-gray-400 flex items-center gap-1">
               <Clock className="w-4 h-4" />
               {editingSubtasks.reduce((sum, st) => sum + (st.estimated_minutes || 0), 0)} min
             </span>
@@ -228,7 +221,7 @@ export default function QuickAddTask({ currentUser }) {
           <div className="space-y-2">
             <Label>Subtasks</Label>
             {editingSubtasks.map((subtask, index) => (
-              <div key={index} className="flex items-start gap-2 p-3 bg-purple-50 rounded-lg">
+              <div key={index} className="flex items-start gap-2 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                 <div className="flex-shrink-0 w-6 h-6 bg-gradient-to-br from-purple-500 to-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
                   {index + 1}
                 </div>
@@ -236,7 +229,7 @@ export default function QuickAddTask({ currentUser }) {
                   <Input
                     value={subtask.title}
                     onChange={(e) => updateSubtask(index, 'title', e.target.value)}
-                    className="bg-white text-sm"
+                    className="bg-white dark:bg-gray-700 text-sm"
                     placeholder="Step description"
                   />
                   <div className="flex items-center gap-2">
@@ -246,9 +239,9 @@ export default function QuickAddTask({ currentUser }) {
                       min="1"
                       value={subtask.estimated_minutes || 10}
                       onChange={(e) => updateSubtask(index, 'estimated_minutes', parseInt(e.target.value))}
-                      className="bg-white w-16 h-7 text-sm"
+                      className="bg-white dark:bg-gray-700 w-16 h-7 text-sm"
                     />
-                    <span className="text-xs text-gray-600">min</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">min</span>
                   </div>
                 </div>
                 <Button
@@ -308,7 +301,7 @@ export default function QuickAddTask({ currentUser }) {
   }
 
   return (
-    <Card className="bg-gradient-to-br from-purple-50 to-teal-50 border-purple-200">
+    <Card className="bg-gradient-to-br from-purple-50 to-teal-50 dark:from-purple-900/20 dark:to-teal-900/20 border-purple-200 dark:border-gray-700">
       <CardContent className="p-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-teal-500 flex items-center justify-center flex-shrink-0">

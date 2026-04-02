@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Play, Pause, RotateCcw, CheckCircle, Coffee, ChevronRight, Clock, Timer, Target } from "lucide-react";
+import { Play, Pause, RotateCcw, CheckCircle, Coffee, ChevronRight, Clock, Timer, Target, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import VirtualCompanion from "../components/VirtualCompanion";

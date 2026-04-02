@@ -45,7 +45,7 @@ export default function GoalsProgress({ currentUser }) {
   const atRiskGoals = activeGoals.filter(g => g.status === 'at_risk').length;
 
   return (
-    <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
+    <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-purple-100 dark:border-gray-700">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2">
@@ -94,40 +94,40 @@ export default function GoalsProgress({ currentUser }) {
               <span className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">
                 {overallProgress}%
               </span>
-              <span className="text-sm text-gray-600">Overall</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">Overall</span>
             </div>
           </div>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="text-center p-3 bg-green-50 rounded-lg">
+          <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
             <CheckCircle className="w-5 h-5 text-green-600 mx-auto mb-1" />
-            <div className="text-2xl font-bold text-green-600">{completedGoals}</div>
-            <div className="text-xs text-gray-600">Completed</div>
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{completedGoals}</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">Completed</div>
           </div>
-          <div className="text-center p-3 bg-blue-50 rounded-lg">
+          <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
             <TrendingUp className="w-5 h-5 text-blue-600 mx-auto mb-1" />
-            <div className="text-2xl font-bold text-blue-600">{activeGoals.length}</div>
-            <div className="text-xs text-gray-600">In Progress</div>
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{activeGoals.length}</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">In Progress</div>
           </div>
-          <div className="text-center p-3 bg-orange-50 rounded-lg">
+          <div className="text-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
             <Calendar className="w-5 h-5 text-orange-600 mx-auto mb-1" />
-            <div className="text-2xl font-bold text-orange-600">{atRiskGoals}</div>
-            <div className="text-xs text-gray-600">At Risk</div>
+            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{atRiskGoals}</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">At Risk</div>
           </div>
         </div>
 
         {/* Individual Goals Progress */}
         {activeGoals.length > 0 && (
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-gray-700">Active Goals</h4>
+            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Active Goals</h4>
             {activeGoals.slice(0, 3).map((goal) => {
               const progress = calculateGoalProgress(goal);
               return (
                 <div key={goal.id} className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700 truncate flex-1">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate flex-1">
                       {goal.title}
                     </span>
                     <span className="text-sm font-bold text-purple-600 ml-2">{progress}%</span>
@@ -140,7 +140,7 @@ export default function GoalsProgress({ currentUser }) {
         )}
 
         {activeGoals.length === 0 && (
-          <div className="text-center py-4 text-gray-500 text-sm">
+          <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
             No active goals. Set some goals to track your progress!
           </div>
         )}

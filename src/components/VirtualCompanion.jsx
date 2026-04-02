@@ -798,10 +798,10 @@ export default function VirtualCompanion({
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/90 backdrop-blur-sm px-4 md:px-6 py-3 rounded-2xl shadow-lg border border-purple-100 max-w-full md:max-w-md text-center relative mx-4"
+          className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-4 md:px-6 py-3 rounded-2xl shadow-lg border border-purple-100 dark:border-gray-700 max-w-full md:max-w-md text-center relative mx-4"
         >
-          <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white/90 rotate-45 border-l border-t border-purple-100" />
-          <p className="text-sm text-gray-700 font-medium break-words">{message}</p>
+          <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white/90 dark:bg-gray-800/90 rotate-45 border-l border-t border-purple-100 dark:border-gray-700" />
+          <p className="text-sm text-gray-700 dark:text-gray-200 font-medium break-words">{message}</p>
           {enableFeedback && (
             <MessageFeedback 
               message={message} 

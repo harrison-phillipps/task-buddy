@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Wind, Coffee, Move, Droplet, CheckCircle } from "lucide-react";
@@ -166,11 +167,7 @@ export default function GuidedBreakFlow({
               )}
 
               <div className="flex gap-2">
-                <Button
-                  onClick={onSkip}
-                  variant="outline"
-                  className="flex-1"
-                >
+                <Button onClick={onSkip} variant="outline" className="flex-1">
                   Skip Break
                 </Button>
                 <Button

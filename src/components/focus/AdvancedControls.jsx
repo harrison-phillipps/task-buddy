@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { Brain, Zap, Activity, Clock, Loader2, TrendingDown } from "lucide-react";
+import { Brain, Zap, Activity, Clock, Coffee, Loader2, TrendingDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -36,28 +36,12 @@ CURRENT STATE:
 
 ANALYZE AND RECOMMEND:
 
-1. OPTIMAL SESSION LENGTH (in minutes)
-   - Based on energy, task complexity, and current mood
-   - Range: 15-90 minutes
-   
-2. OPTIMAL BREAK DURATION (in minutes)
-   - Restorative break time needed
-   - Range: 3-15 minutes
-   
+1. OPTIMAL SESSION LENGTH (in minutes) - Range: 15-90 minutes
+2. OPTIMAL BREAK DURATION (in minutes) - Range: 3-15 minutes
 3. PREDICTED FOCUS DROP POINT (in minutes)
-   - When will focus likely decline?
-   
-4. TASK ADJUSTMENT NEEDED?
-   - Should the task be broken down further?
-   - Is the difficulty accurate?
-   - Suggest specific adjustments if needed
-   
-5. MINDFULNESS INTEGRATION
-   - Should include mindfulness breaks? (true/false)
-   - If yes, what type? ("breathing", "meditation", "body_scan")
-   
+4. TASK ADJUSTMENT NEEDED? (true/false + suggestion)
+5. MINDFULNESS INTEGRATION - Should include mindfulness breaks? type: breathing/meditation/body_scan
 6. REASONING
-   - Why these specific recommendations?
 
 Be precise and evidence-based!`,
         response_json_schema: {
@@ -206,11 +190,7 @@ Be precise and evidence-based!`,
             )}
 
             <div className="flex gap-2">
-              <Button
-                onClick={() => setRecommendations(null)}
-                variant="outline"
-                className="flex-1"
-              >
+              <Button onClick={() => setRecommendations(null)} variant="outline" className="flex-1">
                 Re-analyze
               </Button>
               <Button

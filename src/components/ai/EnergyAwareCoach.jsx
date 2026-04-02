@@ -9,6 +9,7 @@ import {
   BatteryLow,
   Zap,
   Coffee,
+  Clock,
   Sun,
   Moon,
   ThumbsUp,
@@ -38,7 +39,6 @@ export default function EnergyAwareCoach({ tasks, sessions, currentUser, userPro
       const currentHour = new Date().getHours();
       const currentTimeBlock = currentHour < 12 ? 'morning' : currentHour < 18 ? 'afternoon' : 'evening';
 
-      // Analyze past energy patterns
       const energyHistory = sessions.map(s => ({
         hour: new Date(s.created_date).getHours(),
         mood_before: s.mood_before,
@@ -47,11 +47,9 @@ export default function EnergyAwareCoach({ tasks, sessions, currentUser, userPro
         completed: s.completed
       }));
 
-      // Get recent mood patterns
       const recentSessions = sessions.slice(0, 5);
       const avgMoodQuality = recentSessions.filter(s => s.mood_after === 'accomplished' || s.mood_after === 'energized').length / Math.max(recentSessions.length, 1);
 
-      // Get current incomplete tasks
       const incompleteTasks = tasks.filter(t => t.status !== 'completed');
       const highEnergyTasks = incompleteTasks.filter(t => t.energy_level_needed === 'high' || t.difficulty === 'hard');
       const lowEnergyTasks = incompleteTasks.filter(t => t.energy_level_needed === 'low' || t.difficulty === 'easy');
@@ -80,36 +78,18 @@ Be specific and actionable.`,
         response_json_schema: {
           type: "object",
           properties: {
-            predicted_energy: { 
-              type: "string",
-              enum: ["high", "medium", "low"]
-            },
+            predicted_energy: { type: "string", enum: ["high", "medium", "low"] },
             confidence: { type: "number" },
             reasoning: { type: "string" },
             recommended_tasks: {
               type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  task_type: { type: "string" },
-                  reason: { type: "string" }
-                }
-              }
+              items: { type: "object", properties: { task_type: { type: "string" }, reason: { type: "string" } } }
             },
             tasks_to_defer: {
               type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  task_type: { type: "string" },
-                  defer_until: { type: "string" }
-                }
-              }
+              items: { type: "object", properties: { task_type: { type: "string" }, defer_until: { type: "string" } } }
             },
-            energy_tips: {
-              type: "array",
-              items: { type: "string" }
-            },
+            energy_tips: { type: "array", items: { type: "string" } },
             optimal_work_duration: { type: "string" },
             break_suggestion: { type: "string" }
           }
@@ -143,9 +123,7 @@ Be specific and actionable.`,
       <Card className="border-yellow-200 dark:border-yellow-700 dark:bg-gray-800">
         <CardContent className="p-8 text-center">
           <Battery className="w-8 h-8 text-yellow-600 dark:text-yellow-400 animate-pulse mx-auto mb-3" />
-          <p className="text-gray-700 dark:text-gray-300 font-medium">
-            Analyzing your energy patterns...
-          </p>
+          <p className="text-gray-700 dark:text-gray-300 font-medium">Analyzing your energy patterns...</p>
         </CardContent>
       </Card>
     );
@@ -165,7 +143,6 @@ Be specific and actionable.`,
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Energy Prediction */}
         <div className={`p-4 bg-gradient-to-r ${energyConfig.bg} rounded-lg text-white`}>
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
@@ -179,7 +156,6 @@ Be specific and actionable.`,
           <p className="text-sm text-white/90">{prediction.reasoning}</p>
         </div>
 
-        {/* Recommended Tasks */}
         {prediction.recommended_tasks?.length > 0 && (
           <div>
             <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
@@ -203,7 +179,6 @@ Be specific and actionable.`,
           </div>
         )}
 
-        {/* Tasks to Defer */}
         {prediction.tasks_to_defer?.length > 0 && (
           <div>
             <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
@@ -212,10 +187,7 @@ Be specific and actionable.`,
             </h4>
             <div className="space-y-2">
               {prediction.tasks_to_defer.map((task, idx) => (
-                <div 
-                  key={idx}
-                  className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-700"
-                >
+                <div key={idx} className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-700">
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-medium text-sm text-gray-900 dark:text-gray-100">{task.task_type}</p>
                     <Badge variant="outline" className="text-xs">{task.defer_until}</Badge>
@@ -226,7 +198,6 @@ Be specific and actionable.`,
           </div>
         )}
 
-        {/* Energy Tips */}
         {prediction.energy_tips?.length > 0 && (
           <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
             <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
@@ -244,7 +215,6 @@ Be specific and actionable.`,
           </div>
         )}
 
-        {/* Work Duration & Break */}
         <div className="grid grid-cols-2 gap-3">
           <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
             <p className="text-xs font-semibold text-purple-900 dark:text-purple-100 mb-1">Optimal Duration</p>
@@ -256,7 +226,6 @@ Be specific and actionable.`,
           </div>
         </div>
 
-        {/* Feedback */}
         <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
           <p className="text-xs text-gray-600 dark:text-gray-400">Is this energy prediction accurate?</p>
           {!feedbackGiven ? (
