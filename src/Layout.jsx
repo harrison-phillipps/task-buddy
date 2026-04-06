@@ -25,6 +25,8 @@ import DeepPersonalityCustomizer from "@/components/companion/DeepPersonalityCus
 import DevModeIndicator from "@/components/DevModeIndicator";
 import ThemeToggle from "@/components/ThemeToggle";
 import CrossDeviceSessionSync from "@/components/focus/CrossDeviceSessionSync";
+import OfflineIndicator from "@/components/OfflineIndicator";
+import { useGlobalOfflineSync } from "@/hooks/useGlobalOfflineSync";
 
 const navigationItems = [
   {
@@ -116,6 +118,7 @@ function LayoutContent({ children, currentPageName }) {
   const [showPersonalityModal, setShowPersonalityModal] = React.useState(false);
   const [showDeepCustomizer, setShowDeepCustomizer] = React.useState(false);
   const [showMoreMenu, setShowMoreMenu] = React.useState(false);
+  const { isOnline, pendingCount, isSyncing, flushQueue } = useGlobalOfflineSync();
 
   // Dark mode detection - handled by ThemeToggle component now
 
@@ -393,6 +396,12 @@ function LayoutContent({ children, currentPageName }) {
           onUpdate={refreshUser}
           />
 
+          <OfflineIndicator
+            isOnline={isOnline}
+            pendingCount={pendingCount}
+            isSyncing={isSyncing}
+            onRetry={flushQueue}
+          />
           <CrossDeviceSessionSync currentUser={currentUser} />
           <DevModeIndicator />
           </>
