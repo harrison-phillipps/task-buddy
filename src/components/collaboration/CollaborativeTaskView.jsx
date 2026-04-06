@@ -32,8 +32,6 @@ export default function CollaborativeTaskView({ task, open, onOpenChange, curren
   const { isEditing, startEditing, stopEditing, isOtherUserEditing, otherEditorName } = useCoEditing(task || {}, currentUser || {});
   const canEdit = team && task && currentUser ? canEditTask(team, currentUser.id, task) : false;
 
-  if (!task || !currentUser) return null;
-
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
     onSuccess: async (updatedTask, variables) => {

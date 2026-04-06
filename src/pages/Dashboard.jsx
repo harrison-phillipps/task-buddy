@@ -34,6 +34,7 @@ import StrategicProgressCoach from "../components/ai/StrategicProgressCoach";
 import EnergyAwareCoach from "../components/ai/EnergyAwareCoach";
 import OptimalTimeRecommender from "../components/ai/OptimalTimeRecommender";
 import ProductivityReportModal from "../components/analytics/ProductivityReportModal";
+import DailySchedulePlanner from "../components/dashboard/DailySchedulePlanner";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -514,6 +515,21 @@ export default function Dashboard() {
                 )}
               </div>
             )}
+          </motion.div>
+        )}
+
+        {/* AI Daily Schedule Planner */}
+        {tasks.filter(t => t.status !== 'completed').length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.58 }}
+          >
+            <DailySchedulePlanner
+              tasks={tasks}
+              calendarEvents={calendarEvents}
+              userProgress={userProgress}
+            />
           </motion.div>
         )}
 
