@@ -1,4 +1,6 @@
 // Get pronoun based on gender
+import { base44 } from "@/api/base44Client";
+
 function getPronouns(gender) {
   if (gender === "female") return { subject: "she", object: "her", possessive: "her" };
   if (gender === "male") return { subject: "he", object: "him", possessive: "his" };

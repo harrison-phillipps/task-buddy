@@ -77,7 +77,7 @@ export const TIER_INFO = {
 
 // Check if we're in development mode
 const isDevelopmentMode = () => {
-  return process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+  return import.meta.env.DEV || window.location.hostname === 'localhost';
 };
 
 // Check if user has access to a feature

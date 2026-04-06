@@ -1,17 +1,95 @@
 // TaskBuddy Service Worker — background notifications + timer scheduling
-const CACHE_NAME = "taskbuddy-v2";
+// v3 — IndexedDB persistence so timers survive SW restarts (key for wearables)
+
+const DB_NAME = "taskbuddy-sw";
+const DB_VERSION = 1;
+const STORE = "scheduled";
 
 // ── Install & Activate ────────────────────────────────────────────────────────
 self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (e) =>
-  e.waitUntil(self.clients.claim())
-);
+self.addEventListener("activate", async (e) => {
+  e.waitUntil(
+    self.clients.claim().then(() => restorePersistedTimers())
+  );
+});
+
+// ── IndexedDB helpers ─────────────────────────────────────────────────────────
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      req.result.createObjectStore(STORE, { keyPath: "id" });
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function persistTimer(id, fireAt, title, body, options) {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(STORE, "readwrite");
+    tx.objectStore(STORE).put({ id, fireAt, title, body, options });
+    await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+    db.close();
+  } catch (e) {
+    console.warn("[SW] persistTimer failed:", e);
+  }
+}
+
+async function clearPersistedTimer(id) {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(STORE, "readwrite");
+    tx.objectStore(STORE).delete(id);
+    await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+    db.close();
+  } catch (e) {
+    console.warn("[SW] clearPersistedTimer failed:", e);
+  }
+}
+
+async function getAllPersistedTimers() {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(STORE, "readonly");
+    const all = await new Promise((res, rej) => {
+      const req = tx.objectStore(STORE).getAll();
+      req.onsuccess = () => res(req.result);
+      req.onerror = () => rej(req.error);
+    });
+    db.close();
+    return all;
+  } catch (e) {
+    console.warn("[SW] getAllPersistedTimers failed:", e);
+    return [];
+  }
+}
+
+// On SW activate/restart — restore any pending timers from IDB
+async function restorePersistedTimers() {
+  const timers = await getAllPersistedTimers();
+  const now = Date.now();
+  for (const t of timers) {
+    const delay = t.fireAt - now;
+    if (delay <= 0) {
+      // Overdue — fire immediately (or skip if very old, e.g. > 10 min late)
+      if (now - t.fireAt < 10 * 60 * 1000) {
+        fireNotification(t.title, t.body, t.options);
+      }
+      await clearPersistedTimer(t.id);
+    } else {
+      // Re-schedule in memory
+      scheduleNotification(t.id, delay, t.title, t.body, t.options, false);
+    }
+  }
+}
 
 // ── Scheduled notification registry ──────────────────────────────────────────
-// Map of id → timeoutId (kept in SW memory for the lifetime of the SW)
 const scheduledTimers = new Map();
 
-function scheduleNotification(id, delayMs, title, body, options = {}) {
+function scheduleNotification(id, delayMs, title, body, options = {}, persist = true) {
   // Clear any existing timer with this id
   if (scheduledTimers.has(id)) {
     clearTimeout(scheduledTimers.get(id));
@@ -20,11 +98,18 @@ function scheduleNotification(id, delayMs, title, body, options = {}) {
 
   if (delayMs <= 0) {
     fireNotification(title, body, options);
+    if (persist) clearPersistedTimer(id);
     return;
+  }
+
+  // Persist to IDB so it survives SW termination
+  if (persist) {
+    persistTimer(id, Date.now() + delayMs, title, body, options);
   }
 
   const timer = setTimeout(() => {
     scheduledTimers.delete(id);
+    clearPersistedTimer(id);
     fireNotification(title, body, options);
   }, delayMs);
 
@@ -41,7 +126,6 @@ function fireNotification(title, body, options = {}) {
     requireInteraction: options.requireInteraction || false,
     actions: options.actions || [],
     data: options.data || {},
-    // These two are key for Apple Watch / Wear OS mirror
     silent: false,
     renotify: true,
   });
@@ -52,6 +136,7 @@ function cancelTimer(id) {
     clearTimeout(scheduledTimers.get(id));
     scheduledTimers.delete(id);
   }
+  clearPersistedTimer(id);
 }
 
 // ── Message handler (from page) ───────────────────────────────────────────────
@@ -61,7 +146,6 @@ self.addEventListener("message", (event) => {
 
   switch (msg.type) {
 
-    // Claim clients immediately (called on first install)
     case "__CLAIM__":
       self.clients.claim();
       break;
@@ -119,6 +203,19 @@ self.addEventListener("message", (event) => {
       break;
     }
 
+    // Break reminder
+    case "SCHEDULE_BREAK_REMINDER": {
+      const delay = msg.startsAt - Date.now();
+      scheduleNotification(
+        "break-reminder",
+        delay,
+        "☕ Break Time!",
+        msg.body || "Take a short break to recharge.",
+        { tag: "break-reminder", requireInteraction: false, vibrate: [200, 100, 200] }
+      );
+      break;
+    }
+
     // Cancel a specific scheduled notification
     case "CANCEL_NOTIFICATION":
       cancelTimer(msg.id);
@@ -126,7 +223,7 @@ self.addEventListener("message", (event) => {
 
     // Cancel all
     case "CANCEL_ALL":
-      for (const id of scheduledTimers.keys()) cancelTimer(id);
+      for (const id of [...scheduledTimers.keys()]) cancelTimer(id);
       break;
 
     default:
@@ -138,23 +235,37 @@ self.addEventListener("message", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const action = event.action;
   const targetUrl = "/FocusSession";
 
   event.waitUntil(
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clients) => {
-        // If app is already open, focus it
         for (const client of clients) {
           if (client.url.includes(targetUrl) && "focus" in client) {
             return client.focus();
           }
         }
-        // Otherwise open a new window
         if (self.clients.openWindow) {
           return self.clients.openWindow(targetUrl);
         }
       })
   );
+});
+
+// ── Push event (for future Web Push support) ──────────────────────────────────
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+  try {
+    const data = event.data.json();
+    event.waitUntil(
+      fireNotification(data.title || "TaskBuddy", data.body || "", {
+        tag: data.tag || "push",
+        requireInteraction: data.requireInteraction || false,
+        vibrate: data.vibrate || [200, 100, 200],
+      })
+    );
+  } catch (e) {
+    console.warn("[SW] push event parse error:", e);
+  }
 });

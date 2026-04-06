@@ -55,6 +55,8 @@ import FocusNotificationSettings, {
   cancelAllNotifications,
   getNotifPrefs,
   sendSWMessage,
+  startSWKeepAlive,
+  stopSWKeepAlive,
 } from "../components/focus/FocusNotificationSettings";
 
 // Dynamic encouragement based on user progress
@@ -552,6 +554,7 @@ export default function FocusSession() {
     setSessionStarted(true);
     setIsActive(true);
     setSessionStartTime(Date.now());
+    startSWKeepAlive(); // Prevent SW termination during active session
     
     const firstIncomplete = selectedTask.subtasks?.findIndex(st => !st.completed) || 0;
     setCurrentSubtaskIndex(firstIncomplete);
@@ -889,8 +892,8 @@ export default function FocusSession() {
       localStorage.removeItem(`focus_session_${sessionId}`);
     }
 
-    // Cancel all pending SW notifications
     cancelAllNotifications();
+    stopSWKeepAlive();
     // Clear cross-device sync record
     setIsController(false);
     clearSyncSession();

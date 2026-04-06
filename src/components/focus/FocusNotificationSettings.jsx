@@ -10,7 +10,6 @@ import { requestNotificationPermission } from "./BackgroundTimer";
 export async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return null;
   try {
-    // Always update the SW so the latest version is active
     const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' });
     // Force the waiting SW to activate immediately if an update is found
     if (reg.waiting) {
@@ -31,6 +30,23 @@ export async function registerServiceWorker() {
   } catch (e) {
     console.warn('SW registration failed:', e);
     return null;
+  }
+}
+
+// Keep the SW alive during an active focus session by pinging it periodically
+let _keepAliveInterval = null;
+
+export function startSWKeepAlive() {
+  if (_keepAliveInterval) return;
+  _keepAliveInterval = setInterval(() => {
+    sendSWMessage({ type: 'KEEP_ALIVE' });
+  }, 20000); // every 20 seconds
+}
+
+export function stopSWKeepAlive() {
+  if (_keepAliveInterval) {
+    clearInterval(_keepAliveInterval);
+    _keepAliveInterval = null;
   }
 }
 

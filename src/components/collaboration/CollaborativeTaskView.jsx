@@ -29,10 +29,10 @@ export default function CollaborativeTaskView({ task, open, onOpenChange, curren
     refetchInterval: 5000
   });
 
-  if (!task || !currentUser) return null;
+  const { isEditing, startEditing, stopEditing, isOtherUserEditing, otherEditorName } = useCoEditing(task || {}, currentUser || {});
+  const canEdit = team && task && currentUser ? canEditTask(team, currentUser.id, task) : false;
 
-  const { isEditing, startEditing, stopEditing, isOtherUserEditing, otherEditorName } = useCoEditing(task, currentUser);
-  const canEdit = team ? canEditTask(team, currentUser.id, task) : false;
+  if (!task || !currentUser) return null;
 
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
