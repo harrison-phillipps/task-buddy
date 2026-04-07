@@ -244,4 +244,7 @@ export const STRATEGY_PROMPTS = {
   quick_wins: "Prioritize shorter, easier tasks to build momentum and increase completion rate.",
   high_impact: "Prioritize tasks with the highest potential impact on goals, regardless of difficulty.",
   energy_aware: "Match tasks to the user's energy patterns and time of day for optimal performance.",
+  goal_sprint: "Prioritize tasks that are most directly aligned with active high-priority goals; ignore low-goal-relevance tasks.",
+  unblock_chain: "Prioritize tasks that unblock the longest chain of dependent tasks first.",
+  skill_builder: "Elevate learning and skill-development tasks to accelerate personal growth objectives.",
 };

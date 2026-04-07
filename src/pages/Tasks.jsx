@@ -192,11 +192,25 @@ export default function Tasks() {
     return aiTask ? { ...t, ...aiTask } : t;
   });
 
+  const { data: goals = [] } = useQuery({
+    queryKey: ['goals', currentUser?.email],
+    queryFn: () => base44.entities.Goal.filter({ created_by: currentUser.email }),
+    enabled: !!currentUser,
+    staleTime: 5 * 60_000,
+  });
+
+  const { data: skills = [] } = useQuery({
+    queryKey: ['skills', currentUser?.email],
+    queryFn: () => base44.entities.Skill.filter({ created_by: currentUser.email }),
+    enabled: !!currentUser,
+    staleTime: 5 * 60_000,
+  });
+
   const { data: teams = [] } = useQuery({
     queryKey: ['teams', currentUser?.id],
     queryFn: async () => {
       const allTeams = await base44.entities.Team.list();
-      return allTeams.filter(team => 
+      return allTeams.filter(team =>
         team.owner_id === currentUser.id || team.member_ids?.includes(currentUser.id)
       );
     },
@@ -359,12 +373,13 @@ export default function Tasks() {
       const allUserTasks = await base44.entities.Task.filter({ created_by: currentUser.email }, '-updated_date', 200);
       const activeTasks = rawTasks.filter(t => t.status !== 'completed');
       const strategyHint = STRATEGY_PROMPTS[aiStrategyKey] || "";
-      const result = await analyzeTaskPriority(activeTasks, allUserTasks, preferences, strategyHint);
+      const result = await analyzeTaskPriority(activeTasks, allUserTasks, preferences, strategyHint, goals, skills);
       setAiPrioritizedTasks(result.tasks);
       setAiStrategy(result.strategy);
       setAiRecommendedFocus(result.recommended_focus);
       setShowAIInsights(true);
       toast.success("AI prioritization complete! ✨", { description: result.recommended_focus });
+      if (result.goal_insights) setAiStrategy(prev => prev + (prev ? '\n\n' : '') + '🎯 ' + result.goal_insights);
     } catch (error) {
       console.error("AI prioritization error:", error);
       toast.error("Failed to analyze priorities");
