@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { hasFeatureAccess, UpgradePrompt } from "@/components/subscription/FeatureGate";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -72,13 +73,17 @@ export default function Settings() {
             </TabsContent>
 
             <TabsContent value="ai">
-              <AIPrioritizationSettings 
-                currentUser={currentUser}
-                onUpdate={async () => {
-                  const user = await base44.auth.me();
-                  setCurrentUser(user);
-                }}
-              />
+              {hasFeatureAccess(currentUser?.subscription_tier, "ai_prioritization") ? (
+                <AIPrioritizationSettings
+                  currentUser={currentUser}
+                  onUpdate={async () => {
+                    const user = await base44.auth.me();
+                    setCurrentUser(user);
+                  }}
+                />
+              ) : (
+                <UpgradePrompt feature="AI Prioritization Settings" requiredTier="pro" />
+              )}
             </TabsContent>
 
             <TabsContent value="calendar">

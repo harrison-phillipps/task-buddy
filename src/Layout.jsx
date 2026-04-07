@@ -27,6 +27,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import CrossDeviceSessionSync from "@/components/focus/CrossDeviceSessionSync";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import { useGlobalOfflineSync } from "@/hooks/useGlobalOfflineSync";
+import { hasFeatureAccess } from "@/components/subscription/FeatureGate";
 
 const navigationItems = [
   {
@@ -46,68 +47,7 @@ const navigationItems = [
   },
 ];
 
-const moreItems = [
-  {
-    title: "Smart Plan",
-    url: createPageUrl("SmartPlan"),
-    icon: CalendarDays,
-  },
-  {
-    title: "Focus Mode",
-    url: createPageUrl("FocusMode"),
-    icon: Maximize2,
-  },
-  {
-    title: "Voice to Tasks",
-    url: createPageUrl("VoiceTask"),
-    icon: Mic,
-  },
-  {
-    title: "Brain Dump",
-    url: createPageUrl("BrainDump"),
-    icon: Brain,
-  },
-  {
-    title: "Break Down Task",
-    url: createPageUrl("TaskBreakdown"),
-    icon: Sparkles,
-  },
-  {
-    title: "Goals",
-    url: createPageUrl("Goals"),
-    icon: Target,
-  },
-  {
-    title: "Skill Development",
-    url: createPageUrl("SkillDevelopment"),
-    icon: Award,
-  },
-  {
-    title: "Calendar",
-    url: createPageUrl("CalendarView"),
-    icon: Calendar,
-  },
-  {
-    title: "Gap Filler",
-    url: createPageUrl("CalendarGapFiller"),
-    icon: Zap,
-  },
-  {
-    title: "Teams",
-    url: createPageUrl("Teams"),
-    icon: Users,
-  },
-  {
-    title: "Integrations",
-    url: createPageUrl("Integrations"),
-    icon: Sparkles,
-  },
-  {
-    title: "Settings",
-    url: createPageUrl("Settings"),
-    icon: Settings,
-  },
-];
+// moreItems are defined dynamically based on tier — see LayoutContent
 
 function LayoutContent({ children, currentPageName }) {
   const location = useLocation();
@@ -120,14 +60,28 @@ function LayoutContent({ children, currentPageName }) {
   const [showMoreMenu, setShowMoreMenu] = React.useState(false);
   const { isOnline, pendingCount, isSyncing, flushQueue } = useGlobalOfflineSync();
 
-  // Dark mode detection - handled by ThemeToggle component now
+  const userTier = currentUser?.subscription_tier || "free";
+
+  const moreItems = [
+    { title: "Smart Plan", url: createPageUrl("SmartPlan"), icon: CalendarDays, feature: "smart_plan" },
+    { title: "Focus Mode", url: createPageUrl("FocusMode"), icon: Maximize2, feature: null },
+    { title: "Voice to Tasks", url: createPageUrl("VoiceTask"), icon: Mic, feature: "voice_tasks" },
+    { title: "Brain Dump", url: createPageUrl("BrainDump"), icon: Brain, feature: null },
+    { title: "Break Down Task", url: createPageUrl("TaskBreakdown"), icon: Sparkles, feature: null },
+    { title: "Goals", url: createPageUrl("Goals"), icon: Target, feature: null },
+    { title: "Skill Development", url: createPageUrl("SkillDevelopment"), icon: Award, feature: null },
+    { title: "Calendar", url: createPageUrl("CalendarView"), icon: Calendar, feature: "calendar_events" },
+    { title: "Gap Filler", url: createPageUrl("CalendarGapFiller"), icon: Zap, feature: "gap_filler" },
+    { title: "Teams", url: createPageUrl("Teams"), icon: Users, feature: "team_features" },
+    { title: "Integrations", url: createPageUrl("Integrations"), icon: Sparkles, feature: null },
+    { title: "Settings", url: createPageUrl("Settings"), icon: Settings, feature: null },
+  ];
 
   React.useEffect(() => {
     const fetchUser = async () => {
       try {
         const user = await base44.auth.me();
         setCurrentUser(user);
-        // Fetch progress in parallel after we have the user id
         base44.entities.UserProgress.filter({ user_id: user.id }).then(list => {
           setUserProgress(list.length > 0 ? list[0] : null);
         }).catch(() => setUserProgress(null));
@@ -267,21 +221,34 @@ function LayoutContent({ children, currentPageName }) {
                 </button>
                 {showMoreMenu && (
                   <SidebarMenu className="mt-2">
-                    {moreItems.map((item) => (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton 
-                          asChild 
-                          className={`hover:bg-purple-50 hover:text-purple-700 transition-all duration-300 rounded-xl mb-1 ${
-                            location.pathname === item.url ? 'bg-purple-100 text-purple-700' : ''
-                          }`}
-                        >
-                          <Link to={item.url} className="flex items-center gap-3 px-4 py-2 text-sm" onClick={handleNavClick}>
-                            <item.icon className="w-4 h-4" />
-                            <span>{item.title}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
+                    {moreItems.map((item) => {
+                      const locked = item.feature && !hasFeatureAccess(userTier, item.feature);
+                      return (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarMenuButton
+                            asChild={!locked}
+                            className={`hover:bg-purple-50 hover:text-purple-700 transition-all duration-300 rounded-xl mb-1 ${
+                              location.pathname === item.url ? 'bg-purple-100 text-purple-700' : ''
+                            } ${locked ? 'opacity-60 cursor-pointer' : ''}`}
+                          >
+                            {locked ? (
+                              <Link to={createPageUrl("Subscription")} className="flex items-center justify-between gap-3 px-4 py-2 text-sm w-full" onClick={handleNavClick}>
+                                <span className="flex items-center gap-3">
+                                  <item.icon className="w-4 h-4" />
+                                  <span>{item.title}</span>
+                                </span>
+                                <span className="text-[10px] bg-purple-100 text-purple-700 rounded-full px-1.5 py-0.5 font-semibold">Pro</span>
+                              </Link>
+                            ) : (
+                              <Link to={item.url} className="flex items-center gap-3 px-4 py-2 text-sm" onClick={handleNavClick}>
+                                <item.icon className="w-4 h-4" />
+                                <span>{item.title}</span>
+                              </Link>
+                            )}
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
                   </SidebarMenu>
                 )}
               </SidebarGroupContent>

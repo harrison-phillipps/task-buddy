@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { hasFeatureAccess, UpgradePrompt } from "@/components/subscription/FeatureGate";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,14 @@ import AITipsSection from "@/components/analytics/AITipsSection";
 
 export default function Analytics() {
   const [timeRange, setTimeRange] = useState("30d");
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(setCurrentUser).catch(() => {});
+  }, []);
+
+  const userTier = currentUser?.subscription_tier || "free";
+  const hasAdvanced = hasFeatureAccess(userTier, "advanced_analytics");
   
   const { data: tasks = [], isLoading: tasksLoading } = useQuery({
     queryKey: ['tasks'],
@@ -174,22 +183,26 @@ export default function Analytics() {
           userProgress={userProgress} 
         />
 
-        {/* Peak Productivity */}
-        <PeakProductivityDashboard focusSessions={focusSessions} />
+        {/* Peak Productivity — Pro+ */}
+        {hasAdvanced && <PeakProductivityDashboard focusSessions={focusSessions} />}
 
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <WeeklyTrendsChart tasks={tasks} focusSessions={focusSessions} />
-          <CategoryChart tasks={tasks} />
-          <DifficultyChart tasks={tasks} />
-        </div>
+        {/* Charts Grid — Pro+ */}
+        {hasAdvanced ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <WeeklyTrendsChart tasks={tasks} focusSessions={focusSessions} />
+            <CategoryChart tasks={tasks} />
+            <DifficultyChart tasks={tasks} />
+          </div>
+        ) : (
+          <UpgradePrompt feature="Advanced Charts & Trends" requiredTier="pro" />
+        )}
 
-        {/* Detailed Insights */}
-        <ProductivityInsights 
-          tasks={tasks} 
-          focusSessions={focusSessions} 
-          userProgress={userProgress} 
-        />
+        {/* Detailed Insights — Pro+ */}
+        {hasAdvanced && <ProductivityInsights
+          tasks={tasks}
+          focusSessions={focusSessions}
+          userProgress={userProgress}
+        />}
       </div>
     </div>
   );

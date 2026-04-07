@@ -35,6 +35,7 @@ import EnergyAwareCoach from "../components/ai/EnergyAwareCoach";
 import OptimalTimeRecommender from "../components/ai/OptimalTimeRecommender";
 import ProductivityReportModal from "../components/analytics/ProductivityReportModal";
 import DailySchedulePlanner from "../components/dashboard/DailySchedulePlanner";
+import { hasFeatureAccess, UpgradePrompt } from "../components/subscription/FeatureGate";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -296,40 +297,31 @@ export default function Dashboard() {
 
 
 
-        {/* Proactive AI Coach */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.32 }}
-        >
-          <ProactiveCoach 
-            userProgress={userProgress}
-            recentTasks={tasks}
-            recentSessions={sessions}
-            goals={[]}
-            context="dashboard"
-          />
-        </motion.div>
-
-        {/* Optimal Time Recommender */}
-        {sessions.length > 5 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.315 }}
-          >
-            <OptimalTimeRecommender />
-          </motion.div>
-        )}
-
-        {/* Smart Task Recommendations */}
-        {tasks.filter(t => t.status !== 'completed').length > 0 && (
+        {/* Proactive AI Coach — Pro+ */}
+        {hasFeatureAccess(currentUser?.subscription_tier, "proactive_coaching") && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.32 }}
           >
-            <SmartTaskRecommender 
+            <ProactiveCoach
+              userProgress={userProgress}
+              recentTasks={tasks}
+              recentSessions={sessions}
+              goals={[]}
+              context="dashboard"
+            />
+          </motion.div>
+        )}
+
+        {/* Smart Task Recommendations — Pro+ */}
+        {hasFeatureAccess(currentUser?.subscription_tier, "smart_recommendations") && tasks.filter(t => t.status !== 'completed').length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.32 }}
+          >
+            <SmartTaskRecommender
               tasks={tasks.filter(t => t.status !== 'completed')}
               userProgress={userProgress}
               currentUser={currentUser}
@@ -343,7 +335,7 @@ export default function Dashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.32 }}
         >
-          <ProgressInsights 
+          <ProgressInsights
             userProgress={userProgress}
             tasks={tasks}
             focusSessions={sessions}
@@ -435,8 +427,8 @@ export default function Dashboard() {
           </motion.div>
         )}
 
-        {/* Strategic & Energy Coaching — only rendered when there's enough data */}
-        {(tasks.length > 5 || sessions.length > 2) && (
+        {/* Strategic & Energy Coaching — Premium only */}
+        {hasFeatureAccess(currentUser?.subscription_tier, "strategic_coaching") && (tasks.length > 5 || sessions.length > 2) && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -444,20 +436,10 @@ export default function Dashboard() {
             className="grid grid-cols-1 lg:grid-cols-2 gap-4"
           >
             {tasks.length > 5 && sessions.length > 3 && (
-              <StrategicProgressCoach
-                tasks={tasks}
-                sessions={sessions}
-                userProgress={userProgress}
-                goals={[]}
-              />
+              <StrategicProgressCoach tasks={tasks} sessions={sessions} userProgress={userProgress} goals={[]} />
             )}
             {sessions.length > 2 && (
-              <EnergyAwareCoach
-                tasks={tasks}
-                sessions={sessions}
-                currentUser={currentUser}
-                userProgress={userProgress}
-              />
+              <EnergyAwareCoach tasks={tasks} sessions={sessions} currentUser={currentUser} userProgress={userProgress} />
             )}
             {sessions.length > 5 && (
               <div className="lg:col-span-2">
@@ -467,8 +449,8 @@ export default function Dashboard() {
           </motion.div>
         )}
 
-        {/* AI Coaching Bots - collapsible */}
-        {(tasks.length > 3 || sessions.length > 2) && (
+        {/* AI Coaching Bots — Premium only */}
+        {hasFeatureAccess(currentUser?.subscription_tier, "ai_coaching_bots") && (tasks.length > 3 || sessions.length > 2) && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -487,49 +469,30 @@ export default function Dashboard() {
             {showAIBots && (
               <div className="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {tasks.filter(t => t.is_recurring || t.parent_recurring_task_id).length > 0 && (
-                  <HabitFormationBot
-                    recurringTasks={tasks.filter(t => t.is_recurring || t.parent_recurring_task_id)}
-                    userProgress={userProgress}
-                  />
+                  <HabitFormationBot recurringTasks={tasks.filter(t => t.is_recurring || t.parent_recurring_task_id)} userProgress={userProgress} />
                 )}
                 {tasks.length > 5 && (
-                  <ProductivityForecasterBot
-                    tasks={tasks}
-                    sessions={sessions}
-                    userProgress={userProgress}
-                  />
+                  <ProductivityForecasterBot tasks={tasks} sessions={sessions} userProgress={userProgress} />
                 )}
                 {tasks.length > 3 && (
-                  <SkillDevelopmentBot
-                    tasks={tasks}
-                    sessions={sessions}
-                    userProgress={userProgress}
-                  />
+                  <SkillDevelopmentBot tasks={tasks} sessions={sessions} userProgress={userProgress} />
                 )}
                 {sessions.length > 2 && (
-                  <EnergyManagementBot
-                    tasks={tasks}
-                    sessions={sessions}
-                    userProgress={userProgress}
-                  />
+                  <EnergyManagementBot tasks={tasks} sessions={sessions} userProgress={userProgress} />
                 )}
               </div>
             )}
           </motion.div>
         )}
 
-        {/* AI Daily Schedule Planner */}
-        {tasks.filter(t => t.status !== 'completed').length > 0 && (
+        {/* AI Daily Schedule Planner — Pro+ */}
+        {hasFeatureAccess(currentUser?.subscription_tier, "daily_schedule_planner") && tasks.filter(t => t.status !== 'completed').length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.58 }}
           >
-            <DailySchedulePlanner
-              tasks={tasks}
-              calendarEvents={calendarEvents}
-              userProgress={userProgress}
-            />
+            <DailySchedulePlanner tasks={tasks} calendarEvents={calendarEvents} userProgress={userProgress} />
           </motion.div>
         )}
 

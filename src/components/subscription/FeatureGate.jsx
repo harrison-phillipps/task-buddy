@@ -14,23 +14,36 @@ export const FEATURE_ACCESS = {
   brain_dump: ["free", "pro", "premium"],
   focus_session: ["free", "pro", "premium"],
   basic_achievements: ["free", "pro", "premium"],
-  
+  basic_analytics: ["free", "pro", "premium"],
+
   // Pro features
   ai_prioritization: ["pro", "premium"],
-  calendar_sync: ["free", "pro", "premium"],
-  calendar_events: ["free", "pro", "premium"],
+  advanced_ai_settings: ["pro", "premium"],
+  calendar_sync: ["pro", "premium"],
+  calendar_events: ["pro", "premium"],
   advanced_analytics: ["pro", "premium"],
   unlimited_tasks: ["pro", "premium"],
   ambient_sounds: ["pro", "premium"],
   spotify_player: ["pro", "premium"],
   cross_device_notifications: ["pro", "premium"],
-  
+  smart_plan: ["pro", "premium"],
+  voice_tasks: ["pro", "premium"],
+  gap_filler: ["pro", "premium"],
+  daily_schedule_planner: ["pro", "premium"],
+  proactive_coaching: ["pro", "premium"],
+  smart_recommendations: ["pro", "premium"],
+
   // Premium features
   ai_task_breakdown: ["premium"],
   custom_companions: ["premium"],
   priority_support: ["premium"],
   export_data: ["premium"],
-  team_features: ["premium"]
+  team_features: ["premium"],
+  strategic_coaching: ["premium"],
+  energy_coaching: ["premium"],
+  ai_coaching_bots: ["premium"],
+  team_workload: ["premium"],
+  at_mentions: ["premium"],
 };
 
 export const TIER_LIMITS = {
@@ -121,10 +134,15 @@ export function UpgradeModal({ open, onOpenChange, feature, requiredTier = "pro"
       "AI Task Prioritization",
       "Google Calendar Sync",
       "Advanced Analytics",
-      "Unlimited Tasks",
+      "Up to 100 Tasks",
       "Ambient Focus Sounds",
       "Spotify Focus Music",
-      "Smartwatch & Cross-Device Notifications"
+      "Smart Daily Plan",
+      "Voice to Tasks",
+      "Calendar Gap Filler",
+      "Daily Schedule Planner",
+      "Proactive AI Coaching",
+      "Smart Task Recommendations",
     ],
     premium: [
       "Everything in Pro",
