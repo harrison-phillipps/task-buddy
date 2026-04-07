@@ -3,7 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Zap, Sparkles, Crown, ArrowRight, XCircle } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Check, Zap, Sparkles, Crown, ArrowRight, XCircle, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { TIER_INFO } from "../components/subscription/FeatureGate";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -149,12 +150,31 @@ export default function Subscription() {
     }
   };
 
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+
   const handleCancelSubscription = async () => {
-    if (!confirm("Are you sure you want to cancel your subscription? You'll be downgraded to the Free plan at the end of your billing period.")) {
+    if (window.self !== window.top) {
+      alert('Cancellation is only available in the published app.');
       return;
     }
-    
-    alert("To cancel your subscription, please contact support@taskbuddy.app or manage your subscription in the Stripe customer portal. We'll add self-service cancellation soon!");
+    setIsCancelling(true);
+    try {
+      const response = await base44.functions.invoke('cancelSubscription', {});
+      if (response.data?.success) {
+        const cancelDate = new Date(response.data.cancel_at).toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' });
+        setCurrentUser(prev => ({ ...prev, subscription_cancel_at: response.data.cancel_at }));
+        setCancelConfirmOpen(false);
+        alert(`Your subscription has been cancelled. You'll keep access to your current plan until ${cancelDate}.`);
+      } else {
+        throw new Error(response.data?.error || 'Cancellation failed');
+      }
+    } catch (error) {
+      console.error('Cancellation error:', error);
+      alert('Failed to cancel subscription. Please try again or contact support@taskbuddy.app');
+    } finally {
+      setIsCancelling(false);
+    }
   };
 
   const TierIcon = ({ tier }) => {
@@ -320,24 +340,56 @@ export default function Subscription() {
             transition={{ delay: 0.6 }}
             className="mt-12"
           >
-            <Card className="bg-red-50 border-red-200">
+            <Card className="bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900">
               <CardHeader>
-                <CardTitle className="text-red-800 flex items-center gap-2">
+                <CardTitle className="text-red-800 dark:text-red-400 flex items-center gap-2">
                   <XCircle className="w-5 h-5" />
                   Cancel Subscription
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-red-700">
-                  If you cancel your subscription, you'll be moved to the Free plan and lose access to premium features.
-                </p>
-                <Button
-                  onClick={handleCancelSubscription}
-                  variant="destructive"
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  Cancel My Subscription
-                </Button>
+                {currentUser?.subscription_cancel_at ? (
+                  <div className="flex items-start gap-3 p-4 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-lg">
+                    <AlertTriangle className="w-5 h-5 text-orange-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-orange-800 dark:text-orange-400">Cancellation scheduled</p>
+                      <p className="text-sm text-orange-700 dark:text-orange-500 mt-1">
+                        Your subscription will end on <strong>{new Date(currentUser.subscription_cancel_at).toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' })}</strong>. You'll keep full access until then.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-red-700 dark:text-red-400">
+                      If you cancel, you'll keep access to your current plan until the end of your billing period, then be moved to the Free plan.
+                    </p>
+                    <AlertDialog open={cancelConfirmOpen} onOpenChange={setCancelConfirmOpen}>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" className="bg-red-600 hover:bg-red-700">
+                          Cancel My Subscription
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Cancel your subscription?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            You'll keep access to <strong>{currentTier === 'pro' ? 'Pro' : 'Premium'}</strong> features until the end of your current billing period. After that, your account will be downgraded to the Free plan and you'll lose access to premium features.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Keep My Subscription</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleCancelSubscription}
+                            disabled={isCancelling}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                          >
+                            {isCancelling ? 'Cancelling...' : 'Yes, Cancel'}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </>
+                )}
               </CardContent>
             </Card>
           </motion.div>

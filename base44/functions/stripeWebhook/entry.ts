@@ -74,10 +74,11 @@ Deno.serve(async (req) => {
             if (tier) {
               await base44.asServiceRole.entities.User.update(userId, {
                 subscription_tier: tier,
-                stripe_subscription_id: subscription.id
+                stripe_subscription_id: subscription.id,
+                subscription_cancel_at: null
               });
               console.log(`Re-activated user ${userId} to ${tier}`);
-            }
+              }
           }
         }
         break;
@@ -91,7 +92,8 @@ Deno.serve(async (req) => {
           console.log(`Subscription cancelled for user ${userId}`);
           await base44.asServiceRole.entities.User.update(userId, {
             subscription_tier: 'free',
-            stripe_subscription_id: null
+            stripe_subscription_id: null,
+            subscription_cancel_at: null
           });
           console.log(`Downgraded user ${userId} to free`);
         }
