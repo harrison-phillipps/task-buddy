@@ -1,0 +1,97 @@
+{
+  "name": "CompanionLearning",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User this learning profile belongs to"
+    },
+    "preferred_message_length": {
+      "type": "string",
+      "enum": [
+        "short",
+        "medium",
+        "long"
+      ],
+      "default": "medium",
+      "description": "Learned preference for message length"
+    },
+    "preferred_tone": {
+      "type": "string",
+      "enum": [
+        "formal",
+        "casual",
+        "playful",
+        "direct"
+      ],
+      "default": "casual",
+      "description": "Learned preferred communication tone"
+    },
+    "peak_productivity_hours": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "default": [],
+      "description": "Hours of day (0-23) when user is most productive"
+    },
+    "preferred_task_categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Categories user works on most"
+    },
+    "avg_focus_duration_minutes": {
+      "type": "number",
+      "default": 25,
+      "description": "Average focus session duration"
+    },
+    "completion_rate": {
+      "type": "number",
+      "default": 0,
+      "description": "Task completion rate (0-1)"
+    },
+    "interaction_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Total companion interactions"
+    },
+    "positive_responses": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of positive feedback interactions"
+    },
+    "dismissed_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of dismissed suggestions"
+    },
+    "effective_motivators": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Types of messages that got positive responses"
+    },
+    "last_insight_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time a proactive insight was shown"
+    },
+    "behavioral_patterns": {
+      "type": "object",
+      "description": "Detected behavioral patterns from task/session data",
+      "default": {}
+    },
+    "learned_style_prompt": {
+      "type": "string",
+      "description": "AI-generated style instruction based on learned preferences"
+    }
+  },
+  "required": [
+    "user_id"
+  ]
+}

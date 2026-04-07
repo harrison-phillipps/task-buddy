@@ -36,6 +36,7 @@ import OptimalTimeRecommender from "../components/ai/OptimalTimeRecommender";
 import ProductivityReportModal from "../components/analytics/ProductivityReportModal";
 import DailySchedulePlanner from "../components/dashboard/DailySchedulePlanner";
 import { hasFeatureAccess, UpgradePrompt } from "../components/subscription/FeatureGate";
+import AdaptiveCompanionAI from "../components/companion/AdaptiveCompanionAI";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -218,6 +219,13 @@ export default function Dashboard() {
               userProgress={userProgress}
               context="dashboard"
               enableFeedback={!!aiMessage}
+            />
+            <AdaptiveCompanionAI
+              currentUser={currentUser}
+              tasks={tasks}
+              sessions={sessions}
+              progress={userProgress}
+              className="px-4 pb-4"
             />
           </motion.div>
         )}
