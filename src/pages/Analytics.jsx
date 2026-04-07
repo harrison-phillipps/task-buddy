@@ -15,7 +15,7 @@ import ProductivityInsights from "@/components/analytics/ProductivityInsights";
 import CategoryChart from "@/components/analytics/CategoryChart";
 import DifficultyChart from "@/components/analytics/DifficultyChart";
 import WeeklyTrendsChart from "@/components/analytics/WeeklyTrendsChart";
-import PeakHoursChart from "@/components/analytics/PeakHoursChart";
+import PeakProductivityDashboard from "@/components/analytics/PeakProductivityDashboard";
 import AITipsSection from "@/components/analytics/AITipsSection";
 
 export default function Analytics() {
@@ -174,10 +174,12 @@ export default function Analytics() {
           userProgress={userProgress} 
         />
 
+        {/* Peak Productivity */}
+        <PeakProductivityDashboard focusSessions={focusSessions} />
+
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <WeeklyTrendsChart tasks={tasks} focusSessions={focusSessions} />
-          <PeakHoursChart focusSessions={focusSessions} />
           <CategoryChart tasks={tasks} />
           <DifficultyChart tasks={tasks} />
         </div>
