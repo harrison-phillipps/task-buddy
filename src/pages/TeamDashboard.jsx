@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, CheckCircle, Clock, AlertCircle, MessageSquare, Plus, Shield, ListTodo, Brain, Calendar, Bell, FileText } from "lucide-react";
+import { Users, CheckCircle, Clock, AlertCircle, MessageSquare, Plus, Shield, ListTodo, Brain, Calendar, Bell, FileText, BarChart2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -28,6 +28,7 @@ import LivePresenceIndicator from "../components/collaboration/LivePresenceIndic
 import TeamBottleneckAnalyzer from "../components/team/TeamBottleneckAnalyzer";
 import TeamProgressVisualization from "../components/team/TeamProgressVisualization";
 import RealTimeNotificationCenter from "../components/team/RealTimeNotificationCenter";
+import TeamWorkloadView from "../components/team/TeamWorkloadView";
 import { toast } from "sonner";
 
 export default function TeamDashboard() {
@@ -70,7 +71,7 @@ export default function TeamDashboard() {
     retry: 0,
   });
 
-  const { data: teamTasks = [] } = useQuery({
+  const { data: teamTasks = [], refetch: refetchTasks } = useQuery({
     queryKey: ['teamTasks', teamId],
     queryFn: async () => {
       try {
@@ -81,7 +82,19 @@ export default function TeamDashboard() {
       }
     },
     enabled: !!teamId && !!team,
+    refetchInterval: 15000, // poll every 15s for real-time feel
   });
+
+  // Real-time subscription for instant updates
+  React.useEffect(() => {
+    if (!teamId) return;
+    const unsub = base44.entities.Task.subscribe(event => {
+      if (event.data?.team_id === teamId || event.type === 'delete') {
+        queryClient.invalidateQueries({ queryKey: ['teamTasks', teamId] });
+      }
+    });
+    return unsub;
+  }, [teamId, queryClient]);
 
   const teamMembers = React.useMemo(() => {
     if (!team) return [];
@@ -318,6 +331,10 @@ export default function TeamDashboard() {
               <TabsTrigger value="chat" className="flex-shrink-0">
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Team Chat
+              </TabsTrigger>
+              <TabsTrigger value="workloads" className="flex-shrink-0">
+                <BarChart2 className="w-4 h-4 mr-2" />
+                Workloads
               </TabsTrigger>
               <TabsTrigger value="members" className="flex-shrink-0">
                 <Shield className="w-4 h-4 mr-2" />
@@ -589,16 +606,17 @@ export default function TeamDashboard() {
                 <CardContent>
                   <div className="mb-3 p-3 bg-purple-50 rounded-lg">
                     <p className="font-medium text-sm text-gray-900">{selectedTask.title}</p>
-                  </div>
-                  <TaskCommentsSection
-                    task={selectedTask}
-                    currentUser={currentUser}
-                    team={team}
-                    onCommentAdded={() => {
-                      queryClient.invalidateQueries({ queryKey: ['teamNotifications'] });
-                    }}
-                  />
-                </CardContent>
+                    </div>
+                    <TaskCommentsSection
+                     task={selectedTask}
+                     currentUser={currentUser}
+                     team={team}
+                     teamMembers={teamMembers}
+                     onCommentAdded={() => {
+                       queryClient.invalidateQueries({ queryKey: ['teamNotifications'] });
+                     }}
+                    />
+                    </CardContent>
               </Card>
             )}
           </div>
