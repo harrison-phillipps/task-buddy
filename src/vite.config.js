@@ -36,7 +36,7 @@ function singleReactPlugin() {
   };
 }
 
-// cache-bust: v14
+// cache-bust: v15-force-20260408
 export default defineConfig({
   plugins: [singleReactPlugin(), base44()],
   resolve: {
@@ -74,5 +74,9 @@ export default defineConfig({
       '@tanstack/react-query',
     ],
     force: true,
+    esbuildOptions: {
+      // Force esbuild to use a single React instance
+      define: { 'process.env.NODE_ENV': JSON.stringify('development') },
+    },
   },
 });
