@@ -27,14 +27,20 @@ function singleReactPlugin() {
   };
 }
 
-// cache-bust: v2
+// cache-bust: v3
 export default defineConfig({
   plugins: [singleReactPlugin(), base44()],
   resolve: {
-    dedupe: ['react', 'react-dom', 'react/jsx-runtime'],
+    dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react-router-dom'],
+    alias: {
+      'react': resolve(__dirname, 'node_modules/react/index.js'),
+      'react-dom': resolve(__dirname, 'node_modules/react-dom/index.js'),
+      'react/jsx-runtime': resolve(__dirname, 'node_modules/react/jsx-runtime.js'),
+      'react/jsx-dev-runtime': resolve(__dirname, 'node_modules/react/jsx-dev-runtime.js'),
+    },
   },
   optimizeDeps: {
-    dedupe: ['react', 'react-dom', 'react/jsx-runtime'],
+    dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react-router-dom'],
     force: true,
   },
 });
