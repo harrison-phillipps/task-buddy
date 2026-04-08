@@ -18,16 +18,25 @@ function singleReactPlugin() {
     'react-dom/server': resolve(__dirname, 'node_modules/react-dom/server.js'),
   };
 
+  const resolved = new Set(Object.values(reactMap));
+
   return {
     name: 'single-react-instance',
     enforce: 'pre',
-    resolveId(id) {
+    resolveId(id, importer) {
       if (reactMap[id]) return reactMap[id];
+      // If something tries to resolve react from inside node_modules (nested), intercept it
+      if (importer && importer.includes('node_modules') && reactMap[id]) {
+        return reactMap[id];
+      }
+    },
+    load(id) {
+      // No-op — just ensure resolution is canonical
     },
   };
 }
 
-// cache-bust: v10
+// cache-bust: v11
 export default defineConfig({
   plugins: [singleReactPlugin(), base44()],
   resolve: {
