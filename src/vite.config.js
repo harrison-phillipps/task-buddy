@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite';
 import base44 from '@base44/vite-plugin';
-import react from '@vitejs/plugin-react';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -11,14 +10,10 @@ export default defineConfig({
   server: {
     allowedHosts: ['.'],
   },
-  plugins: [base44(), react()],
+  plugins: [base44()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
     },
-  },
-  optimizeDeps: {
-    include: ['react', 'react-dom', 'react/jsx-runtime'],
-    force: true,
   },
 });
