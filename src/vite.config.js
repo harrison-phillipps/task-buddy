@@ -28,6 +28,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react/jsx-runtime', 'next-themes'],
+    exclude: [],
     force: true,
     esbuildOptions: {
       supported: {
