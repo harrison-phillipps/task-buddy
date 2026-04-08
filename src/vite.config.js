@@ -9,12 +9,15 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // v22-skip-tanstack-prebundle-20260408
 export default defineConfig({
+  server: {
+    allowedHosts: ['.'],
+  },
   plugins: [base44(), react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      react: path.resolve(__dirname, './node_modules/react'),
-      'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
+      '@': __dirname,
+      react: path.resolve(__dirname, '../node_modules/react'),
+      'react-dom': path.resolve(__dirname, '../node_modules/react-dom'),
     },
     dedupe: ['react', 'react-dom'],
   },
