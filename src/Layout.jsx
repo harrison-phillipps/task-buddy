@@ -1,3 +1,4 @@
+import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Sparkles, ListTodo, Play, LayoutDashboard, User, RefreshCw, Brain, Award, Trophy, MessageSquare, Calendar, Users, Target, Settings, PanelLeftClose, PanelLeft, ChevronDown, ChevronUp, Maximize2, Mic, CalendarDays, Zap } from "lucide-react";
@@ -58,7 +59,16 @@ function LayoutContent({ children, currentPageName }) {
   const [showPersonalityModal, setShowPersonalityModal] = React.useState(false);
   const [showDeepCustomizer, setShowDeepCustomizer] = React.useState(false);
   const [showMoreMenu, setShowMoreMenu] = React.useState(false);
-  const { isOnline, pendingCount, isSyncing, flushQueue } = useGlobalOfflineSync();
+  const [syncState, setSyncState] = React.useState({ isOnline: true, pendingCount: 0, isSyncing: false });
+
+  React.useEffect(() => {
+    try {
+      const offlineSync = useGlobalOfflineSync();
+      setSyncState(offlineSync);
+    } catch (e) {
+      console.warn('Offline sync unavailable:', e);
+    }
+  }, []);
 
   const userTier = currentUser?.subscription_tier || "free";
 
@@ -364,10 +374,10 @@ function LayoutContent({ children, currentPageName }) {
           />
 
           <OfflineIndicator
-            isOnline={isOnline}
-            pendingCount={pendingCount}
-            isSyncing={isSyncing}
-            onRetry={flushQueue}
+            isOnline={syncState.isOnline}
+            pendingCount={syncState.pendingCount}
+            isSyncing={syncState.isSyncing}
+            onRetry={syncState.flushQueue}
           />
           <CrossDeviceSessionSync currentUser={currentUser} />
           <DevModeIndicator />
