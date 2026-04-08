@@ -20,7 +20,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      '@': path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'src'),
       react: path.join(__dirname, '../node_modules/react'),
       'react-dom': path.join(__dirname, '../node_modules/react-dom'),
     },
