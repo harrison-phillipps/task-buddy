@@ -6,6 +6,7 @@ import { CheckCircle2, Circle, Clock, Zap, Play, MoreVertical, Calendar, Calenda
 import { Progress } from "@/components/ui/progress";
 import SubtaskTracker from "./tasks/SubtaskTracker";
 import OverwhelmedBreakdown from "./tasks/OverwhelmedBreakdown";
+import DueDateSuggester from "./tasks/DueDateSuggester";
 import { useState } from "react";
 import RecurringTaskBadge from "./tasks/RecurringTaskBadge";
 import { getAIPriorityColor, getAIPriorityLabel, getUrgencyIcon } from "./ai/TaskPrioritizer";
@@ -40,6 +41,7 @@ const difficultyIcons = {
 
 export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, onSubtaskToggle, onSetDependency, onSetRecurring, onOpenCollabView, onStartCollab, onQuickComplete, onChangePriority, onUpdateTask, allTasks = [], compact = false, showTeamInfo = false }) {
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const [showDueDateSuggester, setShowDueDateSuggester] = useState(false);
   const completedSubtasks = task.subtasks?.filter(st => st.completed).length || 0;
   const totalSubtasks = task.subtasks?.length || 0;
   const progress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
@@ -215,12 +217,18 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                   </DropdownMenuItem>
                 )}
                 {onSetRecurring && (
-                  <DropdownMenuItem onClick={() => onSetRecurring?.(task)}>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Set Recurring
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={() => onDelete?.(task)} className="text-red-600">
+                   <DropdownMenuItem onClick={() => onSetRecurring?.(task)}>
+                     <RefreshCw className="w-4 h-4 mr-2" />
+                     Set Recurring
+                   </DropdownMenuItem>
+                 )}
+                 {task.status !== 'completed' && (
+                   <DropdownMenuItem onClick={() => setShowDueDateSuggester(true)}>
+                     <Calendar className="w-4 h-4 mr-2" />
+                     Suggest Due Date
+                   </DropdownMenuItem>
+                 )}
+                 <DropdownMenuItem onClick={() => onDelete?.(task)} className="text-red-600">
                   Delete Task
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -280,6 +288,15 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
           </div>
         </CardContent>
       </Card>
+      
+      <DueDateSuggester
+        isOpen={showDueDateSuggester}
+        onClose={() => setShowDueDateSuggester(false)}
+        task={task}
+        onDateSelected={(date) => {
+          onUpdateTask?.(task.id, { due_date: date });
+        }}
+      />
     </motion.div>
   );
 }

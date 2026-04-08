@@ -379,6 +379,7 @@ function LayoutContent({ children, currentPageName }) {
         />
         <CrossDeviceSessionSync currentUser={currentUser} />
         <DevModeIndicator />
+      </div>
       </>
     );
   }
