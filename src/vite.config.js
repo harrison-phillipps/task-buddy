@@ -3,11 +3,10 @@ import base44 from '@base44/vite-plugin';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// v22-skip-tanstack-prebundle-20260408
 export default defineConfig({
   server: {
     allowedHosts: ['.'],
@@ -26,5 +25,10 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom'],
+    esbuildOptions: {
+      supported: {
+        bigint: false
+      }
+    }
   },
 });
