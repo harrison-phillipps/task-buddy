@@ -13,17 +13,21 @@ export default defineConfig({
       'react-router-dom',
       '@tanstack/react-query',
       '@base44/sdk',
+      'next-themes',
+      'sonner',
     ],
   },
   optimizeDeps: {
     include: [
       'react',
       'react-dom',
+      'next-themes',
+      'sonner',
       'react/jsx-runtime',
     ],
     exclude: [
       '@tanstack/react-query',
     ],
-    force: true,
+    force: ['react', 'react-dom', 'next-themes', 'sonner'],
   },
 });
