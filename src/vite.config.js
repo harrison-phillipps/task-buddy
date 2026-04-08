@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import base44 from '@base44/vite-plugin';
 
-// FINAL FIX: v21-minimal-bundle-20260408
+// v22-skip-tanstack-prebundle-20260408
 export default defineConfig({
   plugins: [base44()],
   resolve: {
@@ -21,13 +21,9 @@ export default defineConfig({
       'react-dom',
       'react/jsx-runtime',
     ],
+    exclude: [
+      '@tanstack/react-query',
+    ],
     force: true,
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: undefined,
-      },
-    },
   },
 });
