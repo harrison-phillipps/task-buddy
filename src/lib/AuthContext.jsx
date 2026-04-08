@@ -1,4 +1,5 @@
-// AuthContext - class-based v2 (cache bust) - avoids hook dispatcher issues from duplicate React instances
+// AuthContext - pure class component, zero hooks in AuthProvider
+// This avoids the duplicate-React useState crash entirely
 import React, { useContext } from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
@@ -29,45 +30,36 @@ export class AuthProvider extends React.Component {
   async checkAppState() {
     try {
       this.setState({ isLoadingPublicSettings: true, authError: null });
-      try {
-        const headers = { 'X-App-Id': appParams.appId };
-        if (appParams.token) headers['Authorization'] = `Bearer ${appParams.token}`;
-        const res = await fetch(
-          `${appParams.serverUrl}/api/apps/public/prod/public-settings/by-id/${appParams.appId}`,
-          { headers }
-        );
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          const err = new Error(data?.message || 'Failed');
-          err.status = res.status;
-          err.data = data;
-          throw err;
-        }
-        const publicSettings = await res.json();
-        this.setState({ appPublicSettings: publicSettings, isLoadingPublicSettings: false });
-
-        if (appParams.token) {
-          await this.checkUserAuth();
-        } else {
-          this.setState({ isLoadingAuth: false, isAuthenticated: false });
-        }
-      } catch (appError) {
-        console.error('App state check failed:', appError);
-        if (appError.status === 403 && appError.data?.extra_data?.reason) {
-          const reason = appError.data.extra_data.reason;
-          this.setState({ authError: { type: reason, message: appError.message || reason } });
-        } else {
-          this.setState({ authError: { type: 'unknown', message: appError.message || 'Failed to load app' } });
-        }
-        this.setState({ isLoadingPublicSettings: false, isLoadingAuth: false });
+      const headers = { 'X-App-Id': appParams.appId };
+      if (appParams.token) headers['Authorization'] = `Bearer ${appParams.token}`;
+      const res = await fetch(
+        `${appParams.serverUrl}/api/apps/public/prod/public-settings/by-id/${appParams.appId}`,
+        { headers }
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const err = new Error(data?.message || 'Failed');
+        err.status = res.status;
+        err.data = data;
+        throw err;
       }
-    } catch (error) {
-      console.error('Unexpected error:', error);
-      this.setState({
-        authError: { type: 'unknown', message: error.message || 'An unexpected error occurred' },
-        isLoadingPublicSettings: false,
-        isLoadingAuth: false,
-      });
+      const publicSettings = await res.json();
+      this.setState({ appPublicSettings: publicSettings, isLoadingPublicSettings: false });
+
+      if (appParams.token) {
+        await this.checkUserAuth();
+      } else {
+        this.setState({ isLoadingAuth: false, isAuthenticated: false });
+      }
+    } catch (appError) {
+      console.error('App state check failed:', appError);
+      if (appError.status === 403 && appError.data?.extra_data?.reason) {
+        const reason = appError.data.extra_data.reason;
+        this.setState({ authError: { type: reason, message: appError.message || reason } });
+      } else {
+        this.setState({ authError: { type: 'unknown', message: appError.message || 'Failed to load app' } });
+      }
+      this.setState({ isLoadingPublicSettings: false, isLoadingAuth: false });
     }
   }
 
