@@ -21,8 +21,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'src'),
-      react: path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'node_modules/react'),
-      'react-dom': path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'node_modules/react-dom'),
     },
     dedupe: ['react', 'react-dom'],
   },
