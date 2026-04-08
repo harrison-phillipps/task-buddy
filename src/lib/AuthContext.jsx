@@ -1,5 +1,5 @@
 // AuthContext - class-based v2 (cache bust) - avoids hook dispatcher issues from duplicate React instances
-import React from 'react';
+import React, { useContext } from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 
@@ -116,7 +116,7 @@ export class AuthProvider extends React.Component {
 }
 
 export function useAuth() {
-  const context = React.useContext(AuthContext);
+  const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
