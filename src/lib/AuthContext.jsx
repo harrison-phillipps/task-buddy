@@ -1,4 +1,4 @@
-// AuthContext - class-based to avoid hook dispatcher issues from duplicate React instances
+// AuthContext - class-based v2 (cache bust) - avoids hook dispatcher issues from duplicate React instances
 import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';

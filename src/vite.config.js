@@ -27,6 +27,7 @@ function singleReactPlugin() {
   };
 }
 
+// cache-bust: v2
 export default defineConfig({
   plugins: [singleReactPlugin(), base44()],
   resolve: {
