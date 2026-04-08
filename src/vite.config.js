@@ -29,6 +29,7 @@ export default defineConfig({
       supported: {
         bigint: false
       }
-    }
+    },
+    force: true,
   },
 });
