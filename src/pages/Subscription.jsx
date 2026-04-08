@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Check, Zap, Sparkles, Crown, ArrowRight, XCircle, AlertTriangle } from "lucide-react";
+import { Check, Zap, Sparkles, Crown, ArrowRight, XCircle, AlertTriangle, RefreshCw, CreditCard, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 import { TIER_INFO } from "../components/subscription/FeatureGate";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -94,22 +94,33 @@ export default function Subscription() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [billingPeriod, setBillingPeriod] = useState("monthly");
+  const [subStatus, setSubStatus] = useState(null);
+  const [statusLoading, setStatusLoading] = useState(false);
+
+  const fetchSubStatus = async () => {
+    setStatusLoading(true);
+    try {
+      const res = await base44.functions.invoke('getSubscriptionStatus', {});
+      setSubStatus(res.data);
+    } catch (e) {
+      console.error('Failed to fetch subscription status', e);
+    } finally {
+      setStatusLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const user = await base44.auth.me();
         setCurrentUser(user);
-        
-        // Check for success/cancel query params
-        const params = new URLSearchParams(window.location.hash.split('?')[1]);
+        fetchSubStatus();
+        const params = new URLSearchParams(window.location.search);
         if (params.get('success') === 'true') {
-          alert('🎉 Subscription successful! Welcome to your new plan.');
-          // Clean up URL
-          window.history.replaceState({}, '', '#/Subscription');
+          setTimeout(fetchSubStatus, 2000); // re-fetch after webhook processes
+          window.history.replaceState({}, '', window.location.pathname);
         } else if (params.get('cancelled') === 'true') {
-          alert('Checkout cancelled. No charges were made.');
-          window.history.replaceState({}, '', '#/Subscription');
+          window.history.replaceState({}, '', window.location.pathname);
         }
       } catch (error) {
         console.error("Error fetching user:", error);
@@ -318,11 +329,52 @@ export default function Subscription() {
           })}
         </div>
 
+        {/* Live Subscription Status Card */}
+        {subStatus && subStatus.status !== 'none' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            className="mt-10"
+          >
+            <Card className="bg-gradient-to-r from-purple-50 to-teal-50 dark:from-purple-900/20 dark:to-teal-900/20 border-purple-200 dark:border-purple-700">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-purple-800 dark:text-purple-300 flex items-center justify-between">
+                  <span className="flex items-center gap-2"><CreditCard className="w-5 h-5" /> Billing Details</span>
+                  <button onClick={fetchSubStatus} className="text-purple-500 hover:text-purple-700">
+                    <RefreshCw className={`w-4 h-4 ${statusLoading ? 'animate-spin' : ''}`} />
+                  </button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-500 text-xs mb-1">Status</p>
+                  <Badge className={subStatus.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}>
+                    {subStatus.status}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-gray-500 text-xs mb-1">Plan</p>
+                  <p className="font-semibold capitalize">{subStatus.tier} · {subStatus.billing_interval}ly</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 text-xs mb-1">Amount</p>
+                  <p className="font-semibold">{subStatus.currency} ${subStatus.amount} / {subStatus.billing_interval}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 text-xs mb-1 flex items-center gap-1"><Calendar className="w-3 h-3" />{subStatus.cancel_at_period_end ? 'Access Until' : 'Next Renewal'}</p>
+                  <p className="font-semibold">{subStatus.current_period_end ? new Date(subStatus.current_period_end).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="mt-12 text-center"
+          className="mt-8 text-center"
         >
           <p className="text-gray-500 text-sm">
             All plans include a 14-day free trial. Cancel anytime.
