@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Check, RefreshCw, Loader2 } from "lucide-react";
+import { Calendar, Check, RefreshCw, Loader2, ArrowLeftRight } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
@@ -31,6 +31,25 @@ export default function CalendarIntegrations() {
     } catch (error) {
       console.error(error);
       toast.error(`Failed to sync ${label}`);
+    } finally {
+      setIsSyncing(null);
+    }
+  };
+
+  const handleTwoWaySync = async () => {
+    setIsSyncing('two_way');
+    try {
+      const res = await base44.functions.invoke('syncCalendarToTasks', {});
+      if (res.data?.success) {
+        const total = res.data.total_updated || 0;
+        toast.success(total > 0 ? `Updated ${total} task(s) from calendar changes` : 'Tasks are up to date with your calendar');
+        setLastSynced(prev => ({ ...prev, two_way: new Date() }));
+      } else {
+        toast.error('Two-way sync failed');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Two-way sync failed');
     } finally {
       setIsSyncing(null);
     }
@@ -117,12 +136,46 @@ export default function CalendarIntegrations() {
         </CardContent>
       </Card>
 
+      {(isGoogleConnected || isOutlookConnected) && (
+        <Card className="border-2 border-teal-200 bg-teal-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <ArrowLeftRight className="w-4 h-4 text-teal-600" />
+                  Two-Way Sync
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">Pull calendar date changes back into TaskBuddy tasks</p>
+                {lastSynced.two_way && (
+                  <p className="text-xs text-gray-400 mt-1">Last synced: {lastSynced.two_way.toLocaleTimeString()}</p>
+                )}
+                <p className="text-xs text-teal-700 mt-1">Auto-runs every 30 minutes</p>
+              </div>
+              <Button
+                onClick={handleTwoWaySync}
+                disabled={isSyncing !== null}
+                variant="outline"
+                className="border-teal-300 bg-white text-teal-700 hover:bg-teal-50"
+              >
+                {isSyncing === 'two_way' ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Syncing...</>
+                ) : (
+                  <><ArrowLeftRight className="w-4 h-4 mr-2" />Sync Now</>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="bg-gradient-to-r from-purple-50 to-teal-50 border-purple-200">
         <CardContent className="p-4">
-          <h4 className="font-semibold text-gray-900 mb-2">💡 How it works</h4>
-          <p className="text-sm text-gray-700">
-            Syncing imports your upcoming calendar events into TaskBuddy. The AI planner (Smart Plan) will automatically schedule your tasks around these existing commitments so you're never double-booked.
-          </p>
+          <h4 className="font-semibold text-gray-900 mb-2">💡 How two-way sync works</h4>
+          <ul className="text-sm text-gray-700 space-y-1">
+            <li>→ <strong>Task → Calendar:</strong> Setting a due date auto-creates a calendar event</li>
+            <li>← <strong>Calendar → Task:</strong> Moving an event in your calendar updates the task deadline</li>
+            <li>🔄 Runs automatically every 30 minutes</li>
+          </ul>
         </CardContent>
       </Card>
     </div>
