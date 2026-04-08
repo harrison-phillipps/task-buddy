@@ -1,9 +1,11 @@
 import { defineConfig } from 'vite';
 import base44 from '@base44/vite-plugin';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
 // v22-skip-tanstack-prebundle-20260408
 export default defineConfig({
-  plugins: [base44()],
+  plugins: [react(), base44()],
   resolve: {
     dedupe: [
       'react',
@@ -15,6 +17,7 @@ export default defineConfig({
       '@base44/sdk',
       'next-themes',
       'sonner',
+      '@radix-ui/react-context-menu',
     ],
   },
   optimizeDeps: {
@@ -24,10 +27,14 @@ export default defineConfig({
       'next-themes',
       'sonner',
       'react/jsx-runtime',
+      '@radix-ui/react-context-menu',
     ],
-    exclude: [
-      '@tanstack/react-query',
-    ],
-    force: ['react', 'react-dom', 'next-themes', 'sonner'],
+    force: ['react', 'react-dom', 'react/jsx-runtime', 'next-themes', 'sonner'],
+    esbuildOptions: {
+      target: 'esnext',
+    },
+  },
+  ssr: {
+    noExternal: ['next-themes', 'sonner'],
   },
 });
