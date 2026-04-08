@@ -15,9 +15,9 @@ export default defineConfig({
   plugins: [base44(), react()],
   resolve: {
     alias: {
-      '@': __dirname,
-      react: path.resolve(__dirname, '../node_modules/react'),
-      'react-dom': path.resolve(__dirname, '../node_modules/react-dom'),
+      '@': path.resolve(__dirname, './src'),
+      react: path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
     },
     dedupe: ['react', 'react-dom'],
   },
