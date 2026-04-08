@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Moon, Sun } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function ThemeToggle() {
-  const [isDark, setIsDark] = React.useState(() => {
+  const [isDark, setIsDark] = useState(() => {
     if (typeof window === "undefined") return false;
     const stored = localStorage.getItem("theme");
     if (stored === "dark") return true;
@@ -11,7 +11,7 @@ export default function ThemeToggle() {
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     const root = document.documentElement;
     if (isDark) {
       root.classList.add("dark");
