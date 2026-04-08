@@ -19,12 +19,14 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'src'),
+      '@': path.resolve(__dirname, 'src'),
     },
     dedupe: ['react', 'react-dom'],
+    preserveSymlinks: false,
   },
   optimizeDeps: {
     include: ['react', 'react-dom'],
+    exclude: [],
     esbuildOptions: {
       supported: {
         bigint: false
