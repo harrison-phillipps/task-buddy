@@ -12,30 +12,12 @@ export default defineConfig({
     allowedHosts: ['.'],
   },
   plugins: [base44(), react()],
-  build: {
-    rollupOptions: {
-      external: [],
-      output: {
-        manualChunks: (id) => {
-          if (id.includes('node_modules')) return 'vendor';
-        },
-      },
-    },
-  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
     },
-    dedupe: ['react', 'react-dom', 'react/jsx-runtime'],
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react/jsx-runtime', 'next-themes'],
-    exclude: [],
-    force: true,
-    esbuildOptions: {
-      supported: {
-        bigint: false
-      }
-    },
+    include: ['react', 'react-dom', 'react/jsx-runtime'],
   },
 });
