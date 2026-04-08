@@ -5,7 +5,7 @@ import { dirname, resolve } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// cache-bust: v17-tanstack-20260408 v16-clean-20260408
+// cache-bust: v18-react-fix-20260408 v16-clean-20260408
 export default defineConfig({
   plugins: [base44()],
   resolve: {
