@@ -36,7 +36,7 @@ function singleReactPlugin() {
   };
 }
 
-// cache-bust: v11
+// cache-bust: v12
 export default defineConfig({
   plugins: [singleReactPlugin(), base44()],
   resolve: {
@@ -54,6 +54,7 @@ export default defineConfig({
       'react',
       'react-dom',
       'react/jsx-runtime',
+      '@base44/sdk',
       '@radix-ui/react-tooltip',
       '@radix-ui/react-dialog',
       '@radix-ui/react-select',
