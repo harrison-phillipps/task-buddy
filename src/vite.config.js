@@ -27,7 +27,7 @@ function singleReactPlugin() {
   };
 }
 
-// cache-bust: v3
+// cache-bust: v5
 export default defineConfig({
   plugins: [singleReactPlugin(), base44()],
   resolve: {
@@ -41,6 +41,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react-router-dom'],
+    include: ['react', 'react-dom', 'react/jsx-runtime'],
     force: true,
   },
 });
