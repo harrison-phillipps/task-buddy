@@ -21,14 +21,8 @@ export default defineConfig({
     ],
   },
   optimizeDeps: {
+    exclude: ['@base44/sdk'],
     dedupe: ['react', 'react-dom', 'react/jsx-runtime'],
-    include: [
-      'react',
-      'react-dom',
-      'react/jsx-runtime',
-      '@base44/sdk > react',
-      '@base44/sdk > react-dom',
-    ],
     force: true,
   },
 });
