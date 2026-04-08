@@ -20,11 +20,13 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
+      'react': path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
     },
-    dedupe: ['react', 'react-dom', 'next-themes'],
+    dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'next-themes'],
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'next-themes'],
+    include: ['react', 'react-dom', 'react/jsx-runtime', 'next-themes'],
     force: true,
     esbuildOptions: {
       supported: {
