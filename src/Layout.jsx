@@ -60,14 +60,6 @@ function LayoutContent({ children, currentPageName }) {
   const [showMoreMenu, setShowMoreMenu] = React.useState(false);
   const [syncState, setSyncState] = React.useState({ isOnline: true, pendingCount: 0, isSyncing: false });
 
-  React.useEffect(() => {
-    try {
-      const offlineSync = useGlobalOfflineSync();
-      setSyncState(offlineSync);
-    } catch (e) {
-      console.warn('Offline sync unavailable:', e);
-    }
-  }, []);
 
   const userTier = currentUser?.subscription_tier || "free";
 
@@ -372,10 +364,10 @@ function LayoutContent({ children, currentPageName }) {
         />
 
         <OfflineIndicator
-          isOnline={syncState.isOnline}
-          pendingCount={syncState.pendingCount}
-          isSyncing={syncState.isSyncing}
-          onRetry={syncState.flushQueue}
+          isOnline={true}
+          pendingCount={0}
+          isSyncing={false}
+          onRetry={() => {}}
         />
         <CrossDeviceSessionSync currentUser={currentUser} />
         <DevModeIndicator />
