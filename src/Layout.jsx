@@ -19,7 +19,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import React from "react";
 import PersonalitySettingsModal from "@/components/PersonalitySettingsModal";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import DeepPersonalityCustomizer from "@/components/companion/DeepPersonalityCustomizer";
@@ -356,39 +355,38 @@ function LayoutContent({ children, currentPageName }) {
           <div className="flex-1 overflow-auto">
             {children}
           </div>
-          </main>
-          </div>
+        </main>
 
-          <PersonalitySettingsModal
+        <PersonalitySettingsModal
           open={showPersonalityModal}
           onOpenChange={setShowPersonalityModal}
           currentUser={currentUser}
           onUpdate={refreshUser}
-          />
-          
-          <DeepPersonalityCustomizer
+        />
+        
+        <DeepPersonalityCustomizer
           open={showDeepCustomizer}
           onOpenChange={setShowDeepCustomizer}
           currentUser={currentUser}
           onUpdate={refreshUser}
-          />
+        />
 
-          <OfflineIndicator
-            isOnline={syncState.isOnline}
-            pendingCount={syncState.pendingCount}
-            isSyncing={syncState.isSyncing}
-            onRetry={syncState.flushQueue}
-          />
-          <CrossDeviceSessionSync currentUser={currentUser} />
-          <DevModeIndicator />
-          </>
-          );
-          }
+        <OfflineIndicator
+          isOnline={syncState.isOnline}
+          pendingCount={syncState.pendingCount}
+          isSyncing={syncState.isSyncing}
+          onRetry={syncState.flushQueue}
+        />
+        <CrossDeviceSessionSync currentUser={currentUser} />
+        <DevModeIndicator />
+      </>
+    );
+  }
 
-          export default function Layout({ children, currentPageName }) {
-          return (
-          <SidebarProvider>
-          <LayoutContent children={children} currentPageName={currentPageName} />
-          </SidebarProvider>
-          );
-          }
+export default function Layout({ children, currentPageName }) {
+  return (
+    <SidebarProvider>
+      <LayoutContent children={children} currentPageName={currentPageName} />
+    </SidebarProvider>
+  );
+}
