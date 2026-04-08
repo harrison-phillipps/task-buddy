@@ -13,11 +13,16 @@ export default defineConfig({
     allowedHosts: ['.'],
   },
   plugins: [base44(), react()],
+  build: {
+    rollupOptions: {
+      external: [],
+    },
+  },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      react: path.resolve(__dirname, 'node_modules/react'),
-      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+      '@': __dirname,
+      react: path.join(__dirname, '../node_modules/react'),
+      'react-dom': path.join(__dirname, '../node_modules/react-dom'),
     },
     dedupe: ['react', 'react-dom'],
   },
