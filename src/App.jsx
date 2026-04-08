@@ -68,7 +68,6 @@ const AuthenticatedApp = () => {
 
 
 function App() {
-
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <AuthProvider>
@@ -76,12 +75,11 @@ function App() {
           <Router>
             <AuthenticatedApp />
           </Router>
-        <Toaster />
-
-      </QueryClientProvider>
-    </AuthProvider>
+          <Toaster />
+        </QueryClientProvider>
+      </AuthProvider>
     </ThemeProvider>
-  )
+  );
 }
 
 export default App
