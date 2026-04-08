@@ -9,9 +9,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // v22-skip-tanstack-prebundle-20260408
 export default defineConfig({
-  plugins: [react()],
+  plugins: [base44(), react()],
   resolve: {
     alias: {
+      '@': path.resolve(__dirname, './src'),
       react: path.resolve(__dirname, './node_modules/react'),
       'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
     },
@@ -19,6 +20,5 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom'],
-    force: true,
   },
 });
