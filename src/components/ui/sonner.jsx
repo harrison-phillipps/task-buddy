@@ -1,10 +1,9 @@
 import { Toaster as Sonner } from "sonner"
 
-// Removed next-themes dependency to avoid duplicate React instance crash
 const Toaster = ({ ...props }) => {
   return (
     <Sonner
-      theme="system"
+      theme="light"
       className="toaster group"
       toastOptions={{
         classNames: {
