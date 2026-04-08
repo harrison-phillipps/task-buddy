@@ -1,11 +1,10 @@
-import React, { createContext, useContext } from 'react';
+// AuthContext - class-based to avoid hook dispatcher issues from duplicate React instances
+import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 
-const AuthContext = createContext();
+const AuthContext = React.createContext(null);
 
-// Class component avoids React hooks entirely, bypassing the broken
-// hook dispatcher caused by the duplicate React instance from @base44/sdk.
 export class AuthProvider extends React.Component {
   constructor(props) {
     super(props);
@@ -17,16 +16,19 @@ export class AuthProvider extends React.Component {
       authError: null,
       appPublicSettings: null,
     };
+    this.checkAppState = this.checkAppState.bind(this);
+    this.checkUserAuth = this.checkUserAuth.bind(this);
+    this.logout = this.logout.bind(this);
+    this.navigateToLogin = this.navigateToLogin.bind(this);
   }
 
   componentDidMount() {
     this.checkAppState();
   }
 
-  checkAppState = async () => {
+  async checkAppState() {
     try {
       this.setState({ isLoadingPublicSettings: true, authError: null });
-
       try {
         const headers = { 'X-App-Id': appParams.appId };
         if (appParams.token) headers['Authorization'] = `Bearer ${appParams.token}`;
@@ -42,26 +44,20 @@ export class AuthProvider extends React.Component {
           throw err;
         }
         const publicSettings = await res.json();
-        this.setState({ appPublicSettings: publicSettings });
+        this.setState({ appPublicSettings: publicSettings, isLoadingPublicSettings: false });
 
         if (appParams.token) {
           await this.checkUserAuth();
         } else {
           this.setState({ isLoadingAuth: false, isAuthenticated: false });
         }
-        this.setState({ isLoadingPublicSettings: false });
       } catch (appError) {
         console.error('App state check failed:', appError);
-
         if (appError.status === 403 && appError.data?.extra_data?.reason) {
           const reason = appError.data.extra_data.reason;
-          this.setState({
-            authError: { type: reason, message: appError.message || reason },
-          });
+          this.setState({ authError: { type: reason, message: appError.message || reason } });
         } else {
-          this.setState({
-            authError: { type: 'unknown', message: appError.message || 'Failed to load app' },
-          });
+          this.setState({ authError: { type: 'unknown', message: appError.message || 'Failed to load app' } });
         }
         this.setState({ isLoadingPublicSettings: false, isLoadingAuth: false });
       }
@@ -73,9 +69,9 @@ export class AuthProvider extends React.Component {
         isLoadingAuth: false,
       });
     }
-  };
+  }
 
-  checkUserAuth = async () => {
+  async checkUserAuth() {
     try {
       this.setState({ isLoadingAuth: true });
       const currentUser = await base44.auth.me();
@@ -87,41 +83,42 @@ export class AuthProvider extends React.Component {
         this.setState({ authError: { type: 'auth_required', message: 'Authentication required' } });
       }
     }
-  };
+  }
 
-  logout = (shouldRedirect = true) => {
+  logout(shouldRedirect = true) {
     this.setState({ user: null, isAuthenticated: false });
     if (shouldRedirect) {
       base44.auth.logout(window.location.href);
     } else {
       base44.auth.logout();
     }
-  };
+  }
 
-  navigateToLogin = () => {
+  navigateToLogin() {
     base44.auth.redirectToLogin(window.location.href);
-  };
+  }
 
   render() {
+    const { user, isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, appPublicSettings } = this.state;
     const value = {
-      ...this.state,
+      user,
+      isAuthenticated,
+      isLoadingAuth,
+      isLoadingPublicSettings,
+      authError,
+      appPublicSettings,
       logout: this.logout,
       navigateToLogin: this.navigateToLogin,
       checkAppState: this.checkAppState,
     };
-
-    return (
-      <AuthContext.Provider value={value}>
-        {this.props.children}
-      </AuthContext.Provider>
-    );
+    return React.createElement(AuthContext.Provider, { value }, this.props.children);
   }
 }
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
+export function useAuth() {
+  const context = React.useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
+}
