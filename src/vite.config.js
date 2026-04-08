@@ -5,23 +5,34 @@ import { dirname, resolve } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const reactPath = resolve(__dirname, 'node_modules/react');
-const reactDomPath = resolve(__dirname, 'node_modules/react-dom');
+// Custom plugin: intercepts ALL React module requests and redirects them
+// to the single canonical copy in node_modules, regardless of which package
+// is requesting it. This prevents @base44/sdk from pulling in its own React.
+function singleReactPlugin() {
+  const reactMap = {
+    'react': resolve(__dirname, 'node_modules/react/index.js'),
+    'react/jsx-runtime': resolve(__dirname, 'node_modules/react/jsx-runtime.js'),
+    'react/jsx-dev-runtime': resolve(__dirname, 'node_modules/react/jsx-dev-runtime.js'),
+    'react-dom': resolve(__dirname, 'node_modules/react-dom/index.js'),
+    'react-dom/client': resolve(__dirname, 'node_modules/react-dom/client.js'),
+    'react-dom/server': resolve(__dirname, 'node_modules/react-dom/server.js'),
+  };
+
+  return {
+    name: 'single-react-instance',
+    enforce: 'pre',
+    resolveId(id) {
+      if (reactMap[id]) return reactMap[id];
+    },
+  };
+}
 
 export default defineConfig({
-  plugins: [base44()],
+  plugins: [singleReactPlugin(), base44()],
   resolve: {
-    dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react-dom/client'],
-    alias: [
-      { find: /^react$/, replacement: resolve(reactPath, 'index.js') },
-      { find: /^react\/jsx-runtime$/, replacement: resolve(reactPath, 'jsx-runtime.js') },
-      { find: /^react\/jsx-dev-runtime$/, replacement: resolve(reactPath, 'jsx-dev-runtime.js') },
-      { find: /^react-dom$/, replacement: resolve(reactDomPath, 'index.js') },
-      { find: /^react-dom\/client$/, replacement: resolve(reactDomPath, 'client.js') },
-    ],
+    dedupe: ['react', 'react-dom', 'react/jsx-runtime'],
   },
   optimizeDeps: {
-    exclude: ['@base44/sdk'],
     dedupe: ['react', 'react-dom', 'react/jsx-runtime'],
     force: true,
   },
