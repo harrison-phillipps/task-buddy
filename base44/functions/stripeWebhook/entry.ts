@@ -1,140 +1,86 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
-import Stripe from 'npm:stripe@17.5.0';
+import Stripe from 'npm:stripe@14';
 
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY"));
+const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
+
+const TIER_BY_PRODUCT = {
+  'prod_U4sEVdoJbRr7kg': 'pro',
+  'prod_U4sEu0kX769K7F': 'premium',
+};
 
 Deno.serve(async (req) => {
-  const signature = req.headers.get('stripe-signature');
-  const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-  
-  if (!signature || !webhookSecret) {
-    console.error("Missing signature or webhook secret");
-    return Response.json({ error: 'Webhook validation failed' }, { status: 400 });
-  }
+  const body = await req.text();
+  const sig = req.headers.get('stripe-signature');
 
   let event;
-  
   try {
-    const body = await req.text();
-    
-    // Initialize base44 client
-    const base44 = createClientFromRequest(req);
-    
-    // Verify webhook signature (async in Deno)
     event = await stripe.webhooks.constructEventAsync(
       body,
-      signature,
-      webhookSecret
+      sig,
+      Deno.env.get('STRIPE_WEBHOOK_SECRET')
     );
-    
-    console.log(`Received webhook event: ${event.type}`);
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err.message);
+    return new Response(`Webhook Error: ${err.message}`, { status: 400 });
+  }
 
-    // Handle different event types
+  const base44 = createClientFromRequest(req);
+
+  try {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object;
-        const userId = session.metadata.user_id;
-        const tier = session.metadata.tier;
-        
+        const userId = session.metadata?.user_id;
+        const tier = session.metadata?.tier;
         if (userId && tier) {
-          console.log(`Upgrading user ${userId} to ${tier}`);
-          
-          // Update user's subscription tier
-          const users = await base44.asServiceRole.entities.User.filter({ id: userId });
-          if (users.length > 0) {
-            await base44.asServiceRole.entities.User.update(userId, {
-              subscription_tier: tier,
-              stripe_customer_id: session.customer,
-              stripe_subscription_id: session.subscription
-            });
-            console.log(`Successfully upgraded user ${userId} to ${tier}`);
-          } else {
-            console.error(`User not found: ${userId}`);
-          }
+          await base44.asServiceRole.entities.User.update(userId, { subscription_tier: tier });
+          console.log(`User ${userId} upgraded to ${tier}`);
         }
         break;
       }
 
       case 'customer.subscription.updated': {
-        const subscription = event.data.object;
-        const userId = subscription.metadata.user_id;
-        
-        if (userId) {
-          const status = subscription.status;
-          console.log(`Subscription updated for user ${userId}: ${status}`);
-          
-          if (status === 'canceled' || status === 'past_due' || status === 'unpaid') {
-            await base44.asServiceRole.entities.User.update(userId, {
-              subscription_tier: 'free'
-            });
-            console.log(`Downgraded user ${userId} to free (status: ${status})`);
-          } else if (status === 'active') {
-            // Re-activate if previously downgraded (e.g. payment recovered after past_due)
-            const tier = subscription.metadata.tier;
-            if (tier) {
-              await base44.asServiceRole.entities.User.update(userId, {
-                subscription_tier: tier,
-                stripe_subscription_id: subscription.id,
-                subscription_cancel_at: null
-              });
-              console.log(`Re-activated user ${userId} to ${tier}`);
-              }
-          }
+        const sub = event.data.object;
+        const userId = sub.metadata?.user_id;
+        if (!userId) break;
+        const productId = sub.items.data[0]?.price?.product;
+        const tier = TIER_BY_PRODUCT[productId];
+        if (sub.status === 'active' && tier) {
+          await base44.asServiceRole.entities.User.update(userId, {
+            subscription_tier: tier,
+            subscription_cancel_at: sub.cancel_at ? new Date(sub.cancel_at * 1000).toISOString() : null,
+          });
+          console.log(`User ${userId} subscription updated to ${tier}`);
         }
         break;
       }
 
       case 'customer.subscription.deleted': {
-        const subscription = event.data.object;
-        const userId = subscription.metadata.user_id;
-        
+        const sub = event.data.object;
+        const userId = sub.metadata?.user_id;
         if (userId) {
-          console.log(`Subscription cancelled for user ${userId}`);
           await base44.asServiceRole.entities.User.update(userId, {
             subscription_tier: 'free',
-            stripe_subscription_id: null,
-            subscription_cancel_at: null
+            subscription_cancel_at: null,
           });
-          console.log(`Downgraded user ${userId} to free`);
-        }
-        break;
-      }
-
-      case 'invoice.paid': {
-        // Confirm tier on successful renewal
-        const invoice = event.data.object;
-        const subscriptionId = invoice.subscription;
-        if (subscriptionId) {
-          const sub = await stripe.subscriptions.retrieve(subscriptionId);
-          const userId = sub.metadata.user_id;
-          const tier = sub.metadata.tier;
-          if (userId && tier) {
-            await base44.asServiceRole.entities.User.update(userId, {
-              subscription_tier: tier
-            });
-            console.log(`Confirmed renewal for user ${userId}, tier: ${tier}`);
-          }
+          console.log(`User ${userId} downgraded to free`);
         }
         break;
       }
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object;
-        console.log(`Payment failed for invoice ${invoice.id}, customer: ${invoice.customer}`);
-        // Stripe will retry and eventually fire subscription.updated with past_due — no action needed here
+        console.warn(`Payment failed for customer ${invoice.customer}, subscription ${invoice.subscription}`);
         break;
       }
 
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
-
-    return Response.json({ received: true });
-  } catch (error) {
-    console.error(`Webhook error: ${error.message}`);
-    return Response.json({ 
-      error: 'Webhook processing failed',
-      details: error.message 
-    }, { status: 400 });
+  } catch (err) {
+    console.error(`Error handling event ${event.type}:`, err.message);
+    return new Response('Handler error', { status: 500 });
   }
+
+  return Response.json({ received: true });
 });

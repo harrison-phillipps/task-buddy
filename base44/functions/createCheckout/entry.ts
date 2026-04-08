@@ -1,85 +1,59 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
-import Stripe from 'npm:stripe@17.5.0';
+import Stripe from 'npm:stripe@14';
 
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY"));
+const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
 
-const PRICE_IDS = {
-  pro_monthly: "price_1T6kMQGYED6zM9vpitH2naNL",
-  pro_yearly: "price_1T6kMQGYED6zM9vpFgNxNJ7F",
-  premium_monthly: "price_1T6kMQGYED6zM9vphlxkavnW",
-  premium_yearly: "price_1T6kMQGYED6zM9vpFFCQDt1E"
+// AUD price IDs
+const PRICES = {
+  pro: {
+    monthly: 'price_1T6kMQGYED6zM9vpitH2naNL',
+    yearly: 'price_1T6kMQGYED6zM9vpFgNxNJ7F',
+  },
+  premium: {
+    monthly: 'price_1T6kMQGYED6zM9vphlxkavnW',
+    yearly: 'price_1T6kMQGYED6zM9vpFFCQDt1E',
+  },
 };
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { tier, billingPeriod } = await req.json();
 
-    if (!tier || !billingPeriod) {
-      return Response.json({ error: 'Missing tier or billingPeriod' }, { status: 400 });
-    }
+    const priceId = PRICES[tier]?.[billingPeriod];
+    if (!priceId) return Response.json({ error: 'Invalid plan selected' }, { status: 400 });
 
-    if (tier === 'free') {
-      return Response.json({ error: 'Free tier does not require checkout' }, { status: 400 });
-    }
-
-    const priceKey = `${tier}_${billingPeriod}`;
-    const priceId = PRICE_IDS[priceKey];
-
-    if (!priceId) {
-      console.error(`Invalid price key: ${priceKey}`);
-      return Response.json({ error: 'Invalid tier or billing period' }, { status: 400 });
-    }
-
-    // Get the app origin from the request
-    const origin = req.headers.get('origin') || req.headers.get('referer');
-    const successUrl = origin ? `${origin}/#/Subscription?success=true` : 'https://app.base44.com';
-    const cancelUrl = origin ? `${origin}/#/Subscription?cancelled=true` : 'https://app.base44.com';
+    const origin = req.headers.get('origin') || 'https://app.base44.com';
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      success_url: successUrl,
-      cancel_url: cancelUrl,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${origin}/Subscription?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/Subscription?cancelled=true`,
       customer_email: user.email,
-      client_reference_id: user.id,
       metadata: {
-        base44_app_id: Deno.env.get("BASE44_APP_ID"),
+        base44_app_id: Deno.env.get('BASE44_APP_ID'),
         user_id: user.id,
-        tier: tier,
-        billing_period: billingPeriod
+        tier,
+        billing_period: billingPeriod,
       },
       subscription_data: {
         metadata: {
+          base44_app_id: Deno.env.get('BASE44_APP_ID'),
           user_id: user.id,
-          tier: tier
-        }
-      }
+          tier,
+        },
+      },
     });
 
-    console.log(`Created checkout session for user ${user.email}, tier: ${tier}, billing: ${billingPeriod}`);
-
-    return Response.json({ 
-      url: session.url,
-      sessionId: session.id 
-    });
+    console.log(`Checkout session created for user ${user.id}, tier=${tier}, period=${billingPeriod}`);
+    return Response.json({ url: session.url });
   } catch (error) {
-    console.error("Stripe checkout error:", error);
-    return Response.json({ 
-      error: 'Failed to create checkout session',
-      details: error.message 
-    }, { status: 500 });
+    console.error('createCheckout error:', error.message);
+    return Response.json({ error: error.message }, { status: 500 });
   }
 });

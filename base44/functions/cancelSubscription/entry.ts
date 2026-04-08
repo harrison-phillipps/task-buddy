@@ -1,44 +1,42 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
-import Stripe from 'npm:stripe@17.5.0';
+import Stripe from 'npm:stripe@14';
 
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY"));
+const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    if (!customers.data.length) {
+      return Response.json({ error: 'No subscription found' }, { status: 404 });
     }
 
-    const subscriptionId = user.stripe_subscription_id;
-    if (!subscriptionId) {
-      return Response.json({ error: 'No active subscription found' }, { status: 400 });
+    const customer = customers.data[0];
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customer.id,
+      status: 'active',
+      limit: 1,
+    });
+
+    if (!subscriptions.data.length) {
+      return Response.json({ error: 'No active subscription found' }, { status: 404 });
     }
 
-    console.log(`Cancelling subscription ${subscriptionId} for user ${user.id}`);
-
-    // Cancel at period end (not immediately)
-    const subscription = await stripe.subscriptions.update(subscriptionId, {
-      cancel_at_period_end: true
+    const sub = subscriptions.data[0];
+    const cancelled = await stripe.subscriptions.update(sub.id, {
+      cancel_at_period_end: true,
     });
 
-    const cancelAt = new Date(subscription.current_period_end * 1000).toISOString();
-
-    // Store the cancel_at date on the user record
-    await base44.asServiceRole.entities.User.update(user.id, {
-      subscription_cancel_at: cancelAt
-    });
-
-    console.log(`Subscription set to cancel at ${cancelAt} for user ${user.id}`);
-
+    console.log(`Subscription ${sub.id} scheduled for cancellation for user ${user.id}`);
     return Response.json({
       success: true,
-      cancel_at: cancelAt
+      cancel_at: new Date(cancelled.current_period_end * 1000).toISOString(),
     });
   } catch (error) {
-    console.error(`Cancel subscription error: ${error.message}`);
+    console.error('cancelSubscription error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
