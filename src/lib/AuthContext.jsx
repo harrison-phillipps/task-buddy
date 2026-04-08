@@ -1,5 +1,3 @@
-// AuthContext - pure class component, zero hooks in AuthProvider
-// This avoids the duplicate-React useState crash entirely
 import React, { useContext } from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
