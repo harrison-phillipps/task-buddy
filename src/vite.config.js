@@ -27,11 +27,11 @@ function singleReactPlugin() {
   };
 }
 
-// cache-bust: v7
+// cache-bust: v8
 export default defineConfig({
   plugins: [singleReactPlugin(), base44()],
   resolve: {
-    dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react-router-dom', '@radix-ui/react-tooltip', '@radix-ui/react-dialog', '@radix-ui/react-select', '@radix-ui/react-dropdown-menu', '@radix-ui/react-popover'],
+    dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react-router-dom', '@tanstack/react-query', '@radix-ui/react-tooltip', '@radix-ui/react-dialog', '@radix-ui/react-select', '@radix-ui/react-dropdown-menu', '@radix-ui/react-popover'],
     alias: {
       'react': resolve(__dirname, 'node_modules/react/index.js'),
       'react-dom': resolve(__dirname, 'node_modules/react-dom/index.js'),
@@ -59,6 +59,7 @@ export default defineConfig({
       '@radix-ui/react-scroll-area',
       '@radix-ui/react-separator',
       '@radix-ui/react-avatar',
+      '@tanstack/react-query',
     ],
     force: true,
   },
