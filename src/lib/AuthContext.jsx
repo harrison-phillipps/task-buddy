@@ -2,8 +2,6 @@ import * as React from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 
-const { useContext } = React;
-
 const AuthContext = React.createContext(null);
 
 export class AuthProvider extends React.Component {
@@ -108,7 +106,7 @@ export class AuthProvider extends React.Component {
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const context = React.useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
