@@ -27,11 +27,11 @@ function singleReactPlugin() {
   };
 }
 
-// cache-bust: v9
+// cache-bust: v10
 export default defineConfig({
   plugins: [singleReactPlugin(), base44()],
   resolve: {
-    dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react-router-dom', '@tanstack/react-query', '@radix-ui/react-tooltip', '@radix-ui/react-dialog', '@radix-ui/react-select', '@radix-ui/react-dropdown-menu', '@radix-ui/react-popover'],
+    dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react-router-dom', '@tanstack/react-query', '@base44/sdk', '@radix-ui/react-tooltip', '@radix-ui/react-dialog', '@radix-ui/react-select', '@radix-ui/react-dropdown-menu', '@radix-ui/react-popover'],
     alias: {
       'react': resolve(__dirname, 'node_modules/react/index.js'),
       'react-dom': resolve(__dirname, 'node_modules/react-dom/index.js'),
@@ -40,7 +40,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react-router-dom'],
+    dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react-router-dom', '@base44/sdk'],
     include: [
       'react',
       'react-dom',
