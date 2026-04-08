@@ -38,7 +38,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react-router-dom', '@base44/sdk', 'sonner'],
+    dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime', 'react-router-dom', '@base44/sdk', 'sonner', '@tanstack/react-query'],
     include: [
       'react',
       'react-dom',
