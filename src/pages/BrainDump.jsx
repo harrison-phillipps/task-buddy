@@ -18,6 +18,7 @@ import { getPersonalizedMessage } from "@/components/companionUtils";
 import VoiceToText from "../components/VoiceToText";
 import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
 import VoiceSchedulePrompt from "../components/braindump/VoiceSchedulePrompt";
+import NativeMicButton from "../components/braindump/NativeMicButton";
 
 export default function BrainDump() {
   const navigate = useNavigate();
@@ -117,7 +118,7 @@ export default function BrainDump() {
       // Run LLM + save brain dump + update points all in parallel
       const [result, savedBrainDump] = await Promise.all([
         base44.integrations.Core.InvokeLLM({
-          prompt: `You are an ADHD coach. Extract ALL tasks from this brain dump into structured data.
+          prompt: `You are a productivity assistant. Today's date is ${new Date().toISOString().split('T')[0]}. Extract ALL tasks from this brain dump into structured data.
 
 Brain Dump:
 ${brainDumpText}
@@ -125,6 +126,7 @@ ${brainDumpText}
 Rules:
 - Extract EVERY item (if 10 items listed → 10 tasks)
 - For each task: clear title, category (work/personal/health/creative/learning/household/other), difficulty (easy/medium/hard), energy_level_needed (low/medium/high), task_priority (must_do/should_do/could_do), 3-5 subtasks with time estimates, is_recurring + pattern if applicable
+- Infer due_date from time references ("tomorrow", "next week", "Friday" → ISO date YYYY-MM-DD). If no date mentioned, omit due_date.
 - Keep subtask titles concise
 - estimated_minutes = sum of subtask times
 - encouragement: one short upbeat sentence`,
@@ -142,6 +144,7 @@ Rules:
                     difficulty: { type: "string" },
                     energy_level_needed: { type: "string" },
                     task_priority: { type: "string", enum: ["must_do", "should_do", "could_do"] },
+                    due_date: { type: "string" },
                     estimated_minutes: { type: "number" },
                     is_recurring: { type: "boolean" },
                     recurrence_pattern: { type: "string", enum: ["none", "daily", "weekly", "biweekly", "monthly"] },
@@ -173,23 +176,6 @@ Rules:
         })
       ]);
 
-      // Update encouragement on saved dump + update points in parallel (non-blocking)
-      Promise.all([
-        base44.entities.BrainDump.update(savedBrainDump.id, { encouragement: result.encouragement }),
-        (async () => {
-          try {
-            const progressList = await base44.entities.UserProgress.filter({ user_id: currentUser.id });
-            if (progressList.length > 0) {
-              const up = progressList[0];
-              await base44.entities.UserProgress.update(up.id, {
-                total_points: up.total_points + POINTS_SYSTEM.BRAIN_DUMP_CREATED,
-                brain_dumps_created: (up.brain_dumps_created || 0) + 1
-              });
-            }
-          } catch (e) { console.error("Error updating progress:", e); }
-        })()
-      ]);
-
       setExtractedTasks({ ...result, brainDumpId: savedBrainDump.id });
 
       if (result.recurring_detected > 0) {
@@ -202,6 +188,12 @@ Rules:
     setIsProcessing(false);
   };
 
+  const handleNativeMicDone = (transcript) => {
+    if (!transcript.trim()) return;
+    setBrainDumpText(prev => prev ? prev + "\n" + transcript : transcript);
+    toast.success("Voice captured! Review and tap 'Organize Into Tasks'.");
+  };
+
   const handleVoiceDictationEnd = async () => {
     setIsVoiceActive(false);
     if (!brainDumpText.trim()) return;
@@ -211,7 +203,7 @@ Rules:
     try {
       const [result, savedBrainDump] = await Promise.all([
         base44.integrations.Core.InvokeLLM({
-          prompt: `You are an ADHD coach. Extract ALL tasks from this brain dump into structured data.
+          prompt: `You are a productivity assistant. Today's date is ${new Date().toISOString().split('T')[0]}. Extract ALL tasks from this brain dump into structured data.
 
 Brain Dump:
 ${brainDumpText}
@@ -219,6 +211,7 @@ ${brainDumpText}
 Rules:
 - Extract EVERY item (if 10 items listed → 10 tasks)
 - For each task: clear title, category (work/personal/health/creative/learning/household/other), difficulty (easy/medium/hard), energy_level_needed (low/medium/high), task_priority (must_do/should_do/could_do), 3-5 subtasks with time estimates, is_recurring + pattern if applicable
+- Infer due_date from time references ("tomorrow", "next week", "Friday" → ISO date YYYY-MM-DD). If no date mentioned, omit due_date.
 - Keep subtask titles concise
 - estimated_minutes = sum of subtask times
 - encouragement: one short upbeat sentence`,
@@ -571,10 +564,25 @@ Rules:
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Prominent native mic */}
+                <div className="flex flex-col items-center py-4 bg-gradient-to-br from-purple-50 to-teal-50 dark:from-purple-900/20 dark:to-teal-900/20 rounded-2xl border border-purple-100 dark:border-purple-800">
+                  <p className="text-sm font-semibold text-purple-700 dark:text-purple-300 mb-4">🎙️ Speak your thoughts</p>
+                  <NativeMicButton
+                    onTranscript={(text) => setBrainDumpText(prev => prev + text + " ")}
+                    onDone={handleNativeMicDone}
+                  />
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
+                  <span className="text-xs text-gray-400 font-medium">or type below</span>
+                  <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
+                </div>
+
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="braindump">Write freely - no structure needed!</Label>
-                    <VoiceToText 
+                    <VoiceToText
                       onTranscript={(text) => { setBrainDumpText(prev => prev + text); setIsVoiceActive(true); }}
                       onDictationEnd={handleVoiceDictationEnd}
                     />
@@ -582,10 +590,10 @@ Rules:
                   <div className="relative">
                     <Textarea
                       id="braindump"
-                      placeholder="Example:&#10;- Need to clean my room&#10;- Email boss about deadline&#10;- Call mom&#10;&#10;Just type everything... or use Voice Input above!"
+                      placeholder="Example:&#10;- Need to clean my room by Friday&#10;- Email boss about deadline tomorrow&#10;- Call mom next week&#10;&#10;Or use the mic above!"
                       value={brainDumpText}
                       onChange={(e) => setBrainDumpText(e.target.value)}
-                      className={`min-h-[300px] text-base resize-none transition-all ${isVoiceActive ? 'border-red-400 ring-2 ring-red-100' : ''}`}
+                      className={`min-h-[200px] text-base resize-none transition-all ${isVoiceActive ? 'border-red-400 ring-2 ring-red-100' : ''}`}
                     />
                     {isVoiceActive && (
                       <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-full px-3 py-1 text-xs text-red-600 font-medium">
@@ -595,7 +603,7 @@ Rules:
                     )}
                   </div>
                   <p className="text-xs text-gray-500">
-                    💡 Tip: Use <strong>Voice Input</strong> to speak your tasks — they'll be auto-categorized when you stop.
+                    💡 Mention dates like "tomorrow" or "next Friday" — the AI will set due dates automatically.
                   </p>
                 </div>
 
