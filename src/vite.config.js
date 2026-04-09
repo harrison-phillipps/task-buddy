@@ -21,5 +21,6 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom'],
+    force: true,
   },
 });
