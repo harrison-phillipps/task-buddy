@@ -10,6 +10,7 @@ import CreateGoalModal from "../components/goals/CreateGoalModal";
 import GoalBreakdownModal from "../components/goals/GoalBreakdownModal";
 import CalendarSyncModal from "../components/calendar/CalendarSyncModal";
 import GoalCoach from "../components/ai/GoalCoach";
+import PullToRefresh from "../components/PullToRefresh";
 
 export default function GoalsPage() {
   const queryClient = useQueryClient();
@@ -77,7 +78,12 @@ export default function GoalsPage() {
     completed: goals.filter(g => g.status === "completed").length,
   };
 
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['goals'] });
+  };
+
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         <motion.div
@@ -236,5 +242,6 @@ export default function GoalsPage() {
         />
       </div>
     </div>
+    </PullToRefresh>
   );
 }

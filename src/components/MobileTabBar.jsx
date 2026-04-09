@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, ListTodo, Play, Target } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { cn } from "@/lib/utils";
@@ -12,15 +12,16 @@ const tabs = [
 
 export default function MobileTabBar() {
   const location = useLocation();
+  const navigate = useNavigate();
 
   return (
     <nav className="mobile-tab-bar fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-t border-purple-100 dark:border-gray-700 flex md:hidden">
       {tabs.map((tab) => {
         const active = location.pathname === tab.url;
         return (
-          <Link
+          <button
             key={tab.title}
-            to={tab.url}
+            onClick={() => navigate(tab.url, { replace: active })}
             className={cn(
               "flex-1 flex flex-col items-center justify-center gap-1 py-2 text-xs font-medium transition-colors min-h-[56px]",
               active
@@ -30,7 +31,7 @@ export default function MobileTabBar() {
           >
             <tab.icon className={cn("w-5 h-5", active && "stroke-[2.5]")} />
             <span>{tab.title}</span>
-          </Link>
+          </button>
         );
       })}
     </nav>
