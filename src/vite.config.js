@@ -31,6 +31,8 @@ export default defineConfig({
       '@tanstack/react-query',
       'react-router-dom',
       'framer-motion',
+      'vaul',
+      'sonner',
     ],
   },
   optimizeDeps: {
@@ -41,6 +43,8 @@ export default defineConfig({
       'react/jsx-dev-runtime',
       '@tanstack/react-query',
       'react-router-dom',
+      'vaul',
+      'sonner',
     ],
     force: true,
   },
