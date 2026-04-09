@@ -31,7 +31,7 @@ export default defineConfig({
   server: {
     allowedHosts: ['.'],
   },
-  cacheDir: 'node_modules/.vite_cache_v7',
+  cacheDir: 'node_modules/.vite_cache_v8',
   plugins: [singleReactPlugin(), base44()],
   resolve: {
     alias: {
@@ -74,7 +74,6 @@ export default defineConfig({
       'react-dom',
       'react/jsx-runtime',
       'react/jsx-dev-runtime',
-      '@tanstack/react-query',
       'react-router-dom',
       'framer-motion',
       'sonner',
@@ -95,6 +94,7 @@ export default defineConfig({
       '@radix-ui/react-scroll-area',
       '@radix-ui/react-slot',
     ],
+    exclude: ['@tanstack/react-query'],
     force: true,
   },
 });
