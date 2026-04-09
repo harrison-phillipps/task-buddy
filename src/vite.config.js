@@ -31,7 +31,7 @@ export default defineConfig({
   server: {
     allowedHosts: ['.'],
   },
-  cacheDir: 'node_modules/.vite_cache_v6',
+  cacheDir: 'node_modules/.vite_cache_v7',
   plugins: [singleReactPlugin(), base44()],
   resolve: {
     alias: {
@@ -74,8 +74,10 @@ export default defineConfig({
       'react-dom',
       'react/jsx-runtime',
       'react/jsx-dev-runtime',
-    ],
-    exclude: [
+      '@tanstack/react-query',
+      'react-router-dom',
+      'framer-motion',
+      'sonner',
       '@radix-ui/react-tooltip',
       '@radix-ui/react-dialog',
       '@radix-ui/react-popover',
@@ -92,10 +94,6 @@ export default defineConfig({
       '@radix-ui/react-progress',
       '@radix-ui/react-scroll-area',
       '@radix-ui/react-slot',
-      '@tanstack/react-query',
-      'react-router-dom',
-      'framer-motion',
-      'sonner',
     ],
     force: true,
   },
