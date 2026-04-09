@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { useRef, useEffect } from "react";
 import { LayoutDashboard, ListTodo, Play, Target } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,22 @@ const tabs = [
 export default function MobileTabBar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const scrollPositions = useRef({});
+  const prevPath = useRef(location.pathname);
+
+  // Save scroll position of the outgoing page, restore for incoming
+  useEffect(() => {
+    const incoming = location.pathname;
+    const outgoing = prevPath.current;
+    if (outgoing !== incoming) {
+      // Save scroll of outgoing page
+      scrollPositions.current[outgoing] = window.scrollY;
+      // Restore scroll for incoming page
+      const saved = scrollPositions.current[incoming] ?? 0;
+      requestAnimationFrame(() => window.scrollTo(0, saved));
+      prevPath.current = incoming;
+    }
+  }, [location.pathname]);
 
   return (
     <nav className="mobile-tab-bar fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-t border-purple-100 dark:border-gray-700 flex md:hidden">

@@ -25,6 +25,7 @@ body {
 button, [role="tab"], [role="button"], a, svg {
   user-select: none;
   -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Minimum tap target size for mobile */
