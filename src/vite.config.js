@@ -11,11 +11,27 @@ const reactDomPath = path.resolve(__dirname, 'node_modules/react-dom');
 const reactJsxRuntime = path.resolve(__dirname, 'node_modules/react/jsx-runtime');
 const reactJsxDevRuntime = path.resolve(__dirname, 'node_modules/react/jsx-dev-runtime');
 
+// Custom plugin to enforce a single React instance by intercepting all resolutions
+function singleReactPlugin() {
+  return {
+    name: 'single-react-instance',
+    enforce: 'pre',
+    resolveId(id) {
+      if (id === 'react') return reactPath + '/index.js';
+      if (id === 'react-dom') return reactDomPath + '/index.js';
+      if (id === 'react-dom/client') return reactDomPath + '/client.js';
+      if (id === 'react/jsx-runtime') return reactJsxRuntime + '.js';
+      if (id === 'react/jsx-dev-runtime') return reactJsxDevRuntime + '.js';
+      return null;
+    },
+  };
+}
+
 export default defineConfig({
   server: {
     allowedHosts: ['.'],
   },
-  plugins: [base44()],
+  plugins: [singleReactPlugin(), base44()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
@@ -79,16 +95,5 @@ export default defineConfig({
       '@radix-ui/react-slot',
     ],
     force: true,
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
-            return 'react-vendor';
-          }
-        },
-      },
-    },
   },
 });
