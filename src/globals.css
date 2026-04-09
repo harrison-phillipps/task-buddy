@@ -13,6 +13,14 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* Prevent overscroll bounce in all scrollable tab/content areas */
+[role="tabpanel"],
+.overflow-auto,
+.overflow-y-auto,
+.overflow-scroll {
+  overscroll-behavior: none;
+}
+
 /* Prevent text selection on interactive elements */
 button, [role="tab"], [role="button"], a, svg {
   user-select: none;

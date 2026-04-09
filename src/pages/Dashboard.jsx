@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import PullToRefresh from "../components/PullToRefresh";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -40,6 +41,7 @@ import AdaptiveCompanionAI from "../components/companion/AdaptiveCompanionAI";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [currentUser, setCurrentUser] = useState(null);
   const [userProgress, setUserProgress] = useState(null);
   const [showCoachingTip, setShowCoachingTip] = useState(true);
@@ -168,7 +170,12 @@ export default function Dashboard() {
     );
   }
 
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries();
+  };
+
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div className="min-h-screen p-2 sm:p-4 md:p-8 overflow-x-hidden w-full">
       <OnboardingTour currentUser={currentUser} />
 
@@ -565,5 +572,6 @@ export default function Dashboard() {
         />
         </div>
         </div>
+    </PullToRefresh>
         );
         }

@@ -38,6 +38,7 @@ import { enqueueOp, upsertCachedEntity, removeCachedEntity, cacheEntities, getCa
 import { useOfflineSync } from "../components/useOfflineSync";
 import OfflineIndicator from "../components/OfflineIndicator";
 import { AIPriorityViewToggle, AIStrategyBanner, AIPriorityScoreBadge, PinButton, AIStrategySelector, STRATEGY_PROMPTS } from "../components/tasks/AIPriorityEngine";
+import PullToRefresh from "../components/PullToRefresh";
 
 export default function Tasks() {
   const queryClient = useQueryClient();
@@ -277,6 +278,17 @@ export default function Tasks() {
       await upsertCachedEntity('Task', id, updated);
       return updated;
     },
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previous = queryClient.getQueryData(['tasks', currentUser?.email, selectedTeamId]);
+      queryClient.setQueryData(['tasks', currentUser?.email, selectedTeamId], (old = []) =>
+        old.map(t => t.id === id ? { ...t, ...data } : t)
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(['tasks', currentUser?.email, selectedTeamId], ctx.previous);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['focusSessionTasks'] });
@@ -297,7 +309,19 @@ export default function Tasks() {
       await upsertCachedEntity('Task', task.id, updated);
       return task;
     },
-    onSuccess: (data, task) => {
+    onMutate: async (task) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previous = queryClient.getQueryData(['tasks', currentUser?.email, selectedTeamId]);
+      const completedSubtasks = task.subtasks?.map(st => ({ ...st, completed: true })) || [];
+      queryClient.setQueryData(['tasks', currentUser?.email, selectedTeamId], (old = []) =>
+        old.map(t => t.id === task.id ? { ...t, status: 'completed', subtasks: completedSubtasks } : t)
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(['tasks', currentUser?.email, selectedTeamId], ctx.previous);
+    },
+    onSuccess: (_data, task) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       setCompletedTaskTitle(task.title);
       setShowCelebration(true);
@@ -460,7 +484,12 @@ export default function Tasks() {
     }
   }, [showCelebration]);
 
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+  };
+
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div className="min-h-screen p-4 md:p-8">
       <OfflineIndicator
         isOnline={isOnline}
@@ -533,7 +562,7 @@ export default function Tasks() {
                 <SelectItem value="could_do">🟢 Could Do</SelectItem>
               </SelectContent>
             </Select>
-            <Button 
+            <Button
               variant="outline"
               onClick={() => setShowCalendarSync(true)}
               className="border-purple-200 hover:bg-purple-50 flex-1 sm:flex-none"
@@ -602,7 +631,7 @@ export default function Tasks() {
               {filter === "completed" ? "No completed tasks yet" : "No tasks here"}
             </h3>
             <p className="text-gray-600 mb-6">
-              {filter === "all" 
+              {filter === "all"
                 ? "Get started by breaking down your first task!"
                 : `You don't have any ${filter.replace('_', ' ')} tasks`}
             </p>
@@ -623,7 +652,6 @@ export default function Tasks() {
             className="space-y-4"
           >
             {viewMode === "ai" ? (
-              // AI VIEW: flat sorted list with priority scores
               <div className="space-y-3">
                 {filteredTasks.map((task, index) => (
                   <motion.div
@@ -634,7 +662,6 @@ export default function Tasks() {
                     className="relative"
                   >
                     <div className="flex items-start gap-2">
-                      {/* Rank number */}
                       <div className="flex-shrink-0 w-7 h-7 mt-3 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-500 dark:text-gray-400">
                         {index + 1}
                       </div>
@@ -682,11 +709,10 @@ export default function Tasks() {
                 ))}
               </div>
             ) : (
-              // MANUAL VIEW: category-grouped accordion
               <Accordion type="multiple" defaultValue={Object.keys(groupedTasks)} className="space-y-4">
                 {Object.entries(groupedTasks).map(([category, categoryTasks]) => (
-                  <AccordionItem 
-                    key={category} 
+                  <AccordionItem
+                    key={category}
                     value={category}
                     className={`bg-gradient-to-br ${categoryColors[category]} border rounded-lg overflow-hidden`}
                   >
@@ -769,7 +795,7 @@ export default function Tasks() {
                                                 team_id: task.team_id,
                                                 type: "task_assigned",
                                                 title: `Task assigned: "${task.title}"`,
-                                                message: data.assigned_to_users?.length > 1 
+                                                message: data.assigned_to_users?.length > 1
                                                   ? `Task assigned to ${data.assigned_to_users.length} team members`
                                                   : `Task assigned to ${data.assigned_to_name}`,
                                                 priority: "medium",
@@ -845,8 +871,8 @@ export default function Tasks() {
                   </SelectTrigger>
                   <SelectContent>
                     {tasks
-                      .filter(t => 
-                        t.id !== selectedDependencyTask?.id && 
+                      .filter(t =>
+                        t.id !== selectedDependencyTask?.id &&
                         !selectedDependencyTask?.blocked_by?.includes(t.id)
                       )
                       .map(task => (
@@ -909,5 +935,6 @@ export default function Tasks() {
         />
       </div>
     </div>
+    </PullToRefresh>
   );
 }
