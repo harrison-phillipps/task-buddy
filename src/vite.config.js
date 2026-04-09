@@ -31,7 +31,7 @@ export default defineConfig({
   server: {
     allowedHosts: ['.'],
   },
-  cacheDir: 'node_modules/.vite_cache_v2',
+  cacheDir: 'node_modules/.vite_cache_v3',
   plugins: [singleReactPlugin(), base44()],
   resolve: {
     alias: {
