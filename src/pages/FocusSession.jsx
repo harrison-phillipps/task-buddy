@@ -102,6 +102,7 @@ export default function FocusSession() {
   const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const preselectedTaskId = urlParams.get('taskId');
+  const preselectedTaskTitle = urlParams.get('taskTitle') ? decodeURIComponent(urlParams.get('taskTitle')) : null;
 
   const [selectedTaskId, setSelectedTaskId] = useState(preselectedTaskId || null);
   const [currentSubtaskIndex, setCurrentSubtaskIndex] = useState(0);
@@ -1066,7 +1067,11 @@ export default function FocusSession() {
                 <Label>Choose a task</Label>
                 <Select value={selectedTaskId || ""} onValueChange={setSelectedTaskId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a task to work on" />
+                    <SelectValue placeholder="Select a task to work on">
+                      {selectedTaskId && !tasks.find(t => t.id === selectedTaskId) && preselectedTaskTitle
+                        ? preselectedTaskTitle
+                        : undefined}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {tasks.filter(t => t.status !== 'completed').map(task => (

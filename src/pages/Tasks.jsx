@@ -650,7 +650,7 @@ export default function Tasks() {
                          task={task}
                          allTasks={tasks}
                          showTeamInfo={selectedTeamId !== "personal" || !!task.team_id}
-                         onStart={(task) => window.location.href = createPageUrl("FocusSession") + `?taskId=${task.id}`}
+                         onStart={(task) => window.location.href = createPageUrl("FocusSession") + `?taskId=${task.id}&taskTitle=${encodeURIComponent(task.title)}`}
                          onEdit={(task, action) => {
                            if (action === 'ai-breakdown') {
                              setTaskToBreakdown(task);
@@ -723,7 +723,7 @@ export default function Tasks() {
                                task={task}
                                allTasks={tasks}
                                showTeamInfo={selectedTeamId !== "personal" || !!task.team_id}
-                               onStart={(task) => window.location.href = createPageUrl("FocusSession") + `?taskId=${task.id}`}
+                               onStart={(task) => window.location.href = createPageUrl("FocusSession") + `?taskId=${task.id}&taskTitle=${encodeURIComponent(task.title)}`}
                                onEdit={(task, action) => {
                                  if (action === 'ai-breakdown') {
                                    setTaskToBreakdown(task);
