@@ -6,6 +6,11 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const reactPath = path.resolve(__dirname, 'node_modules/react');
+const reactDomPath = path.resolve(__dirname, 'node_modules/react-dom');
+const reactJsxRuntime = path.resolve(__dirname, 'node_modules/react/jsx-runtime');
+const reactJsxDevRuntime = path.resolve(__dirname, 'node_modules/react/jsx-dev-runtime');
+
 export default defineConfig({
   server: {
     allowedHosts: ['.'],
@@ -14,10 +19,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
-      'react': path.resolve(__dirname, 'node_modules/react'),
-      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
-      'react/jsx-runtime': path.resolve(__dirname, 'node_modules/react/jsx-runtime'),
-      'react/jsx-dev-runtime': path.resolve(__dirname, 'node_modules/react/jsx-dev-runtime'),
+      'react': reactPath,
+      'react-dom': reactDomPath,
+      'react/jsx-runtime': reactJsxRuntime,
+      'react/jsx-dev-runtime': reactJsxDevRuntime,
     },
     dedupe: [
       'react',
@@ -74,5 +79,16 @@ export default defineConfig({
       '@radix-ui/react-slot',
     ],
     force: true,
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+            return 'react-vendor';
+          }
+        },
+      },
+    },
   },
 });
