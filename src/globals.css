@@ -21,10 +21,13 @@ body {
   overscroll-behavior: none;
 }
 
-/* Prevent text selection on interactive elements */
-button, [role="tab"], [role="button"], a, svg {
+/* Prevent text selection on interactive elements — NOT on links/text nodes */
+button, [role="tab"], [role="button"], svg {
   user-select: none;
   -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+a {
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -37,15 +40,11 @@ button, [role="tab"], [role="button"], a, svg {
 
 /* Full-width buttons inside dialogs/drawers on mobile */
 @media (max-width: 767px) {
-  [role="dialog"] button,
-  [data-vaul-drawer] button {
+  [role="dialog"] [data-radix-alert-dialog-footer] button,
+  [role="dialog"] [data-radix-dialog-footer] button,
+  [data-vaul-drawer] > div > button:not([data-icon]) {
     width: 100%;
     justify-content: center;
-  }
-  /* But not icon-only or cancel/close buttons */
-  [role="dialog"] button[data-slot="icon"],
-  [role="dialog"] .dialog-close {
-    width: auto;
   }
 }
 
