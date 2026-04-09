@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, CheckCircle, Clock, AlertCircle, MessageSquare, Plus, Shield, ListTodo, Brain, Calendar, Bell, FileText, BarChart2 } from "lucide-react";
+import { Users, CheckCircle, Clock, AlertCircle, MessageSquare, Plus, Shield, ListTodo, Brain, Calendar, Bell, FileText, BarChart2, Target } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -29,6 +29,7 @@ import TeamBottleneckAnalyzer from "../components/team/TeamBottleneckAnalyzer";
 import TeamProgressVisualization from "../components/team/TeamProgressVisualization";
 import RealTimeNotificationCenter from "../components/team/RealTimeNotificationCenter";
 import TeamWorkloadView from "../components/team/TeamWorkloadView";
+import SharedGoals from "../components/team/SharedGoals";
 import { toast } from "sonner";
 
 export default function TeamDashboard() {
@@ -336,6 +337,10 @@ export default function TeamDashboard() {
                 <BarChart2 className="w-4 h-4 mr-2" />
                 Workloads
               </TabsTrigger>
+              <TabsTrigger value="goals" className="flex-shrink-0">
+                <Target className="w-4 h-4 mr-2" />
+                Goals
+              </TabsTrigger>
               <TabsTrigger value="members" className="flex-shrink-0">
                 <Shield className="w-4 h-4 mr-2" />
                 Members & Roles
@@ -367,6 +372,10 @@ export default function TeamDashboard() {
 
             <TabsContent value="chat">
               <TeamMessaging team={team} currentUser={currentUser} />
+            </TabsContent>
+
+            <TabsContent value="goals">
+              <SharedGoals team={team} currentUser={currentUser} />
             </TabsContent>
 
             <TabsContent value="members">

@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, Copy, Check, Settings, LogOut, Crown } from "lucide-react";
+import { Users, Plus, Copy, Check, Settings, LogOut, Crown, Mail } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -23,6 +23,9 @@ export default function TeamsPage() {
   const [newTeamDescription, setNewTeamDescription] = useState("");
   const [copiedCode, setCopiedCode] = useState(null);
   const [joinCode, setJoinCode] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteTeamId, setInviteTeamId] = useState(null);
+  const [isInviting, setIsInviting] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -123,6 +126,34 @@ export default function TeamsPage() {
       name: newTeamName,
       description: newTeamDescription,
     });
+  };
+
+  const handleInviteByEmail = async (team) => {
+    if (!inviteEmail.trim()) return;
+    setIsInviting(true);
+    try {
+      // Add as pending member by email
+      const existing = team.members?.some(m => m.user_email === inviteEmail.trim());
+      if (existing || team.owner_email === inviteEmail.trim()) {
+        toast.error("This person is already a member");
+        setIsInviting(false);
+        return;
+      }
+      const newMember = { user_id: inviteEmail.trim(), user_name: inviteEmail.trim(), user_email: inviteEmail.trim(), role: "member" };
+      await base44.entities.Team.update(team.id, {
+        members: [...(team.members || []), newMember],
+        member_ids: [...(team.member_ids || []), inviteEmail.trim()],
+      });
+      // Also invite them to the app if they're not registered
+      try { await base44.users.inviteUser(inviteEmail.trim(), "user"); } catch (_) {}
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      setInviteEmail("");
+      setInviteTeamId(null);
+      toast.success(`Invited ${inviteEmail}!`);
+    } catch (err) {
+      toast.error("Failed to invite: " + err.message);
+    }
+    setIsInviting(false);
   };
 
   const handleCopyCode = (code) => {
@@ -255,26 +286,48 @@ export default function TeamsPage() {
                       </div>
 
                       {isOwner && (
-                        <div className="p-3 bg-purple-50 rounded-lg space-y-2">
-                          <Label className="text-xs text-gray-600">Invite Code</Label>
-                          <div className="flex items-center gap-2">
-                            <code className="flex-1 px-3 py-2 bg-white rounded border text-sm font-mono">
-                              {team.invite_code}
-                            </code>
-                            <Button
-                              size="icon"
-                              variant="outline"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleCopyCode(team.invite_code);
-                              }}
-                            >
-                              {copiedCode === team.invite_code ? (
-                                <Check className="w-4 h-4 text-green-600" />
-                              ) : (
-                                <Copy className="w-4 h-4" />
-                              )}
-                            </Button>
+                        <div className="p-3 bg-purple-50 rounded-lg space-y-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs text-gray-600">Invite Code</Label>
+                            <div className="flex items-center gap-2">
+                              <code className="flex-1 px-3 py-2 bg-white rounded border text-sm font-mono">
+                                {team.invite_code}
+                              </code>
+                              <Button
+                                size="icon"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCopyCode(team.invite_code);
+                                }}
+                              >
+                                {copiedCode === team.invite_code ? (
+                                  <Check className="w-4 h-4 text-green-600" />
+                                ) : (
+                                  <Copy className="w-4 h-4" />
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-gray-600">Invite by Email</Label>
+                            <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                              <Input
+                                value={inviteTeamId === team.id ? inviteEmail : ""}
+                                onChange={e => { setInviteTeamId(team.id); setInviteEmail(e.target.value); }}
+                                placeholder="friend@example.com"
+                                className="flex-1 bg-white text-sm"
+                                onKeyDown={e => e.key === 'Enter' && handleInviteByEmail(team)}
+                              />
+                              <Button
+                                size="sm"
+                                onClick={() => handleInviteByEmail(team)}
+                                disabled={isInviting || !(inviteTeamId === team.id && inviteEmail.trim())}
+                                className="bg-purple-600 hover:bg-purple-700 text-white"
+                              >
+                                <Mail className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       )}
