@@ -33,23 +33,7 @@ export default function Settings() {
   const handleDeleteAccount = async () => {
     setDeletingAccount(true);
     try {
-      // Delete all user-owned data before logging out
-      const user = await base44.auth.me();
-      await Promise.allSettled([
-        base44.entities.Task.filter({ created_by: user.email }).then(items =>
-          Promise.all(items.map(i => base44.entities.Task.delete(i.id)))
-        ),
-        base44.entities.UserProgress.filter({ user_id: user.id }).then(items =>
-          Promise.all(items.map(i => base44.entities.UserProgress.delete(i.id)))
-        ),
-        base44.entities.FocusSession.filter({ created_by: user.email }).then(items =>
-          Promise.all(items.map(i => base44.entities.FocusSession.delete(i.id)))
-        ),
-        base44.entities.Notification.filter({ user_id: user.id }).then(items =>
-          Promise.all(items.map(i => base44.entities.Notification.delete(i.id)))
-        ),
-      ]);
-      await base44.auth.logout();
+      await base44.auth.deleteMe();
     } catch (err) {
       console.error("Error during account deletion:", err);
       setDeletingAccount(false);

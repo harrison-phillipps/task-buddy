@@ -16,15 +16,18 @@ export default function MobileTabBar() {
   const navigate = useNavigate();
   const scrollPositions = useRef({});
   const prevPath = useRef(location.pathname);
+  // Store the last visited URL for each tab root
+  const tabHistory = useRef(Object.fromEntries(tabs.map(t => [t.url, t.url])));
 
-  // Save scroll position of the outgoing page, restore for incoming
+  // Track last URL per tab and save/restore scroll
   useEffect(() => {
     const incoming = location.pathname;
     const outgoing = prevPath.current;
     if (outgoing !== incoming) {
-      // Save scroll of outgoing page
       scrollPositions.current[outgoing] = window.scrollY;
-      // Restore scroll for incoming page
+      // Update tab history: find which tab root owns this path
+      const ownerTab = tabs.find(t => incoming === t.url || incoming.startsWith(t.url + '/'));
+      if (ownerTab) tabHistory.current[ownerTab.url] = incoming;
       const saved = scrollPositions.current[incoming] ?? 0;
       requestAnimationFrame(() => window.scrollTo(0, saved));
       prevPath.current = incoming;
@@ -34,11 +37,21 @@ export default function MobileTabBar() {
   return (
     <nav className="mobile-tab-bar fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-t border-purple-100 dark:border-gray-700 flex md:hidden">
       {tabs.map((tab) => {
-        const active = location.pathname === tab.url;
+        const active = location.pathname === tab.url || location.pathname.startsWith(tab.url + '/');
         return (
           <button
             key={tab.title}
-            onClick={() => navigate(tab.url, { replace: active })}
+            onClick={() => {
+              if (active) {
+                // Reset this tab to its root
+                tabHistory.current[tab.url] = tab.url;
+                navigate(tab.url, { replace: true });
+              } else {
+                // Go to last visited page in this tab
+                const dest = tabHistory.current[tab.url] || tab.url;
+                navigate(dest);
+              }
+            }}
             className={cn(
               "flex-1 flex flex-col items-center justify-center gap-1 py-2 text-xs font-medium transition-colors min-h-[56px]",
               active
