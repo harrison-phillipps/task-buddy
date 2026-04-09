@@ -10,12 +10,8 @@ import DueDateSuggester from "./tasks/DueDateSuggester";
 import { useState } from "react";
 import RecurringTaskBadge from "./tasks/RecurringTaskBadge";
 import { getAIPriorityColor, getAIPriorityLabel, getUrgencyIcon } from "./ai/TaskPrioritizer";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { MobileDropdownMenu } from "@/components/ui/MobileDropdownMenu";
 import {
   Tooltip,
   TooltipContent,
@@ -169,13 +165,15 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
               )}
               </div>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            <MobileDropdownMenu
+              trigger={
                 <Button variant="ghost" size="icon" className="h-8 w-8 dark:text-gray-300">
                   <MoreVertical className="w-4 h-4" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              }
+              title="Task Actions"
+              align="end"
+            >
                 {task.status !== 'completed' && onQuickComplete && (
                   <DropdownMenuItem onClick={() => onQuickComplete?.(task)}>
                     <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" />
@@ -231,8 +229,7 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                  <DropdownMenuItem onClick={() => onDelete?.(task)} className="text-red-600">
                   Delete Task
                 </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            </MobileDropdownMenu>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
