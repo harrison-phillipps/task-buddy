@@ -6,7 +6,6 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Resolve to exact absolute paths so every package shares one React copy
 const r = (p) => path.resolve(__dirname, 'node_modules', p);
 
 export default defineConfig({
@@ -15,42 +14,48 @@ export default defineConfig({
   },
   plugins: [base44()],
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, 'src'),
-      // Force every importer to resolve to the exact same React file on disk
-      'react': r('react/index.js'),
-      'react-dom': r('react-dom/index.js'),
-      'react-dom/client': r('react-dom/client.js'),
-      'react/jsx-runtime': r('react/jsx-runtime.js'),
-      'react/jsx-dev-runtime': r('react/jsx-dev-runtime.js'),
-    },
+    // dedupe ensures only ONE copy of React is ever resolved, regardless of
+    // how many packages try to import their own bundled version
     dedupe: [
-      'react',
-      'react-dom',
-      '@tanstack/react-query',
-      'react-router-dom',
-      'framer-motion',
-      'vaul',
-      'sonner',
-    ],
-  },
-  optimizeDeps: {
-    include: [
       'react',
       'react-dom',
       'react/jsx-runtime',
       'react/jsx-dev-runtime',
       '@tanstack/react-query',
       'react-router-dom',
+      'framer-motion',
+      'vaul',
+      'sonner',
+      'scheduler',
+    ],
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+      // Hard-pin every React import to the exact same file on disk
+      'react': r('react/index.js'),
+      'react-dom': r('react-dom/index.js'),
+      'react-dom/client': r('react-dom/client.js'),
+      'react/jsx-runtime': r('react/jsx-runtime.js'),
+      'react/jsx-dev-runtime': r('react/jsx-dev-runtime.js'),
+      // scheduler is the internal package React uses for hooks — dedupe it too
+      'scheduler': r('scheduler/index.js'),
+    },
+  },
+  optimizeDeps: {
+    // Bundle all of these together in ONE esbuild pass so they share
+    // the same React instance in the output chunk
+    include: [
+      'react',
+      'react-dom',
+      'react-dom/client',
+      'react/jsx-runtime',
+      'react/jsx-dev-runtime',
+      'scheduler',
+      '@tanstack/react-query',
+      'react-router-dom',
+      'framer-motion',
       'vaul',
       'sonner',
     ],
-    // Remove force:true so Vite can properly re-bundle with fresh dep graph
-    esbuildOptions: {
-      // Ensure a single React instance across all deps
-      define: {
-        'process.env.NODE_ENV': '"production"',
-      },
-    },
+    force: true,
   },
 });
