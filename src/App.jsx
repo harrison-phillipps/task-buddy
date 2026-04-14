@@ -1,5 +1,5 @@
 import './App.css'
-import React, { lazy, Suspense } from 'react'
+import { Toaster } from "@/components/ui/sonner"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 // VisualEditAgent removed - caused duplicate React chunk conflict
@@ -79,10 +79,6 @@ const AuthenticatedApp = () => {
 };
 
 
-const ToasterLazy = lazy(() =>
-  import('@/components/ui/sonner').then(m => ({ default: m.Toaster }))
-);
-
 function App() {
   return (
     <QueryClientProvider client={queryClientInstance}>
@@ -90,9 +86,7 @@ function App() {
         <Router>
           <AuthenticatedApp />
         </Router>
-        <Suspense fallback={null}>
-          <ToasterLazy />
-        </Suspense>
+        <Toaster />
       </AuthProvider>
     </QueryClientProvider>
   );
