@@ -1,19 +1,25 @@
-import { Toaster as Sonner } from "sonner"
+import { Toaster as HotToaster } from "react-hot-toast"
 
+// Replaced sonner with react-hot-toast to avoid stale Vite pre-bundle conflict
 const Toaster = ({ ...props }) => {
   return (
-    <Sonner
-      theme="light"
-      className="toaster group"
+    <HotToaster
+      position="bottom-right"
       toastOptions={{
-        classNames: {
-          toast:
-            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
-          description: "group-[.toast]:text-muted-foreground",
-          actionButton:
-            "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton:
-            "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+        duration: 4000,
+        style: {
+          background: 'hsl(var(--background))',
+          color: 'hsl(var(--foreground))',
+          border: '1px solid hsl(var(--border))',
+          borderRadius: '0.5rem',
+          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+          fontSize: '0.875rem',
+        },
+        success: {
+          iconTheme: {
+            primary: '#8B5CF6',
+            secondary: '#ffffff',
+          },
         },
       }}
       {...props}

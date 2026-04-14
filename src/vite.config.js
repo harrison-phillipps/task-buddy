@@ -27,7 +27,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     holdUntilCrawlEnd: true,
-    exclude: ['sonner', 'vaul'],
+    exclude: ['sonner', 'vaul', 'react-hot-toast'],
     include: [
       'react',
       'react-dom',
