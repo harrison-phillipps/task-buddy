@@ -23,9 +23,6 @@ export default defineConfig({
       'react-dom/client': r('react-dom/client.js'),
       'react/jsx-runtime': r('react/jsx-runtime.js'),
       'react/jsx-dev-runtime': r('react/jsx-dev-runtime.js'),
-      // Force single instances of packages that bundle React hooks internally
-      'vaul': path.resolve(__dirname, 'node_modules/vaul'),
-      'sonner': path.resolve(__dirname, 'node_modules/sonner'),
     },
     dedupe: [
       'react',
@@ -48,6 +45,12 @@ export default defineConfig({
       'vaul',
       'sonner',
     ],
-    force: true,
+    // Remove force:true so Vite can properly re-bundle with fresh dep graph
+    esbuildOptions: {
+      // Ensure a single React instance across all deps
+      define: {
+        'process.env.NODE_ENV': '"production"',
+      },
+    },
   },
 });
