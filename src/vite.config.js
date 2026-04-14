@@ -17,13 +17,15 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
-      // Force every importer — including @base44/sdk and @tanstack/react-query —
-      // to resolve to the exact same React file on disk
+      // Force every importer to resolve to the exact same React file on disk
       'react': r('react/index.js'),
       'react-dom': r('react-dom/index.js'),
       'react-dom/client': r('react-dom/client.js'),
       'react/jsx-runtime': r('react/jsx-runtime.js'),
       'react/jsx-dev-runtime': r('react/jsx-dev-runtime.js'),
+      // Force single instances of packages that bundle React hooks internally
+      'vaul': path.resolve(__dirname, 'node_modules/vaul'),
+      'sonner': path.resolve(__dirname, 'node_modules/sonner'),
     },
     dedupe: [
       'react',
