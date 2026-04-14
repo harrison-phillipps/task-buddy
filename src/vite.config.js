@@ -6,6 +6,9 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const reactPath = path.resolve(__dirname, 'node_modules/react');
+const reactDomPath = path.resolve(__dirname, 'node_modules/react-dom');
+
 export default defineConfig({
   server: {
     allowedHosts: ['.'],
@@ -14,28 +17,32 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
-      'react': path.resolve(__dirname, 'node_modules/react/index.js'),
-      'react-dom': path.resolve(__dirname, 'node_modules/react-dom/index.js'),
-      'react/jsx-runtime': path.resolve(__dirname, 'node_modules/react/jsx-runtime.js'),
+      'react': reactPath,
+      'react-dom': reactDomPath,
+      'react/jsx-runtime': path.resolve(reactPath, 'jsx-runtime.js'),
+      'react/jsx-dev-runtime': path.resolve(reactPath, 'jsx-dev-runtime.js'),
     },
-    dedupe: ['react', 'react-dom', 'react/jsx-runtime'],
+    dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
     force: true,
+    esbuildOptions: {
+      // Ensure esbuild uses the same React instance when pre-bundling deps
+      alias: {
+        'react': reactPath,
+        'react-dom': reactDomPath,
+      },
+    },
     exclude: ['sonner', 'next-themes'],
     include: [
       'react',
       'react-dom',
       'react/jsx-runtime',
+      'react/jsx-dev-runtime',
       'react-router-dom',
       '@tanstack/react-query',
       'react-hot-toast',
       'framer-motion',
     ],
-  },
-  build: {
-    commonjsOptions: {
-      include: [/node_modules/],
-    },
   },
 });
