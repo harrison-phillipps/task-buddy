@@ -14,11 +14,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
-      // Force ALL react imports to resolve to the exact same singleton
-      'react': path.resolve(__dirname, 'node_modules/react'),
-      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+      'react': path.resolve(__dirname, 'node_modules/react/index.js'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom/index.js'),
+      'react/jsx-runtime': path.resolve(__dirname, 'node_modules/react/jsx-runtime.js'),
     },
-    dedupe: ['react', 'react-dom'],
+    dedupe: ['react', 'react-dom', 'react/jsx-runtime'],
   },
   optimizeDeps: {
     force: true,
@@ -26,10 +26,16 @@ export default defineConfig({
     include: [
       'react',
       'react-dom',
+      'react/jsx-runtime',
       'react-router-dom',
       '@tanstack/react-query',
       'react-hot-toast',
       'framer-motion',
     ],
+  },
+  build: {
+    commonjsOptions: {
+      include: [/node_modules/],
+    },
   },
 });
