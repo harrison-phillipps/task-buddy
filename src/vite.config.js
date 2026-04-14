@@ -15,21 +15,18 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, 'src'),
     },
-    // dedupe is the correct Vite mechanism to prevent multiple React copies
     dedupe: [
       'react',
       'react-dom',
       'react/jsx-runtime',
       'react/jsx-dev-runtime',
       'scheduler',
-      '@tanstack/react-query',
-      'react-router-dom',
-      'framer-motion',
-      'vaul',
-      'sonner',
     ],
   },
   optimizeDeps: {
+    // By NOT including sonner/vaul here, they get bundled together with
+    // the main app chunk and share its React instance instead of getting
+    // a separate pre-bundled chunk with their own React copy
     include: [
       'react',
       'react-dom',
@@ -39,9 +36,8 @@ export default defineConfig({
       '@tanstack/react-query',
       'react-router-dom',
       'framer-motion',
-      'vaul',
-      'sonner',
     ],
+    exclude: ['sonner', 'vaul'],
     force: true,
   },
 });
