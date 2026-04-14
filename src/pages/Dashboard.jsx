@@ -36,6 +36,7 @@ import EnergyAwareCoach from "../components/ai/EnergyAwareCoach";
 import OptimalTimeRecommender from "../components/ai/OptimalTimeRecommender";
 import ProductivityReportModal from "../components/analytics/ProductivityReportModal";
 import DailySchedulePlanner from "../components/dashboard/DailySchedulePlanner";
+import EnergyTaskSuggester from "../components/dashboard/EnergyTaskSuggester";
 import { hasFeatureAccess, UpgradePrompt } from "../components/subscription/FeatureGate";
 import AdaptiveCompanionAI from "../components/companion/AdaptiveCompanionAI";
 
@@ -245,6 +246,17 @@ export default function Dashboard() {
             transition={{ delay: 0.25 }}
           >
             <QuickAddTask currentUser={currentUser} />
+          </motion.div>
+        )}
+
+        {/* Energy-Based Task Suggester */}
+        {tasks.filter(t => t.status !== 'completed').length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.27 }}
+          >
+            <EnergyTaskSuggester tasks={tasks} />
           </motion.div>
         )}
 

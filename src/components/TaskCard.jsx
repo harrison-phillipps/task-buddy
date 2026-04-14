@@ -123,6 +123,15 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                     {task.estimated_minutes}m total
                   </Badge>
                 )}
+                {task.energy_level_needed && (
+                  <Badge className={
+                    task.energy_level_needed === 'high'   ? 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800' :
+                    task.energy_level_needed === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800' :
+                    'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
+                  }>
+                    {task.energy_level_needed === 'high' ? '⚡ High' : task.energy_level_needed === 'medium' ? '😊 Med' : '🌿 Low'} energy
+                  </Badge>
+                )}
                 {task.spread_across_days && (
                   <Badge className="bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-200 border-teal-200 dark:border-teal-800 flex items-center gap-1">
                     <CalendarDays className="w-3 h-3" />
