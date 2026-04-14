@@ -419,6 +419,8 @@ Calculate total time including the prep step.`,
                   taskTitle={taskInput.title}
                   taskDescription={taskInput.description}
                   taskDifficulty={taskInput.difficulty}
+                  taskCategory={taskInput.category}
+                  autoAnalyze={true}
                   onApplySuggestions={(subtasks) => {
                     setBreakdownResult({
                       subtasks: subtasks,
