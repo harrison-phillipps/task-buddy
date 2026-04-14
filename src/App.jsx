@@ -1,5 +1,5 @@
 import './App.css'
-import { Toaster } from "@/components/ui/sonner"
+import { Toaster } from "react-hot-toast"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 // VisualEditAgent removed - caused duplicate React chunk conflict
@@ -86,7 +86,7 @@ function App() {
         <Router>
           <AuthenticatedApp />
         </Router>
-        <Toaster />
+        <Toaster position="bottom-right" toastOptions={{ duration: 4000, style: { background: 'hsl(var(--background))', color: 'hsl(var(--foreground))', border: '1px solid hsl(var(--border))', borderRadius: '0.5rem', fontSize: '0.875rem' } }} />
       </AuthProvider>
     </QueryClientProvider>
   );

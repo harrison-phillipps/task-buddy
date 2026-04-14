@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Calendar, Link as LinkIcon, ChevronDown, ChevronRight, CheckCircle2, Sparkles, RefreshCw, Pin } from "lucide-react";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import { analyzeTaskPriority } from "../components/ai/TaskPrioritizer";
 import {
   Accordion,
@@ -402,7 +402,7 @@ export default function Tasks() {
       setAiStrategy(result.strategy);
       setAiRecommendedFocus(result.recommended_focus);
       setShowAIInsights(true);
-      toast.success("AI prioritization complete! ✨", { description: result.recommended_focus });
+      toast.success("AI prioritization complete! ✨");
       if (result.goal_insights) setAiStrategy(prev => prev + (prev ? '\n\n' : '') + '🎯 ' + result.goal_insights);
     } catch (error) {
       console.error("AI prioritization error:", error);

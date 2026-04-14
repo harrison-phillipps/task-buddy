@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Play, Pause, RotateCcw, CheckCircle, Coffee, ChevronRight, Clock, Timer, Target, Heart } from "lucide-react";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import VirtualCompanion from "../components/VirtualCompanion";
 import { Label } from "@/components/ui/label";
@@ -500,7 +500,7 @@ export default function FocusSession() {
     }
     
     if (template.pre_session_ritual) {
-      toast.info(`Pre-session ritual: ${template.pre_session_ritual}`, { duration: 8000 });
+      toast(`Pre-session ritual: ${template.pre_session_ritual}`, { duration: 8000, icon: '🧘' });
     }
     
     if (template.break_activities?.length > 0) {
@@ -526,7 +526,7 @@ export default function FocusSession() {
       setSoundEnabled(true);
     } else if (suggestion.type === "break") {
       setDynamicBreakSuggestion(suggestion.value);
-      toast.info(`Break suggestion: ${suggestion.value}`, { duration: 5000 });
+      toast(`Break suggestion: ${suggestion.value}`, { duration: 5000 });
     }
   };
 
@@ -541,7 +541,7 @@ export default function FocusSession() {
   };
 
   const handleTaskAdjustment = async (suggestion) => {
-    toast.info(suggestion, { duration: 8000 });
+    toast(suggestion, { duration: 8000 });
   };
 
   const startSession = () => {
@@ -1253,7 +1253,7 @@ export default function FocusSession() {
                   journeyData={journeyData}
                   onSuggestRitual={(ritual) => {
                     setPreSessionRitual(ritual);
-                    toast.info("Pre-session ritual suggested!", { duration: 3000 });
+                    toast("Pre-session ritual suggested! 🧘", { duration: 3000 });
                   }}
                 />
 
