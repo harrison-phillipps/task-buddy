@@ -14,10 +14,21 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
+      // Force ALL react imports to resolve to the exact same singleton
+      'react': path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
     },
     dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
     force: true,
+    exclude: ['sonner'],
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@tanstack/react-query',
+      'react-hot-toast',
+    ],
   },
 });
