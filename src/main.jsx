@@ -1,5 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+// Ensure all React-dependent packages share one instance by pre-importing them here
+import 'sonner'
 import App from '@/App.jsx'
 import '@/index.css'
 

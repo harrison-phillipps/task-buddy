@@ -14,19 +14,12 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
-      // Force all packages to use the exact same React instance
       'react': path.resolve(__dirname, 'node_modules/react'),
       'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
       'react/jsx-runtime': path.resolve(__dirname, 'node_modules/react/jsx-runtime'),
       'react/jsx-dev-runtime': path.resolve(__dirname, 'node_modules/react/jsx-dev-runtime'),
     },
-    dedupe: [
-      'react',
-      'react-dom',
-      'react/jsx-runtime',
-      'react/jsx-dev-runtime',
-      'scheduler',
-    ],
+    dedupe: ['react', 'react-dom', 'scheduler'],
   },
   optimizeDeps: {
     include: [
@@ -35,11 +28,11 @@ export default defineConfig({
       'react/jsx-runtime',
       'react/jsx-dev-runtime',
       'scheduler',
+      'sonner',
+      'vaul',
       '@tanstack/react-query',
       'react-router-dom',
       'framer-motion',
-      'sonner',
-      'vaul',
     ],
     force: true,
   },
