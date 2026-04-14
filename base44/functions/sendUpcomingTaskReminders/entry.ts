@@ -1,52 +1,23 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-
-    // Allow scheduled calls (service role) or admin users
-    let isScheduled = false;
-    try {
-      const user = await base44.auth.me();
-      if (user?.role !== 'admin') {
-        return Response.json({ error: 'Forbidden' }, { status: 403 });
-      }
-    } catch (_) {
-      // Called without user context = scheduled automation, use service role
-      isScheduled = true;
-    }
-
     const client = base44.asServiceRole;
 
     const now = new Date();
-    const windowStart = new Date(now.getTime() + 25 * 60 * 1000); // 25 min from now
-    const windowEnd = new Date(now.getTime() + 35 * 60 * 1000);   // 35 min from now
-
-    const windowStartDate = windowStart.toISOString().split('T')[0];
-    const windowEndDate = windowEnd.toISOString().split('T')[0];
-
-    console.log(`Checking tasks due between ${windowStart.toISOString()} and ${windowEnd.toISOString()}`);
-
-    // Fetch tasks due today or tomorrow (date-only field)
-    const allTasks = await client.entities.Task.filter({ status: ['not_started', 'in_progress'] });
-
-    // Filter to tasks with due_date falling in the 30-min window
-    // due_date is a date string (YYYY-MM-DD), so we match tasks due today within time range
-    // Since due_date has no time component, we notify for tasks due TODAY at the current time window
     const today = now.toISOString().split('T')[0];
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
 
-    // We notify tasks due today where the local time is between 25-35 min before end-of-day
-    // OR tasks that have a matching calendar event with a time
-    // Strategy: notify for all tasks due today once, in the morning window (8-9am) 
-    // AND in the 30-min-before-end-of-day window
-    // Better: notify tasks due today that haven't been notified for "30min reminder" today
+    console.log(`Checking tasks due today (${today}), current time ${currentHour}:${String(currentMinute).padStart(2,'0')}`);
 
-    const tasksInWindow = allTasks.filter(t => t.due_date === today && t.status !== 'completed');
+    // Fetch incomplete tasks due today
+    const allTasks = await client.entities.Task.filter({ due_date: today });
+    const tasksInWindow = allTasks.filter(t => t.status !== 'completed');
 
     if (tasksInWindow.length === 0) {
-      console.log('No tasks in window');
+      console.log('No tasks due today');
       return Response.json({ sent: 0 });
     }
 
@@ -153,7 +124,7 @@ Deno.serve(async (req) => {
         // Send email if enabled
         if (pref?.email_notifications !== false) {
           try {
-            await base44.asServiceRole.integrations.Core.SendEmail({
+            await client.integrations.Core.SendEmail({
               to: email,
               subject: `⏰ Reminder: "${task.title}" is due soon`,
               body: `
