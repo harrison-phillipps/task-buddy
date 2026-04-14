@@ -24,9 +24,6 @@ export default defineConfig({
     ],
   },
   optimizeDeps: {
-    // By NOT including sonner/vaul here, they get bundled together with
-    // the main app chunk and share its React instance instead of getting
-    // a separate pre-bundled chunk with their own React copy
     include: [
       'react',
       'react-dom',
@@ -36,8 +33,9 @@ export default defineConfig({
       '@tanstack/react-query',
       'react-router-dom',
       'framer-motion',
+      'sonner',
+      'vaul',
     ],
-    exclude: ['sonner', 'vaul'],
     force: true,
   },
 });
