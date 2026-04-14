@@ -22,13 +22,14 @@ export default defineConfig({
   },
   optimizeDeps: {
     force: true,
-    exclude: ['sonner'],
+    exclude: ['sonner', 'next-themes'],
     include: [
       'react',
       'react-dom',
       'react-router-dom',
       '@tanstack/react-query',
       'react-hot-toast',
+      'framer-motion',
     ],
   },
 });
