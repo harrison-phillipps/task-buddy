@@ -19,6 +19,15 @@ export default defineConfig({
   },
   optimizeDeps: {
     force: true,
-    exclude: ['sonner', 'next-themes', 'react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'],
+    exclude: ['sonner', 'next-themes'],
+    include: [
+      'react',
+      'react-dom',
+      'react/jsx-runtime',
+      'react-router-dom',
+      '@tanstack/react-query',
+      'react-hot-toast',
+      'framer-motion',
+    ],
   },
 });
