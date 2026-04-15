@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,7 @@ export default function TaskBreakdown() {
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const [pendingTaskData, setPendingTaskData] = useState(null);
   const [selectedTeam, setSelectedTeam] = useState(null);
+  const companionMessage = useMemo(() => getPersonalizedMessage(userProgress, "task_breakdown"), [userProgress?.total_points]);
 
   const { data: teams = [] } = useQuery({
     queryKey: ['teams', currentUser?.id],
@@ -244,7 +245,7 @@ Calculate total time including the prep step.`,
             >
               <VirtualCompanion 
                 mood="supportive"
-                message={getPersonalizedMessage(userProgress, "task_breakdown")}
+                message={companionMessage}
                 size="small"
                 characterType={currentUser?.companion_type || "human"}
                 userProgress={userProgress}
