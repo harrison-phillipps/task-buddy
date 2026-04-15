@@ -15,7 +15,6 @@ import VirtualCompanion from "../components/VirtualCompanion";
 import { getPersonalizedMessage } from "../components/companionUtils";
 import AIEnhancedTextarea from "../components/ai/AIEnhancedTextarea";
 import { generateTaskDescription } from "../components/ai/AIContentGenerator";
-import TaskBreakdownBot from "../components/ai/TaskBreakdownBot";
 import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
 import AITaskBreakdownSuggestion from "../components/tasks/AITaskBreakdownSuggestion";
 import ProactiveCoach from "../components/ai/ProactiveCoach";
@@ -252,34 +251,15 @@ Calculate total time including the prep step.`,
               />
             </motion.div>
 
-            {taskInput.title && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15 }}
-                >
-                  <ProactiveCoach 
-                    userProgress={userProgress}
-                    recentTasks={[]}
-                    recentSessions={[]}
-                    goals={[]}
-                    context="task_breakdown"
-                  />
-                </motion.div>
-                
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <TaskBreakdownBot 
-                    taskTitle={taskInput.title}
-                    taskDescription={taskInput.description}
-                  />
-                </motion.div>
-              </>
-            )}
+            <div className={taskInput.title ? undefined : "hidden"}>
+              <ProactiveCoach 
+                userProgress={userProgress}
+                recentTasks={[]}
+                recentSessions={[]}
+                goals={[]}
+                context="task_breakdown"
+              />
+            </div>
 
             <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
               <CardHeader>
@@ -409,12 +389,12 @@ Calculate total time including the prep step.`,
                   </div>
                 )}
 
-                {taskInput.title && (
+                <div className={taskInput.title ? undefined : "hidden"}>
                   <AITimeEstimator
                     task={taskInput}
                     onApplyEstimate={(minutes) => setTaskInput(prev => ({ ...prev, estimated_minutes: minutes }))}
                   />
-                )}
+                </div>
 
                 <AITaskBreakdownSuggestion
                   taskTitle={taskInput.title}
