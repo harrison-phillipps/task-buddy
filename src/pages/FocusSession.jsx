@@ -170,18 +170,19 @@ export default function FocusSession() {
     });
   }, []);
 
-  const { data: tasks = [] } = useQuery({
+  const { data: tasks = [], refetch: refetchTasks } = useQuery({
     queryKey: ['focusSessionTasks', currentUser?.id],
     queryFn: async () => {
-      if (!currentUser) return [];
+      const user = currentUser || await base44.auth.me();
+      if (!user) return [];
 
       if (!navigator.onLine) {
         const cached = await getCachedEntities('Task');
         return cached.filter(task => {
-          if (!task.team_id && task.created_by === currentUser.email) return true;
+          if (!task.team_id && task.created_by === user.email) return true;
           if (task.team_id && (
-            task.assigned_to === currentUser.id ||
-            task.assigned_to_users?.some(u => u.user_id === currentUser.id)
+            task.assigned_to === user.id ||
+            task.assigned_to_users?.some(u => u.user_id === user.id)
           )) return true;
           return false;
         });
@@ -190,15 +191,15 @@ export default function FocusSession() {
       const allTasks = await base44.entities.Task.list('-created_date');
       await cacheEntities('Task', allTasks);
       return allTasks.filter(task => {
-        if (!task.team_id && task.created_by === currentUser.email) return true;
+        if (!task.team_id && task.created_by === user.email) return true;
         if (task.team_id && (
-          task.assigned_to === currentUser.id || 
-          task.assigned_to_users?.some(u => u.user_id === currentUser.id)
+          task.assigned_to === user.id || 
+          task.assigned_to_users?.some(u => u.user_id === user.id)
         )) return true;
         return false;
       });
     },
-    enabled: !!currentUser,
+    enabled: true,
     staleTime: isOnline ? 0 : Infinity,
   });
 
@@ -557,9 +558,11 @@ export default function FocusSession() {
     setSessionStartTime(Date.now());
     startSWKeepAlive(); // Prevent SW termination during active session
     
-    const firstIncomplete = selectedTask.subtasks?.findIndex(st => !st.completed) || 0;
-    setCurrentSubtaskIndex(firstIncomplete);
-    const firstSubtask = selectedTask.subtasks[firstIncomplete];
+    const subtasks = selectedTask.subtasks || [];
+    const firstIncomplete = subtasks.findIndex(st => !st.completed);
+    const firstIdx = firstIncomplete === -1 ? 0 : firstIncomplete;
+    setCurrentSubtaskIndex(firstIdx);
+    const firstSubtask = subtasks[firstIdx];
     
     const initialTime = focusTechnique === "pomodoro" 
       ? workInterval * 60 
@@ -1234,9 +1237,14 @@ export default function FocusSession() {
                 </div>
               )}
 
+              {selectedTaskId && selectedTask && !selectedTask?.subtasks?.length && (
+                <p className="text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400 p-3 rounded-lg text-center">
+                  ⚠️ This task has no steps yet. Use "Break Down Task" to add steps first.
+                </p>
+              )}
               <Button
                 onClick={startSession}
-                disabled={!selectedTaskId || !moodBefore || !selectedTask?.subtasks?.length}
+                disabled={!selectedTaskId || !moodBefore || !selectedTask || !selectedTask?.subtasks?.length}
                 className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold py-6 text-lg shadow-lg"
               >
                 <Play className="w-5 h-5 mr-2" />
