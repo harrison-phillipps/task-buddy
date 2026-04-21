@@ -1237,14 +1237,9 @@ export default function FocusSession() {
                 </div>
               )}
 
-              {selectedTaskId && selectedTask && !selectedTask?.subtasks?.length && (
-                <p className="text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400 p-3 rounded-lg text-center">
-                  ⚠️ This task has no steps yet. Use "Break Down Task" to add steps first.
-                </p>
-              )}
               <Button
                 onClick={startSession}
-                disabled={!selectedTaskId || !moodBefore || !selectedTask || !selectedTask?.subtasks?.length}
+                disabled={!selectedTaskId || !moodBefore}
                 className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold py-6 text-lg shadow-lg"
               >
                 <Play className="w-5 h-5 mr-2" />
