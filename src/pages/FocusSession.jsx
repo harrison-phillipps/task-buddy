@@ -104,6 +104,10 @@ export default function FocusSession() {
   const preselectedTaskId = urlParams.get('taskId');
   const preselectedTaskTitle = urlParams.get('taskTitle') ? decodeURIComponent(urlParams.get('taskTitle')) : null;
 
+  const quickStart = urlParams.get('quickStart') === '1';
+  const preselectedMood = urlParams.get('mood') || null;
+  const preselectedTechnique = urlParams.get('technique') || null;
+
   const [selectedTaskId, setSelectedTaskId] = useState(preselectedTaskId || null);
   const [currentSubtaskIndex, setCurrentSubtaskIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -111,7 +115,7 @@ export default function FocusSession() {
   const [sessionStarted, setSessionStarted] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [sessionId, setSessionId] = useState(null);
-  const [moodBefore, setMoodBefore] = useState(null);
+  const [moodBefore, setMoodBefore] = useState(preselectedMood || null);
   const [completedSubtasks, setCompletedSubtasks] = useState(new Set());
   const [sessionNotes, setSessionNotes] = useState("");
   const [showBreakPrompt, setShowBreakPrompt] = useState(false);
@@ -120,7 +124,7 @@ export default function FocusSession() {
   const [allStepsComplete, setAllStepsComplete] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   
-  const [focusTechnique, setFocusTechnique] = useState("standard");
+  const [focusTechnique, setFocusTechnique] = useState(preselectedTechnique || "standard");
   const [workInterval, setWorkInterval] = useState(25);
   const [breakInterval, setBreakInterval] = useState(5);
   const [ambientSound, setAmbientSound] = useState("none");
@@ -274,6 +278,10 @@ export default function FocusSession() {
       if (interval) clearInterval(interval);
     };
   }, [isActive, sessionStarted, timeLeft]);
+
+  // Auto-start session when quickStart param is present and task is loaded
+  const quickStartFiredRef = React.useRef(false);
+  const startSessionRef = React.useRef(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -613,6 +621,25 @@ export default function FocusSession() {
       showRichNotification('Focus Session Started 🎯', `Working on: ${selectedTask.title}`, { tag: 'session-start' });
     }
   };
+
+  // Register startSession in ref so the quick-start effect can call it after definition
+  startSessionRef.current = startSession;
+
+  // Auto-start when quickStart URL param is set
+  useEffect(() => {
+    if (
+      quickStart &&
+      !quickStartFiredRef.current &&
+      selectedTaskId &&
+      tasks.length > 0 &&
+      tasks.find(t => t.id === selectedTaskId) &&
+      moodBefore &&
+      !sessionStarted
+    ) {
+      quickStartFiredRef.current = true;
+      setTimeout(() => startSessionRef.current?.(), 600);
+    }
+  }, [quickStart, selectedTaskId, tasks, moodBefore, sessionStarted]);
 
   const togglePause = () => {
     if (isActive) {

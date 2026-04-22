@@ -39,6 +39,7 @@ import DailySchedulePlanner from "../components/dashboard/DailySchedulePlanner";
 import EnergyTaskSuggester from "../components/dashboard/EnergyTaskSuggester";
 import { hasFeatureAccess, UpgradePrompt } from "../components/subscription/FeatureGate";
 import AdaptiveCompanionAI from "../components/companion/AdaptiveCompanionAI";
+import QuickFocusWidget from "../components/dashboard/QuickFocusWidget";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -246,6 +247,17 @@ export default function Dashboard() {
             transition={{ delay: 0.25 }}
           >
             <QuickAddTask currentUser={currentUser} />
+          </motion.div>
+        )}
+
+        {/* Quick Focus Widget */}
+        {tasks.filter(t => t.status !== 'completed').length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.26 }}
+          >
+            <QuickFocusWidget currentUser={currentUser} tasks={tasks} sessions={sessions} />
           </motion.div>
         )}
 
