@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, X } from "lucide-react";
+import MobileSelect from "@/components/MobileSelect";
 import AIEnhancedTextarea from "../ai/AIEnhancedTextarea";
 import { generateGoalStatement } from "../ai/AIContentGenerator";
 
@@ -98,33 +98,33 @@ export default function CreateGoalModal({ open, onOpenChange, onSuccess }) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Goal Type</Label>
-              <Select value={type} onValueChange={setType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="okr">OKR</SelectItem>
-                  <SelectItem value="quarterly">Quarterly Goal</SelectItem>
-                  <SelectItem value="annual">Annual Goal</SelectItem>
-                  <SelectItem value="milestone">Milestone</SelectItem>
-                  <SelectItem value="personal">Personal Goal</SelectItem>
-                </SelectContent>
-              </Select>
+              <MobileSelect
+                value={type}
+                onValueChange={setType}
+                placeholder="Goal Type"
+                options={[
+                  { value: "okr", label: "OKR" },
+                  { value: "quarterly", label: "Quarterly Goal" },
+                  { value: "annual", label: "Annual Goal" },
+                  { value: "milestone", label: "Milestone" },
+                  { value: "personal", label: "Personal Goal" },
+                ]}
+              />
             </div>
 
             <div className="space-y-2">
               <Label>Priority</Label>
-              <Select value={priority} onValueChange={setPriority}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="critical">Critical</SelectItem>
-                </SelectContent>
-              </Select>
+              <MobileSelect
+                value={priority}
+                onValueChange={setPriority}
+                placeholder="Priority"
+                options={[
+                  { value: "low", label: "Low" },
+                  { value: "medium", label: "Medium" },
+                  { value: "high", label: "High" },
+                  { value: "critical", label: "Critical" },
+                ]}
+              />
             </div>
           </div>
 

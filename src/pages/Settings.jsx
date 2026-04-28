@@ -33,6 +33,23 @@ export default function Settings() {
   const handleDeleteAccount = async () => {
     setDeletingAccount(true);
     try {
+      // Delete all user data before removing the account
+      if (currentUser) {
+        const [tasks, goals, focusSessions, brainDumps, progress] = await Promise.allSettled([
+          base44.entities.Task.filter({ created_by: currentUser.email }),
+          base44.entities.Goal.filter({ created_by: currentUser.email }),
+          base44.entities.FocusSession.filter({ created_by: currentUser.email }),
+          base44.entities.BrainDump.filter({ created_by: currentUser.email }),
+          base44.entities.UserProgress.filter({ user_id: currentUser.id }),
+        ]);
+        await Promise.allSettled([
+          ...(tasks.value || []).map(t => base44.entities.Task.delete(t.id)),
+          ...(goals.value || []).map(g => base44.entities.Goal.delete(g.id)),
+          ...(focusSessions.value || []).map(s => base44.entities.FocusSession.delete(s.id)),
+          ...(brainDumps.value || []).map(b => base44.entities.BrainDump.delete(b.id)),
+          ...(progress.value || []).map(p => base44.entities.UserProgress.delete(p.id)),
+        ]);
+      }
       await base44.auth.deleteMe();
     } catch (err) {
       console.error("Error during account deletion:", err);
