@@ -53,6 +53,17 @@ export default function GoalsPage() {
 
   const deleteGoalMutation = useMutation({
     mutationFn: (goalId) => base44.entities.Goal.delete(goalId),
+    onMutate: async (goalId) => {
+      await queryClient.cancelQueries({ queryKey: ['goals'] });
+      const previous = queryClient.getQueryData(['goals', currentUser?.email]);
+      queryClient.setQueryData(['goals', currentUser?.email], (old = []) =>
+        old.filter(g => g.id !== goalId)
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(['goals', currentUser?.email], ctx.previous);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
     },
@@ -60,6 +71,17 @@ export default function GoalsPage() {
 
   const updateGoalMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Goal.update(id, data),
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: ['goals'] });
+      const previous = queryClient.getQueryData(['goals', currentUser?.email]);
+      queryClient.setQueryData(['goals', currentUser?.email], (old = []) =>
+        old.map(g => g.id === id ? { ...g, ...data } : g)
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(['goals', currentUser?.email], ctx.previous);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
     },

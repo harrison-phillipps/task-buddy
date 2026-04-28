@@ -29,7 +29,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import MobileSelect from "@/components/MobileSelect";
 import TaskAssignment from "../components/team/TaskAssignment";
 import CollaborativeTaskView from "../components/collaboration/CollaborativeTaskView";
 import AutoScheduleFocusBlock from "../components/calendar/AutoScheduleFocusBlock";
@@ -260,6 +260,17 @@ export default function Tasks() {
       }
       await base44.entities.Task.delete(taskId);
       await removeCachedEntity('Task', taskId);
+    },
+    onMutate: async (taskId) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previous = queryClient.getQueryData(['tasks', currentUser?.email, selectedTeamId]);
+      queryClient.setQueryData(['tasks', currentUser?.email, selectedTeamId], (old = []) =>
+        old.filter(t => t.id !== taskId)
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(['tasks', currentUser?.email, selectedTeamId], ctx.previous);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -526,19 +537,16 @@ export default function Tasks() {
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent mb-3 break-words">
               {selectedTeamId === "personal" ? "My Tasks" : currentTeam?.name || "Team Tasks"}
             </h1>
-            <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
-              <SelectTrigger className="w-full sm:w-64">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="personal">Personal Tasks</SelectItem>
-                {teams.map(team => (
-                  <SelectItem key={team.id} value={team.id}>
-                    {team.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <MobileSelect
+              value={selectedTeamId}
+              onValueChange={setSelectedTeamId}
+              placeholder="Select workspace"
+              className="w-full sm:w-64"
+              options={[
+                { value: "personal", label: "Personal Tasks" },
+                ...teams.map(team => ({ value: team.id, label: team.name }))
+              ]}
+            />
           </div>
           <div className="flex gap-2 flex-wrap items-center">
             <AIPriorityViewToggle
@@ -551,17 +559,18 @@ export default function Tasks() {
             {viewMode === "ai" && (
               <AIStrategySelector value={aiStrategyKey} onChange={handleStrategyChange} />
             )}
-            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-full sm:w-44">
-                <SelectValue placeholder="Filter by priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Priorities</SelectItem>
-                <SelectItem value="must_do">🔴 Must Do</SelectItem>
-                <SelectItem value="should_do">🟡 Should Do</SelectItem>
-                <SelectItem value="could_do">🟢 Could Do</SelectItem>
-              </SelectContent>
-            </Select>
+            <MobileSelect
+              value={priorityFilter}
+              onValueChange={setPriorityFilter}
+              placeholder="Filter by priority"
+              className="w-full sm:w-44"
+              options={[
+                { value: "all", label: "All Priorities" },
+                { value: "must_do", label: "🔴 Must Do" },
+                { value: "should_do", label: "🟡 Should Do" },
+                { value: "could_do", label: "🟢 Could Do" },
+              ]}
+            />
             <Button
               variant="outline"
               onClick={() => setShowCalendarSync(true)}
@@ -865,23 +874,17 @@ export default function Tasks() {
               </p>
               <div className="space-y-2">
                 <Label>Blocking Task</Label>
-                <Select onValueChange={handleAddDependency}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a task" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tasks
-                      .filter(t =>
-                        t.id !== selectedDependencyTask?.id &&
-                        !selectedDependencyTask?.blocked_by?.includes(t.id)
-                      )
-                      .map(task => (
-                        <SelectItem key={task.id} value={task.id}>
-                          {task.title}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+                <MobileSelect
+                  value=""
+                  onValueChange={handleAddDependency}
+                  placeholder="Select a task"
+                  options={tasks
+                    .filter(t =>
+                      t.id !== selectedDependencyTask?.id &&
+                      !selectedDependencyTask?.blocked_by?.includes(t.id)
+                    )
+                    .map(t => ({ value: t.id, label: t.title }))}
+                />
               </div>
               {selectedDependencyTask && (
                 <TaskDependencies
