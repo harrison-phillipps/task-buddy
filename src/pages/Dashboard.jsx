@@ -5,7 +5,7 @@ import PullToRefresh from "../components/PullToRefresh";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, TrendingUp, Clock, CheckCircle, Brain, ChevronDown, ChevronUp, Zap } from "lucide-react";
+import { Sparkles, TrendingUp, Clock, CheckCircle, Brain, ChevronDown, ChevronUp, Zap, Mic } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import VirtualCompanion from "../components/VirtualCompanion";
 import { generateCompanionMessage } from "../components/ai/CompanionAI";
@@ -293,7 +293,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 md:gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4"
           >
           <div onClick={() => setShowProductivityReport(true)}>
             <Card className="bg-gradient-to-br from-blue-500 to-cyan-500 border-none hover:shadow-2xl transition-all duration-300 cursor-pointer group">
@@ -334,6 +334,16 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </div>
+
+          <Link to={createPageUrl("VoiceTask")}>
+            <Card className="bg-gradient-to-br from-emerald-500 to-teal-500 border-none hover:shadow-2xl transition-all duration-300 cursor-pointer group">
+              <CardContent className="p-6 text-white">
+                <Mic className="w-10 h-10 mb-3 group-hover:scale-110 transition-transform" />
+                <h3 className="text-2xl font-bold mb-2">Voice Day Plan</h3>
+                <p className="text-emerald-100">Narrate your day, get a schedule</p>
+              </CardContent>
+            </Card>
+          </Link>
 
           <Link to={createPageUrl("FocusSession")}>
             <Card className="focus-card bg-gradient-to-br from-pink-500 to-orange-500 border-none hover:shadow-2xl transition-all duration-300 cursor-pointer group">
