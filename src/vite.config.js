@@ -14,12 +14,12 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
+      'react': path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
     },
     dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'],
   },
   optimizeDeps: {
-    force: true,
-    exclude: ['sonner', 'next-themes'],
     include: [
       'react',
       'react-dom',
@@ -29,6 +29,8 @@ export default defineConfig({
       '@tanstack/react-query',
       'react-hot-toast',
       'framer-motion',
+      'sonner',
+      'next-themes',
     ],
   },
 });
