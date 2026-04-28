@@ -280,8 +280,8 @@ export default function FocusSession() {
   }, [isActive, sessionStarted, timeLeft]);
 
   // Auto-start session when quickStart param is present and task is loaded
-  const quickStartFiredRef = React.useRef(false);
-  const startSessionRef = React.useRef(null);
+  const quickStartFiredRef = useRef(false);
+  const startSessionRef = useRef(null);
 
   useEffect(() => {
     const fetchUser = async () => {
