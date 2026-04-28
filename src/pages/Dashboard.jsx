@@ -5,7 +5,7 @@ import PullToRefresh from "../components/PullToRefresh";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, TrendingUp, Clock, CheckCircle, Brain, ChevronDown, ChevronUp } from "lucide-react";
+import { Sparkles, TrendingUp, Clock, CheckCircle, Brain, ChevronDown, ChevronUp, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import VirtualCompanion from "../components/VirtualCompanion";
 import { generateCompanionMessage } from "../components/ai/CompanionAI";
@@ -40,6 +40,7 @@ import EnergyTaskSuggester from "../components/dashboard/EnergyTaskSuggester";
 import { hasFeatureAccess, UpgradePrompt } from "../components/subscription/FeatureGate";
 import AdaptiveCompanionAI from "../components/companion/AdaptiveCompanionAI";
 import QuickFocusWidget from "../components/dashboard/QuickFocusWidget";
+import SmartTaskAnalyzer from "../components/tasks/SmartTaskAnalyzer";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -51,6 +52,7 @@ export default function Dashboard() {
   const [showProgressReport, setShowProgressReport] = useState(false);
   const [showProductivityReport, setShowProductivityReport] = useState(false);
   const [showAIBots, setShowAIBots] = useState(false);
+  const [showSmartAnalyzer, setShowSmartAnalyzer] = useState(false);
   const [aiMessage, setAiMessage] = useState(null);
   const [isLoadingMessage, setIsLoadingMessage] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -291,7 +293,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 md:gap-4"
           >
           <div onClick={() => setShowProductivityReport(true)}>
             <Card className="bg-gradient-to-br from-blue-500 to-cyan-500 border-none hover:shadow-2xl transition-all duration-300 cursor-pointer group">
@@ -322,6 +324,16 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </Link>
+
+          <div onClick={() => setShowSmartAnalyzer(true)}>
+            <Card className="bg-gradient-to-br from-violet-500 to-fuchsia-500 border-none hover:shadow-2xl transition-all duration-300 cursor-pointer group">
+              <CardContent className="p-6 text-white">
+                <Zap className="w-10 h-10 mb-3 group-hover:scale-110 transition-transform" />
+                <h3 className="text-2xl font-bold mb-2">Smart Analyzer</h3>
+                <p className="text-violet-100">Paste any description, get a full plan</p>
+              </CardContent>
+            </Card>
+          </div>
 
           <Link to={createPageUrl("FocusSession")}>
             <Card className="focus-card bg-gradient-to-br from-pink-500 to-orange-500 border-none hover:shadow-2xl transition-all duration-300 cursor-pointer group">
@@ -596,6 +608,14 @@ export default function Dashboard() {
         />
         </div>
         </div>
+
+      <SmartTaskAnalyzer
+        open={showSmartAnalyzer}
+        onOpenChange={setShowSmartAnalyzer}
+        onTaskCreated={() => {
+          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        }}
+      />
     </PullToRefresh>
         );
         }
