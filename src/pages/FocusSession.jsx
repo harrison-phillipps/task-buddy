@@ -48,6 +48,7 @@ import DistractionBlocker from "../components/focus/DistractionBlocker";
 import SessionMetrics from "../components/focus/SessionMetrics";
 import SpotifyPlayer from "../components/focus/SpotifyPlayer";
 import { hasFeatureAccess, UpgradePrompt } from "../components/subscription/FeatureGate";
+import FocusCompanionChat from "../components/focus/FocusCompanionChat";
 import VoiceCommandListener from "../components/focus/VoiceCommandListener";
 import FocusNotificationSettings, {
   showRichNotification,
@@ -1682,6 +1683,12 @@ export default function FocusSession() {
             onSkip={skipBreak}
           />
         )}
+
+        <FocusCompanionChat
+          isSessionActive={sessionStarted && isActive && !isBreakTime}
+          taskTitle={selectedTask?.title}
+          currentUser={currentUser}
+        />
 
         {showMindfulness && !showGuidedBreak && (
           <MindfulnessBreak
