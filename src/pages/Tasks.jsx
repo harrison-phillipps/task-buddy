@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Calendar, Link as LinkIcon, ChevronDown, ChevronRight, CheckCircle2, Sparkles, RefreshCw, Pin } from "lucide-react";
+import { Plus, Calendar, Link as LinkIcon, ChevronDown, ChevronRight, CheckCircle2, Sparkles, RefreshCw, Pin, UserPlus } from "lucide-react";
 import toast from "react-hot-toast";
 import { analyzeTaskPriority } from "../components/ai/TaskPrioritizer";
 import {
@@ -39,6 +39,9 @@ import { useOfflineSync } from "../components/useOfflineSync";
 import OfflineIndicator from "../components/OfflineIndicator";
 import { AIPriorityViewToggle, AIStrategyBanner, AIPriorityScoreBadge, PinButton, AIStrategySelector, STRATEGY_PROMPTS } from "../components/tasks/AIPriorityEngine";
 import PullToRefresh from "../components/PullToRefresh";
+import SharedTaskListInviteModal from "../components/collaboration/SharedTaskListInviteModal";
+import TeamMemberAvatars from "../components/collaboration/TeamMemberAvatars";
+import AssignWithNotification from "../components/collaboration/AssignWithNotification";
 
 export default function Tasks() {
   const queryClient = useQueryClient();
@@ -73,6 +76,7 @@ export default function Tasks() {
   const [pinnedTaskIds, setPinnedTaskIds] = useState(() => {
     try { return JSON.parse(localStorage.getItem('pinned_task_ids') || '[]'); } catch { return []; }
   });
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   const { isOnline, pendingCount, isSyncing, flushQueue, refreshPendingCount } = useOfflineSync({
     onSyncComplete: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
@@ -548,6 +552,17 @@ export default function Tasks() {
               ]}
             />
           </div>
+          {selectedTeamId !== "personal" && currentTeam && (
+            <div className="flex items-center gap-3 mb-1">
+              <TeamMemberAvatars team={currentTeam} currentUser={currentUser} />
+              <button
+                onClick={() => setShowInviteModal(true)}
+                className="text-xs text-purple-600 hover:underline font-medium"
+              >
+                + Invite members
+              </button>
+            </div>
+          )}
           <div className="flex gap-2 flex-wrap items-center">
             <AIPriorityViewToggle
               viewMode={viewMode}
@@ -579,6 +594,15 @@ export default function Tasks() {
               <Calendar className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Sync to Calendar</span>
               <span className="sm:hidden">Sync</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowInviteModal(true)}
+              className="border-purple-200 hover:bg-purple-50 flex-1 sm:flex-none"
+            >
+              <UserPlus className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Share List</span>
+              <span className="sm:hidden">Share</span>
             </Button>
             <Link to={createPageUrl("TaskBreakdown")} className="flex-1 sm:flex-none">
               <Button className="bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold shadow-lg w-full">
@@ -707,7 +731,10 @@ export default function Tasks() {
                         />
                         {task.team_id && (
                           <div className="ml-4 mt-2">
-                            <TaskAssignment task={task} teamMembers={getTeamMembers(task)}
+                            <AssignWithNotification
+                              task={task}
+                              teamMembers={getTeamMembers(task)}
+                              currentUser={currentUser}
                               onAssign={(data) => updateTaskMutation.mutate({ id: task.id, data })}
                             />
                           </div>
@@ -791,37 +818,15 @@ export default function Tasks() {
                                onUpdateTask={(id, data) => updateTaskMutation.mutate({ id, data })}
                               />
                               {task.team_id && (
-                                <div className="ml-4">
-                                  <TaskAssignment
-                                    task={task}
-                                    teamMembers={getTeamMembers(task)}
-                                    onAssign={(data) => {
-                                      updateTaskMutation.mutate({ id: task.id, data }, {
-                                        onSuccess: async () => {
-                                          if (data.assigned_to || data.assigned_to_users?.length > 0) {
-                                            try {
-                                              await base44.entities.TeamNotification.create({
-                                                team_id: task.team_id,
-                                                type: "task_assigned",
-                                                title: `Task assigned: "${task.title}"`,
-                                                message: data.assigned_to_users?.length > 1
-                                                  ? `Task assigned to ${data.assigned_to_users.length} team members`
-                                                  : `Task assigned to ${data.assigned_to_name}`,
-                                                priority: "medium",
-                                                related_id: task.id,
-                                                created_by: currentUser?.id
-                                              });
-                                              queryClient.invalidateQueries({ queryKey: ['teamNotifications'] });
-                                            } catch (error) {
-                                              console.error("Error creating notification:", error);
-                                            }
-                                          }
-                                        }
-                                      });
-                                    }}
-                                  />
-                                </div>
-                              )}
+                                 <div className="ml-4">
+                                   <AssignWithNotification
+                                     task={task}
+                                     teamMembers={getTeamMembers(task)}
+                                     currentUser={currentUser}
+                                     onAssign={(data) => updateTaskMutation.mutate({ id: task.id, data })}
+                                   />
+                                 </div>
+                               )}
                             </div>
                           </motion.div>
                         ))}
@@ -934,6 +939,17 @@ export default function Tasks() {
               setTaskToBreakdown(null);
               toast.success("Subtasks added to task!");
             }
+          }}
+        />
+
+        <SharedTaskListInviteModal
+          open={showInviteModal}
+          onOpenChange={setShowInviteModal}
+          currentUser={currentUser}
+          teams={teams}
+          onTeamCreated={(team) => {
+            queryClient.invalidateQueries({ queryKey: ['teams'] });
+            setSelectedTeamId(team.id);
           }}
         />
       </div>
