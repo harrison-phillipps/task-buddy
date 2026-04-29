@@ -19,6 +19,7 @@ import VoiceToText from "../components/VoiceToText";
 import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
 import VoiceSchedulePrompt from "../components/braindump/VoiceSchedulePrompt";
 import NativeMicButton from "../components/braindump/NativeMicButton";
+import VoiceBrainDump from "../components/braindump/VoiceBrainDump";
 
 export default function BrainDump() {
   const navigate = useNavigate();
@@ -110,8 +111,9 @@ export default function BrainDump() {
     },
   });
 
-  const handleProcess = async () => {
-    if (!brainDumpText.trim()) return;
+  const handleProcess = async (overrideText) => {
+    const text = overrideText || brainDumpText;
+    if (!text?.trim()) return;
 
     setIsProcessing(true);
     try {
@@ -121,7 +123,7 @@ export default function BrainDump() {
           prompt: `You are a productivity assistant. Today's date is ${new Date().toISOString().split('T')[0]}. Extract ALL tasks from this brain dump into structured data.
 
 Brain Dump:
-${brainDumpText}
+${text}
 
 Rules:
 - Extract EVERY item (if 10 items listed → 10 tasks)
@@ -170,7 +172,7 @@ Rules:
           }
         }),
         base44.entities.BrainDump.create({
-          content: brainDumpText,
+          content: text,
           tasks_created: 0,
           team_id: selectedTeam || undefined
         })
@@ -564,14 +566,15 @@ Rules:
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Prominent native mic */}
-                <div className="flex flex-col items-center py-4 bg-gradient-to-br from-purple-50 to-teal-50 dark:from-purple-900/20 dark:to-teal-900/20 rounded-2xl border border-purple-100 dark:border-purple-800">
-                  <p className="text-sm font-semibold text-purple-700 dark:text-purple-300 mb-4">🎙️ Speak your thoughts</p>
-                  <NativeMicButton
-                    onTranscript={(text) => setBrainDumpText(prev => prev + text + " ")}
-                    onDone={handleNativeMicDone}
-                  />
-                </div>
+                {/* Rich voice brain dump */}
+                <VoiceBrainDump
+                  onTranscriptReady={(text) => setBrainDumpText(text)}
+                  onRequestParse={(text) => {
+                    setBrainDumpText(text);
+                    handleProcess(text);
+                  }}
+                  isProcessing={isProcessing}
+                />
 
                 <div className="flex items-center gap-3">
                   <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
