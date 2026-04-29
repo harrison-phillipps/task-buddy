@@ -13,11 +13,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, parseISO } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import PushNotificationSetup from "./PushNotificationSetup";
 
 export default function NotificationBell({ currentUser }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [pushDismissed, setPushDismissed] = useState(() => localStorage.getItem('push_setup_dismissed') === '1');
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', currentUser?.id],
@@ -110,6 +112,18 @@ export default function NotificationBell({ currentUser }) {
           )}
         </div>
         
+        {!pushDismissed && (
+          <div className="p-3 border-b">
+            <PushNotificationSetup
+              compact={false}
+              onDismiss={() => {
+                setPushDismissed(true);
+                localStorage.setItem('push_setup_dismissed', '1');
+              }}
+            />
+          </div>
+        )}
+
         <ScrollArea className="h-[400px]">
           {notifications.length === 0 ? (
             <div className="text-center py-12 text-gray-500">

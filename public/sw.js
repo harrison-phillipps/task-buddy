@@ -1,50 +1,89 @@
-// TaskBuddy Service Worker - Network only for all JS assets
-const CACHE_NAME = 'taskbuddy-v3';
+// TaskBuddy Service Worker - Push Notifications + Snooze
 
-self.addEventListener('install', () => {
+self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys()
-      .then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
-      .then(() => self.clients.claim())
-  );
+  event.waitUntil(clients.claim());
 });
 
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+
+  let data;
+  try {
+    data = event.data.json();
+  } catch (e) {
+    data = { title: 'TaskBuddy', body: event.data.text() };
   }
+
+  const { title, body, taskId, taskTitle, estimatedMinutes, dueDate, icon } = data;
+
+  const options = {
+    body,
+    icon: icon || '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: `task-${taskId}`,
+    renotify: true,
+    requireInteraction: true,
+    data: { taskId, taskTitle, estimatedMinutes, dueDate },
+    actions: [
+      { action: 'snooze_15', title: '⏰ Snooze 15 min' },
+      { action: 'snooze_60', title: '⏰ Snooze 1 hr' },
+      { action: 'open', title: '✅ Open Task' },
+    ],
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// Always fetch from network — never serve JS/CSS from cache
-// This prevents stale React chunk mismatches
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+self.addEventListener('notificationclick', (event) => {
+  const { action } = event;
+  const { taskId, taskTitle, estimatedMinutes, dueDate } = event.notification.data || {};
 
-  // Only cache static image/font assets — never JS or CSS
-  const isStaticAsset =
-    /\.(png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|eot)(\?.*)?$/.test(url.pathname);
+  event.notification.close();
 
-  if (!isStaticAsset) {
-    // Network-only for JS, CSS, HTML, API calls
-    event.respondWith(fetch(event.request));
+  if (action === 'snooze_15' || action === 'snooze_60') {
+    const snoozeMinutes = action === 'snooze_15' ? 15 : 60;
+
+    // Schedule a new notification after the snooze delay
+    event.waitUntil(
+      new Promise((resolve) => {
+        setTimeout(async () => {
+          await self.registration.showNotification(`⏰ ${taskTitle}`, {
+            body: `Snoozed reminder: "${taskTitle}" still needs your attention!`,
+            icon: '/icon-192.png',
+            badge: '/icon-192.png',
+            tag: `task-${taskId}-snoozed`,
+            requireInteraction: true,
+            data: { taskId, taskTitle, estimatedMinutes, dueDate },
+            actions: [
+              { action: 'snooze_15', title: '⏰ Snooze 15 min' },
+              { action: 'open', title: '✅ Open Task' },
+            ],
+          });
+          resolve();
+        }, snoozeMinutes * 60 * 1000);
+        // Resolve immediately so SW doesn't get killed; the setTimeout fires when possible
+        resolve();
+      })
+    );
     return;
   }
 
-  // Cache-first for images/fonts only
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((response) => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+  // 'open' action or plain click — navigate to the task
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      const url = taskId ? `/Tasks?taskId=${taskId}` : '/Tasks';
+      for (const client of clientList) {
+        if ('focus' in client) {
+          client.focus();
+          client.navigate(url);
+          return;
         }
-        return response;
-      });
+      }
+      return clients.openWindow(url);
     })
   );
 });
