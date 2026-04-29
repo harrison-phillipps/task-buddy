@@ -19,7 +19,7 @@ const plansData = [
     description: "Get started with basic productivity tools",
     features: [
       "Up to 10 active tasks",
-      "Basic brain dumps (2/day)",
+      "Brain dump with voice capture (2/day)",
       "Focus sessions (3/day)",
       "Basic achievements",
       "1 companion type"
@@ -42,7 +42,7 @@ const plansData = [
     description: "Supercharge your productivity with AI",
     features: [
       "Up to 100 active tasks",
-      "Unlimited brain dumps",
+      "Unlimited brain dumps with voice",
       "Unlimited focus sessions",
       "AI Task Prioritization",
       "Goal setting & tracking",
@@ -72,7 +72,7 @@ const plansData = [
     features: [
       "Everything in Pro",
       "Unlimited tasks",
-      "AI Task Breakdown",
+      "AI Task Breakdown (auto subtasks)",
       "Team collaboration & shared tasks",
       "Team workload dashboard",
       "@mentions in task comments",

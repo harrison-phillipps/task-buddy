@@ -135,8 +135,8 @@ export function UpgradeModal({ open, onOpenChange, feature, requiredTier = "pro"
       "Google Calendar Sync",
       "Advanced Analytics",
       "Up to 100 Tasks",
-      "Ambient Focus Sounds",
-      "Spotify Focus Music",
+      "Unlimited Brain Dumps with Voice",
+      "Ambient Focus Sounds & Spotify",
       "Smart Daily Plan",
       "Voice to Tasks",
       "Calendar Gap Filler",
@@ -146,11 +146,13 @@ export function UpgradeModal({ open, onOpenChange, feature, requiredTier = "pro"
     ],
     premium: [
       "Everything in Pro",
-      "AI Task Breakdown",
-      "Custom Companions",
+      "Unlimited Tasks",
+      "AI Task Breakdown (auto subtasks)",
+      "Team Collaboration & Shared Tasks",
+      "Custom Companion Personalities",
       "Priority Support",
       "Data Export",
-      "Team Features"
+      "Early Access to New Features"
     ]
   };
 
