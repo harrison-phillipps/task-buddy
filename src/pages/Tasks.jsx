@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Calendar, Link as LinkIcon, ChevronDown, ChevronRight, CheckCircle2, Sparkles, RefreshCw, Pin, UserPlus, BookTemplate } from "lucide-react";
+import TaskFilterSortBar from "../components/tasks/TaskFilterSortBar";
 import toast from "react-hot-toast";
 import { analyzeTaskPriority } from "../components/ai/TaskPrioritizer";
 import {
@@ -50,7 +51,8 @@ export default function Tasks() {
   const teamIdParam = urlParams.get('teamId');
   
   const [filter, setFilter] = useState("all");
-  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [taskFilters, setTaskFilters] = useState({ difficulty: "all", category: "all", priority: "all" });
+  const [taskSort, setTaskSort] = useState("default");
   const [spreadTask, setSpreadTask] = useState(null);
   const [showCalendarSync, setShowCalendarSync] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -444,37 +446,64 @@ export default function Tasks() {
     setIsAnalyzingPriority(false);
   };
 
+  const DIFFICULTY_ORDER = { easy: 0, medium: 1, hard: 2 };
+  const PRIORITY_ORDER = { must_do: 0, should_do: 1, could_do: 2 };
+
   const filteredTasks = (() => {
     let result = tasks.filter(task => {
       if (task.is_recurring && !task.parent_recurring_task_id && !task.due_date) return false;
-      let statusMatch = filter === "all" ? task.status !== 'completed' : task.status === filter;
-      let priorityMatch = priorityFilter === "all" || task.task_priority === priorityFilter;
-      return statusMatch && priorityMatch;
+      const statusMatch = filter === "all" ? task.status !== 'completed' : task.status === filter;
+      const priorityMatch = taskFilters.priority === "all" || task.task_priority === taskFilters.priority;
+      const difficultyMatch = taskFilters.difficulty === "all" || task.difficulty === taskFilters.difficulty;
+      const categoryMatch = taskFilters.category === "all" || task.category === taskFilters.category;
+      return statusMatch && priorityMatch && difficultyMatch && categoryMatch;
     });
 
-    if (viewMode === "ai" && aiPrioritizedTasks) {
-      result = [...result].sort((a, b) => {
-        const aPinned = pinnedTaskIds.includes(a.id);
-        const bPinned = pinnedTaskIds.includes(b.id);
-        if (aPinned !== bPinned) return aPinned ? -1 : 1;
+    // Pinned always float to top; then apply sort
+    result = [...result].sort((a, b) => {
+      const aPinned = pinnedTaskIds.includes(a.id);
+      const bPinned = pinnedTaskIds.includes(b.id);
+      if (aPinned !== bPinned) return aPinned ? -1 : 1;
+
+      if (viewMode === "ai" && aiPrioritizedTasks && taskSort === "default") {
         return (b.ai_priority_score || 0) - (a.ai_priority_score || 0);
-      });
-    } else {
-      result = [...result].sort((a, b) => {
-        const aPinned = pinnedTaskIds.includes(a.id);
-        const bPinned = pinnedTaskIds.includes(b.id);
-        if (aPinned !== bPinned) return aPinned ? -1 : 1;
-        return 0;
-      });
-    }
+      }
+
+      switch (taskSort) {
+        case "due_date_asc":
+          return (a.due_date || "9999") < (b.due_date || "9999") ? -1 : 1;
+        case "due_date_desc":
+          return (a.due_date || "") > (b.due_date || "") ? -1 : 1;
+        case "difficulty_asc":
+          return (DIFFICULTY_ORDER[a.difficulty] ?? 1) - (DIFFICULTY_ORDER[b.difficulty] ?? 1);
+        case "difficulty_desc":
+          return (DIFFICULTY_ORDER[b.difficulty] ?? 1) - (DIFFICULTY_ORDER[a.difficulty] ?? 1);
+        case "priority_desc":
+          return (PRIORITY_ORDER[a.task_priority] ?? 99) - (PRIORITY_ORDER[b.task_priority] ?? 99);
+        case "estimated_asc":
+          return (a.estimated_minutes || 0) - (b.estimated_minutes || 0);
+        case "estimated_desc":
+          return (b.estimated_minutes || 0) - (a.estimated_minutes || 0);
+        default:
+          return 0;
+      }
+    });
+
     return result;
   })();
 
+  const visibleTasks = tasks.filter(t => {
+    const priorityMatch = taskFilters.priority === "all" || t.task_priority === taskFilters.priority;
+    const difficultyMatch = taskFilters.difficulty === "all" || t.difficulty === taskFilters.difficulty;
+    const categoryMatch = taskFilters.category === "all" || t.category === taskFilters.category;
+    return priorityMatch && difficultyMatch && categoryMatch;
+  });
+
   const statusCounts = {
-    all: tasks.length,
-    not_started: tasks.filter(t => t.status === "not_started").length,
-    in_progress: tasks.filter(t => t.status === "in_progress").length,
-    completed: tasks.filter(t => t.status === "completed").length,
+    all: visibleTasks.length,
+    not_started: visibleTasks.filter(t => t.status === "not_started").length,
+    in_progress: visibleTasks.filter(t => t.status === "in_progress").length,
+    completed: visibleTasks.filter(t => t.status === "completed").length,
   };
 
   // Group tasks by category (only used in manual view)
@@ -592,18 +621,6 @@ export default function Tasks() {
             {viewMode === "ai" && (
               <AIStrategySelector value={aiStrategyKey} onChange={handleStrategyChange} />
             )}
-            <MobileSelect
-              value={priorityFilter}
-              onValueChange={setPriorityFilter}
-              placeholder="Filter by priority"
-              className="w-full sm:w-44"
-              options={[
-                { value: "all", label: "All Priorities" },
-                { value: "must_do", label: "🔴 Must Do" },
-                { value: "should_do", label: "🟡 Should Do" },
-                { value: "could_do", label: "🟢 Could Do" },
-              ]}
-            />
             <Button
               variant="outline"
               onClick={() => setShowCalendarSync(true)}
@@ -639,6 +656,13 @@ export default function Tasks() {
             </Link>
           </div>
         </motion.div>
+
+        <TaskFilterSortBar
+          filters={taskFilters}
+          onFiltersChange={setTaskFilters}
+          sort={taskSort}
+          onSortChange={setTaskSort}
+        />
 
         {showAIInsights && viewMode === "ai" && (
           <AIStrategyBanner
