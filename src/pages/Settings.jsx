@@ -50,7 +50,7 @@ export default function Settings() {
           ...(progress.value || []).map(p => base44.entities.UserProgress.delete(p.id)),
         ]);
       }
-      await base44.auth.deleteMe();
+      await base44.users.deleteMe();
     } catch (err) {
       console.error("Error during account deletion:", err);
       setDeletingAccount(false);
