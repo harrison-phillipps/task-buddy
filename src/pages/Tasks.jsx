@@ -29,6 +29,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import MobileSelect from "@/components/MobileSelect";
 import TaskAssignment from "../components/team/TaskAssignment";
@@ -81,6 +91,7 @@ export default function Tasks() {
   });
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showRoutineTemplates, setShowRoutineTemplates] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState(null);
 
   const { isOnline, pendingCount, isSyncing, flushQueue, refreshPendingCount } = useOfflineSync({
     onSyncComplete: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
@@ -770,7 +781,7 @@ export default function Tasks() {
                              window.location.href = createPageUrl("TaskBreakdown") + `?editTaskId=${task.id}`;
                            }
                          }}
-                         onDelete={(task) => { if (confirm(`Delete "${task.title}"?`)) deleteTaskMutation.mutate(task.id); }}
+                         onDelete={(task) => setTaskToDelete(task)}
                          onSpread={(task) => setSpreadTask(task)}
                          onSubtaskToggle={handleSubtaskToggle}
                          onSetDependency={(task) => { setSelectedDependencyTask(task); setShowDependencyModal(true); }}
@@ -845,11 +856,7 @@ export default function Tasks() {
                                    window.location.href = createPageUrl("TaskBreakdown") + `?editTaskId=${task.id}`;
                                  }
                                }}
-                               onDelete={(task) => {
-                                 if (confirm(`Delete "${task.title}"?`)) {
-                                   deleteTaskMutation.mutate(task.id);
-                                 }
-                               }}
+                               onDelete={(task) => setTaskToDelete(task)}
                                onSpread={(task) => setSpreadTask(task)}
                                onSubtaskToggle={handleSubtaskToggle}
                                onSetDependency={(task) => {
@@ -1010,6 +1017,29 @@ export default function Tasks() {
             setSelectedTeamId(team.id);
           }}
         />
+
+        <AlertDialog open={!!taskToDelete} onOpenChange={(open) => { if (!open) setTaskToDelete(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete task?</AlertDialogTitle>
+              <AlertDialogDescription>
+                "{taskToDelete?.title}" will be permanently deleted. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-red-600 hover:bg-red-700"
+                onClick={() => {
+                  deleteTaskMutation.mutate(taskToDelete.id);
+                  setTaskToDelete(null);
+                }}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
     </PullToRefresh>
