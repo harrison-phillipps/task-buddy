@@ -8,9 +8,11 @@ import {
   CheckCircle, 
   ExternalLink, 
   Zap,
-  Clock
+  Clock,
+  Smartphone
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useIsNativeIOS } from "@/hooks/useIsNativeIOS";
 
 const integrations = [
   {
@@ -38,6 +40,7 @@ const integrations = [
 export default function Integrations() {
   const [connectingId, setConnectingId] = useState(null);
   const [connectedIds, setConnectedIds] = useState([]);
+  const isNativeIOS = useIsNativeIOS();
 
   useEffect(() => {
     base44.auth.me().then(user => {
@@ -102,19 +105,26 @@ export default function Integrations() {
                         </li>
                       ))}
                     </ul>
-                    <Button
-                      onClick={() => handleConnect(integration)}
-                      disabled={connectingId === integration.id}
-                      className={`w-full bg-gradient-to-r ${integration.color} text-white hover:opacity-90`}
-                    >
-                      {connectingId === integration.id ? (
-                        <><Clock className="w-4 h-4 mr-2 animate-spin" />Syncing...</>
-                      ) : connectedIds.includes(integration.id) ? (
-                        <><CheckCircle className="w-4 h-4 mr-2" />Synced!</>
-                      ) : (
-                        <><ExternalLink className="w-4 h-4 mr-2" />Sync Now</>
-                      )}
-                    </Button>
+                    {isNativeIOS ? (
+                      <div className="flex items-start gap-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-3 text-xs text-blue-800 dark:text-blue-300">
+                        <Smartphone className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                        <span>To connect {integration.name}, visit <strong>taskbuddy.app</strong> in Safari.</span>
+                      </div>
+                    ) : (
+                      <Button
+                        onClick={() => handleConnect(integration)}
+                        disabled={connectingId === integration.id}
+                        className={`w-full bg-gradient-to-r ${integration.color} text-white hover:opacity-90`}
+                      >
+                        {connectingId === integration.id ? (
+                          <><Clock className="w-4 h-4 mr-2 animate-spin" />Syncing...</>
+                        ) : connectedIds.includes(integration.id) ? (
+                          <><CheckCircle className="w-4 h-4 mr-2" />Synced!</>
+                        ) : (
+                          <><ExternalLink className="w-4 h-4 mr-2" />Sync Now</>
+                        )}
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
