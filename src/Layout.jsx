@@ -108,7 +108,14 @@ function LayoutContent({ children, currentPageName }) {
 
   const currentLevel = userProgress ? Math.floor(userProgress.total_points / 200) + 1 : 1;
   const handleNavClick = () => setOpenMobile(false);
-  const isDashboard = location.pathname === createPageUrl('Dashboard') || location.pathname === '/';
+  const rootRoutes = [
+    '/',
+    createPageUrl('Dashboard'),
+    createPageUrl('Tasks'),
+    createPageUrl('FocusSession'),
+    createPageUrl('Goals'),
+  ];
+  const isRootRoute = rootRoutes.includes(location.pathname);
 
   return (
     <>
@@ -288,7 +295,7 @@ function LayoutContent({ children, currentPageName }) {
                 <SidebarTrigger className="hover:bg-purple-100 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors duration-200 hidden md:flex">
                   <PanelLeft className="w-5 h-5 dark:text-gray-200" />
                 </SidebarTrigger>
-                {!isDashboard && (
+                {!isRootRoute && (
                   <button
                     onClick={() => navigate(-1)}
                     className="flex items-center gap-1 text-sm text-purple-600 dark:text-purple-400 hover:underline md:hidden min-h-[44px] px-2"

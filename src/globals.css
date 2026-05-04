@@ -81,6 +81,19 @@ a {
 .dark .bg-yellow-50  { background-color: #1f1c10 !important; }
 .dark .bg-pink-50    { background-color: #1f101a !important; }
 
+/* Native date/time inputs — consistent styling matching MobileSelect */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  min-height: 44px;
+  color-scheme: light;
+}
+.dark input[type="date"],
+.dark input[type="time"],
+.dark input[type="datetime-local"] {
+  color-scheme: dark;
+}
+
 /* Scrollbars */
 .dark ::-webkit-scrollbar { width: 6px; height: 6px; }
 .dark ::-webkit-scrollbar-track { background: #1e1b2c; }
