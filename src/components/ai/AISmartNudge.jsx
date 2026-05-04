@@ -177,7 +177,11 @@ Return a nudge type and message.`,
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 50, scale: 0.95 }}
         transition={{ type: "spring", duration: 0.5 }}
-        className="fixed bottom-4 right-4 z-50 max-w-md"
+        className="fixed z-50 max-w-md"
+        style={{
+          bottom: 'max(1rem, calc(1rem + env(safe-area-inset-bottom)))',
+          right: 'max(1rem, env(safe-area-inset-right))',
+        }}
       >
         <Card className={`bg-gradient-to-br ${nudgeConfig.color} border-none shadow-2xl`}>
           <CardContent className="p-4">

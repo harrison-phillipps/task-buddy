@@ -86,7 +86,12 @@ export default function FocusCompanionChat({ isSessionActive, taskTitle, current
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             onClick={handleOpen}
-            className="fixed bottom-24 right-4 md:bottom-8 md:right-6 z-50 w-13 h-13 rounded-full bg-gradient-to-br from-purple-500 to-teal-500 text-white shadow-xl flex items-center justify-center p-3 hover:opacity-90 transition-opacity"
+            className="fixed z-50 w-13 h-13 rounded-full bg-gradient-to-br from-purple-500 to-teal-500 text-white shadow-xl flex items-center justify-center p-3 hover:opacity-90 transition-opacity"
+            style={{
+              bottom: 'calc(6rem + env(safe-area-inset-bottom))',
+              right: 'max(1rem, env(safe-area-inset-right))',
+            }}
+
             title="Focus Companion"
           >
             <MessageCircle className="w-6 h-6" />
@@ -103,8 +108,12 @@ export default function FocusCompanionChat({ isSessionActive, taskTitle, current
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-24 right-4 md:bottom-8 md:right-6 z-50 w-80 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-purple-100 dark:border-gray-700 flex flex-col overflow-hidden"
-            style={{ height: 400 }}
+            className="fixed z-50 w-80 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-purple-100 dark:border-gray-700 flex flex-col overflow-hidden"
+            style={{
+              height: 400,
+              bottom: 'calc(6rem + env(safe-area-inset-bottom))',
+              right: 'max(1rem, env(safe-area-inset-right))',
+            }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-500 to-teal-500">

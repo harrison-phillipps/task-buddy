@@ -19,6 +19,8 @@ body {
 .overflow-y-auto,
 .overflow-scroll {
   overscroll-behavior: none;
+  /* Native iOS momentum scrolling */
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Prevent text selection on interactive elements — NOT on links/text nodes */
