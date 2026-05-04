@@ -1,0 +1,79 @@
+{
+  "name": "RoutineTemplate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Template name (e.g. Morning Routine)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description of the routine"
+    },
+    "routine_type": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "weekly",
+        "custom"
+      ],
+      "default": "daily",
+      "description": "Intended cadence for this routine"
+    },
+    "tasks": {
+      "type": "array",
+      "description": "Task definitions in this template",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "difficulty": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "energy_level_needed": {
+            "type": "string"
+          },
+          "estimated_minutes": {
+            "type": "number"
+          },
+          "recurrence_pattern": {
+            "type": "string"
+          },
+          "recurrence_interval": {
+            "type": "number"
+          },
+          "recurrence_days": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "recurrence_end_date": {
+            "type": "string"
+          },
+          "subtasks": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "default": []
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

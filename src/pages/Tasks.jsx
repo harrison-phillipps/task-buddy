@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Calendar, Link as LinkIcon, ChevronDown, ChevronRight, CheckCircle2, Sparkles, RefreshCw, Pin, UserPlus } from "lucide-react";
+import { Plus, Calendar, Link as LinkIcon, ChevronDown, ChevronRight, CheckCircle2, Sparkles, RefreshCw, Pin, UserPlus, BookTemplate } from "lucide-react";
 import toast from "react-hot-toast";
 import { analyzeTaskPriority } from "../components/ai/TaskPrioritizer";
 import {
@@ -42,6 +42,7 @@ import PullToRefresh from "../components/PullToRefresh";
 import SharedTaskListInviteModal from "../components/collaboration/SharedTaskListInviteModal";
 import TeamMemberAvatars from "../components/collaboration/TeamMemberAvatars";
 import AssignWithNotification from "../components/collaboration/AssignWithNotification";
+import RoutineTemplatesModal from "../components/tasks/RoutineTemplatesModal";
 
 export default function Tasks() {
   const queryClient = useQueryClient();
@@ -77,6 +78,7 @@ export default function Tasks() {
     try { return JSON.parse(localStorage.getItem('pinned_task_ids') || '[]'); } catch { return []; }
   });
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showRoutineTemplates, setShowRoutineTemplates] = useState(false);
 
   const { isOnline, pendingCount, isSyncing, flushQueue, refreshPendingCount } = useOfflineSync({
     onSyncComplete: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
@@ -396,6 +398,22 @@ export default function Tasks() {
     quickCompleteMutation.mutate(task);
   };
 
+  const handleLoadRoutineTemplate = async (template) => {
+    const today = new Date().toISOString().split('T')[0];
+    for (const taskDef of (template.tasks || [])) {
+      const newTask = {
+        ...taskDef,
+        status: 'not_started',
+        due_date: today,
+        is_recurring: !!(taskDef.recurrence_pattern && taskDef.recurrence_pattern !== 'none'),
+        subtasks: (taskDef.subtasks || []).map(s => ({ ...s, completed: false })),
+        team_id: selectedTeamId !== 'personal' ? selectedTeamId : undefined,
+      };
+      await base44.entities.Task.create(newTask);
+    }
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+  };
+
   const handleChangePriority = (task, priority) => {
     updateTaskMutation.mutate({
       id: task.id,
@@ -603,6 +621,15 @@ export default function Tasks() {
               <UserPlus className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Share List</span>
               <span className="sm:hidden">Share</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowRoutineTemplates(true)}
+              className="border-purple-200 hover:bg-purple-50 flex-1 sm:flex-none"
+            >
+              <BookTemplate className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Routines</span>
+              <span className="sm:hidden">Routines</span>
             </Button>
             <Link to={createPageUrl("TaskBreakdown")} className="flex-1 sm:flex-none">
               <Button className="bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold shadow-lg w-full">
@@ -940,6 +967,13 @@ export default function Tasks() {
               toast.success("Subtasks added to task!");
             }
           }}
+        />
+
+        <RoutineTemplatesModal
+          open={showRoutineTemplates}
+          onOpenChange={setShowRoutineTemplates}
+          tasks={tasks}
+          onLoadTemplate={handleLoadRoutineTemplate}
         />
 
         <SharedTaskListInviteModal
