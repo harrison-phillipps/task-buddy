@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import MobileSelect from "@/components/MobileSelect";
 import {
   Sparkles, RefreshCw, Check, Clock, Loader2, Zap, Battery, BatteryLow,
   BatteryMedium, BatteryFull, Edit2, Trash2, Plus, ChevronDown, ChevronUp
@@ -247,14 +247,13 @@ Be specific and realistic with time estimates based on the complexity of each st
                     ].map(({ label, field, options }) => (
                       <div key={field}>
                         <Label className="text-xs text-gray-500">{label}</Label>
-                        <Select value={result[field]} onValueChange={v => setResult(prev => ({ ...prev, [field]: v }))}>
-                          <SelectTrigger className="mt-1 h-8 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {options.map(o => <SelectItem key={o} value={o} className="text-xs capitalize">{o}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                        <MobileSelect
+                          value={result[field]}
+                          onValueChange={v => setResult(prev => ({ ...prev, [field]: v }))}
+                          placeholder={label}
+                          options={options.map(o => ({ value: o, label: o.charAt(0).toUpperCase() + o.slice(1) }))}
+                          className="mt-1 h-8 text-xs"
+                        />
                       </div>
                     ))}
                   </div>
@@ -328,19 +327,17 @@ Be specific and realistic with time estimates based on the complexity of each st
                               {ENERGY_ICONS[st.energy_level] || ENERGY_ICONS.medium}
                               <span className="ml-1 capitalize">{st.energy_level || "medium"}</span>
                             </Badge>
-                            <Select
+                            <MobileSelect
                               value={st.energy_level || "medium"}
                               onValueChange={v => updateSubtask(i, "energy_level", v)}
-                            >
-                              <SelectTrigger className="w-20 h-6 text-[10px] px-1">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="low" className="text-xs">Low</SelectItem>
-                                <SelectItem value="medium" className="text-xs">Medium</SelectItem>
-                                <SelectItem value="high" className="text-xs">High</SelectItem>
-                              </SelectContent>
-                            </Select>
+                              placeholder="Energy"
+                              options={[
+                                { value: "low", label: "Low" },
+                                { value: "medium", label: "Medium" },
+                                { value: "high", label: "High" },
+                              ]}
+                              className="w-20 h-6 text-[10px] px-1"
+                            />
                           </div>
                         </div>
                         <button

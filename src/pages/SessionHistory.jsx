@@ -1,5 +1,6 @@
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import PullToRefresh from "@/components/PullToRefresh";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, TrendingUp, Zap, Brain, Music } from "lucide-react";
@@ -19,6 +20,7 @@ const moodEmojis = {
 };
 
 export default function SessionHistory() {
+  const queryClient = useQueryClient();
   const { data: sessions = [], isLoading } = useQuery({
     queryKey: ['sessions'],
     queryFn: () => base44.entities.FocusSession.list('-created_date'),
@@ -48,7 +50,12 @@ export default function SessionHistory() {
     return acc;
   }, {});
 
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['sessions'] });
+  };
+
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         <motion.div
@@ -303,5 +310,6 @@ export default function SessionHistory() {
         )}
       </div>
     </div>
+    </PullToRefresh>
   );
 }
