@@ -41,6 +41,7 @@ import { hasFeatureAccess, UpgradePrompt } from "../components/subscription/Feat
 import AdaptiveCompanionAI from "../components/companion/AdaptiveCompanionAI";
 import QuickFocusWidget from "../components/dashboard/QuickFocusWidget";
 import SmartTaskAnalyzer from "../components/tasks/SmartTaskAnalyzer";
+import DailyCheckIn from "../components/dashboard/DailyCheckIn";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -240,6 +241,11 @@ export default function Dashboard() {
             />
           </motion.div>
         )}
+
+        {/* Daily Check-In */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}>
+          <DailyCheckIn currentUser={currentUser} />
+        </motion.div>
 
         {/* Quick Add Task */}
         {visibleWidgets.quickAdd && (
