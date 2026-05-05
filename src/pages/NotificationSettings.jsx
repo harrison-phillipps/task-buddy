@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Bell, Mail, Clock, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import PushNotificationSetup from "@/components/notifications/PushNotificationSetup";
 
 export default function NotificationSettings() {
   const queryClient = useQueryClient();
@@ -84,6 +85,15 @@ export default function NotificationSettings() {
       >
         <p className="text-gray-600 text-center">Customize how and when you receive notifications</p>
       </motion.div>
+
+        {/* Push Notifications */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+        >
+          <PushNotificationSetup />
+        </motion.div>
 
         {/* Task Reminders */}
         <motion.div
@@ -329,4 +339,4 @@ export default function NotificationSettings() {
         </motion.div>
       </div>
     );
-  }
+}
