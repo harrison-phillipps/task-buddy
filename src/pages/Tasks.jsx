@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Calendar, Link as LinkIcon, ChevronDown, ChevronRight, CheckCircle2, Sparkles, RefreshCw, Pin, UserPlus, BookTemplate } from "lucide-react";
+import { Plus, Calendar, Link as LinkIcon, CheckCircle2, Sparkles, RefreshCw, Pin, UserPlus, BookTemplate, Trash2, CheckSquare, Square, X } from "lucide-react";
 import TaskFilterSortBar from "../components/tasks/TaskFilterSortBar";
 import toast from "react-hot-toast";
 import { analyzeTaskPriority } from "../components/ai/TaskPrioritizer";
@@ -92,6 +92,35 @@ export default function Tasks() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showRoutineTemplates, setShowRoutineTemplates] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
+  const [selectedTaskIds, setSelectedTaskIds] = useState(new Set());
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+
+  const isSelecting = selectedTaskIds.size > 0;
+
+  const toggleSelectTask = (taskId) => {
+    setSelectedTaskIds(prev => {
+      const next = new Set(prev);
+      next.has(taskId) ? next.delete(taskId) : next.add(taskId);
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedTaskIds(new Set());
+
+  const handleBulkComplete = async () => {
+    const tasksToComplete = filteredTasks.filter(t => selectedTaskIds.has(t.id) && t.status !== 'completed');
+    await Promise.all(tasksToComplete.map(t => quickCompleteMutation.mutateAsync(t)));
+    clearSelection();
+    toast.success(`${tasksToComplete.length} task${tasksToComplete.length !== 1 ? 's' : ''} completed! 🎉`);
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = [...selectedTaskIds];
+    await Promise.all(ids.map(id => deleteTaskMutation.mutateAsync(id)));
+    clearSelection();
+    setShowBulkDeleteConfirm(false);
+    toast.success(`${ids.length} task${ids.length !== 1 ? 's' : ''} deleted`);
+  };
 
   const { isOnline, pendingCount, isSyncing, flushQueue, refreshPendingCount } = useOfflineSync({
     onSyncComplete: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
@@ -683,6 +712,42 @@ export default function Tasks() {
           />
         )}
 
+        {/* Bulk action bar */}
+        <AnimatePresence>
+          {isSelecting && (
+            <motion.div
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              className="flex items-center gap-3 bg-white dark:bg-gray-800 border border-purple-200 dark:border-gray-600 rounded-xl px-4 py-3 shadow-md"
+            >
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex-1">
+                {selectedTaskIds.size} selected
+              </span>
+              <Button
+                size="sm"
+                onClick={handleBulkComplete}
+                className="bg-green-500 hover:bg-green-600 text-white gap-1.5"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                Complete
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => setShowBulkDeleteConfirm(true)}
+                className="gap-1.5"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </Button>
+              <button onClick={clearSelection} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                <X className="w-4 h-4 text-gray-500" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -757,6 +822,14 @@ export default function Tasks() {
                     className="relative"
                   >
                     <div className="flex items-start gap-2">
+                      <button
+                        onClick={() => toggleSelectTask(task.id)}
+                        className="flex-shrink-0 mt-3 p-0.5 text-gray-400 hover:text-purple-600 transition-colors"
+                      >
+                        {selectedTaskIds.has(task.id)
+                          ? <CheckSquare className="w-5 h-5 text-purple-600" />
+                          : <Square className="w-5 h-5" />}
+                      </button>
                       <div className="flex-shrink-0 w-7 h-7 mt-3 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-500 dark:text-gray-400">
                         {index + 1}
                       </div>
@@ -834,6 +907,16 @@ export default function Tasks() {
                             transition={{ delay: index * 0.03 }}
                           >
                             <div className="space-y-3">
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  onClick={() => toggleSelectTask(task.id)}
+                                  className="p-0.5 text-gray-400 hover:text-purple-600 transition-colors"
+                                >
+                                  {selectedTaskIds.has(task.id)
+                                    ? <CheckSquare className="w-5 h-5 text-purple-600" />
+                                    : <Square className="w-5 h-5" />}
+                                </button>
+                              </div>
                               {pinnedTaskIds.includes(task.id) && (
                                 <div className="flex items-center gap-1 text-xs text-purple-600 font-medium ml-1">
                                   <Pin className="w-3 h-3" />
@@ -1017,6 +1100,23 @@ export default function Tasks() {
             setSelectedTeamId(team.id);
           }}
         />
+
+        <AlertDialog open={showBulkDeleteConfirm} onOpenChange={setShowBulkDeleteConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {selectedTaskIds.size} task{selectedTaskIds.size !== 1 ? 's' : ''}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete {selectedTaskIds.size} selected task{selectedTaskIds.size !== 1 ? 's' : ''}. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={handleBulkDelete}>
+                Delete all
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <AlertDialog open={!!taskToDelete} onOpenChange={(open) => { if (!open) setTaskToDelete(null); }}>
           <AlertDialogContent>
