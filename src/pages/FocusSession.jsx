@@ -50,6 +50,7 @@ import SpotifyPlayer from "../components/focus/SpotifyPlayer";
 import { hasFeatureAccess, UpgradePrompt } from "../components/subscription/FeatureGate";
 import FocusCompanionChat from "../components/focus/FocusCompanionChat";
 import VoiceCommandListener from "../components/focus/VoiceCommandListener";
+import { useVoiceAnnouncements } from "../hooks/useVoiceAnnouncements";
 import FocusNotificationSettings, {
   showRichNotification,
   registerServiceWorker,
@@ -158,6 +159,9 @@ export default function FocusSession() {
   const [showGuidedBreak, setShowGuidedBreak] = useState(false);
   const [isController, setIsController] = useState(false);
   
+  const [voiceAnnouncementsEnabled, setVoiceAnnouncementsEnabled] = useState(false);
+  const { checkMilestone, announcePhase, reset: resetVoice } = useVoiceAnnouncements(voiceAnnouncementsEnabled);
+
   const audioRef = useRef(null);
   const encouragementTimers = useRef([]);
 
@@ -263,7 +267,9 @@ export default function FocusSession() {
     if (isActive && sessionStarted && timeLeft > 0) {
       interval = setInterval(() => {
         setTimeLeft(prev => {
-          if (prev <= 1) {
+          const next = prev - 1;
+          checkMilestone(next, isBreakTime ? "break" : "focus");
+          if (next <= 0) {
             setIsActive(false);
             if (focusTechnique === "pomodoro") {
               handlePomodoroComplete();
@@ -272,14 +278,14 @@ export default function FocusSession() {
             }
             return 0;
           }
-          return prev - 1;
+          return next;
         });
       }, 1000);
     }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isActive, sessionStarted, timeLeft]);
+  }, [isActive, sessionStarted, timeLeft, checkMilestone, isBreakTime]);
 
   // Auto-start session when quickStart param is present and task is loaded
   const quickStartFiredRef = useRef(false);
@@ -413,6 +419,7 @@ export default function FocusSession() {
         setIsBreakTime(true);
         setTimeLeft(breakInterval * 60);
         setShowBreakPrompt(true);
+        announcePhase(`Pomodoro complete! Break time. ${breakInterval} minutes.`);
         if (notificationsEnabled && getNotifPrefs().breakReminder !== false) {
           showRichNotification('Break Time! ☕', `${breakInterval} min break — stretch, hydrate, breathe.`, {
             tag: 'break-start',
@@ -431,6 +438,7 @@ export default function FocusSession() {
     } else {
       setIsBreakTime(false);
       setShowBreakPrompt(false);
+      announcePhase("Break over. Back to focus!");
       // Schedule next Pomodoro-complete notification
       if (notificationsEnabled && getNotifPrefs().pomodoroComplete !== false) {
         sendSWMessage({
@@ -927,6 +935,7 @@ export default function FocusSession() {
 
     cancelAllNotifications();
     stopSWKeepAlive();
+    resetVoice();
     // Clear cross-device sync record
     setIsController(false);
     clearSyncSession();
@@ -1265,6 +1274,20 @@ export default function FocusSession() {
                   <p className="text-sm text-gray-700 dark:text-gray-300">{preSessionRitual}</p>
                 </div>
               )}
+
+              {/* Voice Announcements toggle */}
+              <div className="flex items-center justify-between p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-100 dark:border-purple-800">
+                <div>
+                  <p className="font-medium text-gray-800 dark:text-gray-200 text-sm">🎧 Voice Announcements</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Hear time remaining through AirPods or headphones</p>
+                </div>
+                <button
+                  onClick={() => setVoiceAnnouncementsEnabled(v => !v)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${voiceAnnouncementsEnabled ? 'bg-purple-600' : 'bg-gray-300 dark:bg-gray-600'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${voiceAnnouncementsEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
 
               <Button
                 onClick={startSession}
