@@ -7,10 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bell, Mail, Clock, CheckCircle } from "lucide-react";
+import { Bell, Mail, Clock, CheckCircle, Play } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import PushNotificationSetup from "@/components/notifications/PushNotificationSetup";
+import FocusNotificationSettings from "@/components/focus/FocusNotificationSettings";
 
 export default function NotificationSettings() {
   const queryClient = useQueryClient();
@@ -78,7 +79,7 @@ export default function NotificationSettings() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-8 max-w-2xl mx-auto">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -93,6 +94,26 @@ export default function NotificationSettings() {
           transition={{ delay: 0.05 }}
         >
           <PushNotificationSetup />
+        </motion.div>
+
+        {/* Focus Session Notifications */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Play className="w-5 h-5 text-purple-600" />
+                Focus Session Notifications
+              </CardTitle>
+              <CardDescription>Push alerts for session starts, time-remaining milestones, and break reminders — mirrored to Apple Watch &amp; Wear OS</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FocusNotificationSettings />
+            </CardContent>
+          </Card>
         </motion.div>
 
         {/* Task Reminders */}
