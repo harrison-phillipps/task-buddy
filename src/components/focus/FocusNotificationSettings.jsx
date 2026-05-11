@@ -138,6 +138,7 @@ const DEFAULT_PREFS = {
   pomodoroComplete: true,
   breakReminder: true,
   sessionEnd: true,
+  sessionEndingSoon: true,
   encouragements: false,
 };
 
@@ -207,6 +208,7 @@ export default function FocusNotificationSettings({ onPermissionChange }) {
     { label: "Session starts 🎯", key: "sessionStart" },
     { label: "Pomodoro cycle completes 🍅", key: "pomodoroComplete" },
     { label: "Break time begins ☕", key: "breakReminder" },
+    { label: "Session ending soon ⏰", key: "sessionEndingSoon" },
     { label: "Session ends 🎉", key: "sessionEnd" },
     { label: "Encouragement messages 💪", key: "encouragements" },
   ];

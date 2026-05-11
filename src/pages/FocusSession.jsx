@@ -261,6 +261,14 @@ export default function FocusSession() {
     onRemoteState,
   });
 
+  // Track which ending-soon alerts have already fired for the current interval
+  const endingSoonFiredRef = useRef(new Set());
+
+  // Reset fired alerts when a new timer interval starts (task changes, break starts, etc.)
+  useEffect(() => {
+    endingSoonFiredRef.current = new Set();
+  }, [currentSubtaskIndex, isBreakTime, sessionStarted]);
+
   // Timer effect
   useEffect(() => {
     let interval = null;
@@ -269,6 +277,32 @@ export default function FocusSession() {
         setTimeLeft(prev => {
           const next = prev - 1;
           checkMilestone(next, isBreakTime ? "break" : "focus");
+
+          // Ending-soon alerts: 5 min, 2 min, 1 min
+          if (!isBreakTime && notificationsEnabled && getNotifPrefs().sessionEndingSoon !== false) {
+            const thresholds = [300, 120, 60]; // seconds
+            for (const t of thresholds) {
+              if (next === t && !endingSoonFiredRef.current.has(t)) {
+                endingSoonFiredRef.current.add(t);
+                const mins = Math.floor(t / 60);
+                const label = mins === 1 ? "1 minute" : `${mins} minutes`;
+                const msg = `${label} remaining — keep it up!`;
+                showRichNotification(`⏰ ${label} left`, msg, {
+                  tag: `ending-soon-${t}`,
+                  requireInteraction: false,
+                  vibrate: [100, 50, 100],
+                });
+                // Voice announcement
+                if (voiceAnnouncementsEnabled && 'speechSynthesis' in window) {
+                  const utt = new SpeechSynthesisUtterance(`${label} remaining`);
+                  utt.volume = 0.8;
+                  utt.rate = 0.95;
+                  window.speechSynthesis.speak(utt);
+                }
+              }
+            }
+          }
+
           if (next <= 0) {
             setIsActive(false);
             if (focusTechnique === "pomodoro") {
@@ -285,7 +319,7 @@ export default function FocusSession() {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isActive, sessionStarted, timeLeft, checkMilestone, isBreakTime]);
+  }, [isActive, sessionStarted, timeLeft, checkMilestone, isBreakTime, notificationsEnabled, voiceAnnouncementsEnabled]);
 
   // Auto-start session when quickStart param is present and task is loaded
   const quickStartFiredRef = useRef(false);
@@ -591,16 +625,41 @@ export default function FocusSession() {
     // Schedule a SW-based session-end notification at the exact timestamp
     const prefs = getNotifPrefs();
     const totalMs = selectedTask.subtasks?.reduce((s, st) => s + (st.estimated_minutes || 0) * 60000, 0) || initialTime * 1000;
+    const sessionEndsAt = Date.now() + totalMs;
 
     // Schedule SW-based session-end notification
     if (notificationsEnabled && prefs.sessionEnd !== false) {
       sendSWMessage({
         type: 'SCHEDULE_SESSION_END',
-        endsAt: Date.now() + totalMs,
+        endsAt: sessionEndsAt,
         title: '⏱ Session Complete!',
         body: `You finished: ${selectedTask.title}`,
         taskId: selectedTask.id,
       });
+    }
+
+    // Schedule SW-based ending-soon notifications (5 min, 2 min, 1 min before end)
+    if (notificationsEnabled && prefs.sessionEndingSoon !== false) {
+      const warningThresholds = [
+        { seconds: 300, label: "5 minutes" },
+        { seconds: 120, label: "2 minutes" },
+        { seconds: 60,  label: "1 minute" },
+      ];
+      for (const { seconds, label } of warningThresholds) {
+        const alertAt = sessionEndsAt - seconds * 1000;
+        if (alertAt > Date.now()) {
+          sendSWMessage({
+            type: 'SCHEDULE_NOTIFICATION',
+            id: `ending-soon-sw-${seconds}`,
+            delay: alertAt - Date.now(),
+            title: `⏰ ${label} left`,
+            body: `${label} remaining on: ${selectedTask.title}`,
+            tag: `ending-soon-${seconds}`,
+            vibrate: [100, 50, 100],
+            requireInteraction: false,
+          });
+        }
+      }
     }
 
     // Schedule first Pomodoro-complete (if pomodoro mode)
@@ -935,6 +994,7 @@ export default function FocusSession() {
 
     cancelAllNotifications();
     stopSWKeepAlive();
+    endingSoonFiredRef.current = new Set();
     resetVoice();
     // Clear cross-device sync record
     setIsController(false);
