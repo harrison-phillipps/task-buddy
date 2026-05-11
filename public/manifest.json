@@ -1,13 +1,15 @@
 {
   "name": "TaskBuddy",
   "short_name": "TaskBuddy",
-  "description": "Your AI-powered productivity companion with focus sessions, tasks, and goals",
+  "description": "AI-powered productivity companion with focus sessions, tasks, and goals",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FAF9F7",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
   "theme_color": "#8B5CF6",
-  "orientation": "portrait-primary",
+  "lang": "en",
   "scope": "/",
+  "categories": ["productivity", "utilities"],
   "icons": [
     {
       "src": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68ff06728f59128717455ed3/947e987fc_Screenshot2025-12-08at84335AM.png",
@@ -22,21 +24,7 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["productivity", "utilities"],
-  "shortcuts": [
-    {
-      "name": "Focus Now",
-      "short_name": "Focus",
-      "description": "Start a focus session",
-      "url": "/FocusSession",
-      "icons": [{ "src": "/favicon.ico", "sizes": "96x96" }]
-    },
-    {
-      "name": "My Tasks",
-      "short_name": "Tasks",
-      "description": "View your tasks",
-      "url": "/Tasks",
-      "icons": [{ "src": "/favicon.ico", "sizes": "96x96" }]
-    }
-  ]
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
 }
