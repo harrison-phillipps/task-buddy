@@ -313,7 +313,10 @@ function LayoutContent({ children, currentPageName }) {
             </div>
           </header>
 
-          <div className="flex-1 overflow-auto pb-16 md:pb-0">
+          <div
+            className="flex-1 overflow-auto md:pb-0"
+            style={{ paddingBottom: 'max(4rem, calc(4rem + env(safe-area-inset-bottom)))' }}
+          >
             {children}
           </div>
         </main>
