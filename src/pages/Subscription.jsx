@@ -17,18 +17,18 @@ const plansData = [
     priceMonthly: "$0",
     priceYearly: "$0",
     period: "forever",
-    description: "Get started with basic productivity tools",
+    description: "Dip your toes in — no credit card needed",
     features: [
-      "Up to 10 active tasks",
-      "Brain dump with voice capture (2/day)",
-      "Focus sessions (3/day)",
-      "Basic achievements",
-      "1 companion type"
+      "10 active tasks to get you started",
+      "2 brain dumps per day with voice capture",
+      "3 focus sessions per day",
+      "Basic achievements & streaks",
+      "1 AI companion character"
     ],
     limitations: [
-      "No AI prioritization",
+      "No AI to prioritise your tasks for you",
       "No calendar sync",
-      "Limited analytics"
+      "No goals or daily planning"
     ],
     cta: "Current Plan",
     popular: false
@@ -40,26 +40,23 @@ const plansData = [
     priceYearly: "A$99",
     savingsYearly: "Save A$20",
     period: "per month",
-    description: "Supercharge your productivity with AI",
+    description: "Let AI do the heavy lifting — less stress, more done",
     features: [
-      "Up to 100 active tasks",
-      "Unlimited brain dumps with voice",
-      "Unlimited focus sessions",
-      "AI Task Prioritization",
-      "Goal setting & tracking",
-      "Google Calendar sync",
-      "Advanced analytics & charts",
-      "Smart Daily Plan",
-      "Voice to Tasks",
-      "Calendar Gap Filler",
-      "Proactive AI coaching",
-      "Smart task recommendations",
-      "Daily Schedule Planner",
-      "All ambient sounds & Spotify",
-      "All achievements"
+      "🧠 AI tells you exactly what to work on next",
+      "📅 Auto-syncs with Google Calendar",
+      "🗓️ Smart Daily Plan built for you every morning",
+      "⚡ Finds free time in your calendar & fills it",
+      "🎯 Set goals and track your progress visually",
+      "🎙️ Speak your tasks — AI captures & organises them",
+      "📊 See when you're most productive with analytics",
+      "🔁 Unlimited focus sessions & brain dumps",
+      "🎵 Focus music: ambient sounds + Spotify",
+      "💡 Proactive AI nudges to keep you on track",
+      "🏆 Unlock all achievements & rewards",
+      "Up to 100 active tasks"
     ],
     limitations: [],
-    cta: "Upgrade to Pro",
+    cta: "Start Getting More Done →",
     popular: true
   },
   {
@@ -69,24 +66,23 @@ const plansData = [
     priceYearly: "A$199",
     savingsYearly: "Save A$40",
     period: "per month",
-    description: "The ultimate productivity experience",
+    description: "For serious achievers & teams who want everything",
     features: [
-      "Everything in Pro",
-      "Unlimited tasks",
-      "AI Task Breakdown (auto subtasks)",
-      "Team collaboration & shared tasks",
-      "Team workload dashboard",
-      "@mentions in task comments",
-      "Strategic progress coaching",
-      "Energy-aware AI coaching",
-      "AI coaching bots suite",
-      "Custom companion personalities",
-      "Priority support",
-      "Export your data",
-      "Early access to new features"
+      "✅ Everything in Pro, plus…",
+      "🤖 AI auto-breaks big tasks into actionable steps",
+      "👥 Collaborate with your team on shared tasks",
+      "📋 Team workload dashboard & bottleneck alerts",
+      "💬 @mention teammates in task comments",
+      "🔋 Energy-aware AI — right task at the right time",
+      "🎯 Strategic coaching to hit your long-term goals",
+      "🧬 Full AI coaching bots suite (habit, skill & more)",
+      "🎨 Custom companion personalities & deep customisation",
+      "📤 Export all your data anytime",
+      "⚡ Priority support & early access to new features",
+      "Unlimited tasks — no caps, ever"
     ],
     limitations: [],
-    cta: "Go Premium",
+    cta: "Go Premium →",
     popular: false
   }
 ];
@@ -211,10 +207,10 @@ export default function Subscription() {
           className="text-center mb-12"
         >
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">
-            Choose Your Plan
+            Stop Leaving Tasks Undone
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Unlock powerful features to supercharge your productivity journey
+            Most TaskBuddy Pro users complete <strong>3× more tasks</strong> in their first week. Pick a plan and let AI do the hard work for you.
           </p>
           
           <div className="flex justify-center mt-8">
@@ -386,10 +382,10 @@ export default function Subscription() {
           className="mt-8 text-center"
         >
           <p className="text-gray-500 text-sm">
-            All plans include a 14-day free trial. Cancel anytime.
+            🔒 Secure payment via Stripe &nbsp;·&nbsp; Cancel anytime, no questions asked &nbsp;·&nbsp; 14-day free trial on all paid plans
           </p>
           <p className="text-gray-400 text-xs mt-2">
-            Questions? Contact us at support@taskbuddy.app
+            Questions? Reach us at support@taskbuddy.app — we reply within 24 hours.
           </p>
         </motion.div>
 
