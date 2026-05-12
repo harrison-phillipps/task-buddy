@@ -2,28 +2,60 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68ff06728f59128717455ed3/947e987fc_Screenshot2025-12-08at84335AM.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-    <!-- PWA -->
+    <!-- Viewport: viewport-fit=cover for notch/dynamic island support -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+    <!-- ===== PWA / Home Screen ===== -->
     <link rel="manifest" href="/manifest.json" />
+
+    <!-- Android / Chrome -->
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="TaskBuddy" />
     <meta name="theme-color" content="#8B5CF6" />
     <meta name="msapplication-TileColor" content="#8B5CF6" />
+    <meta name="msapplication-tap-highlight" content="no" />
 
-    <!-- Apple touch icon -->
-    <link rel="apple-touch-icon" href="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68ff06728f59128717455ed3/947e987fc_Screenshot2025-12-08at84335AM.png" />
+    <!-- iOS Safari -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <!-- black-translucent: app content extends behind the status bar (requires padding-top: safe-area-inset-top) -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="TaskBuddy" />
 
-    <!-- SEO / Social -->
-    <meta name="description" content="TaskBuddy — AI-powered productivity companion with focus sessions, tasks, and goals" />
-    <meta property="og:title" content="TaskBuddy" />
-    <meta property="og:description" content="Your AI-powered productivity companion" />
+    <!-- Prevent iOS automatic phone/email/date detection (avoids unwanted link styling) -->
+    <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
+
+    <!-- ===== Icons ===== -->
+    <link rel="icon" type="image/png" href="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68ff06728f59128717455ed3/947e987fc_Screenshot2025-12-08at84335AM.png" />
+
+    <!-- Apple touch icons (recommended sizes for all iOS devices) -->
+    <link rel="apple-touch-icon" sizes="180x180" href="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68ff06728f59128717455ed3/947e987fc_Screenshot2025-12-08at84335AM.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68ff06728f59128717455ed3/947e987fc_Screenshot2025-12-08at84335AM.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68ff06728f59128717455ed3/947e987fc_Screenshot2025-12-08at84335AM.png" />
+
+    <!-- ===== SEO / Social ===== -->
+    <title>TaskBuddy — AI Productivity Companion</title>
+    <meta name="description" content="TaskBuddy is your AI-powered productivity companion. Manage tasks, run focus sessions, track goals, and build better habits — all in one place." />
+    <meta name="keywords" content="productivity, task manager, focus timer, pomodoro, AI, goals, habits" />
+    <meta name="author" content="TaskBuddy" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="TaskBuddy — AI Productivity Companion" />
+    <meta property="og:description" content="Your AI-powered productivity companion. Tasks, focus sessions, goals, and more." />
     <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68ff06728f59128717455ed3/947e987fc_Screenshot2025-12-08at84335AM.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
 
-    <title>TaskBuddy</title>
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="TaskBuddy — AI Productivity Companion" />
+    <meta name="twitter:description" content="Your AI-powered productivity companion. Tasks, focus sessions, goals, and more." />
+    <meta name="twitter:image" content="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68ff06728f59128717455ed3/947e987fc_Screenshot2025-12-08at84335AM.png" />
+
+    <!-- ===== Performance / Security ===== -->
+    <!-- Disable DNS prefetch for privacy; re-enable if needed for perf -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   </head>
   <body>
     <div id="root"></div>

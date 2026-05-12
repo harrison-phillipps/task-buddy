@@ -1,16 +1,24 @@
 {
-  "name": "TaskBuddy",
+  "name": "TaskBuddy — AI Productivity Companion",
   "short_name": "TaskBuddy",
-  "description": "AI-powered productivity companion with focus sessions, tasks, and goals",
+  "description": "Your AI-powered productivity companion. Manage tasks, run focus sessions, track goals, and build better habits.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "background_color": "#FAF9F7",
   "theme_color": "#8B5CF6",
   "lang": "en",
-  "scope": "/",
-  "categories": ["productivity", "utilities"],
+  "dir": "ltr",
+  "categories": ["productivity", "utilities", "lifestyle"],
+  "iarc_rating_id": "",
   "icons": [
+    {
+      "src": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68ff06728f59128717455ed3/947e987fc_Screenshot2025-12-08at84335AM.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
     {
       "src": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68ff06728f59128717455ed3/947e987fc_Screenshot2025-12-08at84335AM.png",
       "sizes": "192x192",
@@ -19,12 +27,48 @@
     },
     {
       "src": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68ff06728f59128717455ed3/947e987fc_Screenshot2025-12-08at84335AM.png",
-      "sizes": "512x512",
+      "sizes": "180x180",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68ff06728f59128717455ed3/947e987fc_Screenshot2025-12-08at84335AM.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68ff06728f59128717455ed3/947e987fc_Screenshot2025-12-08at84335AM.png",
+      "sizes": "120x120",
+      "type": "image/png",
+      "purpose": "any"
     }
   ],
   "screenshots": [],
-  "related_applications": [],
-  "prefer_related_applications": false
+  "shortcuts": [
+    {
+      "name": "Focus Now",
+      "short_name": "Focus",
+      "description": "Start a focus session",
+      "url": "/FocusSession",
+      "icons": [
+        {
+          "src": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68ff06728f59128717455ed3/947e987fc_Screenshot2025-12-08at84335AM.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "My Tasks",
+      "short_name": "Tasks",
+      "description": "View and manage tasks",
+      "url": "/Tasks",
+      "icons": [
+        {
+          "src": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68ff06728f59128717455ed3/947e987fc_Screenshot2025-12-08at84335AM.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
 }
