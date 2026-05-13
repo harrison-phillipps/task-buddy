@@ -9,6 +9,7 @@ import {
   CheckCircle, Flame
 } from "lucide-react";
 import { motion } from "framer-motion";
+import ProductivityScore from "@/components/analytics/ProductivityScore";
 
 
 
@@ -175,6 +176,13 @@ export default function Analytics() {
             </Card>
           </motion.div>
         </div>
+
+        {/* Productivity Score — Pro+ */}
+        {hasAdvanced ? (
+          <ProductivityScore tasks={tasks} focusSessions={focusSessions} userProgress={userProgress} />
+        ) : (
+          <UpgradePrompt feature="Productivity Score" requiredTier="pro" />
+        )}
 
         {/* AI Insights Section */}
         <AITipsSection 

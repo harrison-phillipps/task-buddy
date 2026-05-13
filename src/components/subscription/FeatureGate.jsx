@@ -33,6 +33,11 @@ export const FEATURE_ACCESS = {
   proactive_coaching: ["pro", "premium"],
   smart_recommendations: ["pro", "premium"],
 
+  // Pro features (continued)
+  productivity_score: ["pro", "premium"],
+  custom_focus_sounds: ["pro", "premium"],
+  weekly_goals: ["pro", "premium"],
+
   // Premium features
   ai_task_breakdown: ["premium"],
   custom_companions: ["premium"],

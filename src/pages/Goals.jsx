@@ -11,11 +11,15 @@ import GoalBreakdownModal from "../components/goals/GoalBreakdownModal";
 import CalendarSyncModal from "../components/calendar/CalendarSyncModal";
 import GoalCoach from "../components/ai/GoalCoach";
 import PullToRefresh from "../components/PullToRefresh";
+import WeeklyGoalsPanel from "../components/goals/WeeklyGoalsPanel";
+import { hasFeatureAccess, UpgradePrompt } from "@/components/subscription/FeatureGate";
 
 export default function GoalsPage() {
   const queryClient = useQueryClient();
   const [currentUser, setCurrentUser] = useState(null);
   const [filter, setFilter] = useState("all");
+  const userTier = currentUser?.subscription_tier || "free";
+  const hasWeeklyGoals = hasFeatureAccess(userTier, "weekly_goals");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [breakdownGoal, setBreakdownGoal] = useState(null);
   const [showCalendarSync, setShowCalendarSync] = useState(false);
@@ -232,6 +236,14 @@ export default function GoalsPage() {
             </motion.div>
           </>
         )}
+
+        {/* Weekly Goals — Pro+ */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+          {hasWeeklyGoals
+            ? <WeeklyGoalsPanel />
+            : <UpgradePrompt feature="Recurring Weekly Goals" requiredTier="pro" />
+          }
+        </motion.div>
 
         <CreateGoalModal
           open={showCreateModal}

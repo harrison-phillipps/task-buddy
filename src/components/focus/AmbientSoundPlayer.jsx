@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Volume2, VolumeX, Volume1 } from "lucide-react";
+import { Volume2, VolumeX, Volume1, Crown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { hasFeatureAccess } from "@/components/subscription/FeatureGate";
 
 const SOUND_URLS = {
   rain: "https://cdn.freesound.org/previews/531/531947_5765212-lq.mp3",
@@ -13,7 +14,14 @@ const SOUND_URLS = {
   brown_noise: "https://cdn.freesound.org/previews/560/560615_7648543-lq.mp3",
   fireplace: "https://cdn.freesound.org/previews/412/412015_5121236-lq.mp3",
   thunderstorm: "https://cdn.freesound.org/previews/446/446753_9159316-lq.mp3",
+  // Pro custom sounds
+  pink_noise: "https://cdn.freesound.org/previews/484/484921_6950257-lq.mp3",
+  library: "https://cdn.freesound.org/previews/351/351518_6242451-lq.mp3",
+  japan_temple: "https://cdn.freesound.org/previews/270/270524_5123851-lq.mp3",
+  birds: "https://cdn.freesound.org/previews/560/560553_7648543-lq.mp3",
 };
+
+const FREE_SOUNDS = ["none", "rain", "cafe", "forest", "ocean", "white_noise", "brown_noise", "fireplace", "thunderstorm"];
 
 const ambientSounds = {
   none: { name: "None", emoji: "🔇" },
@@ -25,15 +33,22 @@ const ambientSounds = {
   brown_noise: { name: "Brown Noise", emoji: "🎵" },
   fireplace: { name: "Fireplace", emoji: "🔥" },
   thunderstorm: { name: "Thunder", emoji: "⛈️" },
+  // Pro custom sounds
+  pink_noise: { name: "Pink Noise", emoji: "🌸", pro: true },
+  library: { name: "Library", emoji: "📚", pro: true },
+  japan_temple: { name: "Zen Temple", emoji: "⛩️", pro: true },
+  birds: { name: "Birds", emoji: "🐦", pro: true },
 };
 
 export default function AmbientSoundPlayer({ 
   selectedSound, 
   setSelectedSound,
   isPlaying,
-  compact = false 
+  compact = false,
+  userTier = "free"
 }) {
   const [volume, setVolume] = useState(50);
+  const hasCustomSounds = hasFeatureAccess(userTier, "custom_focus_sounds");
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const audioRef = useRef(null);
@@ -151,28 +166,34 @@ export default function AmbientSoundPlayer({
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        {Object.entries(ambientSounds).map(([key, { name, emoji }]) => (
-          <Button
-            key={key}
-            variant={selectedSound === key ? "default" : "outline"}
-            onClick={() => {
-              setSelectedSound(key);
-              if (key !== "none") {
-                setIsAudioPlaying(true);
-              } else {
-                setIsAudioPlaying(false);
-              }
-            }}
-            className={`flex items-center gap-2 ${
-              selectedSound === key 
-                ? "bg-gradient-to-r from-teal-500 to-blue-500 text-white" 
-                : ""
-            }`}
-          >
-            <span>{emoji}</span>
-            <span className="text-sm">{name}</span>
-          </Button>
-        ))}
+        {Object.entries(ambientSounds).map(([key, { name, emoji, pro }]) => {
+          const locked = pro && !hasCustomSounds;
+          return (
+            <Button
+              key={key}
+              variant={selectedSound === key ? "default" : "outline"}
+              onClick={() => {
+                if (locked) return;
+                setSelectedSound(key);
+                if (key !== "none") {
+                  setIsAudioPlaying(true);
+                } else {
+                  setIsAudioPlaying(false);
+                }
+              }}
+              title={locked ? "Upgrade to Pro to unlock" : undefined}
+              className={`flex items-center gap-2 relative ${
+                selectedSound === key 
+                  ? "bg-gradient-to-r from-teal-500 to-blue-500 text-white" 
+                  : locked ? "opacity-60 cursor-default" : ""
+              }`}
+            >
+              <span>{emoji}</span>
+              <span className="text-sm">{name}</span>
+              {locked && <Crown className="w-3 h-3 text-yellow-500 ml-auto" />}
+            </Button>
+          );
+        })}
       </div>
       
       <div className="text-xs text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 p-2 rounded">
