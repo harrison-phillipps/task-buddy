@@ -6,6 +6,7 @@ import { Calendar, Check, RefreshCw, Loader2, ArrowLeftRight, Info } from "lucid
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { useIsNativeIOS } from "@/hooks/useIsNativeIOS";
+import IOSCalendarExport from "@/components/settings/IOSCalendarExport";
 
 export default function CalendarIntegrations() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -181,19 +182,7 @@ export default function CalendarIntegrations() {
         </CardContent>
       </Card>
 
-      {isNativeIOS && (
-        <Card className="border-amber-200 bg-amber-50">
-          <CardContent className="flex items-start gap-3 p-4">
-            <Info className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="font-semibold text-amber-800">Apple Calendar not supported</p>
-              <p className="text-sm text-amber-700 mt-1">
-                TaskBuddy syncs with <strong>Google Calendar</strong> and <strong>Outlook</strong> — not the built-in iPhone Calendar app. To use calendar sync, connect one of those accounts above.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <IOSCalendarExport />
     </div>
   );
 }
