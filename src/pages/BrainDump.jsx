@@ -616,12 +616,12 @@ Rules:
                       <Users className="w-4 h-4" />
                       Create Tasks for Team (optional)
                     </Label>
-                    <Select value={selectedTeam || ""} onValueChange={(val) => setSelectedTeam(val || null)}>
+                    <Select value={selectedTeam || "__personal__"} onValueChange={(val) => setSelectedTeam(val === "__personal__" ? null : val)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Personal tasks" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={null}>Personal tasks</SelectItem>
+                        <SelectItem value="__personal__">Personal tasks</SelectItem>
                         {teams.map(team => (
                           <SelectItem key={team.id} value={team.id}>
                             👥 {team.name}
@@ -639,7 +639,7 @@ Rules:
                 )}
 
                 <Button
-                  onClick={handleProcess}
+                  onClick={() => handleProcess()}
                   disabled={!brainDumpText.trim() || isProcessing}
                   className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold py-6 text-lg shadow-lg"
                 >
