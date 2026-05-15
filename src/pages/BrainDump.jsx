@@ -174,9 +174,26 @@ Rules:
         base44.entities.BrainDump.create({
           content: text,
           tasks_created: 0,
-          team_id: selectedTeam || undefined
+          team_id: selectedTeam && selectedTeam !== "__personal__" ? selectedTeam : undefined
         })
       ]);
+
+      // Save encouragement + update points (fire-and-forget, non-blocking)
+      Promise.all([
+        base44.entities.BrainDump.update(savedBrainDump.id, { encouragement: result.encouragement }),
+        (async () => {
+          try {
+            const progressList = await base44.entities.UserProgress.filter({ user_id: currentUser?.id });
+            if (progressList.length > 0) {
+              const up = progressList[0];
+              await base44.entities.UserProgress.update(up.id, {
+                total_points: up.total_points + POINTS_SYSTEM.BRAIN_DUMP_CREATED,
+                brain_dumps_created: (up.brain_dumps_created || 0) + 1
+              });
+            }
+          } catch (e) { console.error("Error updating progress:", e); }
+        })()
+      ]).catch(console.error);
 
       setExtractedTasks({ ...result, brainDumpId: savedBrainDump.id });
 
@@ -258,7 +275,7 @@ Rules:
         base44.entities.BrainDump.create({
           content: brainDumpText,
           tasks_created: 0,
-          team_id: selectedTeam || undefined
+          team_id: selectedTeam && selectedTeam !== "__personal__" ? selectedTeam : undefined
         })
       ]);
 
@@ -296,7 +313,7 @@ Rules:
       is_recurring: t.is_recurring || false,
       recurrence_pattern: t.recurrence_pattern || "none",
       task_priority: t.task_priority || null,
-      team_id: selectedTeam || undefined
+      team_id: selectedTeam && selectedTeam !== "__personal__" ? selectedTeam : undefined
     }));
 
     try {
@@ -324,7 +341,7 @@ Rules:
       is_recurring: task.is_recurring || false,
       recurrence_pattern: task.recurrence_pattern || "none",
       task_priority: task.task_priority || null,
-      team_id: selectedTeam || undefined
+      team_id: selectedTeam && selectedTeam !== "__personal__" ? selectedTeam : undefined
     }));
 
     // Check for duplicates in non-completed tasks
