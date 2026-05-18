@@ -1440,6 +1440,10 @@ export default function FocusSession() {
               />
             </TabsContent>
           </Tabs>
+        ) : !selectedTask ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
+          </div>
         ) : (
           <AnimatePresence>
             {!showBreakPrompt || isBreakTime ? (
@@ -1452,7 +1456,7 @@ export default function FocusSession() {
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                        Step {currentSubtaskIndex + 1} of {selectedTask.subtasks.length}
+                        Step {currentSubtaskIndex + 1} of {selectedTask.subtasks?.length || 0}
                       </span>
                       <div className="flex items-center gap-2">
                         <Badge className="bg-gradient-to-r from-purple-500 to-teal-500 text-white">
@@ -1466,7 +1470,7 @@ export default function FocusSession() {
                       </div>
                     </div>
                     <Progress 
-                      value={(completedSubtasks.size / selectedTask.subtasks.length) * 100} 
+                      value={selectedTask.subtasks?.length ? (completedSubtasks.size / selectedTask.subtasks.length) * 100 : 0} 
                       className="h-2 mb-2" 
                     />
                   </CardContent>
@@ -1588,7 +1592,7 @@ export default function FocusSession() {
                           </div>
                         )}
                       </div>
-                      {!isBreakTime && currentSubtaskIndex < selectedTask.subtasks.length - 1 && (
+                      {!isBreakTime && currentSubtaskIndex < (selectedTask.subtasks?.length || 0) - 1 && (
                         <div className="flex justify-center">
                           <Button 
                             onClick={skipToNextStep} 
@@ -1635,7 +1639,7 @@ export default function FocusSession() {
                   </CardContent>
                 </Card>
 
-                {!isBreakTime && (
+                {!isBreakTime && selectedTask.subtasks?.length > 0 && (
                   <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-purple-100 dark:border-gray-700">
                     <CardHeader>
                       <CardTitle className="text-lg dark:text-gray-100">All Steps</CardTitle>
