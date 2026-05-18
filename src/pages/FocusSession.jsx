@@ -226,7 +226,9 @@ export default function FocusSession() {
     enabled: !!currentUser,
   });
 
-  const selectedTask = tasks.find(t => t.id === selectedTaskId);
+  // Keep a stable reference to the task once the session starts, so refetches don't lose it
+  const [lockedTask, setLockedTask] = useState(null);
+  const selectedTask = sessionStarted ? (lockedTask || tasks.find(t => t.id === selectedTaskId)) : tasks.find(t => t.id === selectedTaskId);
   const currentSubtask = selectedTask?.subtasks?.[currentSubtaskIndex];
 
   // Real-time cross-device session sync (must be after selectedTask is defined)
@@ -603,6 +605,11 @@ export default function FocusSession() {
 
   const startSession = () => {
     if (!selectedTaskId || !moodBefore) return;
+
+    // Lock the task data so refetches don't cause a blank screen mid-session
+    const taskToLock = tasks.find(t => t.id === selectedTaskId);
+    if (!taskToLock) return;
+    setLockedTask(taskToLock);
     
     // Generate unique session ID
     const newSessionId = `session_${Date.now()}`;
@@ -971,6 +978,7 @@ export default function FocusSession() {
   };
   
   const resetSession = () => {
+    setLockedTask(null);
     setSessionStarted(false);
     setIsActive(false);
     setCompletedSubtasks(new Set());
