@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Calendar, Link as LinkIcon, CheckCircle2, Sparkles, RefreshCw, Pin, UserPlus, BookTemplate, Trash2, CheckSquare, Square, X } from "lucide-react";
+import { Plus, Calendar, Link as LinkIcon, CheckCircle2, Sparkles, RefreshCw, Pin, UserPlus, BookTemplate, Trash2, CheckSquare, Square, X, Tag, Zap } from "lucide-react";
 import TaskFilterSortBar from "../components/tasks/TaskFilterSortBar";
 import toast from "react-hot-toast";
 import { analyzeTaskPriority } from "../components/ai/TaskPrioritizer";
@@ -94,6 +94,7 @@ export default function Tasks() {
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [selectedTaskIds, setSelectedTaskIds] = useState(new Set());
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [bulkEditMode, setBulkEditMode] = useState(null); // 'category' | 'difficulty' | null
 
   const isSelecting = selectedTaskIds.size > 0;
 
@@ -105,7 +106,7 @@ export default function Tasks() {
     });
   };
 
-  const clearSelection = () => setSelectedTaskIds(new Set());
+  const clearSelection = () => { setSelectedTaskIds(new Set()); setBulkEditMode(null); };
 
   const handleBulkComplete = async () => {
     const tasksToComplete = filteredTasks.filter(t => selectedTaskIds.has(t.id) && t.status !== 'completed');
@@ -120,6 +121,13 @@ export default function Tasks() {
     clearSelection();
     setShowBulkDeleteConfirm(false);
     toast.success(`${ids.length} task${ids.length !== 1 ? 's' : ''} deleted`);
+  };
+
+  const handleBulkUpdate = async (field, value) => {
+    const ids = [...selectedTaskIds];
+    await Promise.all(ids.map(id => updateTaskMutation.mutateAsync({ id, data: { [field]: value } })));
+    clearSelection();
+    toast.success(`${ids.length} task${ids.length !== 1 ? 's' : ''} updated`);
   };
 
   const { isOnline, pendingCount, isSyncing, flushQueue, refreshPendingCount } = useOfflineSync({
@@ -719,31 +727,105 @@ export default function Tasks() {
               initial={{ opacity: 0, y: -12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
-              className="flex items-center gap-3 bg-white dark:bg-gray-800 border border-purple-200 dark:border-gray-600 rounded-xl px-4 py-3 shadow-md"
+              className="bg-white dark:bg-gray-800 border border-purple-200 dark:border-gray-600 rounded-xl shadow-md overflow-hidden"
             >
-              <span className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex-1">
-                {selectedTaskIds.size} selected
-              </span>
-              <Button
-                size="sm"
-                onClick={handleBulkComplete}
-                className="bg-green-500 hover:bg-green-600 text-white gap-1.5"
-              >
-                <CheckCircle2 className="w-4 h-4" />
-                Complete
-              </Button>
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => setShowBulkDeleteConfirm(true)}
-                className="gap-1.5"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete
-              </Button>
-              <button onClick={clearSelection} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                <X className="w-4 h-4 text-gray-500" />
-              </button>
+              {/* Main action row */}
+              <div className="flex items-center gap-2 px-4 py-3 flex-wrap">
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex-1">
+                  {selectedTaskIds.size} selected
+                </span>
+                <Button size="sm" onClick={handleBulkComplete} className="bg-green-500 hover:bg-green-600 text-white gap-1.5">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Complete</span>
+                </Button>
+                <Button
+                  size="sm"
+                  variant={bulkEditMode === 'category' ? 'default' : 'outline'}
+                  onClick={() => setBulkEditMode(prev => prev === 'category' ? null : 'category')}
+                  className="gap-1.5 border-purple-200"
+                >
+                  <Tag className="w-4 h-4" />
+                  <span className="hidden sm:inline">Category</span>
+                </Button>
+                <Button
+                  size="sm"
+                  variant={bulkEditMode === 'difficulty' ? 'default' : 'outline'}
+                  onClick={() => setBulkEditMode(prev => prev === 'difficulty' ? null : 'difficulty')}
+                  className="gap-1.5 border-purple-200"
+                >
+                  <Zap className="w-4 h-4" />
+                  <span className="hidden sm:inline">Difficulty</span>
+                </Button>
+                <Button size="sm" variant="destructive" onClick={() => setShowBulkDeleteConfirm(true)} className="gap-1.5">
+                  <Trash2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Delete</span>
+                </Button>
+                <button onClick={clearSelection} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                  <X className="w-4 h-4 text-gray-500" />
+                </button>
+              </div>
+
+              {/* Inline category picker */}
+              <AnimatePresence>
+                {bulkEditMode === 'category' && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden border-t border-purple-100 dark:border-gray-700 px-4 py-3"
+                  >
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Set category for all selected</p>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { value: 'work', label: '💼 Work' },
+                        { value: 'personal', label: '🙂 Personal' },
+                        { value: 'health', label: '💪 Health' },
+                        { value: 'creative', label: '🎨 Creative' },
+                        { value: 'learning', label: '📚 Learning' },
+                        { value: 'household', label: '🏠 Household' },
+                        { value: 'other', label: '📌 Other' },
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => handleBulkUpdate('category', opt.value)}
+                          className="px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 dark:bg-gray-700 hover:bg-purple-100 dark:hover:bg-purple-900/50 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Inline difficulty picker */}
+              <AnimatePresence>
+                {bulkEditMode === 'difficulty' && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden border-t border-purple-100 dark:border-gray-700 px-4 py-3"
+                  >
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Set difficulty for all selected</p>
+                    <div className="flex gap-3">
+                      {[
+                        { value: 'easy', label: '🟢 Easy', color: 'hover:bg-green-100 hover:text-green-700 dark:hover:bg-green-900/50 dark:hover:text-green-300' },
+                        { value: 'medium', label: '🟡 Medium', color: 'hover:bg-yellow-100 hover:text-yellow-700 dark:hover:bg-yellow-900/50 dark:hover:text-yellow-300' },
+                        { value: 'hard', label: '🔴 Hard', color: 'hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-900/50 dark:hover:text-red-300' },
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => handleBulkUpdate('difficulty', opt.value)}
+                          className={`px-4 py-2 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 transition-colors ${opt.color}`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
         </AnimatePresence>
