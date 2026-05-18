@@ -57,8 +57,7 @@ Output 4–7 subtasks. Also give a short 1-sentence encouragement message.`,
     if (subtasks) onApply(subtasks);
   };
 
-  // Auto-generate on mount
-  React.useEffect(() => { generate(); }, []);
+  // Do NOT auto-generate on mount — user must click to save credits
 
   return (
     <motion.div
@@ -79,6 +78,18 @@ Output 4–7 subtasks. Also give a short 1-sentence encouragement message.`,
             <X className="w-4 h-4" />
           </button>
         </div>
+
+        {!subtasks && !isLoading && (
+          <div className="flex flex-col items-center gap-3 py-4">
+            <p className="text-sm text-purple-700 dark:text-purple-300 text-center">
+              Let AI break this into small, manageable steps for you.
+            </p>
+            <Button size="sm" onClick={generate} className="bg-gradient-to-r from-purple-500 to-teal-500 text-white">
+              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+              Break it down
+            </Button>
+          </div>
+        )}
 
         {isLoading && (
           <div className="flex items-center gap-2 py-4 justify-center text-purple-600 dark:text-purple-400">

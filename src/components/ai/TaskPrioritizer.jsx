@@ -18,6 +18,8 @@ export async function analyzeTaskPriority(tasks, userHistory, preferences = {}, 
     preferDeepWork = false,
   } = preferences;
 
+  // Cap to 50 active tasks to keep prompt size manageable
+  tasks = tasks.slice(0, 50);
   const completedTasks = userHistory.filter(t => t.status === 'completed');
 
   const completionPatterns = {
@@ -39,59 +41,17 @@ export async function analyzeTaskPriority(tasks, userHistory, preferences = {}, 
 
   const strategyLine = strategyHint ? `\nSTRATEGY INSTRUCTION: ${strategyHint}\n` : "";
 
-  const prompt = `You are an expert task prioritization assistant helping someone optimize their workflow.${strategyLine}
+  const prompt = `Prioritize these tasks (0-100 score each).${strategyLine}
 
-ACTIVE TASKS (with dependency chain depth and goal linkage):
+TASKS:
 ${tasks.map(t => {
   const goal = t.goal_id ? goalMap[t.goal_id] : null;
   const depth = dependencyDepthMap[t.id] || 0;
-  const isLearning = t.category === 'learning' || skillCategories.has(t.category);
-  return `
-- ID: "${t.id}" | Title: "${t.title}"
-  Category: ${t.category}, Difficulty: ${t.difficulty}, Energy: ${t.energy_level_needed}
-  Estimated: ${t.estimated_minutes || '?'}m, Priority: ${t.task_priority || 'not set'}
-  Due: ${t.due_date || 'no deadline'}
-  Blocked by: ${t.blocked_by?.length > 0 ? t.blocked_by.length + ' tasks' : 'none'}
-  Unblocks: ${t.blocks?.length || 0} tasks (chain depth: ${depth})
-  Status: ${t.status}, Subtasks: ${t.subtasks?.length || 0} (${t.subtasks?.filter(st => st.completed).length || 0} done)
-  Goal alignment: ${goal ? `"${goal.title}" (${goal.priority} priority, status: ${goal.status})` : 'none'}
-  Skill/learning task: ${isLearning ? 'yes' : 'no'}`;
+  return `- "${t.id}": ${t.title} | ${t.category}/${t.difficulty} | due:${t.due_date || 'none'} | blocks:${depth} | priority:${t.task_priority || '-'} | status:${t.status}${goal ? ` | goal:"${goal.title}"(${goal.priority})` : ''}`;
 }).join('\n')}
 
-USER GOALS (active):
-${goals.filter(g => g.status !== 'completed').map(g => `- "${g.title}" | type: ${g.type} | priority: ${g.priority} | deadline: ${g.target_date || 'none'} | status: ${g.status}`).join('\n') || 'None set'}
-
-SKILL DEVELOPMENT AREAS:
-${skills.slice(0, 8).map(s => `- ${s.name || s.title} (${s.category || 'general'})`).join('\n') || 'None tracked'}
-
-USER COMPLETION PATTERNS:
-- Preferred work time: ${completionPatterns.preferredTimeOfDay}
-- Average task completion time: ${completionPatterns.averageCompletionTime}m
-- Best performing category: ${completionPatterns.categorySuccess[0]?.category || 'N/A'}
-- Best at difficulty level: ${completionPatterns.difficultySuccess[0]?.difficulty || 'N/A'}
-
-PRIORITIZATION PREFERENCES:
-- Consider deadlines: ${considerDeadlines} (weight: ${urgencyWeight}x)
-- Consider dependencies: ${considerDependencies} (chain depth weight: ${dependencyChainWeight}x)
-- Consider difficulty: ${considerDifficulty}
-- Consider patterns: ${considerCompletionPatterns}
-- Consider goal alignment: ${considerGoalAlignment} (weight: ${goalAlignmentWeight}x)
-- Consider skill development: ${considerSkillDevelopment} (weight: ${learningWeight}x)
-- Work style: ${workStyle}
-- Avoid task switching: ${avoidTaskSwitching}
-- Prefer deep work blocks: ${preferDeepWork}
-- Importance weight: ${importanceWeight}x
-
-Analyze and provide optimal task order. Scoring factors (0-100):
-1. Deadline urgency (× ${urgencyWeight})
-2. Dependency chain depth - tasks unblocking more work score higher (× ${dependencyChainWeight})
-3. Goal alignment - tasks tied to high-priority goals score higher (× ${goalAlignmentWeight})
-4. Learning/skill development value (× ${learningWeight})
-5. Historical success patterns for this category/difficulty
-6. Energy level match and work style fit
-7. MoSCoW priority and task importance (× ${importanceWeight})
-8. Momentum: in-progress tasks get a boost
-9. Work style: ${workStyle === 'deep_work' ? 'cluster similar tasks together' : workStyle === 'quick_wins' ? 'favour shorter tasks' : 'balanced approach'}`;
+CONTEXT: work_time:${completionPatterns.preferredTimeOfDay} | strategy:${workStyle}${strategyHint ? ` | ${strategyHint}` : ''}
+${goals.filter(g => g.status !== 'completed').length > 0 ? `GOALS: ${goals.filter(g => g.status !== 'completed').slice(0,5).map(g => `${g.title}(${g.priority})`).join(', ')}` : ''}`;
 
   const result = await base44.integrations.Core.InvokeLLM({
     prompt,

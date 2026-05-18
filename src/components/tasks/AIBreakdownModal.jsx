@@ -27,41 +27,14 @@ export default function AIBreakdownModal({ task, open, onOpenChange, onSave }) {
 
     setIsGenerating(true);
     try {
-      // Get historical time estimation data
-      let historicalData = null;
-      try {
-        const historyResponse = await base44.functions.invoke('analyzeTaskHistory', {
-          analysisType: 'time_estimation'
-        });
-        historicalData = historyResponse.data;
-      } catch (error) {
-        console.error("Failed to get historical data:", error);
-      }
-
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze this task and break it down into smaller, actionable subtasks with estimated time for each:
+        prompt: `Break this task into 4–7 specific, actionable subtasks with time estimates. Add a warm-up step if difficult.
 
-Task Title: ${task.title}
-Task Description: ${task.description || "No description"}
-Task Category: ${task.category}
-Task Difficulty: ${task.difficulty}
+Task: ${task.title}
+${task.description ? `Description: ${task.description}` : ""}
+Category: ${task.category} | Difficulty: ${task.difficulty}
 
-${historicalData ? `Historical Time Estimation Data:
-- Average time for ${task.category} tasks: ${historicalData.category_estimates?.[task.category] || 'unknown'} minutes
-- Difficulty multiplier for ${task.difficulty}: ${historicalData.difficulty_multipliers?.[task.difficulty] || 1}x
-- Insights: ${historicalData.insights}
-
-Use this historical data to provide more accurate time estimates.` : ''}
-
-Please provide:
-1. Subtasks that are specific and actionable
-2. Estimated time in minutes for each subtask
-3. Order them logically
-4. Add a warm-up task if it's a difficult task
-5. Encouragement message
-6. Tips for completing this task successfully
-
-Return JSON with: subtasks (array of {title, estimated_minutes, order, is_warmup: boolean, completed: false}), encouragement (string), tips (array of strings)`,
+Return JSON with: subtasks (array of {title, estimated_minutes, order, is_warmup: boolean, completed: false}), encouragement (string, 1 sentence), tips (array of 2-3 strings)`,
         response_json_schema: {
           type: "object",
           properties: {

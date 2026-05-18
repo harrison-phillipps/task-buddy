@@ -1,5 +1,9 @@
 import { base44 } from "@/api/base44Client";
 
+// Simple in-memory cache: key → { message, ts }
+const _msgCache = {};
+const MSG_TTL = 10 * 60 * 1000; // 10 minutes
+
 /**
  * Generate a dynamic companion message using AI based on personality, context, and user data
  */
@@ -71,16 +75,21 @@ Write ONE concise message (1-2 sentences max) that:
 
 Return ONLY the message text, nothing else.`;
 
+  const cacheKey = `${context}-${personality.encouragement}-${personality.humor}-${level}-${streak}`;
+  const cached = _msgCache[cacheKey];
+  if (cached && Date.now() - cached.ts < MSG_TTL) {
+    return cached.message;
+  }
+
   try {
     const response = await base44.integrations.Core.InvokeLLM({
       prompt,
       add_context_from_internet: false,
     });
-    
+    _msgCache[cacheKey] = { message: response, ts: Date.now() };
     return response;
   } catch (error) {
     console.error("AI message generation failed:", error);
-    // Fallback to simple message
     return getFallbackMessage(context, personality);
   }
 }
