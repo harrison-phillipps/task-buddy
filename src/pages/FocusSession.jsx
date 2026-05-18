@@ -107,7 +107,7 @@ export default function FocusSession() {
   const preselectedTaskId = urlParams.get('taskId');
   const preselectedTaskTitle = urlParams.get('taskTitle') ? decodeURIComponent(urlParams.get('taskTitle')) : null;
 
-  const quickStart = urlParams.get('quickStart') === '1';
+  const quickStart = urlParams.get('quickStart') === '1' || urlParams.get('autostart') === 'true';
   const preselectedMood = urlParams.get('mood') || null;
   const preselectedTechnique = urlParams.get('technique') || null;
 
@@ -118,7 +118,8 @@ export default function FocusSession() {
   const [sessionStarted, setSessionStarted] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [sessionId, setSessionId] = useState(null);
-  const [moodBefore, setMoodBefore] = useState(preselectedMood || null);
+  // Default mood to "neutral" for quick-start so session can begin without manual mood selection
+  const [moodBefore, setMoodBefore] = useState(preselectedMood || (quickStart ? "neutral" : null));
   const [completedSubtasks, setCompletedSubtasks] = useState(new Set());
   const [sessionNotes, setSessionNotes] = useState("");
   const [showBreakPrompt, setShowBreakPrompt] = useState(false);
@@ -490,17 +491,20 @@ export default function FocusSession() {
     newCompleted.add(currentSubtaskIndex);
     setCompletedSubtasks(newCompleted);
 
-    const updatedSubtasks = selectedTask.subtasks.map((st, i) => ({
+    const subtasks = selectedTask?.subtasks || [];
+    const updatedSubtasks = subtasks.map((st, i) => ({
       ...st,
       completed: newCompleted.has(i)
     }));
 
-    updateTaskMutation.mutate({
-      id: selectedTask.id,
-      data: { subtasks: updatedSubtasks }
-    });
+    if (updatedSubtasks.length > 0) {
+      updateTaskMutation.mutate({
+        id: selectedTask.id,
+        data: { subtasks: updatedSubtasks }
+      });
+    }
 
-    if (currentSubtaskIndex >= selectedTask.subtasks.length - 1) {
+    if (subtasks.length === 0 || currentSubtaskIndex >= subtasks.length - 1) {
       setAllStepsComplete(true);
       setShowBreakPrompt(true);
 
@@ -514,7 +518,7 @@ export default function FocusSession() {
     } else {
       const nextIndex = currentSubtaskIndex + 1;
       setCurrentSubtaskIndex(nextIndex);
-      const nextSubtask = selectedTask.subtasks[nextIndex];
+      const nextSubtask = (selectedTask?.subtasks || [])[nextIndex];
 
       const nextTime = focusTechnique === "pomodoro" 
         ? workInterval * 60 
@@ -610,7 +614,7 @@ export default function FocusSession() {
     setSessionStartTime(Date.now());
     startSWKeepAlive(); // Prevent SW termination during active session
     
-    const subtasks = selectedTask.subtasks || [];
+    const subtasks = selectedTask?.subtasks || [];
     const firstIncomplete = subtasks.findIndex(st => !st.completed);
     const firstIdx = firstIncomplete === -1 ? 0 : firstIncomplete;
     setCurrentSubtaskIndex(firstIdx);
