@@ -28,7 +28,7 @@ export default function MobileTabBar() {
   const scrollPositions = useRef({});
   const prevPath = useRef(location.pathname);
   // Store the last visited URL for each tab root
-  const tabHistory = useRef(Object.fromEntries(tabs.map(t => [t.url, t.url])));
+  const tabHistory = useRef(Object.fromEntries(tabs.filter(Boolean).map(t => [t.url, t.url])));
 
   // Track last URL per tab and save/restore scroll
   useEffect(() => {
@@ -37,7 +37,7 @@ export default function MobileTabBar() {
     if (outgoing !== incoming) {
       scrollPositions.current[outgoing] = window.scrollY;
       // Update tab history: find which tab root owns this path
-      const ownerTab = tabs.find(t => incoming === t.url || incoming.startsWith(t.url + '/'));
+      const ownerTab = tabs.find(t => t && (incoming === t.url || incoming.startsWith(t.url + '/')));
       if (ownerTab) tabHistory.current[ownerTab.url] = incoming;
       const saved = scrollPositions.current[incoming] ?? 0;
       requestAnimationFrame(() => window.scrollTo(0, saved));
