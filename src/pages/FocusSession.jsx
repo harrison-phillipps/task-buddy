@@ -621,7 +621,7 @@ export default function FocusSession() {
     setSessionStartTime(Date.now());
     startSWKeepAlive(); // Prevent SW termination during active session
     
-    const subtasks = selectedTask?.subtasks || [];
+    const subtasks = taskToLock.subtasks || [];
     const firstIncomplete = subtasks.findIndex(st => !st.completed);
     const firstIdx = firstIncomplete === -1 ? 0 : firstIncomplete;
     setCurrentSubtaskIndex(firstIdx);
@@ -635,7 +635,7 @@ export default function FocusSession() {
 
     // Schedule a SW-based session-end notification at the exact timestamp
     const prefs = getNotifPrefs();
-    const totalMs = selectedTask.subtasks?.reduce((s, st) => s + (st.estimated_minutes || 0) * 60000, 0) || initialTime * 1000;
+    const totalMs = taskToLock.subtasks?.reduce((s, st) => s + (st.estimated_minutes || 0) * 60000, 0) || initialTime * 1000;
     const sessionEndsAt = Date.now() + totalMs;
 
     // Schedule SW-based session-end notification
@@ -644,8 +644,8 @@ export default function FocusSession() {
         type: 'SCHEDULE_SESSION_END',
         endsAt: sessionEndsAt,
         title: '⏱ Session Complete!',
-        body: `You finished: ${selectedTask.title}`,
-        taskId: selectedTask.id,
+        body: `You finished: ${taskToLock.title}`,
+        taskId: taskToLock.id,
       });
     }
 
@@ -664,7 +664,7 @@ export default function FocusSession() {
             id: `ending-soon-sw-${seconds}`,
             delay: alertAt - Date.now(),
             title: `⏰ ${label} left`,
-            body: `${label} remaining on: ${selectedTask.title}`,
+            body: `${label} remaining on: ${taskToLock.title}`,
             tag: `ending-soon-${seconds}`,
             vibrate: [100, 50, 100],
             requireInteraction: false,
@@ -682,9 +682,9 @@ export default function FocusSession() {
       });
     }
 
-    if (selectedTask?.status === 'not_started') {
+    if (taskToLock.status === 'not_started') {
       updateTaskMutation.mutate({
-        id: selectedTask.id,
+        id: taskToLock.id,
         data: { status: 'in_progress' }
       });
     }
@@ -694,11 +694,11 @@ export default function FocusSession() {
       requestNotificationPermission().then(granted => {
         setNotificationsEnabled(granted);
         if (granted && getNotifPrefs().sessionStart !== false) {
-          showRichNotification('Focus Session Started 🎯', `Working on: ${selectedTask.title}`, { tag: 'session-start' });
+          showRichNotification('Focus Session Started 🎯', `Working on: ${taskToLock.title}`, { tag: 'session-start' });
         }
       });
     } else if (getNotifPrefs().sessionStart !== false) {
-      showRichNotification('Focus Session Started 🎯', `Working on: ${selectedTask.title}`, { tag: 'session-start' });
+      showRichNotification('Focus Session Started 🎯', `Working on: ${taskToLock.title}`, { tag: 'session-start' });
     }
   };
 
