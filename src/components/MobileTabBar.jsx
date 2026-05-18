@@ -1,12 +1,13 @@
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useRef, useEffect, useState } from "react";
-import { LayoutDashboard, ListTodo, Play, Target, MoreHorizontal, Brain, Settings, Calendar, Users, Award, Zap, X } from "lucide-react";
+import { LayoutDashboard, ListTodo, Play, Target, MoreHorizontal, Brain, Settings, Calendar, Users, Award, Zap, X, Plus } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { title: "Home", url: createPageUrl("Dashboard"), icon: LayoutDashboard },
   { title: "Tasks", url: createPageUrl("Tasks"), icon: ListTodo },
+  null, // center placeholder for Quick Add
   { title: "Focus", url: createPageUrl("FocusSession"), icon: Play },
   { title: "Goals", url: createPageUrl("Goals"), icon: Target },
 ];
@@ -91,7 +92,20 @@ export default function MobileTabBar() {
       </div>
 
       <nav className="mobile-tab-bar fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-t border-purple-100 dark:border-gray-700 flex md:hidden">
-        {tabs.map((tab) => {
+        {tabs.map((tab, i) => {
+          // Center Quick Add button
+          if (tab === null) {
+            return (
+              <div key="quick-add" className="flex-1 flex items-center justify-center" style={{ marginBottom: "env(safe-area-inset-bottom)" }}>
+                <button
+                  onClick={() => navigate(createPageUrl("QuickAdd"))}
+                  className="w-14 h-14 -mt-5 bg-gradient-to-br from-purple-500 to-teal-500 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform"
+                >
+                  <Plus className="w-7 h-7 text-white stroke-[2.5]" />
+                </button>
+              </div>
+            );
+          }
           const active = location.pathname === tab.url || location.pathname.startsWith(tab.url + '/');
           return (
             <button
