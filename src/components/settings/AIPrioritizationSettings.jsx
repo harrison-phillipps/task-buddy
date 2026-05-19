@@ -5,11 +5,22 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Info, Target, BookOpen, Link, Zap } from "lucide-react";
+import { Sparkles, Info, Target, BookOpen, Link, Zap, BatteryLow } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
+const ALL_CATEGORIES = [
+  { value: 'work', label: '💼 Work' },
+  { value: 'personal', label: '🙂 Personal' },
+  { value: 'health', label: '💪 Health' },
+  { value: 'creative', label: '🎨 Creative' },
+  { value: 'learning', label: '📚 Learning' },
+  { value: 'household', label: '🏠 Household' },
+  { value: 'other', label: '📌 Other' },
+];
+
 const DEFAULT_PREFS = {
+  low_ai_categories: [],
   considerDeadlines: true,
   considerDependencies: true,
   considerDifficulty: true,
@@ -153,6 +164,41 @@ export default function AIPrioritizationSettings({ currentUser, onUpdate }) {
 
           <ToggleRow id="noSwitch" label="Avoid Task Switching" description="Try to group tasks by category to reduce context switching" prefKey="avoidTaskSwitching" />
           <ToggleRow id="deepWork" label="Prefer Deep Work Blocks" description="Prioritise uninterrupted large tasks over many small ones" prefKey="preferDeepWork" />
+        </div>
+
+        {/* ── Low-AI Mode ─────────────────────────────────────────────────── */}
+        <div className="border-t dark:border-gray-700 pt-4 space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+            <BatteryLow className="w-3.5 h-3.5 text-yellow-500" /> Low-AI Mode — Skip AI Breakdown
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            For selected categories, the AI task breakdown will be skipped entirely — saving integration credits on simple chores.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {ALL_CATEGORIES.map(cat => {
+              const active = (preferences.low_ai_categories || []).includes(cat.value);
+              return (
+                <button
+                  key={cat.value}
+                  type="button"
+                  onClick={() => {
+                    const current = preferences.low_ai_categories || [];
+                    set('low_ai_categories', active
+                      ? current.filter(c => c !== cat.value)
+                      : [...current, cat.value]
+                    );
+                  }}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                    active
+                      ? 'bg-yellow-100 border-yellow-400 text-yellow-800 dark:bg-yellow-900/40 dark:border-yellow-600 dark:text-yellow-300'
+                      : 'bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300'
+                  }`}
+                >
+                  {cat.label} {active ? '✕ AI off' : ''}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg p-3 text-sm flex gap-2">

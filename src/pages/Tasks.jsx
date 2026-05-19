@@ -1152,6 +1152,7 @@ export default function Tasks() {
           task={taskToBreakdown}
           open={showAIBreakdown}
           onOpenChange={setShowAIBreakdown}
+          lowAIMode={(currentUser?.ai_prioritization_preferences?.low_ai_categories || []).includes(taskToBreakdown?.category)}
           onSave={(data) => {
             if (taskToBreakdown) {
               updateTaskMutation.mutate({

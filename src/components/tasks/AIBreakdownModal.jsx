@@ -3,12 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, RefreshCw, Edit2, Trash2, Check, Clock, Loader2 } from "lucide-react";
+import { Sparkles, RefreshCw, Edit2, Trash2, Check, Clock, Loader2, BatteryLow } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 
-export default function AIBreakdownModal({ task, open, onOpenChange, onSave }) {
+export default function AIBreakdownModal({ task, open, onOpenChange, onSave, lowAIMode = false }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [subtasks, setSubtasks] = useState([]);
   const [encouragement, setEncouragement] = useState("");
@@ -17,10 +17,10 @@ export default function AIBreakdownModal({ task, open, onOpenChange, onSave }) {
   const [editValue, setEditValue] = useState("");
 
   React.useEffect(() => {
-    if (open && task && subtasks.length === 0) {
+    if (open && task && subtasks.length === 0 && !lowAIMode) {
       handleGenerate();
     }
-  }, [open, task]);
+  }, [open, task, lowAIMode]);
 
   const handleGenerate = async () => {
     if (!task) return;
@@ -124,7 +124,15 @@ Return JSON with: subtasks (array of {title, estimated_minutes, order, is_warmup
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {isGenerating ? (
+          {lowAIMode ? (
+            <div className="rounded-lg border border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-700 p-4 text-sm text-yellow-800 dark:text-yellow-300 flex gap-3">
+              <BatteryLow className="w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-600" />
+              <div>
+                <p className="font-semibold mb-1">Low-AI Mode is on for this category</p>
+                <p className="text-xs">AI breakdown is disabled for <strong>{task?.category}</strong> tasks to save integration credits. You can add subtasks manually from the task edit page, or turn this off in <strong>Settings → AI Priority</strong>.</p>
+              </div>
+            </div>
+          ) : isGenerating ? (
             <div className="text-center py-12">
               <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
               <p className="text-gray-600">Analyzing task and creating breakdown...</p>
