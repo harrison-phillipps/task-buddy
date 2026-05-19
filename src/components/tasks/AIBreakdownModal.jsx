@@ -3,10 +3,32 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, RefreshCw, Edit2, Trash2, Check, Clock, Loader2, BatteryLow } from "lucide-react";
+import { Sparkles, RefreshCw, Edit2, Trash2, Check, Clock, Loader2, BatteryLow, DatabaseZap } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
+
+const CACHE_PREFIX = "ai_breakdown_";
+const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+function getCached(taskId) {
+  try {
+    const raw = localStorage.getItem(CACHE_PREFIX + taskId);
+    if (!raw) return null;
+    const { data, cachedAt } = JSON.parse(raw);
+    if (Date.now() - cachedAt > CACHE_TTL_MS) {
+      localStorage.removeItem(CACHE_PREFIX + taskId);
+      return null;
+    }
+    return data;
+  } catch { return null; }
+}
+
+function setCache(taskId, data) {
+  try {
+    localStorage.setItem(CACHE_PREFIX + taskId, JSON.stringify({ data, cachedAt: Date.now() }));
+  } catch {}
+}
 
 export default function AIBreakdownModal({ task, open, onOpenChange, onSave, lowAIMode = false }) {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -15,17 +37,41 @@ export default function AIBreakdownModal({ task, open, onOpenChange, onSave, low
   const [tips, setTips] = useState([]);
   const [editingIndex, setEditingIndex] = useState(null);
   const [editValue, setEditValue] = useState("");
+  const [fromCache, setFromCache] = useState(false);
 
   React.useEffect(() => {
     if (open && task && subtasks.length === 0 && !lowAIMode) {
-      handleGenerate();
+      const cached = getCached(task.id);
+      if (cached) {
+        setSubtasks(cached.subtasks || []);
+        setEncouragement(cached.encouragement || "");
+        setTips(cached.tips || []);
+        setFromCache(true);
+      } else {
+        handleGenerate();
+      }
+    }
+    if (!open) {
+      setFromCache(false);
     }
   }, [open, task, lowAIMode]);
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (force = false) => {
     if (!task) return;
 
+    if (!force) {
+      const cached = getCached(task.id);
+      if (cached) {
+        setSubtasks(cached.subtasks || []);
+        setEncouragement(cached.encouragement || "");
+        setTips(cached.tips || []);
+        setFromCache(true);
+        return;
+      }
+    }
+
     setIsGenerating(true);
+    setFromCache(false);
     try {
       const result = await base44.integrations.Core.InvokeLLM({
         prompt: `Break this task into 4–7 specific, actionable subtasks with time estimates. Add a warm-up step if difficult.
@@ -60,9 +106,15 @@ Return JSON with: subtasks (array of {title, estimated_minutes, order, is_warmup
         }
       });
 
-      setSubtasks(result.subtasks || []);
-      setEncouragement(result.encouragement || "");
-      setTips(result.tips || []);
+      const data = {
+        subtasks: result.subtasks || [],
+        encouragement: result.encouragement || "",
+        tips: result.tips || [],
+      };
+      setCache(task.id, data);
+      setSubtasks(data.subtasks);
+      setEncouragement(data.encouragement);
+      setTips(data.tips);
 
       toast.success("AI breakdown complete! ✨");
     } catch (error) {
@@ -110,6 +162,7 @@ Return JSON with: subtasks (array of {title, estimated_minutes, order, is_warmup
     setSubtasks([]);
     setEncouragement("");
     setTips([]);
+    setFromCache(false);
     onOpenChange(false);
   };
 
@@ -254,10 +307,17 @@ Return JSON with: subtasks (array of {title, estimated_minutes, order, is_warmup
                   </div>
                 )}
 
-                <div className="flex gap-2 pt-4">
+                <div className="flex flex-col gap-2 pt-4">
+                  {fromCache && (
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500 justify-center">
+                      <DatabaseZap className="w-3.5 h-3.5 text-teal-500" />
+                      Loaded from cache · <button className="underline hover:text-purple-600" onClick={() => handleGenerate(true)}>Regenerate fresh</button>
+                    </div>
+                  )}
+                  <div className="flex gap-2">
                   <Button
                     variant="outline"
-                    onClick={handleGenerate}
+                    onClick={() => handleGenerate(true)}
                     disabled={isGenerating}
                     className="flex-1"
                   >
@@ -271,6 +331,7 @@ Return JSON with: subtasks (array of {title, estimated_minutes, order, is_warmup
                     <Check className="w-4 h-4 mr-2" />
                     Apply Subtasks
                   </Button>
+                  </div>
                 </div>
               </motion.div>
             </AnimatePresence>
