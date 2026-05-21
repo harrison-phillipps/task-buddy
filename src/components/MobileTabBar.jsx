@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useRef, useEffect, useState } from "react";
-import { LayoutDashboard, ListTodo, Play, Target, MoreHorizontal, Brain, Settings, Calendar, Users, Award, Zap, X, Plus } from "lucide-react";
+import { LayoutDashboard, ListTodo, Play, Target, MoreHorizontal, Brain, Settings, Calendar, Users, Award, Zap, X, Plus, Sparkles } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +18,7 @@ const moreLinks = [
   { title: "Teams", url: createPageUrl("Teams"), icon: Users },
   { title: "Achievements", url: createPageUrl("Achievements"), icon: Award },
   { title: "Gap Filler", url: createPageUrl("CalendarGapFiller"), icon: Zap },
+  { title: "Companion", url: createPageUrl("CharacterSelection"), icon: Sparkles },
   { title: "Settings", url: createPageUrl("Settings"), icon: Settings },
 ];
 
