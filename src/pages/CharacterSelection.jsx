@@ -173,7 +173,7 @@ function CatCompanion({ selected }) {
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-10 h-8 bg-yellow-100/60 rounded-full" />
           {/* Tail */}
           <motion.div
-            className="absolute bottom-2 -right-8 w-14 h-5 bg-gradient-to-r from-amber-400 to-yellow-300 rounded-full border border-white/40"
+            className="absolute bottom-2 -right-8 w-14 h-5 bg-gradient-to-r from-amber-400 to-yellow-300 rounded-full border border-white/40 -z-10"
             animate={{ rotate: [10, 30, 10] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
             style={{ originX: 0, originY: 0.5 }}
@@ -254,7 +254,7 @@ function DogCompanion({ selected }) {
           <div className="absolute top-8 right-5 w-4 h-4 bg-amber-700/30 rounded-full" />
           {/* Tail */}
           <motion.div
-            className="absolute top-2 -right-6 w-5 h-16 bg-gradient-to-b from-amber-400 to-amber-500 rounded-full border border-white/40 shadow"
+            className="absolute top-2 -right-6 w-5 h-16 bg-gradient-to-b from-amber-400 to-amber-500 rounded-full border border-white/40 shadow -z-10"
             animate={{ rotate: [20, 50, 20] }}
             transition={{ duration: 0.5, repeat: Infinity, ease: "easeInOut" }}
             style={{ originY: 0 }}
