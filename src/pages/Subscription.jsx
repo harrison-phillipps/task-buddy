@@ -4,11 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Check, Zap, Sparkles, Crown, ArrowRight, XCircle, AlertTriangle, RefreshCw, CreditCard, Calendar, Smartphone } from "lucide-react";
+import { Check, Zap, Sparkles, Crown, ArrowRight, XCircle, AlertTriangle, RefreshCw, CreditCard, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 import { TIER_INFO } from "../components/subscription/FeatureGate";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useIsNativeIOS } from "@/hooks/useIsNativeIOS";
+import { useNativePlatform } from "@/hooks/useNativePlatform";
+import MobilePaymentGate from "@/components/subscription/MobilePaymentGate";
 
 const plansData = [
   {
@@ -126,7 +127,7 @@ export default function Subscription() {
     fetchUser();
   }, []);
 
-  const isNativeIOS = useIsNativeIOS();
+  const { isNative, isIOS, isAndroid, platform } = useNativePlatform();
   const currentTier = currentUser?.subscription_tier || "free";
 
   const handleSelectPlan = async (tier) => {
@@ -299,11 +300,8 @@ export default function Subscription() {
                       </div>
                     )}
 
-                    {isNativeIOS && !isCurrentPlan && plan.tier !== 'free' ? (
-                      <div className="mt-4 flex items-start gap-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-3 text-xs text-blue-800 dark:text-blue-300">
-                        <Smartphone className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>To subscribe, visit <strong>taskbuddy.app</strong> in Safari and manage your plan from there.</span>
-                      </div>
+                    {isNative && !isCurrentPlan && plan.tier !== 'free' ? (
+                      <MobilePaymentGate platform={platform} tier={plan.tier} billingPeriod={billingPeriod} />
                     ) : (
                       <Button
                         onClick={() => handleSelectPlan(plan.tier)}
@@ -389,30 +387,10 @@ export default function Subscription() {
           </p>
         </motion.div>
 
-        {/* iOS billing notice */}
-        {isNativeIOS && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="mt-8"
-          >
-            <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
-              <CardContent className="flex items-start gap-3 py-5">
-                <Smartphone className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-semibold text-blue-800 dark:text-blue-300">Manage your subscription on the web</p>
-                  <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
-                    Subscriptions for TaskBuddy are managed via our website. Open <strong>taskbuddy.app</strong> in Safari to subscribe, upgrade, or cancel your plan.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
+        {/* iOS/Android billing notice — handled inline in each plan card via MobilePaymentGate */}
 
-        {/* Cancel Subscription Section — hidden on iOS native */}
-        {!isNativeIOS && currentUser?.subscription_tier && currentUser.subscription_tier !== "free" && (
+        {/* Cancel Subscription Section — hidden on native (managed via device settings) */}
+        {!isNative && currentUser?.subscription_tier && currentUser.subscription_tier !== "free" && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
