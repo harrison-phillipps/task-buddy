@@ -36,7 +36,7 @@ function RobotCompanion({ selected }) {
         </div>
 
         {/* Head */}
-        <div className="w-20 h-20 bg-gradient-to-br from-slate-300 via-slate-200 to-slate-400 rounded-2xl shadow-xl border-2 border-white/80 relative overflow-hidden">
+        <div className="w-20 h-20 bg-gradient-to-br from-slate-300 via-slate-200 to-slate-400 rounded-2xl shadow-xl border-2 border-white/80 relative overflow-hidden mx-auto">
           {/* Sheen */}
           <div className="absolute top-1 left-1 w-6 h-3 bg-white/40 rounded-full rotate-12" />
           {/* Face screen */}
@@ -129,20 +129,24 @@ function CatCompanion({ selected }) {
           <div className="w-24 h-24 bg-gradient-to-br from-yellow-200 via-yellow-300 to-amber-400 rounded-full border-2 border-white/80 shadow-xl relative overflow-hidden">
             <div className="absolute top-1 left-3 w-8 h-3 bg-white/30 rounded-full rotate-12" />
             {/* Eyes */}
-            <motion.div
-              className="absolute top-8 left-1/2 -translate-x-1/2 flex gap-4"
-              animate={{ scaleY: [1, 0.05, 1] }}
-              transition={{ duration: 3.5, repeat: Infinity, times: [0, 0.5, 1] }}
-            >
-              <div className="w-4 h-4 bg-emerald-500 rounded-full border-2 border-gray-800 shadow">
+            <div className="absolute top-8 left-1/2 -translate-x-1/2 flex gap-3">
+              <motion.div
+                className="w-4 h-4 bg-emerald-500 rounded-full border-2 border-gray-800 shadow relative"
+                animate={{ scaleY: [1, 0.05, 1] }}
+                transition={{ duration: 3.5, repeat: Infinity, times: [0, 0.5, 1] }}
+              >
                 <div className="w-2 h-2 bg-gray-900 rounded-full absolute top-0.5 left-0.5" />
                 <div className="w-1 h-1 bg-white rounded-full absolute top-0.5 right-0.5" />
-              </div>
-              <div className="w-4 h-4 bg-emerald-500 rounded-full border-2 border-gray-800 shadow">
+              </motion.div>
+              <motion.div
+                className="w-4 h-4 bg-emerald-500 rounded-full border-2 border-gray-800 shadow relative"
+                animate={{ scaleY: [1, 0.05, 1] }}
+                transition={{ duration: 3.5, repeat: Infinity, times: [0, 0.5, 1], delay: 0.05 }}
+              >
                 <div className="w-2 h-2 bg-gray-900 rounded-full absolute top-0.5 left-0.5" />
                 <div className="w-1 h-1 bg-white rounded-full absolute top-0.5 right-0.5" />
-              </div>
-            </motion.div>
+              </motion.div>
+            </div>
             {/* Nose */}
             <div className="absolute top-14 left-1/2 -translate-x-1/2 w-2.5 h-2 bg-pink-400 rounded-sm rotate-45" />
             {/* Mouth */}
