@@ -13,7 +13,7 @@ function RobotCompanion({ selected }) {
   return (
     <motion.div
       className="relative flex items-end justify-center"
-      style={{ height: 160 }}
+      style={{ height: 180, paddingTop: 24 }}
       animate={{ y: [0, -6, 0] }}
       transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
     >
@@ -103,7 +103,7 @@ function CatCompanion({ selected }) {
   return (
     <motion.div
       className="relative flex items-end justify-center"
-      style={{ height: 160 }}
+      style={{ height: 180, paddingTop: 24 }}
       animate={{ y: [0, -5, 0] }}
       transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
     >
@@ -184,7 +184,7 @@ function DogCompanion({ selected }) {
   return (
     <motion.div
       className="relative flex items-end justify-center"
-      style={{ height: 160 }}
+      style={{ height: 180, paddingTop: 20 }}
       animate={{ y: [0, -4, 0] }}
       transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
     >
@@ -265,7 +265,7 @@ function OrbCompanion({ selected }) {
   return (
     <motion.div
       className="relative flex items-center justify-center"
-      style={{ height: 160 }}
+      style={{ height: 180 }}
       animate={{ y: [0, -10, 0] }}
       transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
     >
@@ -477,7 +477,7 @@ export default function CharacterSelection() {
 
                 <div className="p-4 sm:p-6 flex flex-col items-center text-center gap-3">
                   {/* Companion visual */}
-                  <div className="w-full flex items-center justify-center" style={{ minHeight: 160 }}>
+                  <div className="w-full flex items-center justify-center overflow-visible" style={{ height: 180 }}>
                     <c.Component selected={isSelected} />
                   </div>
 
