@@ -22,7 +22,6 @@ import {
 import { Button } from "@/components/ui/button";
 import PersonalitySettingsModal from "@/components/PersonalitySettingsModal";
 import NotificationBell from "@/components/notifications/NotificationBell";
-import DeepPersonalityCustomizer from "@/components/companion/DeepPersonalityCustomizer";
 import DevModeIndicator from "@/components/DevModeIndicator";
 import ThemeToggle from "@/components/ThemeToggle";
 import CrossDeviceSessionSync from "@/components/focus/CrossDeviceSessionSync";
@@ -43,7 +42,7 @@ function LayoutContent({ children, currentPageName }) {
   const [currentUser, setCurrentUser] = React.useState(null);
   const [userProgress, setUserProgress] = React.useState(null);
   const [showPersonalityModal, setShowPersonalityModal] = React.useState(false);
-  const [showDeepCustomizer, setShowDeepCustomizer] = React.useState(false);
+
   const [showMoreMenu, setShowMoreMenu] = React.useState(false);
 
   const userTier = currentUser?.subscription_tier || "free";
@@ -256,10 +255,7 @@ function LayoutContent({ children, currentPageName }) {
                         <MessageSquare className="w-3 h-3 mr-2" />
                         {getPersonalityLabel()}
                       </Button>
-                      <Button onClick={() => setShowDeepCustomizer(true)} variant="outline" size="sm" className="w-full bg-white hover:bg-purple-50 border-purple-200 text-purple-700 font-medium">
-                        <Sparkles className="w-3 h-3 mr-2" />
-                        Deep Customize
-                      </Button>
+
                     </div>
                   </div>
                 </SidebarGroupContent>
@@ -324,13 +320,6 @@ function LayoutContent({ children, currentPageName }) {
         <PersonalitySettingsModal
           open={showPersonalityModal}
           onOpenChange={setShowPersonalityModal}
-          currentUser={currentUser}
-          onUpdate={refreshUser}
-        />
-
-        <DeepPersonalityCustomizer
-          open={showDeepCustomizer}
-          onOpenChange={setShowDeepCustomizer}
           currentUser={currentUser}
           onUpdate={refreshUser}
         />
