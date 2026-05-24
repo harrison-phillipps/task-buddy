@@ -608,30 +608,32 @@ export default function FocusSession() {
 
     // Lock the task data so refetches don't cause a blank screen mid-session
     const taskToLock = tasks.find(t => t.id === selectedTaskId);
-    if (!taskToLock) return;
-    setLockedTask(taskToLock);
-    
-    // Generate unique session ID
+    if (!taskToLock) {
+      toast.error("Task not found. Please re-select your task.");
+      return;
+    }
+
+    // Set all state synchronously in one batch to avoid race condition
+    // where sessionStarted=true but lockedTask is still null
     const newSessionId = `session_${Date.now()}`;
+    setLockedTask(taskToLock);
     setSessionId(newSessionId);
-    
-    setIsController(true); // This device owns/controls the session
-    setSessionStarted(true);
-    setIsActive(true);
-    setSessionStartTime(Date.now());
-    startSWKeepAlive(); // Prevent SW termination during active session
-    
+    setIsController(true);
+
     const subtasks = taskToLock.subtasks || [];
     const firstIncomplete = subtasks.findIndex(st => !st.completed);
     const firstIdx = firstIncomplete === -1 ? 0 : firstIncomplete;
-    setCurrentSubtaskIndex(firstIdx);
     const firstSubtask = subtasks[firstIdx];
-    
-    const initialTime = focusTechnique === "pomodoro" 
-      ? workInterval * 60 
+    const initialTime = focusTechnique === "pomodoro"
+      ? workInterval * 60
       : (firstSubtask?.estimated_minutes || 10) * 60;
-    
+
+    setCurrentSubtaskIndex(firstIdx);
     setTimeLeft(initialTime);
+    setSessionStartTime(Date.now());
+    setIsActive(true);
+    setSessionStarted(true); // set LAST so lockedTask is ready when render triggers
+    startSWKeepAlive(); // Prevent SW termination during active session
 
     // Schedule a SW-based session-end notification at the exact timestamp
     const prefs = getNotifPrefs();
