@@ -190,21 +190,6 @@ a {
   border-color: #5b4f7a !important;
 }
 
-/* Focus session — headings and time estimate text */
-.dark .text-gray-700,
-.dark .text-gray-800 {
-  color: #d1cee0 !important;
-}
-.dark .text-gray-500 {
-  color: #a09abc !important;
-}
-.dark .text-gray-600 {
-  color: #b8b0cc !important;
-}
-.dark .text-gray-900 {
-  color: #f1f0f5 !important;
-}
-
 /* ============ END DARK MODE CONTRAST FIXES ============ */
 
 /* Native date/time inputs — consistent styling matching MobileSelect */
