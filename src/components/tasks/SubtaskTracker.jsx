@@ -14,7 +14,7 @@ export default function SubtaskTracker({ subtasks = [], onToggle, compact = fals
   if (compact) {
     return (
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs text-gray-600">
+        <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
           <span>{completedCount}/{totalCount} completed</span>
           <span>{Math.round(progress)}%</span>
         </div>
@@ -28,7 +28,7 @@ export default function SubtaskTracker({ subtasks = [], onToggle, compact = fals
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-purple-600" />
-          <span className="font-medium text-sm text-gray-700">
+          <span className="font-medium text-sm text-gray-700 dark:text-gray-300">
             Progress: {completedCount}/{totalCount}
           </span>
         </div>
@@ -48,7 +48,9 @@ export default function SubtaskTracker({ subtasks = [], onToggle, compact = fals
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 10 }}
               className={`flex items-start gap-3 p-2 rounded-lg transition-colors ${
-                subtask.completed ? 'bg-green-50' : 'bg-gray-50 hover:bg-gray-100'
+                subtask.completed
+                  ? 'bg-green-50 dark:bg-green-900/20'
+                  : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
               <Checkbox
@@ -57,12 +59,12 @@ export default function SubtaskTracker({ subtasks = [], onToggle, compact = fals
                 className="mt-1"
               />
               <div className="flex-1 min-w-0">
-                <p className={`text-sm ${subtask.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>
+                <p className={`text-sm ${subtask.completed ? 'line-through text-gray-500 dark:text-gray-500' : 'text-gray-800 dark:text-gray-200'}`}>
                   {subtask.title}
                 </p>
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
                   {subtask.estimated_minutes && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-xs dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
                       <Clock className="w-3 h-3 mr-1" />
                       {subtask.estimated_minutes}m
                     </Badge>
