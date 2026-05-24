@@ -1044,7 +1044,7 @@ export default function FocusSession() {
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-8">
+    <div className="min-h-screen p-4 md:p-8 pb-24 md:pb-8">
       <OfflineIndicator
         isOnline={isOnline}
         pendingCount={pendingCount}
@@ -1322,15 +1322,22 @@ export default function FocusSession() {
               />
 
               <div className="space-y-2">
-                <Label>How are you feeling right now?</Label>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                  {['energized', 'focused', 'tired', 'anxious', 'neutral'].map(mood => (
+                <Label className="dark:text-gray-200">How are you feeling right now?</Label>
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                  {[
+                    { mood: 'energized', emoji: '⚡' },
+                    { mood: 'focused', emoji: '🎯' },
+                    { mood: 'tired', emoji: '😴' },
+                    { mood: 'anxious', emoji: '😰' },
+                    { mood: 'neutral', emoji: '😐' },
+                  ].map(({ mood, emoji }) => (
                     <Button
                       key={mood}
                       variant={moodBefore === mood ? "default" : "outline"}
                       onClick={() => setMoodBefore(mood)}
-                      className={moodBefore === mood ? "bg-gradient-to-r from-purple-500 to-teal-500 text-white" : ""}
+                      className={`flex flex-col h-auto py-3 gap-1 text-xs capitalize min-h-[56px] ${moodBefore === mood ? "bg-gradient-to-r from-purple-500 to-teal-500 text-white border-transparent" : "dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"}`}
                     >
+                      <span className="text-lg">{emoji}</span>
                       {mood}
                     </Button>
                   ))}
@@ -1361,14 +1368,26 @@ export default function FocusSession() {
                 </button>
               </div>
 
+              {!selectedTaskId && (
+                <p className="text-center text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg py-2 px-3">
+                  Please select a task above to begin
+                </p>
+              )}
+              {selectedTaskId && !moodBefore && (
+                <p className="text-center text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg py-2 px-3">
+                  Please select how you're feeling to begin
+                </p>
+              )}
               <Button
                 onClick={startSession}
                 disabled={!selectedTaskId || !moodBefore}
-                className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold py-6 text-lg shadow-lg"
+                className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 disabled:opacity-40 text-white font-semibold py-6 text-lg shadow-lg"
               >
                 <Play className="w-5 h-5 mr-2" />
                 Start Focus Session
               </Button>
+              {/* Extra bottom padding so mobile tab bar doesn't cover the button */}
+              <div className="h-6 md:hidden" />
                 </CardContent>
               </Card>
             </TabsContent>

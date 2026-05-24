@@ -81,6 +81,117 @@ a {
 .dark .bg-yellow-50  { background-color: #1f1c10 !important; }
 .dark .bg-pink-50    { background-color: #1f101a !important; }
 
+/* ============ DARK MODE CONTRAST FIXES ============ */
+
+/* Ensure body text is readable */
+.dark p, .dark span, .dark li, .dark td, .dark th {
+  color: inherit;
+}
+
+/* Card text contrast */
+.dark [class*="CardTitle"],
+.dark [class*="CardHeader"] h1,
+.dark [class*="CardHeader"] h2,
+.dark [class*="CardHeader"] h3 {
+  color: #f1f0f5;
+}
+
+/* Input / select fields in dark mode */
+.dark input:not([type="range"]),
+.dark textarea,
+.dark select {
+  background-color: #1e1b2c !important;
+  color: #e2e0ec !important;
+  border-color: #3d3656 !important;
+}
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #7c748f !important;
+}
+
+/* Outline buttons in dark mode — ensure text is visible */
+.dark button[data-variant="outline"],
+.dark .border.bg-background {
+  color: #e2e0ec;
+}
+
+/* Badge contrast in dark mode */
+.dark [class*="Badge"]:not([class*="bg-gradient"]) {
+  color: #e2e0ec;
+}
+
+/* Table rows */
+.dark tr { border-color: #2d2a3e; }
+.dark th { color: #b8b0cc; }
+
+/* Select trigger / content */
+.dark [role="combobox"],
+.dark [role="listbox"] {
+  background-color: #1e1b2c;
+  color: #e2e0ec;
+  border-color: #3d3656;
+}
+
+/* Progress bar track */
+.dark [role="progressbar"] {
+  background-color: #2d2a3e;
+}
+
+/* Slider track */
+.dark [data-orientation="horizontal"].relative.flex {
+  background-color: #2d2a3e;
+}
+
+/* Dialog / Sheet / Drawer content */
+.dark [role="dialog"],
+.dark [data-vaul-drawer] {
+  background-color: #1a1728 !important;
+  color: #e2e0ec;
+}
+
+/* Popover content */
+.dark [data-radix-popper-content-wrapper] > div {
+  background-color: #1e1b2c;
+  border-color: #3d3656;
+  color: #e2e0ec;
+}
+
+/* Dropdown menu */
+.dark [role="menu"] {
+  background-color: #1e1b2c !important;
+  border-color: #3d3656 !important;
+}
+.dark [role="menuitem"],
+.dark [role="option"] {
+  color: #e2e0ec !important;
+}
+.dark [role="menuitem"]:hover,
+.dark [role="option"]:hover,
+.dark [role="menuitem"]:focus,
+.dark [role="option"]:focus {
+  background-color: #2d2a3e !important;
+}
+
+/* Tabs in dark mode */
+.dark [role="tablist"] {
+  background-color: #1e1b2c;
+}
+.dark [role="tab"] {
+  color: #a09abc;
+}
+.dark [role="tab"][data-state="active"] {
+  background-color: #2d2a3e;
+  color: #e2e0ec;
+}
+
+/* Checkbox & radio */
+.dark [role="checkbox"],
+.dark [role="radio"] {
+  border-color: #5b4f7a !important;
+}
+
+/* ============ END DARK MODE CONTRAST FIXES ============ */
+
 /* Native date/time inputs — consistent styling matching MobileSelect */
 input[type="date"],
 input[type="time"],
