@@ -1,0 +1,8 @@
+{
+  "type": "outlook",
+  "scopes": [
+    "Calendars.Read",
+    "User.Read",
+    "Calendars.ReadWrite"
+  ]
+}
