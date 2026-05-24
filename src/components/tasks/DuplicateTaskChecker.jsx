@@ -16,6 +16,7 @@ export default function DuplicateTaskChecker({
   duplicates, 
   newTaskTitle,
   onProceed, 
+  onSkipDuplicates,
   onCancel 
 }) {
   if (!duplicates || duplicates.length === 0) return null;
@@ -84,20 +85,29 @@ export default function DuplicateTaskChecker({
           </div>
         </div>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="flex flex-col sm:flex-row gap-2">
           <Button
             variant="outline"
             onClick={onCancel}
-            className="flex-1"
+            className="sm:flex-1"
           >
             Cancel
           </Button>
+          {onSkipDuplicates && (
+            <Button
+              variant="outline"
+              onClick={onSkipDuplicates}
+              className="sm:flex-1 border-teal-300 text-teal-700 hover:bg-teal-50"
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Save (Skip Duplicates)
+            </Button>
+          )}
           <Button
             onClick={onProceed}
-            className="flex-1 bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white"
+            className="sm:flex-1 bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white"
           >
-            <CheckCircle className="w-4 h-4 mr-2" />
-            Create Anyway
+            Save All Anyway
           </Button>
         </DialogFooter>
       </DialogContent>

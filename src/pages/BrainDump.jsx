@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, CheckCircle, Brain, Trash2, Clock, Layers, Mic, Repeat, Users } from "lucide-react";
+import { Sparkles, Loader2, CheckCircle, Brain, Trash2, Clock, Layers, Repeat, Users } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -18,8 +18,6 @@ import { getPersonalizedMessage } from "@/components/companionUtils";
 import VoiceToText from "../components/VoiceToText";
 import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
 import VoiceSchedulePrompt from "../components/braindump/VoiceSchedulePrompt";
-import NativeMicButton from "../components/braindump/NativeMicButton";
-import VoiceBrainDump from "../components/braindump/VoiceBrainDump";
 
 export default function BrainDump() {
   const navigate = useNavigate();
@@ -386,6 +384,23 @@ Rules:
     setDuplicateCheck(null);
   };
 
+  const handleSkipDuplicates = () => {
+    if (pendingTasks) {
+      const duplicateIds = new Set(duplicateCheck?.duplicates?.map(d => d.id) || []);
+      // Filter out tasks whose titles closely match any duplicate
+      const dedupedTasks = pendingTasks.tasks.filter(newTask => {
+        return !duplicateCheck?.duplicates?.some(existing =>
+          existing.title.toLowerCase().includes(newTask.title.toLowerCase().substring(0, 10)) ||
+          newTask.title.toLowerCase().includes(existing.title.toLowerCase().substring(0, 10))
+        );
+      });
+      createTasksMutation.mutate({ tasks: dedupedTasks, brainDumpId: pendingTasks.brainDumpId });
+    }
+    setShowDuplicateDialog(false);
+    setPendingTasks(null);
+    setDuplicateCheck(null);
+  };
+
   const handleCancelDuplicates = () => {
     setShowDuplicateDialog(false);
     setPendingTasks(null);
@@ -583,22 +598,6 @@ Rules:
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Rich voice brain dump */}
-                <VoiceBrainDump
-                  onTranscriptReady={(text) => setBrainDumpText(text)}
-                  onRequestParse={(text) => {
-                    setBrainDumpText(text);
-                    handleProcess(text);
-                  }}
-                  isProcessing={isProcessing}
-                />
-
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
-                  <span className="text-xs text-gray-400 font-medium">or type below</span>
-                  <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
-                </div>
-
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="braindump">Write freely - no structure needed!</Label>
@@ -872,6 +871,7 @@ Rules:
           duplicates={duplicateCheck?.duplicates || []}
           newTaskTitle={duplicateCheck?.newTaskTitle || ""}
           onProceed={handleProceedWithDuplicates}
+          onSkipDuplicates={handleSkipDuplicates}
           onCancel={handleCancelDuplicates}
         />
       </div>
