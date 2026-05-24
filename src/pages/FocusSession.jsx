@@ -1713,7 +1713,7 @@ export default function FocusSession() {
                                 </Badge>
                               )}
                             </div>
-                            <Badge variant="outline" className="flex items-center gap-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                            <Badge variant="outline" className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
                               {subtask.estimated_minutes}m
                             </Badge>

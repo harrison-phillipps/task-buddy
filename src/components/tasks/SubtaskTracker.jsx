@@ -64,7 +64,7 @@ export default function SubtaskTracker({ subtasks = [], onToggle, compact = fals
                 </p>
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
                   {subtask.estimated_minutes && (
-                    <Badge variant="outline" className="text-xs dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <Badge variant="outline" className="text-xs">
                       <Clock className="w-3 h-3 mr-1" />
                       {subtask.estimated_minutes}m
                     </Badge>

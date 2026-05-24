@@ -118,7 +118,7 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                   {task.category}
                 </Badge>
                 {task.estimated_minutes && (
-                  <Badge variant="outline" className="flex items-center gap-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <Badge variant="outline" className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     {task.estimated_minutes}m total
                   </Badge>
@@ -150,7 +150,7 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                   </Badge>
                 )}
                 {showTeamInfo && (task.assigned_to_name || task.assigned_to_users?.length > 0) && (
-                  <Badge variant="outline" className="flex items-center gap-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <Badge variant="outline" className="flex items-center gap-1">
                     <UserCircle className="w-3 h-3" />
                     {task.assigned_to_users?.length > 1 
                       ? `${task.assigned_to_users.length} members`
