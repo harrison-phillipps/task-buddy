@@ -189,10 +189,41 @@ export default function FocusSession() {
 
       if (!navigator.onLine) {
         const cached = await getCachedEntities('Task');
-        return cached;
+        return cached.filter(task =>
+          (!task.team_id && task.created_by === user.email) ||
+          task.assigned_to === user.id ||
+          task.assigned_to_users?.some(u => u.user_id === user.id) ||
+          task.team_id
+        );
       }
 
-      const allTasks = await base44.entities.Task.list('-created_date');
+      // Fetch personal tasks + tasks assigned to this user (mirrors Tasks page logic)
+      const [personalTasks, assignedTasks] = await Promise.all([
+        base44.entities.Task.filter({ created_by: user.email, team_id: null }, '-created_date'),
+        base44.entities.Task.filter({ assigned_to: user.id }, '-created_date'),
+      ]);
+      const seen = new Set();
+      const allTasks = [...personalTasks, ...assignedTasks].filter(t => {
+        if (seen.has(t.id)) return false;
+        seen.add(t.id);
+        return true;
+      });
+      // Also fetch tasks from teams the user belongs to
+      const allTeamTasks = await base44.entities.Team.list();
+      const userTeams = allTeamTasks.filter(team =>
+        team.owner_id === user.id || team.member_ids?.includes(user.id)
+      );
+      if (userTeams.length > 0) {
+        const teamTaskArrays = await Promise.all(
+          userTeams.map(team => base44.entities.Task.filter({ team_id: team.id }, '-created_date'))
+        );
+        teamTaskArrays.flat().forEach(t => {
+          if (!seen.has(t.id)) {
+            seen.add(t.id);
+            allTasks.push(t);
+          }
+        });
+      }
       await cacheEntities('Task', allTasks);
       return allTasks;
     },
