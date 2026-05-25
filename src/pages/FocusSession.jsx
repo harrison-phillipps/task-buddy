@@ -189,26 +189,12 @@ export default function FocusSession() {
 
       if (!navigator.onLine) {
         const cached = await getCachedEntities('Task');
-        return cached.filter(task => {
-          if (!task.team_id && task.created_by === user.email) return true;
-          if (task.team_id && (
-            task.assigned_to === user.id ||
-            task.assigned_to_users?.some(u => u.user_id === user.id)
-          )) return true;
-          return false;
-        });
+        return cached;
       }
 
       const allTasks = await base44.entities.Task.list('-created_date');
       await cacheEntities('Task', allTasks);
-      return allTasks.filter(task => {
-        if (!task.team_id && task.created_by === user.email) return true;
-        if (task.team_id && (
-          task.assigned_to === user.id || 
-          task.assigned_to_users?.some(u => u.user_id === user.id)
-        )) return true;
-        return false;
-      });
+      return allTasks;
     },
     enabled: true,
     staleTime: isOnline ? 0 : Infinity,
