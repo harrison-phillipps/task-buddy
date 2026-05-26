@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Target, Plus, RefreshCw } from "lucide-react";
+import GoogleTasksSyncButton from "../components/goals/GoogleTasksSyncButton";
 import { motion } from "framer-motion";
 import GoalCard from "../components/goals/GoalCard";
 import CreateGoalModal from "../components/goals/CreateGoalModal";
@@ -123,7 +124,8 @@ export default function GoalsPage() {
             </h1>
             <p className="text-gray-600 mt-1">Define big goals and track your progress</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap justify-end">
+            <GoogleTasksSyncButton goals={goals} />
             <Button 
               onClick={() => setShowCalendarSync(true)}
               variant="outline"
