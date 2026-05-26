@@ -90,30 +90,38 @@ export default function TaskBreakdown() {
       const result = await base44.integrations.Core.InvokeLLM({
         prompt: `You are a supportive ADHD coach helping someone break down a task into manageable steps.
 
-Task: ${taskInput.title}
+Task: "${taskInput.title}"
 Description: ${taskInput.description || "No additional details"}
+Category: ${taskInput.category}
 Difficulty: ${taskInput.difficulty}
 Energy Level Needed: ${taskInput.energy_level_needed}
 Current Mood: ${taskInput.current_mood || "not specified"}
 
-IMPORTANT: Based on their current mood, include a FIRST preparatory step to help them transition into the task:
-- If TIRED: suggest something energizing (e.g., "Do 10 jumping jacks", "Splash cold water on face", "Make a quick energizing drink", "Stand and stretch for 2 minutes")
-- If ANXIOUS: suggest something calming (e.g., "Take 5 deep breaths", "Write down 3 things you're grateful for", "Listen to a calming song")
-- If OVERWHELMED: suggest something grounding (e.g., "Tidy your immediate workspace for 2 minutes", "Write a quick brain dump of worries", "Look at your task and say 'I only need to do one step at a time'")
-- If UNMOTIVATED: suggest something activating (e.g., "Put on your favorite upbeat playlist", "Change into fresh/comfortable clothes", "Set a 2-minute timer and move around")
-- If DISTRACTED: suggest something focusing (e.g., "Clear your desk of distractions", "Put phone in another room", "Set up a 'focus mode' environment")
+CRITICAL RULE: The VERY FIRST step (step 1) must ALWAYS be an ultra-simple, physical "momentum starter" — something that takes 1-3 minutes, requires almost zero mental effort, and physically prepares or primes them for the task. This is the most important step because it breaks the inertia and creates a sense of "I've started". Examples tailored by task type:
+- Cleaning/household task: "Put on a comfy playlist or podcast", "Change into your cleaning clothes", "Gather all your cleaning supplies and put them in one spot", "Fill a bucket or grab a spray bottle"
+- Work/study task: "Clear your desk and put everything you need in front of you", "Make yourself a drink (tea, coffee, water)", "Open your documents and write the task title at the top"
+- Creative task: "Set up your creative space — lay out your tools/materials", "Put on background music that fits the vibe", "Write down one sentence about what you want to create"
+- Health/fitness task: "Put on your workout clothes", "Fill your water bottle", "Roll out your mat or set up your space"
+- Cooking: "Pull out all the ingredients and put them on the counter", "Fill the sink with soapy water for easy cleanup", "Put on a cooking playlist"
+- General: "Gather any supplies you'll need and lay them out", "Put on a playlist or background music", "Set a timer to make this feel like a game"
 
-Then break down the actual task into 3-7 clear, actionable subtasks. Each subtask should:
-- Be specific and concrete
-- Take 5-30 minutes to complete
-- Have a clear start and end point
+The momentum starter should feel almost TOO easy — that's the point. It creates a "foot in the door" and builds immediate confidence.
+
+Then add the mood-based adjustment if mood is specified:
+- TIRED: also ensure the first step is especially low-effort
+- ANXIOUS: second step could include "Take 3 slow breaths before moving to the next step"
+- OVERWHELMED: keep all steps very small and reassuring
+- UNMOTIVATED: make early steps extra satisfying and tangible
+- DISTRACTED: include "put phone out of reach" in the first two steps
+
+After the momentum starter, break down the actual task into 3-6 clear, actionable subtasks. Each should:
+- Be specific and concrete with a clear start and end point
+- Take 5-25 minutes to complete
 - Be ordered logically
 - Use encouraging, supportive language
 - Include a realistic time estimate in minutes
 
-The preparatory step should take 2-5 minutes maximum and feel doable even in their current mood state.
-
-Calculate total time including the prep step.`,
+Total steps should be 4-8 including the momentum starter.`,
         response_json_schema: {
           type: "object",
           properties: {
@@ -469,16 +477,26 @@ Calculate total time including the prep step.`,
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {editingSubtasks?.length > 0 && (
+                    <div className="flex items-center gap-2 text-sm font-semibold text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                      <span>🚀</span>
+                      <span>Step 1 is your momentum starter — super easy, just to get you moving!</span>
+                    </div>
+                  )}
                   {editingSubtasks?.map((subtask, index) => (
                     <motion.div
                       key={index}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className="flex items-start gap-3 p-4 bg-gradient-to-r from-purple-50 to-teal-50 rounded-xl"
+                      className={`flex items-start gap-3 p-4 rounded-xl ${index === 0 ? 'bg-gradient-to-r from-green-50 to-teal-50 border-2 border-green-200' : 'bg-gradient-to-r from-purple-50 to-teal-50'}`}
                     >
-                      <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold">
-                        {index + 1}
+                      {index === 0 && (
+                        <div className="absolute -top-2 left-4">
+                        </div>
+                      )}
+                      <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${index === 0 ? 'bg-gradient-to-br from-green-400 to-teal-500' : 'bg-gradient-to-br from-purple-500 to-teal-500'}`}>
+                        {index === 0 ? '🚀' : index + 1}
                       </div>
                       <div className="flex-1 space-y-2">
                         <Input
