@@ -29,6 +29,12 @@ const PRIORITY_OPTIONS = [
   { value: "could_do", label: "🟢 Could Do" },
 ];
 
+const SOURCE_OPTIONS = [
+  { value: "all", label: "All Sources" },
+  { value: "mine", label: "👤 My Tasks" },
+  { value: "team", label: "👥 Team Tasks" },
+];
+
 const SORT_OPTIONS = [
   { value: "default", label: "Default Order" },
   { value: "due_date_asc", label: "📅 Due Date (Earliest)" },
@@ -40,17 +46,18 @@ const SORT_OPTIONS = [
   { value: "estimated_desc", label: "⏱ Time (Longest)" },
 ];
 
-export default function TaskFilterSortBar({ filters, onFiltersChange, sort, onSortChange }) {
+export default function TaskFilterSortBar({ filters, onFiltersChange, sort, onSortChange, showSourceFilter = false }) {
   const [expanded, setExpanded] = useState(false);
 
   const activeFilterCount = [
     filters.difficulty !== "all" ? 1 : 0,
     filters.category !== "all" ? 1 : 0,
     filters.priority !== "all" ? 1 : 0,
+    (showSourceFilter && filters.source !== "all") ? 1 : 0,
   ].reduce((a, b) => a + b, 0) + (sort !== "default" ? 1 : 0);
 
   const clearAll = () => {
-    onFiltersChange({ difficulty: "all", category: "all", priority: "all" });
+    onFiltersChange({ difficulty: "all", category: "all", priority: "all", source: "all" });
     onSortChange("default");
   };
 
@@ -110,6 +117,15 @@ export default function TaskFilterSortBar({ filters, onFiltersChange, sort, onSo
             className="flex-1 min-w-[140px] sm:w-44 text-sm"
             options={CATEGORY_OPTIONS}
           />
+          {showSourceFilter && (
+            <MobileSelect
+              value={filters.source || "all"}
+              onValueChange={(v) => onFiltersChange({ ...filters, source: v })}
+              placeholder="Source"
+              className="flex-1 min-w-[140px] sm:w-44 text-sm"
+              options={SOURCE_OPTIONS}
+            />
+          )}
         </div>
       )}
     </div>

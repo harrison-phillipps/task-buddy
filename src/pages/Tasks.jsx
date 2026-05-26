@@ -61,7 +61,7 @@ export default function Tasks() {
   const teamIdParam = urlParams.get('teamId');
   
   const [filter, setFilter] = useState("all");
-  const [taskFilters, setTaskFilters] = useState({ difficulty: "all", category: "all", priority: "all" });
+  const [taskFilters, setTaskFilters] = useState({ difficulty: "all", category: "all", priority: "all", source: "all" });
   const [taskSort, setTaskSort] = useState("default");
   const [spreadTask, setSpreadTask] = useState(null);
   const [showCalendarSync, setShowCalendarSync] = useState(false);
@@ -508,7 +508,12 @@ export default function Tasks() {
       const priorityMatch = taskFilters.priority === "all" || task.task_priority === taskFilters.priority;
       const difficultyMatch = taskFilters.difficulty === "all" || task.difficulty === taskFilters.difficulty;
       const categoryMatch = taskFilters.category === "all" || task.category === taskFilters.category;
-      return statusMatch && priorityMatch && difficultyMatch && categoryMatch;
+      const sourceMatch = taskFilters.source === "all" || !currentUser
+        ? true
+        : taskFilters.source === "mine"
+          ? !task.team_id
+          : !!task.team_id;
+      return statusMatch && priorityMatch && difficultyMatch && categoryMatch && sourceMatch;
     });
 
     // Pinned always float to top; then apply sort
@@ -714,6 +719,7 @@ export default function Tasks() {
           onFiltersChange={setTaskFilters}
           sort={taskSort}
           onSortChange={setTaskSort}
+          showSourceFilter={selectedTeamId === "personal"}
         />
 
         {showAIInsights && viewMode === "ai" && (
