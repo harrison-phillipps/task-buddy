@@ -3,6 +3,7 @@
   "scopes": [
     "Calendars.Read",
     "User.Read",
-    "Calendars.ReadWrite"
+    "Calendars.ReadWrite",
+    "offline_access"
   ]
 }
