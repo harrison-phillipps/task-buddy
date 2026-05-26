@@ -209,20 +209,32 @@ export default function Tasks() {
       if (!navigator.onLine) {
         const cached = await getCachedEntities('Task');
         if (selectedTeamId === 'personal') {
-          return cached.filter(t => !t.team_id && t.created_by === currentUser.email);
+          const userTeamIds = teams.map(t => t.id);
+          return cached.filter(t =>
+            (!t.team_id && t.created_by === currentUser.email) ||
+            (t.assigned_to === currentUser.id && userTeamIds.includes(t.team_id))
+          );
         }
         return cached.filter(t => t.team_id === selectedTeamId);
       }
 
       let fetched = [];
       if (selectedTeamId === "personal") {
-        // Only fetch personal tasks — no team_id, created by this user
-        // Assigned-to tasks are intentionally excluded here to avoid team tasks bleeding in;
-        // they appear under the relevant team workspace instead.
-        fetched = await base44.entities.Task.filter(
-          { created_by: currentUser.email, team_id: null },
-          '-created_date'
-        );
+        // Personal tasks created by this user + team tasks assigned to this user
+        const [personalTasks, assignedTasks] = await Promise.all([
+          base44.entities.Task.filter({ created_by: currentUser.email, team_id: null }, '-created_date'),
+          base44.entities.Task.filter({ assigned_to: currentUser.id }, '-created_date'),
+        ]);
+        // Also grab tasks where user is in assigned_to_users for their teams
+        const userTeamIds = teams.map(t => t.id);
+        const seen = new Set();
+        fetched = [...personalTasks, ...assignedTasks].filter(t => {
+          // Exclude team tasks that don't belong to the user's own teams
+          if (t.team_id && !userTeamIds.includes(t.team_id)) return false;
+          if (seen.has(t.id)) return false;
+          seen.add(t.id);
+          return true;
+        });
       } else {
         fetched = await base44.entities.Task.filter({ team_id: selectedTeamId }, '-created_date');
       }
