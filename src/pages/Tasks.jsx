@@ -209,28 +209,20 @@ export default function Tasks() {
       if (!navigator.onLine) {
         const cached = await getCachedEntities('Task');
         if (selectedTeamId === 'personal') {
-          return cached.filter(t =>
-            (!t.team_id && t.created_by === currentUser.email) ||
-            t.assigned_to === currentUser.id ||
-            t.assigned_to_users?.some(u => u.user_id === currentUser.id)
-          );
+          return cached.filter(t => !t.team_id && t.created_by === currentUser.email);
         }
         return cached.filter(t => t.team_id === selectedTeamId);
       }
 
       let fetched = [];
       if (selectedTeamId === "personal") {
-        // Run both filters in parallel
-        const [personalTasks, assignedTasks] = await Promise.all([
-          base44.entities.Task.filter({ created_by: currentUser.email, team_id: null }, '-created_date'),
-          base44.entities.Task.filter({ assigned_to: currentUser.id }, '-created_date'),
-        ]);
-        const seen = new Set();
-        fetched = [...personalTasks, ...assignedTasks].filter(t => {
-          if (seen.has(t.id)) return false;
-          seen.add(t.id);
-          return true;
-        });
+        // Only fetch personal tasks — no team_id, created by this user
+        // Assigned-to tasks are intentionally excluded here to avoid team tasks bleeding in;
+        // they appear under the relevant team workspace instead.
+        fetched = await base44.entities.Task.filter(
+          { created_by: currentUser.email, team_id: null },
+          '-created_date'
+        );
       } else {
         fetched = await base44.entities.Task.filter({ team_id: selectedTeamId }, '-created_date');
       }
