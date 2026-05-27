@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Flame, Sun, Moon, Zap, Trophy } from "lucide-react";
 import RoutineSection from "../components/habits/RoutineSection";
 import AddHabitSheet from "../components/habits/AddHabitSheet";
+import WinsJournal from "../components/habits/WinsJournal";
 
 const TODAY = new Date().toISOString().split("T")[0];
 
@@ -110,6 +111,11 @@ export default function Habits() {
             />
           );
         })}
+      </div>
+
+      {/* Wins Journal */}
+      <div className="mt-4">
+        <WinsJournal />
       </div>
 
       {/* Add habit sheet */}

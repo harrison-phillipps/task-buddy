@@ -1,0 +1,36 @@
+{
+  "name": "WinsJournal",
+  "type": "object",
+  "properties": {
+    "entry_date": {
+      "type": "string",
+      "format": "date",
+      "description": "YYYY-MM-DD"
+    },
+    "wins": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "List of wins for the day"
+    },
+    "mood": {
+      "type": "string",
+      "enum": [
+        "amazing",
+        "good",
+        "okay",
+        "tough"
+      ],
+      "default": "good"
+    },
+    "reflection": {
+      "type": "string",
+      "description": "Optional end-of-day reflection note"
+    }
+  },
+  "required": [
+    "entry_date"
+  ]
+}
