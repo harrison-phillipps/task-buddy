@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, ListTodo, Play, LayoutDashboard, User, RefreshCw, Brain, Award, MessageSquare, Calendar, Users, Target, Settings, PanelLeft, ChevronDown, ChevronUp, Maximize2, Mic, CalendarDays, Zap, ArrowLeft } from "lucide-react";
+import { Sparkles, ListTodo, Play, LayoutDashboard, User, RefreshCw, Brain, Award, MessageSquare, Calendar, Users, Target, Settings, PanelLeft, ChevronDown, ChevronUp, Maximize2, Mic, CalendarDays, Zap, ArrowLeft, Flame } from "lucide-react";
 import MobileTabBar from "@/components/MobileTabBar";
 import { base44 } from "@/api/base44Client";
 import {
@@ -54,6 +54,7 @@ function LayoutContent({ children, currentPageName }) {
     { title: "Brain Dump", url: createPageUrl("BrainDump"), icon: Brain, feature: null },
     { title: "Break Down Task", url: createPageUrl("TaskBreakdown"), icon: Sparkles, feature: null },
     { title: "Goals", url: createPageUrl("Goals"), icon: Target, feature: null },
+    { title: "Habits & Routines", url: createPageUrl("Habits"), icon: Flame, feature: null },
     { title: "Skill Development", url: createPageUrl("SkillDevelopment"), icon: Award, feature: null },
     { title: "Calendar", url: createPageUrl("CalendarView"), icon: Calendar, feature: "calendar_events" },
     { title: "Gap Filler", url: createPageUrl("CalendarGapFiller"), icon: Zap, feature: "gap_filler" },

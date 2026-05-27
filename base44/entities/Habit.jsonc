@@ -1,0 +1,79 @@
+{
+  "name": "Habit",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Habit title"
+    },
+    "description": {
+      "type": "string"
+    },
+    "icon": {
+      "type": "string",
+      "default": "\ud83d\udccc"
+    },
+    "color": {
+      "type": "string",
+      "default": "#8B5CF6"
+    },
+    "routine": {
+      "type": "string",
+      "enum": [
+        "morning",
+        "evening",
+        "anytime"
+      ],
+      "default": "anytime",
+      "description": "Which routine this habit belongs to"
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "weekly"
+      ],
+      "default": "daily"
+    },
+    "days_of_week": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "default": [],
+      "description": "For weekly: 0=Sun, 6=Sat"
+    },
+    "target_count": {
+      "type": "number",
+      "default": 1
+    },
+    "reminder_time": {
+      "type": "string",
+      "description": "HH:mm reminder time"
+    },
+    "order": {
+      "type": "number",
+      "default": 0,
+      "description": "Sort order within routine"
+    },
+    "current_streak": {
+      "type": "number",
+      "default": 0
+    },
+    "longest_streak": {
+      "type": "number",
+      "default": 0
+    },
+    "total_completions": {
+      "type": "number",
+      "default": 0
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

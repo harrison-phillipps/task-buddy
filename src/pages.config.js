@@ -14,6 +14,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const FocusMode = lazy(() => import('./pages/FocusMode'));
 const FocusSession = lazy(() => import('./pages/FocusSession'));
 const Goals = lazy(() => import('./pages/Goals'));
+const Habits = lazy(() => import('./pages/Habits'));
 const Home = lazy(() => import('./pages/Home'));
 const Integrations = lazy(() => import('./pages/Integrations'));
 const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage'));
@@ -46,6 +47,7 @@ export const PAGES = {
     "FocusMode": FocusMode,
     "FocusSession": FocusSession,
     "Goals": Goals,
+    "Habits": Habits,
     "Home": Home,
     "Integrations": Integrations,
     "LeaderboardPage": LeaderboardPage,

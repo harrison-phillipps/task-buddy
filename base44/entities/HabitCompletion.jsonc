@@ -1,0 +1,23 @@
+{
+  "name": "HabitCompletion",
+  "type": "object",
+  "properties": {
+    "habit_id": {
+      "type": "string",
+      "description": "ID of the habit"
+    },
+    "completion_date": {
+      "type": "string",
+      "format": "date",
+      "description": "YYYY-MM-DD"
+    },
+    "count": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "habit_id",
+    "completion_date"
+  ]
+}
