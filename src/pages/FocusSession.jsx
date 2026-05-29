@@ -20,7 +20,6 @@ import AchievementNotification from "../components/AchievementNotification";
 import { POINTS_SYSTEM, checkNewAchievements, calculateLevel } from "@/components/achievementsData";
 import { getPersonalizedMessage } from "@/components/companionUtils";
 import SessionGoals from "../components/focus/SessionGoals";
-import AmbientSoundPlayer from "../components/focus/AmbientSoundPlayer";
 import PostSessionSummary from "../components/focus/PostSessionSummary";
 import FocusBoosterBot from "../components/ai/FocusBoosterBot";
 import FocusSessionTemplates from "../components/focus/FocusSessionTemplates";
@@ -1287,17 +1286,9 @@ export default function FocusSession() {
                 )}
               </div>
 
-              <AmbientSoundPlayer
-                selectedSound={ambientSound}
-                setSelectedSound={setAmbientSound}
-                isPlaying={false}
-              />
-
               {hasFeatureAccess(currentUser?.subscription_tier, "spotify_player") ? (
                 <SpotifyPlayer isSessionActive={false} />
-              ) : (
-                <UpgradePrompt feature="Spotify Focus Music" requiredTier="pro" compact />
-              )}
+              ) : null}
 
               {hasFeatureAccess(currentUser?.subscription_tier, "cross_device_notifications") ? (
                 <FocusNotificationSettings
@@ -1562,14 +1553,7 @@ export default function FocusSession() {
                       )}
                     </div>
 
-                    {ambientSound !== "none" && !isBreakTime && (
-                      <AmbientSoundPlayer
-                        selectedSound={ambientSound}
-                        setSelectedSound={setAmbientSound}
-                        isPlaying={isActive}
-                        compact
-                      />
-                    )}
+
                     {!isBreakTime && hasFeatureAccess(currentUser?.subscription_tier, "spotify_player") && (
                       <SpotifyPlayer isSessionActive={isActive} compact />
                     )}
