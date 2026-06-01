@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ThumbsUp, ThumbsDown, X, Sparkles, Brain, Lightbulb } from "lucide-react";
+import { ThumbsUp, ThumbsDown, X, Sparkles, Brain, Lightbulb, Lock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 const INSIGHT_COOLDOWN_MINUTES = 30;
 
@@ -78,7 +80,7 @@ Do NOT be generic. Do NOT start with "I notice" or "Based on".
 Output ONLY the message text, nothing else.`;
 }
 
-export default function AdaptiveCompanionAI({ currentUser, tasks = [], sessions = [], progress, className = "" }) {
+export default function AdaptiveCompanionAI({ currentUser, userTier = "free", tasks = [], sessions = [], progress, className = "" }) {
   const [learningProfile, setLearningProfile] = useState(null);
   const [insight, setInsight] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -129,6 +131,8 @@ export default function AdaptiveCompanionAI({ currentUser, tasks = [], sessions 
 
   const generateInsight = async () => {
     if (isLoading || !currentUser) return;
+    // Block LLM for free users
+    if (!userTier || userTier === "free") return;
     setIsLoading(true);
     try {
       const behavior = analyzeBehavior(tasks, sessions, progress);
@@ -193,26 +197,41 @@ export default function AdaptiveCompanionAI({ currentUser, tasks = [], sessions 
     return map[currentUser?.companion_type] || "🤖";
   };
 
+  const navigate = useNavigate();
+  const isFree = !userTier || userTier === "free";
+
   if (!currentUser?.companion_type) return null;
 
   return (
     <div className={className}>
       {/* Manual trigger button */}
       {!isVisible && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={generateInsight}
-          disabled={isLoading}
-          className="gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300"
-        >
-          {isLoading ? (
-            <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <Brain className="w-4 h-4" />
-          )}
-          {isLoading ? "Analyzing..." : "Get Insight"}
-        </Button>
+        isFree ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(createPageUrl("Subscription"))}
+            className="gap-2 border-purple-200 text-purple-500 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-400"
+          >
+            <Lock className="w-4 h-4" />
+            Get Insight (Pro)
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={generateInsight}
+            disabled={isLoading}
+            className="gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300"
+          >
+            {isLoading ? (
+              <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Brain className="w-4 h-4" />
+            )}
+            {isLoading ? "Analyzing..." : "Get Insight"}
+          </Button>
+        )
       )}
 
       {/* Insight card */}

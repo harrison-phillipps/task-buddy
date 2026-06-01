@@ -8,8 +8,10 @@ import { Label } from "@/components/ui/label";
 import MobileSelect from "@/components/MobileSelect";
 import {
   Sparkles, RefreshCw, Check, Clock, Loader2, Zap, Battery, BatteryLow,
-  BatteryMedium, BatteryFull, Edit2, Trash2, Plus, ChevronDown, ChevronUp
+  BatteryMedium, BatteryFull, Edit2, Trash2, Plus, ChevronDown, ChevronUp, Lock
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
@@ -26,7 +28,7 @@ const ENERGY_COLORS = {
   high: "bg-red-100 text-red-700 border-red-200",
 };
 
-export default function SmartTaskAnalyzer({ open, onOpenChange, onTaskCreated }) {
+export default function SmartTaskAnalyzer({ open, onOpenChange, onTaskCreated, userTier = "free" }) {
   const [rawText, setRawText] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
@@ -34,6 +36,8 @@ export default function SmartTaskAnalyzer({ open, onOpenChange, onTaskCreated })
   const [editValue, setEditValue] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [showRaw, setShowRaw] = useState(true);
+  const navigate = useNavigate();
+  const isFree = !userTier || userTier === "free";
 
   const handleAnalyze = async () => {
     if (!rawText.trim()) return;
@@ -182,17 +186,26 @@ Be specific and realistic with time estimates based on the complexity of each st
                   onChange={e => setRawText(e.target.value)}
                   className="h-32 resize-none text-sm"
                 />
-                <Button
-                  onClick={handleAnalyze}
-                  disabled={!rawText.trim() || isAnalyzing}
-                  className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white"
-                >
-                  {isAnalyzing ? (
-                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Analyzing…</>
-                  ) : (
-                    <><Sparkles className="w-4 h-4 mr-2" /> Analyze & Generate Plan</>
-                  )}
-                </Button>
+                {isFree ? (
+                  <Button
+                    onClick={() => { onOpenChange(false); navigate(createPageUrl("Subscription")); }}
+                    className="w-full bg-gradient-to-r from-purple-400 to-teal-400 text-white"
+                  >
+                    <Lock className="w-4 h-4 mr-2" /> Upgrade to Pro to Analyze
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleAnalyze}
+                    disabled={!rawText.trim() || isAnalyzing}
+                    className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white"
+                  >
+                    {isAnalyzing ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Analyzing…</>
+                    ) : (
+                      <><Sparkles className="w-4 h-4 mr-2" /> Analyze & Generate Plan</>
+                    )}
+                  </Button>
+                )}
               </div>
             )}
           </div>

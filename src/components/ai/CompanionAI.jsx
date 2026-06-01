@@ -15,8 +15,13 @@ export async function generateCompanionMessage({
   userProgress = null,
   userMood = null,
   recentActivity = null,
-  userPreferences = null
+  userPreferences = null,
+  userTier = "free"
 }) {
+  // Free users get a static fallback — no LLM call
+  if (!userTier || userTier === "free") {
+    return getFallbackMessage(context, personality);
+  }
   const level = userProgress?.level || 1;
   const streak = userProgress?.current_streak || 0;
   const tasksCompleted = userProgress?.tasks_completed || 0;

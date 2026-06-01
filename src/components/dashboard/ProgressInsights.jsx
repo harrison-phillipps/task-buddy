@@ -7,15 +7,21 @@ import { Sparkles, RefreshCw, TrendingUp, TrendingDown, Minus } from "lucide-rea
 import { motion, AnimatePresence } from "framer-motion";
 import { analyzeUserProgress, getProgressTrend } from "../ai/ProgressAnalyzer";
 import { toast } from "sonner";
+import { Lock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 export default function ProgressInsights({ 
   userProgress, 
   tasks = [], 
   focusSessions = [], 
-  brainDumps = [] 
+  brainDumps = [],
+  userTier = "free"
 }) {
   const [analysis, setAnalysis] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const navigate = useNavigate();
+  const isFree = !userTier || userTier === "free";
 
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
@@ -56,23 +62,33 @@ export default function ProgressInsights({
             <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
               Get personalized insights about your productivity patterns, wins, and areas for growth.
             </p>
-            <Button
-              onClick={handleAnalyze}
-              disabled={isAnalyzing}
-              className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600"
-            >
-              {isAnalyzing ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Analyzing Your Progress...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Analyze My Progress
-                </>
-              )}
-            </Button>
+            {isFree ? (
+              <Button
+                onClick={() => navigate(createPageUrl("Subscription"))}
+                className="w-full bg-gradient-to-r from-purple-400 to-teal-400 text-white"
+              >
+                <Lock className="w-4 h-4 mr-2" />
+                Upgrade to Pro for AI Insights
+              </Button>
+            ) : (
+              <Button
+                onClick={handleAnalyze}
+                disabled={isAnalyzing}
+                className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Analyzing Your Progress...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Analyze My Progress
+                  </>
+                )}
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (

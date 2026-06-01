@@ -38,6 +38,12 @@ export const FEATURE_ACCESS = {
   custom_focus_sounds: ["pro", "premium"],
   weekly_goals: ["pro", "premium"],
 
+  // AI credit-burning features — gated to paid tiers
+  ai_companion_messages: ["pro", "premium"],
+  ai_smart_analyzer: ["pro", "premium"],
+  ai_proactive_coach: ["pro", "premium"],
+  ai_adaptive_companion: ["pro", "premium"],
+
   // Premium features
   ai_task_breakdown: ["premium"],
   custom_companions: ["premium"],

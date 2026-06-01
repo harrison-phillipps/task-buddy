@@ -18,7 +18,8 @@ export default function ProactiveCoach({
   recentTasks = [],
   recentSessions = [],
   goals = [],
-  context = "dashboard"
+  context = "dashboard",
+  userTier = "free"
 }) {
   const [coachingTip, setCoachingTip] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -26,6 +27,8 @@ export default function ProactiveCoach({
 
   useEffect(() => {
     if (!userProgress || isDismissed) return;
+    // Free users don't get AI coaching tips
+    if (!userTier || userTier === "free") return;
 
     const sessionKey = 'proactive_coach_shown_' + new Date().toDateString();
     if (sessionStorage.getItem(sessionKey)) return;

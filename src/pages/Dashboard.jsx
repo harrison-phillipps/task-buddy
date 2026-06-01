@@ -225,6 +225,7 @@ export default function Dashboard() {
             />
             <AdaptiveCompanionAI
               currentUser={currentUser}
+              userTier={currentUser?.subscription_tier || "free"}
               tasks={tasks}
               sessions={sessions}
               progress={userProgress}
@@ -363,6 +364,7 @@ export default function Dashboard() {
               recentSessions={sessions}
               goals={[]}
               context="dashboard"
+              userTier={currentUser?.subscription_tier || "free"}
             />
           </motion.div>
         )}
@@ -393,6 +395,7 @@ export default function Dashboard() {
             tasks={tasks}
             focusSessions={sessions}
             brainDumps={brainDumps}
+            userTier={currentUser?.subscription_tier || "free"}
           />
         </motion.div>
 
@@ -607,6 +610,7 @@ export default function Dashboard() {
           tasks={tasks}
           sessions={sessions}
           currentUser={currentUser}
+          userTier={currentUser?.subscription_tier || "free"}
         />
         </div>
         </div>
@@ -614,6 +618,7 @@ export default function Dashboard() {
       <SmartTaskAnalyzer
         open={showSmartAnalyzer}
         onOpenChange={setShowSmartAnalyzer}
+        userTier={currentUser?.subscription_tier || "free"}
         onTaskCreated={() => {
           queryClient.invalidateQueries({ queryKey: ['tasks'] });
         }}

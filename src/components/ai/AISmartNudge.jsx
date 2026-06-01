@@ -38,7 +38,7 @@ const nudgeTypes = {
   }
 };
 
-export default function AISmartNudge({ userProgress, tasks, sessions, currentUser }) {
+export default function AISmartNudge({ userProgress, tasks, sessions, currentUser, userTier = "free" }) {
   const [nudge, setNudge] = useState(null);
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -46,6 +46,8 @@ export default function AISmartNudge({ userProgress, tasks, sessions, currentUse
   useEffect(() => {
     const checkForNudge = async () => {
       if (!currentUser || loading) return;
+      // Free users don't get AI nudges
+      if (!userTier || userTier === "free") return;
 
       // Check if we should show a nudge (not too frequently)
       const lastNudge = localStorage.getItem('last_nudge_time');
