@@ -1,0 +1,68 @@
+{
+  "name": "ActiveSession",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User who owns this session"
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Task being worked on"
+    },
+    "task_title": {
+      "type": "string",
+      "description": "Title of the task"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the timer is running"
+    },
+    "is_break_time": {
+      "type": "boolean",
+      "default": false
+    },
+    "time_left": {
+      "type": "number",
+      "description": "Seconds remaining on the timer"
+    },
+    "current_subtask_index": {
+      "type": "number",
+      "default": 0
+    },
+    "focus_technique": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "pomodoro"
+      ],
+      "default": "standard"
+    },
+    "work_interval": {
+      "type": "number",
+      "default": 25
+    },
+    "break_interval": {
+      "type": "number",
+      "default": 5
+    },
+    "pomodoros_completed": {
+      "type": "number",
+      "default": 0
+    },
+    "last_updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of last state push (used to detect stale data)"
+    },
+    "device_id": {
+      "type": "string",
+      "description": "ID of the device that owns/controls this session"
+    }
+  },
+  "required": [
+    "user_id",
+    "task_id"
+  ]
+}

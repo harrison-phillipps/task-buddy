@@ -1,0 +1,83 @@
+{
+  "name": "CalendarEvent",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Event title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Event description"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Start date"
+    },
+    "start_time": {
+      "type": "string",
+      "description": "Start time (HH:mm)"
+    },
+    "end_time": {
+      "type": "string",
+      "description": "End time (HH:mm)"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "description": "Duration in minutes"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "task",
+        "google",
+        "outlook"
+      ],
+      "default": "manual",
+      "description": "Where this event came from"
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Associated task ID if synced from task"
+    },
+    "external_id": {
+      "type": "string",
+      "description": "External calendar event ID"
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "default": false
+    },
+    "recurrence_pattern": {
+      "type": "string",
+      "enum": [
+        "none",
+        "daily",
+        "weekly",
+        "weekdays",
+        "biweekly",
+        "monthly"
+      ],
+      "default": "none"
+    },
+    "color": {
+      "type": "string",
+      "default": "#8B5CF6"
+    },
+    "is_focus_block": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is a dedicated focus time block"
+    },
+    "team_id": {
+      "type": "string",
+      "description": "Team/workspace this event belongs to"
+    }
+  },
+  "required": [
+    "title",
+    "start_date"
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "name": "TeamTemplate",
+  "type": "object",
+  "properties": {
+    "team_id": {
+      "type": "string",
+      "description": "Team this template belongs to"
+    },
+    "name": {
+      "type": "string",
+      "description": "Template name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Template description"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "work",
+        "personal",
+        "health",
+        "creative",
+        "learning",
+        "household",
+        "other"
+      ],
+      "default": "work",
+      "description": "Template category"
+    },
+    "template_data": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": [
+            "easy",
+            "medium",
+            "hard"
+          ]
+        },
+        "estimated_minutes": {
+          "type": "number"
+        },
+        "subtasks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "estimated_minutes": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      "description": "Task template structure"
+    },
+    "is_recurring_template": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this template is for recurring tasks"
+    },
+    "recurrence_settings": {
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "type": "string"
+        },
+        "interval": {
+          "type": "number"
+        },
+        "days": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Default recurrence settings if applicable"
+    },
+    "usage_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times template has been used"
+    }
+  },
+  "required": [
+    "team_id",
+    "name",
+    "template_data"
+  ]
+}

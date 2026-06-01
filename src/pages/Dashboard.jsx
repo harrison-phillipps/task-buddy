@@ -5,10 +5,9 @@ import PullToRefresh from "../components/PullToRefresh";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, TrendingUp, Clock, CheckCircle, Brain, ChevronDown, ChevronUp, Zap, Mic } from "lucide-react";
+import { Sparkles, TrendingUp, Clock, CheckCircle, Brain, ChevronDown, ChevronUp, Zap, Mic, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import VirtualCompanion from "../components/VirtualCompanion";
-import { generateCompanionMessage } from "../components/ai/CompanionAI";
 import TaskCard from "../components/TaskCard";
 import SmartTaskSuggestion from "../components/SmartTaskSuggestion";
 import AIPrioritization from "../components/AIPrioritization";
@@ -16,9 +15,7 @@ import WeeklyOverview from "../components/dashboard/WeeklyOverview";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { getPersonalizedMessage, getProductivityTip } from "@/components/companionUtils";
-import ProactiveCoachingTip from "../components/ProactiveCoachingTip";
 import ProgressReportModal from "../components/ai/ProgressReportModal";
-import { FileText } from "lucide-react";
 import QuickAddTask from "../components/dashboard/QuickAddTask";
 import GoalsProgress from "../components/dashboard/GoalsProgress";
 import WidgetCustomizer from "../components/dashboard/WidgetCustomizer";
@@ -49,16 +46,10 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const [currentUser, setCurrentUser] = useState(null);
   const [userProgress, setUserProgress] = useState(null);
-  const [showCoachingTip, setShowCoachingTip] = useState(true);
-  const [coachingTip, setCoachingTip] = useState(null);
   const [showProgressReport, setShowProgressReport] = useState(false);
   const [showProductivityReport, setShowProductivityReport] = useState(false);
   const [showAIBots, setShowAIBots] = useState(false);
   const [showSmartAnalyzer, setShowSmartAnalyzer] = useState(false);
-  const [aiMessage, setAiMessage] = useState(null);
-  const [isLoadingMessage, setIsLoadingMessage] = useState(false);
-  const [showCelebration, setShowCelebration] = useState(false);
-  const [completedTaskTitle, setCompletedTaskTitle] = useState("");
   const [visibleWidgets, setVisibleWidgets] = useState(() => {
     const saved = localStorage.getItem('dashboardWidgets');
     return saved ? JSON.parse(saved) : {
@@ -227,11 +218,10 @@ export default function Dashboard() {
           >
             <VirtualCompanion 
               mood={completedToday.length > 0 ? "celebrating" : "supportive"}
-              message={isLoadingMessage ? "Thinking..." : (aiMessage || getCompanionMessage())}
+              message={getCompanionMessage()}
               characterType={currentUser.companion_type}
               userProgress={userProgress}
               context="dashboard"
-              enableFeedback={!!aiMessage}
             />
             <AdaptiveCompanionAI
               currentUser={currentUser}
@@ -288,19 +278,7 @@ export default function Dashboard() {
           </motion.div>
         )}
 
-        {/* Proactive Coaching Tip */}
-        {coachingTip && showCoachingTip && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <ProactiveCoachingTip
-              tip={coachingTip}
-              onDismiss={() => setShowCoachingTip(false)}
-            />
-          </motion.div>
-        )}
+
 
         {/* Quick Actions */}
         <motion.div

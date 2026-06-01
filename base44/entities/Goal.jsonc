@@ -1,0 +1,89 @@
+{
+  "name": "Goal",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Goal or objective title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the goal"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "okr",
+        "quarterly",
+        "annual",
+        "milestone",
+        "personal"
+      ],
+      "default": "personal",
+      "description": "Type of goal"
+    },
+    "target_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Target completion date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "at_risk",
+        "completed"
+      ],
+      "default": "not_started"
+    },
+    "key_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "target_value": {
+            "type": "number"
+          },
+          "current_value": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "Key results for OKR-style goals"
+    },
+    "team_id": {
+      "type": "string",
+      "description": "Team this goal belongs to"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium"
+    },
+    "calendar_event_id": {
+      "type": "string",
+      "description": "Google Calendar event ID if synced"
+    },
+    "calendar_synced": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this goal is synced to calendar"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

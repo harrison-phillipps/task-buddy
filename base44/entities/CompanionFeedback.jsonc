@@ -1,0 +1,39 @@
+{
+  "name": "CompanionFeedback",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User who provided feedback"
+    },
+    "message_text": {
+      "type": "string",
+      "description": "The companion message that was rated"
+    },
+    "context": {
+      "type": "string",
+      "description": "Context when message was shown (dashboard, task_complete, etc)"
+    },
+    "rating": {
+      "type": "string",
+      "enum": [
+        "positive",
+        "negative"
+      ],
+      "description": "User's rating of the message"
+    },
+    "feedback": {
+      "type": "string",
+      "description": "Detailed feedback if provided"
+    },
+    "personality_settings": {
+      "type": "object",
+      "description": "User's personality settings at time of message"
+    }
+  },
+  "required": [
+    "user_id",
+    "message_text",
+    "rating"
+  ]
+}

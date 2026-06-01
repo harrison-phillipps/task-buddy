@@ -1,0 +1,248 @@
+{
+  "name": "Task",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "The main task title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the task"
+    },
+    "goal_id": {
+      "type": "string",
+      "description": "ID of the goal this task contributes to"
+    },
+    "subtasks": {
+      "type": "array",
+      "description": "Broken down steps",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "order": {
+            "type": "number"
+          },
+          "estimated_minutes": {
+            "type": "number",
+            "description": "Estimated time for this subtask in minutes"
+          },
+          "scheduled_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Date this subtask is scheduled for"
+          },
+          "completed_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this subtask was completed"
+          }
+        }
+      },
+      "default": []
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "completed",
+        "blocked"
+      ],
+      "default": "not_started"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "default": "medium"
+    },
+    "estimated_minutes": {
+      "type": "number",
+      "description": "Estimated time to complete in minutes"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "work",
+        "personal",
+        "health",
+        "creative",
+        "learning",
+        "household",
+        "other"
+      ],
+      "default": "personal"
+    },
+    "energy_level_needed": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "medium",
+      "description": "Energy required to complete this task"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Deadline for the task"
+    },
+    "blocked_by": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "IDs of tasks that must be completed before this one"
+    },
+    "blocks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "IDs of tasks that this task blocks"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium",
+      "description": "User-defined importance level"
+    },
+    "task_priority": {
+      "type": "string",
+      "enum": [
+        "must_do",
+        "should_do",
+        "could_do"
+      ],
+      "description": "MoSCoW priority categorization"
+    },
+    "spread_across_days": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this task is spread across multiple days"
+    },
+    "daily_time_limit": {
+      "type": "number",
+      "description": "Maximum minutes to work on this task per day when spread"
+    },
+    "calendar_event_id": {
+      "type": "string",
+      "description": "Google Calendar event ID if synced"
+    },
+    "calendar_synced": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this task is synced to calendar"
+    },
+    "focus_block_scheduled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether a focus block has been scheduled for this task"
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this task repeats"
+    },
+    "recurrence_pattern": {
+      "type": "string",
+      "enum": [
+        "none",
+        "daily",
+        "weekly",
+        "biweekly",
+        "monthly",
+        "custom"
+      ],
+      "default": "none",
+      "description": "How often the task repeats"
+    },
+    "recurrence_interval": {
+      "type": "number",
+      "description": "For custom recurrence: repeat every N days"
+    },
+    "recurrence_days": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "description": "For weekly: days of week (0=Sunday, 6=Saturday)"
+    },
+    "recurrence_end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When to stop recurring"
+    },
+    "parent_recurring_task_id": {
+      "type": "string",
+      "description": "ID of the parent recurring task template"
+    },
+    "next_occurrence_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Next scheduled occurrence for recurring tasks"
+    },
+    "team_id": {
+      "type": "string",
+      "description": "Team/workspace this task belongs to"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "User ID of the person assigned to this task"
+    },
+    "assigned_to_name": {
+      "type": "string",
+      "description": "Display name of the assigned person"
+    },
+    "assigned_to_users": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string"
+          },
+          "user_name": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "Multiple users assigned to this task"
+    },
+    "currently_editing_by": {
+      "type": "string",
+      "description": "User ID of person currently editing this task"
+    },
+    "currently_editing_name": {
+      "type": "string",
+      "description": "Name of person currently editing this task"
+    },
+    "last_edited_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time this task was edited"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

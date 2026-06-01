@@ -1,0 +1,101 @@
+{
+  "name": "FocusSessionTemplate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Template name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Template description"
+    },
+    "focus_technique": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "pomodoro"
+      ],
+      "default": "standard",
+      "description": "Focus technique to use"
+    },
+    "work_interval": {
+      "type": "number",
+      "default": 25,
+      "description": "Work interval in minutes (for Pomodoro)"
+    },
+    "break_interval": {
+      "type": "number",
+      "default": 5,
+      "description": "Break interval in minutes (for Pomodoro)"
+    },
+    "ambient_sound": {
+      "type": "string",
+      "enum": [
+        "none",
+        "rain",
+        "cafe",
+        "forest",
+        "ocean",
+        "white_noise",
+        "brown_noise"
+      ],
+      "default": "none",
+      "description": "Default ambient sound"
+    },
+    "enable_focus_bot": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable Focus Booster Bot"
+    },
+    "session_goal_type": {
+      "type": "string",
+      "enum": [
+        "none",
+        "subtasks",
+        "time",
+        "pomodoros"
+      ],
+      "default": "none",
+      "description": "Default session goal type"
+    },
+    "session_goal_value": {
+      "type": "number",
+      "description": "Default session goal value"
+    },
+    "task_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Pre-selected task IDs"
+    },
+    "category_filter": {
+      "type": "string",
+      "description": "Filter tasks by category"
+    },
+    "difficulty_filter": {
+      "type": "string",
+      "description": "Filter tasks by difficulty"
+    },
+    "usage_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times this template was used"
+    },
+    "is_ai_suggested": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this template was AI-suggested"
+    },
+    "color": {
+      "type": "string",
+      "default": "#8B5CF6",
+      "description": "Template color"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

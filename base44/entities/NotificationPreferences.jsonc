@@ -1,0 +1,76 @@
+{
+  "name": "NotificationPreferences",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User these preferences belong to"
+    },
+    "task_reminders": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable task due date reminders"
+    },
+    "task_reminder_minutes": {
+      "type": "number",
+      "default": 60,
+      "description": "Minutes before due date to remind"
+    },
+    "goal_reminders": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable goal deadline reminders"
+    },
+    "goal_reminder_days": {
+      "type": "number",
+      "default": 7,
+      "description": "Days before deadline to remind"
+    },
+    "habit_reminders": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable daily habit reminders"
+    },
+    "achievement_notifications": {
+      "type": "boolean",
+      "default": true,
+      "description": "Get notified for achievements"
+    },
+    "team_notifications": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable team-related notifications"
+    },
+    "email_notifications": {
+      "type": "boolean",
+      "default": true,
+      "description": "Send email for critical notifications"
+    },
+    "email_digest": {
+      "type": "string",
+      "enum": [
+        "none",
+        "daily",
+        "weekly"
+      ],
+      "default": "daily",
+      "description": "Email digest frequency"
+    },
+    "quiet_hours_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable quiet hours"
+    },
+    "quiet_hours_start": {
+      "type": "string",
+      "description": "Quiet hours start time (HH:mm)"
+    },
+    "quiet_hours_end": {
+      "type": "string",
+      "description": "Quiet hours end time (HH:mm)"
+    }
+  },
+  "required": [
+    "user_id"
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "name": "FocusJourney",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User this journey data belongs to"
+    },
+    "session_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the session"
+    },
+    "task_category": {
+      "type": "string",
+      "description": "Category of task worked on"
+    },
+    "task_difficulty": {
+      "type": "string",
+      "enum": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "description": "Difficulty of the task"
+    },
+    "focus_technique": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "pomodoro"
+      ],
+      "description": "Technique used"
+    },
+    "work_interval": {
+      "type": "number",
+      "description": "Work interval in minutes"
+    },
+    "break_interval": {
+      "type": "number",
+      "description": "Break interval in minutes"
+    },
+    "ambient_sound": {
+      "type": "string",
+      "description": "Sound used during session"
+    },
+    "mood_before": {
+      "type": "string",
+      "description": "Mood at session start"
+    },
+    "mood_after": {
+      "type": "string",
+      "description": "Mood at session end"
+    },
+    "energy_before": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "description": "Energy level before session"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "description": "Total session duration"
+    },
+    "subtasks_completed": {
+      "type": "number",
+      "description": "Number of subtasks completed"
+    },
+    "total_subtasks": {
+      "type": "number",
+      "description": "Total subtasks in task"
+    },
+    "effectiveness_score": {
+      "type": "number",
+      "description": "Session effectiveness (0-100)"
+    },
+    "pause_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of pauses during session"
+    },
+    "goal_achieved": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether session goal was met"
+    },
+    "mindfulness_used": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether mindfulness breaks were used"
+    },
+    "mindfulness_type": {
+      "type": "string",
+      "description": "Type of mindfulness exercise used"
+    },
+    "time_of_day": {
+      "type": "string",
+      "enum": [
+        "morning",
+        "afternoon",
+        "evening"
+      ],
+      "description": "When the session occurred"
+    }
+  },
+  "required": [
+    "user_id",
+    "session_date",
+    "focus_technique",
+    "mood_before",
+    "duration_minutes"
+  ]
+}

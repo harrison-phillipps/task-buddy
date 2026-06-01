@@ -9,7 +9,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
+    // Parse body once
+    let body = {};
+    try { body = await req.json(); } catch { /* no body */ }
     const { analysisType = 'time_estimation', period = 'weekly', force = false } = body;
 
     // Fetch user's historical tasks and focus sessions

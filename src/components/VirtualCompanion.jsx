@@ -15,7 +15,7 @@ const activities = [
   { text: "checking my to-do list", icon: Sparkles, emoji: "✨" },
 ];
 
-function RobotCharacter({ mood, isLarge, currentMood }) {
+function RobotCharacter({ mood, isLarge }) {
   const size = isLarge ? 160 : 112;
   return (
     <div className={`relative ${isLarge ? 'w-48 h-56' : 'w-28 sm:w-32 h-36 sm:h-40'} flex items-center justify-center flex-shrink-0`}>
@@ -169,7 +169,7 @@ function RobotCharacter({ mood, isLarge, currentMood }) {
   );
 }
 
-function CatCharacter({ mood, isLarge, currentMood }) {
+function CatCharacter({ mood, isLarge }) {
   const size = isLarge ? 160 : 112;
   return (
     <div className={`relative ${isLarge ? 'w-48 h-56' : 'w-28 sm:w-32 h-36 sm:h-40'} flex items-center justify-center flex-shrink-0`}>
@@ -292,7 +292,7 @@ function CatCharacter({ mood, isLarge, currentMood }) {
   );
 }
 
-function DogCharacter({ mood, isLarge, currentMood }) {
+function DogCharacter({ mood, isLarge }) {
   const size = isLarge ? 160 : 112;
   return (
     <div className={`relative ${isLarge ? 'w-48 h-56' : 'w-28 sm:w-32 h-36 sm:h-40'} flex items-center justify-center flex-shrink-0`}>
@@ -580,7 +580,6 @@ export default function VirtualCompanion({
   const upgrades = getCompanionUpgrades(level);
   const [currentActivity, setCurrentActivity] = useState(activities[0]);
   const [showActivityMessage, setShowActivityMessage] = useState(false);
-  const [isBlinking, setIsBlinking] = useState(false);
 
   useEffect(() => {
     if (!showActivity) return;
@@ -589,47 +588,12 @@ export default function VirtualCompanion({
       const randomActivity = activities[Math.floor(Math.random() * activities.length)];
       setCurrentActivity(randomActivity);
       setShowActivityMessage(true);
-      
       setTimeout(() => setShowActivityMessage(false), 4000);
     }, 15000);
 
     return () => clearInterval(activityInterval);
   }, [showActivity]);
 
-  // Blinking animation
-  useEffect(() => {
-    const blinkInterval = setInterval(() => {
-      setIsBlinking(true);
-      setTimeout(() => setIsBlinking(false), 200);
-    }, 3000 + Math.random() * 2000);
-
-    return () => clearInterval(blinkInterval);
-  }, []);
-
-  const moods = {
-    supportive: {
-      color: "from-purple-400 to-pink-400",
-      armAnimation: { rotate: [0, 10, 0] },
-      bodyColor: "bg-gradient-to-br from-purple-100 to-pink-100"
-    },
-    celebrating: {
-      color: "from-yellow-400 to-orange-400",
-      armAnimation: { rotate: [-20, 20, -20], y: [-5, 5, -5] },
-      bodyColor: "bg-gradient-to-br from-yellow-100 to-orange-100"
-    },
-    working: {
-      color: "from-teal-400 to-blue-400",
-      armAnimation: { rotate: [0, -15, 0] },
-      bodyColor: "bg-gradient-to-br from-teal-100 to-blue-100"
-    },
-    calm: {
-      color: "from-purple-300 to-teal-300",
-      armAnimation: { y: [0, 3, 0] },
-      bodyColor: "bg-gradient-to-br from-purple-100 to-teal-100"
-    }
-  };
-
-  const currentMood = moods[mood] || moods.supportive;
   const isLarge = size === "large";
 
   const ActivityIcon = currentActivity.icon;
@@ -741,28 +705,13 @@ export default function VirtualCompanion({
           </>
         )}
         {characterType === "robot" ? (
-          <RobotCharacter 
-            mood={mood} 
-            isLarge={isLarge}
-            currentMood={currentMood}
-          />
+          <RobotCharacter mood={mood} isLarge={isLarge} />
         ) : characterType === "dog" ? (
-          <DogCharacter 
-            mood={mood} 
-            isLarge={isLarge}
-            currentMood={currentMood}
-          />
+          <DogCharacter mood={mood} isLarge={isLarge} />
         ) : characterType === "orb" ? (
-          <OrbCharacter 
-            mood={mood} 
-            isLarge={isLarge}
-          />
+          <OrbCharacter mood={mood} isLarge={isLarge} />
         ) : (
-          <CatCharacter 
-            mood={mood} 
-            isLarge={isLarge}
-            currentMood={currentMood}
-          />
+          <CatCharacter mood={mood} isLarge={isLarge} />
         )}
 
         {/* Activity indicator */}

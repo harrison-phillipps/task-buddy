@@ -1,0 +1,27 @@
+{
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "description": "The role of the user in the app",
+      "enum": [
+        "admin",
+        "user"
+      ]
+    },
+    "calendar_provider": {
+      "type": "string",
+      "enum": [
+        "google",
+        "outlook"
+      ]
+    },
+    "calendar_connected": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "role"
+  ],
+  "name": "User"
+}

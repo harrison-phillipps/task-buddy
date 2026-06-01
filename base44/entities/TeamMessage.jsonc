@@ -1,0 +1,44 @@
+{
+  "name": "TeamMessage",
+  "type": "object",
+  "properties": {
+    "team_id": {
+      "type": "string",
+      "description": "ID of the team this message belongs to"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "ID of the user who sent the message"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Display name of the sender"
+    },
+    "content": {
+      "type": "string",
+      "description": "Message content"
+    },
+    "reply_to": {
+      "type": "string",
+      "description": "ID of the message this is replying to"
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "URLs of attached files"
+    },
+    "is_pinned": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this message is pinned"
+    }
+  },
+  "required": [
+    "team_id",
+    "user_id",
+    "content"
+  ]
+}

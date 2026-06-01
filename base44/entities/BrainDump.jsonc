@@ -1,0 +1,33 @@
+{
+  "name": "BrainDump",
+  "type": "object",
+  "properties": {
+    "content": {
+      "type": "string",
+      "description": "The raw brain dump text"
+    },
+    "tasks_created": {
+      "type": "number",
+      "description": "Number of tasks created from this brain dump"
+    },
+    "task_ids": {
+      "type": "array",
+      "description": "IDs of tasks created from this brain dump",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "encouragement": {
+      "type": "string",
+      "description": "AI encouragement message"
+    },
+    "team_id": {
+      "type": "string",
+      "description": "Team ID if this is a team brain dump"
+    }
+  },
+  "required": [
+    "content"
+  ]
+}

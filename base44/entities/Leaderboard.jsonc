@@ -1,0 +1,42 @@
+{
+  "name": "Leaderboard",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Reference to the user"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Display name of the user"
+    },
+    "weekly_points": {
+      "type": "number",
+      "default": 0,
+      "description": "Points earned this week"
+    },
+    "monthly_points": {
+      "type": "number",
+      "default": 0,
+      "description": "Points earned this month"
+    },
+    "all_time_points": {
+      "type": "number",
+      "default": 0,
+      "description": "Total points ever earned"
+    },
+    "week_start": {
+      "type": "string",
+      "format": "date",
+      "description": "Start of the current week"
+    },
+    "month_start": {
+      "type": "string",
+      "format": "date",
+      "description": "Start of the current month"
+    }
+  },
+  "required": [
+    "user_id"
+  ]
+}

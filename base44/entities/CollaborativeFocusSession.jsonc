@@ -1,0 +1,81 @@
+{
+  "name": "CollaborativeFocusSession",
+  "type": "object",
+  "properties": {
+    "team_id": {
+      "type": "string",
+      "description": "Team this session belongs to"
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Task being worked on"
+    },
+    "task_title": {
+      "type": "string",
+      "description": "Title of the task"
+    },
+    "host_id": {
+      "type": "string",
+      "description": "User who started the session"
+    },
+    "host_name": {
+      "type": "string",
+      "description": "Name of the host"
+    },
+    "participants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string"
+          },
+          "user_name": {
+            "type": "string"
+          },
+          "joined_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "default": [],
+      "description": "Users currently in the session"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "description": "Planned session duration"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the session started"
+    },
+    "ends_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the session will end"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed",
+        "cancelled"
+      ],
+      "default": "active",
+      "description": "Session status"
+    },
+    "is_break": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is a break session"
+    }
+  },
+  "required": [
+    "team_id",
+    "task_id",
+    "host_id",
+    "duration_minutes"
+  ]
+}

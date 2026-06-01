@@ -365,15 +365,10 @@ export function getPersonalizedMessage(userProgress, context, user = null) {
 
   const contextMessages = messages[context] || messages.dashboard;
   const baseMessage = contextMessages[Math.floor(Math.random() * contextMessages.length)];
-  
-  // If user has archetype/traits customization, enhance with AI
-  if (archetype || user?.companion_traits) {
-    // Return promise for AI-enhanced message
-    return getAIEnhancedMessage(baseMessage, user, context);
-  }
-  
-  // For calm and direct, return as-is (they're already styled)
-  // For motivational and witty, they're already expressive
+
+  // Note: AI enhancement (getAIEnhancedMessage) is intentionally NOT called here
+  // because this function is used synchronously in JSX renders.
+  // Deep personality customisation is handled asynchronously by AdaptiveCompanionAI.
   return baseMessage;
 }
 

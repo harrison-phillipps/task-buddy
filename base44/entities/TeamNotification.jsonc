@@ -1,0 +1,74 @@
+{
+  "name": "TeamNotification",
+  "type": "object",
+  "properties": {
+    "team_id": {
+      "type": "string",
+      "description": "Team this notification belongs to"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "task_assigned",
+        "deadline_reminder",
+        "session_started",
+        "task_completed",
+        "general"
+      ],
+      "description": "Type of notification"
+    },
+    "title": {
+      "type": "string",
+      "description": "Notification title"
+    },
+    "message": {
+      "type": "string",
+      "description": "Notification message"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium",
+      "description": "Notification priority"
+    },
+    "related_id": {
+      "type": "string",
+      "description": "ID of related task/session"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "User who created the notification"
+    },
+    "acknowledged_by": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string"
+          },
+          "user_name": {
+            "type": "string"
+          },
+          "acknowledged_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "default": [],
+      "description": "Users who have acknowledged this notification"
+    }
+  },
+  "required": [
+    "team_id",
+    "type",
+    "title",
+    "message"
+  ]
+}

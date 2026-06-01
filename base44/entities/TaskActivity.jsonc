@@ -1,0 +1,48 @@
+{
+  "name": "TaskActivity",
+  "type": "object",
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "ID of the task this activity belongs to"
+    },
+    "team_id": {
+      "type": "string",
+      "description": "Team ID for filtering"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "User who performed the action"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Display name of the user"
+    },
+    "action_type": {
+      "type": "string",
+      "enum": [
+        "created",
+        "updated",
+        "completed",
+        "assigned",
+        "commented",
+        "status_changed",
+        "subtask_completed"
+      ],
+      "description": "Type of activity"
+    },
+    "details": {
+      "type": "object",
+      "description": "Additional details about the action"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the activity"
+    }
+  },
+  "required": [
+    "task_id",
+    "user_id",
+    "action_type"
+  ]
+}

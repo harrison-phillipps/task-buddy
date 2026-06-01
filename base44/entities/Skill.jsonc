@@ -1,0 +1,86 @@
+{
+  "name": "Skill",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Skill name"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "technical",
+        "creative",
+        "business",
+        "communication",
+        "leadership",
+        "personal",
+        "design",
+        "data",
+        "other"
+      ],
+      "default": "other",
+      "description": "Skill category"
+    },
+    "level": {
+      "type": "string",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced",
+        "expert"
+      ],
+      "default": "beginner",
+      "description": "User's current level in this skill"
+    },
+    "practice_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times practiced"
+    },
+    "last_practiced": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time this skill was practiced"
+    },
+    "target_level": {
+      "type": "string",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced",
+        "expert"
+      ],
+      "description": "Target level user wants to achieve"
+    },
+    "related_tasks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Task IDs related to this skill"
+    },
+    "related_goals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Goal IDs related to this skill"
+    },
+    "is_ai_suggested": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this skill was AI-identified"
+    },
+    "importance_score": {
+      "type": "number",
+      "default": 0,
+      "description": "AI-calculated importance score (0-100)"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

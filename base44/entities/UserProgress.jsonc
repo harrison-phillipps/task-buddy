@@ -1,0 +1,66 @@
+{
+  "name": "UserProgress",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Reference to the user"
+    },
+    "total_points": {
+      "type": "number",
+      "default": 0,
+      "description": "Total points earned"
+    },
+    "level": {
+      "type": "number",
+      "default": 1,
+      "description": "Current level"
+    },
+    "achievements_unlocked": {
+      "type": "array",
+      "description": "List of achievement IDs unlocked",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "tasks_completed": {
+      "type": "number",
+      "default": 0,
+      "description": "Total tasks completed"
+    },
+    "focus_sessions_completed": {
+      "type": "number",
+      "default": 0,
+      "description": "Total focus sessions completed"
+    },
+    "total_focus_minutes": {
+      "type": "number",
+      "default": 0,
+      "description": "Total minutes spent focusing"
+    },
+    "brain_dumps_created": {
+      "type": "number",
+      "default": 0,
+      "description": "Total brain dumps created"
+    },
+    "current_streak": {
+      "type": "number",
+      "default": 0,
+      "description": "Current daily completion streak"
+    },
+    "longest_streak": {
+      "type": "number",
+      "default": 0,
+      "description": "Longest streak achieved"
+    },
+    "last_activity_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Last date user completed an activity"
+    }
+  },
+  "required": [
+    "user_id"
+  ]
+}

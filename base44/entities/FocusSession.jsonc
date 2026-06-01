@@ -1,0 +1,92 @@
+{
+  "name": "FocusSession",
+  "type": "object",
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "ID of the task being worked on"
+    },
+    "task_title": {
+      "type": "string",
+      "description": "Title of the task"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "description": "Length of the focus session"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false
+    },
+    "notes": {
+      "type": "string",
+      "description": "Session notes"
+    },
+    "mood_before": {
+      "type": "string",
+      "enum": [
+        "energized",
+        "focused",
+        "tired",
+        "anxious",
+        "neutral"
+      ],
+      "description": "Mood at session start"
+    },
+    "mood_after": {
+      "type": "string",
+      "enum": [
+        "accomplished",
+        "frustrated",
+        "tired",
+        "energized",
+        "neutral"
+      ],
+      "description": "Mood at session end"
+    },
+    "focus_technique": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "pomodoro",
+        "custom"
+      ],
+      "default": "standard",
+      "description": "Focus technique used"
+    },
+    "work_interval": {
+      "type": "number",
+      "description": "Work interval in minutes for Pomodoro",
+      "default": 25
+    },
+    "break_interval": {
+      "type": "number",
+      "description": "Break interval in minutes for Pomodoro",
+      "default": 5
+    },
+    "ambient_sound": {
+      "type": "string",
+      "enum": [
+        "none",
+        "rain",
+        "cafe",
+        "forest",
+        "ocean",
+        "white_noise",
+        "brown_noise"
+      ],
+      "default": "none",
+      "description": "Ambient sound played during session"
+    },
+    "pomodoros_completed": {
+      "type": "number",
+      "description": "Number of Pomodoro cycles completed",
+      "default": 0
+    }
+  },
+  "required": [
+    "task_id",
+    "task_title",
+    "duration_minutes"
+  ]
+}

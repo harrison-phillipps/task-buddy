@@ -1,0 +1,35 @@
+{
+  "name": "TaskComment",
+  "type": "object",
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "ID of the task this comment belongs to"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "ID of the user who wrote the comment"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Display name of the commenter"
+    },
+    "content": {
+      "type": "string",
+      "description": "Comment text"
+    },
+    "mentions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "User IDs mentioned in the comment"
+    }
+  },
+  "required": [
+    "task_id",
+    "user_id",
+    "content"
+  ]
+}

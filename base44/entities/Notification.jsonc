@@ -1,0 +1,85 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User this notification belongs to"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "task_due",
+        "goal_deadline",
+        "habit_reminder",
+        "achievement",
+        "team_mention",
+        "general"
+      ],
+      "description": "Type of notification"
+    },
+    "title": {
+      "type": "string",
+      "description": "Notification title"
+    },
+    "message": {
+      "type": "string",
+      "description": "Notification message"
+    },
+    "related_id": {
+      "type": "string",
+      "description": "ID of related task/goal/habit"
+    },
+    "related_type": {
+      "type": "string",
+      "enum": [
+        "task",
+        "goal",
+        "habit",
+        "achievement"
+      ],
+      "description": "Type of related entity"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether notification has been read"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium",
+      "description": "Priority level"
+    },
+    "action_url": {
+      "type": "string",
+      "description": "URL to navigate to when clicked"
+    },
+    "scheduled_for": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When to send this notification"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When notification was sent"
+    },
+    "email_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether email notification was sent"
+    }
+  },
+  "required": [
+    "user_id",
+    "type",
+    "title",
+    "message"
+  ]
+}
