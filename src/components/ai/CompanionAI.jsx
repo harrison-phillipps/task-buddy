@@ -2,6 +2,8 @@ import { base44 } from "@/api/base44Client";
 
 // Simple in-memory cache: key → { message, ts }
 const _msgCache = {};
+// Dashboard messages cached for 1 hour (fires on every page load); other contexts 10 min
+const MSG_TTL_DASHBOARD = 60 * 60 * 1000; // 1 hour
 const MSG_TTL = 10 * 60 * 1000; // 10 minutes
 
 /**
@@ -77,7 +79,8 @@ Return ONLY the message text, nothing else.`;
 
   const cacheKey = `${context}-${personality.encouragement}-${personality.humor}-${level}-${streak}`;
   const cached = _msgCache[cacheKey];
-  if (cached && Date.now() - cached.ts < MSG_TTL) {
+  const ttl = context === 'dashboard' ? MSG_TTL_DASHBOARD : MSG_TTL;
+  if (cached && Date.now() - cached.ts < ttl) {
     return cached.message;
   }
 

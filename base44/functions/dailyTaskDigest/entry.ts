@@ -56,8 +56,9 @@ Deno.serve(async (req) => {
       const pref = prefByUserId[user.id];
       // Respect task_reminders preference (default: on)
       if (pref && pref.task_reminders === false) continue;
-      // Respect email_notifications preference (default: on)
+      // Respect email_notifications and email_digest preferences
       if (pref && pref.email_notifications === false) continue;
+      if (pref && pref.email_digest === 'none') continue;
 
       // Categorise tasks
       const overdue = tasks.filter(t => t.due_date && t.due_date < today)

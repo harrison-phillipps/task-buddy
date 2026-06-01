@@ -65,18 +65,21 @@ Deno.serve(async (req) => {
     const diffDays = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
     let urgencyLabel, priority, sendEmail;
+    // Only send emails to users who have opted in to email notifications AND
+    // have email_digest set to 'daily' or 'weekly' (not 'none')
+    const emailOptedIn = prefs?.email_notifications !== false && prefs?.email_digest !== 'none';
     if (diffDays <= 1) {
       urgencyLabel = 'due TODAY';
       priority = 'critical';
-      sendEmail = true;
+      sendEmail = emailOptedIn; // even critical respects opt-out
     } else if (diffDays <= 3) {
       urgencyLabel = `due in ${diffDays} days`;
       priority = 'high';
-      sendEmail = prefs?.email_notifications !== false;
+      sendEmail = emailOptedIn;
     } else {
       urgencyLabel = `due in ${diffDays} days`;
       priority = 'medium';
-      sendEmail = false;
+      sendEmail = false; // never email for 4-7 day tasks
     }
 
     const title = `⏰ Task ${urgencyLabel}: ${task.title}`;

@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
@@ -9,22 +9,42 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { analysisType = 'time_estimation' } = await req.json();
+    const body = await req.json();
+    const { analysisType = 'time_estimation', period = 'weekly', force = false } = body;
 
     // Fetch user's historical tasks and focus sessions
-    const allTasks = await base44.entities.Task.filter({ 
-      created_by: user.email 
+    const allTasks = await base44.entities.Task.filter({
+      created_by: user.email
     }, '-updated_date', 500);
 
     const completedTasks = allTasks.filter(t => t.status === 'completed');
-    
+
     const focusSessions = await base44.entities.FocusSession.filter({
       created_by: user.email
     }, '-created_date', 300);
 
+    // --- Cache check: read from UserProgress ---
+    const progressList = await base44.entities.UserProgress.filter({ user_id: user.id });
+    const progress = progressList[0] || null;
+
+    const cacheField = `ai_cache_${analysisType}`;
+    const cacheCountField = `ai_cache_count_${analysisType}`;
+    const cachedResult = progress?.[cacheField];
+    const cachedCount = progress?.[cacheCountField] || 0;
+    const currentCount = completedTasks.length;
+
+    // Return cache if: not forced, cache exists, and fewer than 5 new completions since last run
+    if (!force && cachedResult && (currentCount - cachedCount) < 5) {
+      console.log(`[analyzeTaskHistory] Returning cached result for ${analysisType} (${currentCount - cachedCount} new completions since last run)`);
+      return Response.json(typeof cachedResult === 'string' ? JSON.parse(cachedResult) : cachedResult);
+    }
+
+    console.log(`[analyzeTaskHistory] Running fresh LLM analysis: ${analysisType} (${currentCount - cachedCount} new completions since last cache)`);
+
+    let result;
+
     if (analysisType === 'time_estimation') {
-      // Analyze historical completion times by category/difficulty
-      const result = await base44.integrations.Core.InvokeLLM({
+      result = await base44.integrations.Core.InvokeLLM({
         prompt: `Analyze these completed tasks and focus sessions to provide accurate time estimation patterns:
 
 Completed Tasks: ${JSON.stringify(completedTasks.slice(0, 50).map(t => ({
@@ -67,13 +87,8 @@ Provide time estimation insights by category and difficulty.`,
           }
         }
       });
-
-      return Response.json(result);
-    }
-
-    if (analysisType === 'optimal_times') {
-      // Analyze when user is most productive
-      const result = await base44.integrations.Core.InvokeLLM({
+    } else if (analysisType === 'optimal_times') {
+      result = await base44.integrations.Core.InvokeLLM({
         prompt: `Analyze when this user is most productive based on their focus session history:
 
 Focus Sessions: ${JSON.stringify(focusSessions.map(s => ({
@@ -111,14 +126,7 @@ Identify:
           }
         }
       });
-
-      return Response.json(result);
-    }
-
-    if (analysisType === 'productivity_report') {
-      const { period = 'weekly' } = await req.json();
-      
-      // Calculate date range
+    } else if (analysisType === 'productivity_report') {
       const now = new Date();
       const startDate = new Date(now);
       if (period === 'weekly') {
@@ -127,7 +135,7 @@ Identify:
         startDate.setMonth(now.getMonth() - 1);
       }
 
-      const periodTasks = completedTasks.filter(t => 
+      const periodTasks = completedTasks.filter(t =>
         new Date(t.updated_date) >= startDate
       );
 
@@ -135,7 +143,7 @@ Identify:
         new Date(s.created_date) >= startDate
       );
 
-      const result = await base44.integrations.Core.InvokeLLM({
+      result = await base44.integrations.Core.InvokeLLM({
         prompt: `Generate a comprehensive productivity report for this ${period} period:
 
 Completed Tasks (${periodTasks.length}): ${JSON.stringify(periodTasks.map(t => ({
@@ -168,7 +176,7 @@ Provide:
             overall_score: { type: "number" },
             total_tasks_completed: { type: "number" },
             total_time_minutes: { type: "number" },
-            completion_rate_by_category: { 
+            completion_rate_by_category: {
               type: "object",
               additionalProperties: { type: "number" }
             },
@@ -195,15 +203,30 @@ Provide:
           }
         }
       });
-
-      return Response.json(result);
+    } else {
+      return Response.json({ error: 'Invalid analysis type' }, { status: 400 });
     }
 
-    return Response.json({ error: 'Invalid analysis type' }, { status: 400 });
+    // --- Store result in UserProgress cache fields ---
+    try {
+      const updateData = {
+        [cacheField]: JSON.stringify(result),
+        [cacheCountField]: currentCount,
+      };
+      if (progress) {
+        await base44.entities.UserProgress.update(progress.id, updateData);
+      } else {
+        await base44.entities.UserProgress.create({ user_id: user.id, ...updateData });
+      }
+    } catch (cacheErr) {
+      console.warn('[analyzeTaskHistory] Failed to store cache:', cacheErr.message);
+    }
+
+    return Response.json(result);
 
   } catch (error) {
     console.error('Analysis error:', error);
-    return Response.json({ 
+    return Response.json({
       error: error.message || 'Failed to analyze task history'
     }, { status: 500 });
   }
