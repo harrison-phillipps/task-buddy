@@ -234,6 +234,23 @@ export default function WinsJournal() {
         {/* Reflection */}
         <div>
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Reflection (optional)</p>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {[
+              "What was the hardest thing I did today?",
+              "What am I most proud of?",
+              "What did I learn today?",
+              "How did I show up for myself?",
+              "What would I do differently?",
+            ].map((prompt) => (
+              <button
+                key={prompt}
+                onClick={() => setReflection(r => r ? r + " " + prompt : prompt)}
+                className="text-xs px-2.5 py-1 rounded-full border border-purple-200 text-purple-600 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/20 transition-colors"
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
           <Textarea
             value={reflection}
             onChange={e => setReflection(e.target.value)}
