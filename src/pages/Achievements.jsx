@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Award, TrendingUp, Zap, Star, Trophy, Target, Flame } from "lucide-react";
+import { Award, TrendingUp, Zap, Star, Trophy, Target, Flame, CalendarCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { ACHIEVEMENTS, calculateLevel, getPointsForNextLevel, getLevelRewards } from "@/components/achievementsData";
 
@@ -17,6 +17,50 @@ export default function AchievementsPage() {
       const user = await base44.auth.me();
       const progressList = await base44.entities.UserProgress.filter({ user_id: user.id });
       return progressList[0] || null;
+    },
+  });
+
+  const { data: winStreak = { current: 0, longest: 0 } } = useQuery({
+    queryKey: ['winStreak'],
+    queryFn: async () => {
+      // Fetch last 90 days of wins journal entries sorted descending
+      const entries = await base44.entities.WinsJournal.list("-entry_date", 90);
+      // Only count entries that have at least one win
+      const winDates = new Set(
+        entries
+          .filter(e => e.wins && e.wins.length > 0)
+          .map(e => e.entry_date)
+      );
+
+      const toDateStr = (d) => d.toISOString().split("T")[0];
+      const today = toDateStr(new Date());
+      const yesterday = toDateStr(new Date(Date.now() - 86400000));
+
+      // Calculate current streak (must include today or yesterday to be "active")
+      let current = 0;
+      if (winDates.has(today) || winDates.has(yesterday)) {
+        let check = new Date(winDates.has(today) ? today : yesterday);
+        while (winDates.has(toDateStr(check))) {
+          current++;
+          check = new Date(check.getTime() - 86400000);
+        }
+      }
+
+      // Calculate longest streak from all dates
+      const sorted = [...winDates].sort();
+      let longest = 0, run = 0, prev = null;
+      for (const d of sorted) {
+        if (prev) {
+          const diff = (new Date(d) - new Date(prev)) / 86400000;
+          run = diff === 1 ? run + 1 : 1;
+        } else {
+          run = 1;
+        }
+        if (run > longest) longest = run;
+        prev = d;
+      }
+
+      return { current, longest };
     },
   });
 
@@ -123,6 +167,61 @@ export default function AchievementsPage() {
               <p className="text-sm text-orange-100">
                 Longest: {userProgress?.longest_streak || 0} days
               </p>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Win Streak */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <Card className="bg-gradient-to-br from-yellow-400 to-amber-500 text-white border-none shadow-lg">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                    <span className="text-3xl">⭐</span>
+                  </div>
+                  <div>
+                    <p className="text-yellow-100 text-sm font-medium uppercase tracking-wide">Win Streak</p>
+                    <div className="flex items-end gap-2">
+                      <p className="text-5xl font-bold">{winStreak.current}</p>
+                      <p className="text-yellow-100 text-lg mb-1">day{winStreak.current !== 1 ? "s" : ""}</p>
+                    </div>
+                    <p className="text-yellow-100 text-sm mt-1">
+                      Consecutive days with at least one recorded win
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="bg-white/20 rounded-xl px-4 py-3">
+                    <p className="text-yellow-100 text-xs font-medium mb-1">Personal Best</p>
+                    <p className="text-3xl font-bold">{winStreak.longest}</p>
+                    <p className="text-yellow-100 text-xs">days</p>
+                  </div>
+                </div>
+              </div>
+              {winStreak.current > 0 && (
+                <div className="mt-4 pt-4 border-t border-yellow-300/40">
+                  <div className="flex items-center gap-2 text-sm text-yellow-100">
+                    <CalendarCheck className="w-4 h-4" />
+                    {winStreak.current >= 7
+                      ? "🔥 Incredible! A full week of wins!"
+                      : winStreak.current >= 3
+                      ? "Keep it going — you're building a beautiful habit!"
+                      : "Great start — come back tomorrow to extend your streak!"}
+                  </div>
+                </div>
+              )}
+              {winStreak.current === 0 && (
+                <div className="mt-4 pt-4 border-t border-yellow-300/40">
+                  <p className="text-sm text-yellow-100">
+                    Head to <strong>Habits &amp; Routines</strong> and record a win today to start your streak! ⭐
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>
