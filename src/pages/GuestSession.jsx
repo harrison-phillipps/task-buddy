@@ -112,50 +112,68 @@ export default function GuestSession() {
     try {
       const energyLabel = ENERGY_OPTIONS.find(e => e.value === energy)?.label || energy;
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Break down this SPECIFIC task into 4-6 concrete micro-steps that are UNIQUE to exactly this task and nothing else.
+        prompt: `Break down "${taskText}" into 4-5 specific micro-steps for someone with ${energyLabel} energy and ${timeMinutes} minutes.
 
-Task: "${taskText}"
-Energy level: ${energyLabel}
-Time available: ${timeMinutes} minutes
+Each step MUST be specific to "${taskText}" — name the actual objects, actions, or sub-tasks involved. Someone reading only the steps (with no context) should immediately know they're doing "${taskText}".
 
-CRITICAL RULES:
-- Every step must be SPECIFIC to "${taskText}" — if someone read just the steps with no context, they would know exactly what task was being broken down
-- NEVER use generic steps like "do the first obvious action" or "keep going" — these could apply to any task
-- Steps must name specific physical actions or objects relevant to THIS task
-- Start every step with a strong action verb
-- Match energy level: low energy = smaller, gentler steps; high energy = bolder steps
-- All steps combined must fit within ${timeMinutes} minutes (each step 2-8 min)
-- The "tip" field should be a one-line coaching nudge specific to that step
+Bad example (generic, never do this): "Do the first obvious action"
+Good example for "clean the kitchen": "Stack dirty dishes into the dishwasher"
 
-Return a JSON object with steps array and a short encouragement string.`,
+Energy ${energyLabel}: ${energy === "low" ? "Keep steps small and low-effort" : energy === "high" ? "Steps can be bigger and more demanding" : "Mix of easy and moderate steps"}
+
+Return JSON: { steps: [ { title: string, duration_minutes: number, tip: string } ] }`,
         response_json_schema: {
-          type: "object",
-          properties: {
-            steps: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  title: { type: "string" },
-                  duration_minutes: { type: "number" },
-                  tip: { type: "string" }
-                }
-              }
-            },
-            encouragement: { type: "string" }
+        type: "object",
+        properties: {
+        steps: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              duration_minutes: { type: "number" },
+              tip: { type: "string" }
+            }
           }
+        }
+        }
         }
       });
       setSteps(result.steps || []);
       setStep(STEP_BREAKDOWN);
     } catch (err) {
-      // Fallback steps
-      setSteps([
-        { title: `Start with just 2 minutes on: ${taskText}`, duration_minutes: 2, tip: "Just begin — momentum builds fast." },
-        { title: "Clear the space in front of you", duration_minutes: 3, tip: "A clear space = a clear mind." },
-        { title: "Do the first obvious action", duration_minutes: 5, tip: "Don't plan, just act." },
-        { title: "Keep going for 5 more minutes", duration_minutes: 5, tip: "You're in the zone now." },
-      ]);
+      console.error("Breakdown failed, trying second attempt:", err);
+      // Second attempt with simpler prompt
+      try {
+        const result2 = await base44.integrations.Core.InvokeLLM({
+          prompt: `Give me 4 specific steps to: "${taskText}". Each step must directly reference the actual task. Energy: ${energy}, Time: ${timeMinutes} min. Return JSON with steps array, each having title (specific action for this task), duration_minutes (number), tip (string).`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              steps: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    duration_minutes: { type: "number" },
+                    tip: { type: "string" }
+                  }
+                }
+              }
+            }
+          }
+        });
+        setSteps(result2.steps || []);
+      } catch (err2) {
+        console.error("Second attempt also failed:", err2);
+        setSteps([
+          { title: `Open up "${taskText}" and look at it for 60 seconds`, duration_minutes: 2, tip: "Starting is the hardest part." },
+          { title: `Do the first physical action required for "${taskText}"`, duration_minutes: 5, tip: "One concrete move." },
+          { title: `Continue working on "${taskText}" — pick the next obvious piece`, duration_minutes: 5, tip: "Keep the momentum." },
+          { title: `Finish or pause "${taskText}" at a natural stopping point`, duration_minutes: 3, tip: "Leave it in a state you can return to." },
+        ]);
+      }
       setStep(STEP_BREAKDOWN);
     }
     setLoading(false);
