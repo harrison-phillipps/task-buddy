@@ -265,7 +265,7 @@ function LayoutContent({ children, currentPageName }) {
 
             <div className="mt-6 mx-3 p-4 bg-gradient-to-br from-purple-100 to-teal-100 dark:from-purple-900/30 dark:to-teal-900/30 rounded-2xl">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">💜 Remember</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Progress over perfection. You've got this!</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">One thing started beats ten things planned.</p>
             </div>
           </SidebarContent>
 
