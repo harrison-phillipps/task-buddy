@@ -9,6 +9,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Gate: LLM analysis is Pro/Premium only
+    const tier = user.subscription_tier || 'free';
+    if (tier === 'free') {
+      return Response.json({ error: 'This feature requires a Pro or Premium subscription.' }, { status: 403 });
+    }
+
     // Parse body once
     let body = {};
     try { body = await req.json(); } catch { /* no body */ }

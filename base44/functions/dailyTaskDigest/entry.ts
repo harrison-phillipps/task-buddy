@@ -53,12 +53,18 @@ Deno.serve(async (req) => {
       const user = userByEmail[email];
       if (!user) continue;
 
+      // Only send digest to paid users (Pro/Premium) — free tier would be 1 credit/user/day at scale
+      const tier = user.subscription_tier || 'free';
+      if (tier === 'free') continue;
+
       const pref = prefByUserId[user.id];
-      // Respect task_reminders preference (default: on)
-      if (pref && pref.task_reminders === false) continue;
+      // If no pref record exists, user hasn't opted in — skip (avoids default-on behaviour)
+      if (!pref) continue;
+      // Respect task_reminders preference
+      if (pref.task_reminders === false) continue;
       // Respect email_notifications and email_digest preferences
-      if (pref && pref.email_notifications === false) continue;
-      if (pref && pref.email_digest === 'none') continue;
+      if (pref.email_notifications === false) continue;
+      if (pref.email_digest === 'none') continue;
 
       // Categorise tasks
       const overdue = tasks.filter(t => t.due_date && t.due_date < today)
