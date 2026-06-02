@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { Textarea } from "@/components/ui/textarea";
 
-export default function MessageFeedback({ message, context, onFeedbackSubmitted }) {
+export default function MessageFeedback({ message, context, insightType, onFeedbackSubmitted }) {
   const [showFeedback, setShowFeedback] = useState(false);
   const [rating, setRating] = useState(null);
   const [showDetailedFeedback, setShowDetailedFeedback] = useState(false);
@@ -29,26 +29,15 @@ export default function MessageFeedback({ message, context, onFeedbackSubmitted 
       const user = await base44.auth.me();
       
       // Store feedback for learning
+      // Store context as the insight type so ProactiveCoach can suppress by type
       await base44.entities.CompanionFeedback.create({
         user_id: user.id,
         message_text: message,
-        context: context,
+        context: insightType || context,
         rating: ratingValue,
         feedback: detailedFeedback,
         personality_settings: user.companion_personality_custom || {}
       });
-
-      // Update user preferences if negative
-      if (ratingValue === "negative" && detailedFeedback) {
-        const preferences = user.companion_preferences || { dislikedPhrases: [] };
-        // Could extract phrases from feedback, for now just store
-        await base44.auth.updateMe({
-          companion_preferences: {
-            ...preferences,
-            lastNegativeFeedback: detailedFeedback
-          }
-        });
-      }
 
       setShowFeedback(false);
       setShowDetailedFeedback(false);
@@ -126,7 +115,18 @@ export default function MessageFeedback({ message, context, onFeedbackSubmitted 
             exit={{ opacity: 0 }}
             className="absolute -bottom-8 right-0 text-xs text-green-600"
           >
-            Thanks for the feedback! ✓
+            Noted ✓
+          </motion.div>
+        )}
+
+        {rating === "negative" && !showDetailedFeedback && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute -bottom-8 right-0 text-xs text-gray-500"
+          >
+            Got it — you'll see fewer of these.
           </motion.div>
         )}
       </AnimatePresence>

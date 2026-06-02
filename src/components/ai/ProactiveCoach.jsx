@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, X, TrendingUp, Brain, Target, Zap, CheckCircle, AlertCircle } from "lucide-react";
+import { Sparkles, X, TrendingUp, Brain, Target, Zap, CheckCircle, ThumbsUp, ThumbsDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const COACHING_TYPES = {
@@ -24,10 +24,10 @@ export default function ProactiveCoach({
   const [coachingTip, setCoachingTip] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [feedbackGiven, setFeedbackGiven] = useState(null); // 'positive' | 'negative'
 
   useEffect(() => {
     if (!userProgress || isDismissed) return;
-    // Free users don't get AI coaching tips
     if (!userTier || userTier === "free") return;
 
     const sessionKey = 'proactive_coach_shown_' + new Date().toDateString();
@@ -57,40 +57,65 @@ export default function ProactiveCoach({
           t.priority === 'urgent' || t.task_priority === 'must_do'
         ).length;
 
-        const prompt = `You are an empathetic ADHD productivity coach analyzing a user's activity in ${context} context.
+        // Load negative feedback to avoid surfacing disliked insight types
+        let suppressedTypes = [];
+        try {
+          const user = await base44.auth.me();
+          const recentFeedback = await base44.entities.CompanionFeedback.filter(
+            { user_id: user.id, rating: "negative" },
+            '-created_date',
+            20
+          );
+          // Count negative hits per type; suppress any type with 2+ negatives
+          const typeCounts = {};
+          recentFeedback.forEach(f => {
+            if (f.context) typeCounts[f.context] = (typeCounts[f.context] || 0) + 1;
+          });
+          suppressedTypes = Object.entries(typeCounts)
+            .filter(([, count]) => count >= 2)
+            .map(([type]) => type);
+        } catch {}
 
-TIME: ${timeOfDay} (${hourOfDay}:00)
+        const availableTypes = Object.values(COACHING_TYPES).filter(t => !suppressedTypes.includes(t));
+
+        const prompt = `You are a sharp, peer-level productivity coach. Your tone is direct, specific, and treats the user as a capable adult. Never be patronising or use corporate wellness language.
+
+CONTEXT: ${timeOfDay} (${hourOfDay}:00)
 USER LEVEL: ${Math.floor(userProgress.total_points / 200) + 1}
 STREAK: ${userProgress.current_streak || 0} days
-TOTAL POINTS: ${userProgress.total_points}
 
-TODAY'S ACTIVITY:
-- Completed tasks: ${completedTasksToday}
-- Focus sessions: ${focusSessionsToday}
-- Focus time: ${totalFocusMinutes} minutes
-- Pending tasks: ${pendingTasks}
-- High priority tasks: ${highPriorityTasks}
+TODAY:
+- Tasks completed: ${completedTasksToday}
+- Focus sessions: ${focusSessionsToday} (${totalFocusMinutes} min total)
+- Pending tasks: ${pendingTasks} (${highPriorityTasks} high priority)
 
-RECENT PATTERNS:
-- Total tasks completed: ${userProgress.tasks_completed || 0}
-- Total focus sessions: ${userProgress.focus_sessions_completed || 0}
-- Total focus time: ${userProgress.total_focus_minutes || 0} minutes
+HISTORY:
+- All-time tasks: ${userProgress.tasks_completed || 0}
+- All-time focus sessions: ${userProgress.focus_sessions_completed || 0}
+- Total focus time: ${userProgress.total_focus_minutes || 0} min
 
 GOALS: ${goals.length > 0 ? goals.map(g => `${g.title} (${g.status})`).join(', ') : 'None set'}
 
-Generate ONE proactive coaching tip that is:
-1. Contextually relevant to their current time, activity, and patterns
-2. Actionable and specific (not generic)
-3. Encouraging but realistic
-4. Brief (2-3 sentences max)
-5. Focused on ONE improvement area`;
+AVOID THESE INSIGHT TYPES (user gave negative feedback): ${suppressedTypes.length > 0 ? suppressedTypes.join(', ') : 'none'}
+AVAILABLE TYPES: ${availableTypes.join(', ')}
+
+Generate ONE insight. Rules:
+1. Lead with the data point — put the number or fact in the first 5 words
+2. Max 2 sentences. No padding.
+3. No phrases like "To boost your...", "Remember to...", "Don't forget...", "Great job..."
+4. No exclamation marks unless quoting something
+5. Sound like a coach who respects the user's intelligence, not a wellness app
+6. The title should be 3–5 words, factual, no hype
+
+Good example: "Your brain runs best at 11am. That's today — use it."
+Bad example: "To boost your productivity, try scheduling focused sessions at your peak hour of 11am..."`;
 
         const result = await base44.integrations.Core.InvokeLLM({
           prompt,
           response_json_schema: {
             type: "object",
             properties: {
-              type: { type: "string", enum: Object.values(COACHING_TYPES) },
+              type: { type: "string", enum: availableTypes.length > 0 ? availableTypes : Object.values(COACHING_TYPES) },
               title: { type: "string" },
               message: { type: "string" },
               actionable: { type: "boolean" },
@@ -161,6 +186,27 @@ Generate ONE proactive coaching tip that is:
     setIsDismissed(true);
   };
 
+  const handleFeedback = async (rating) => {
+    setFeedbackGiven(rating);
+    if (rating === 'negative') {
+      // Dismiss after a moment so user sees the confirmation
+      setTimeout(() => handleDismiss(), 1200);
+    }
+    try {
+      const user = await base44.auth.me();
+      await base44.entities.CompanionFeedback.create({
+        user_id: user.id,
+        message_text: coachingTip.message,
+        context: coachingTip.type, // store insight type so future sessions can suppress it
+        rating,
+        feedback: "",
+        personality_settings: {}
+      });
+    } catch (error) {
+      console.error("Failed to save feedback:", error);
+    }
+  };
+
   if (!coachingTip || !isVisible) return null;
 
   const Icon = getIcon();
@@ -201,13 +247,40 @@ Generate ONE proactive coaching tip that is:
                 </p>
 
                 {coachingTip.actionable && coachingTip.action_label && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 mb-3">
                     <div className={`w-1 h-1 rounded-full ${colorClasses.dot}`} />
                     <span className={`text-xs font-medium ${colorClasses.action}`}>
                       {coachingTip.action_label}
                     </span>
                   </div>
                 )}
+
+                {/* Inline feedback — captured immediately, feeds suppression logic */}
+                <div className="flex items-center gap-2 pt-1 border-t border-black/5">
+                  {feedbackGiven === null ? (
+                    <>
+                      <span className="text-xs text-gray-400 mr-1">Useful?</span>
+                      <button
+                        onClick={() => handleFeedback('positive')}
+                        className="p-1 rounded hover:bg-green-50 text-gray-400 hover:text-green-600 transition-colors"
+                        title="Yes, helpful"
+                      >
+                        <ThumbsUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleFeedback('negative')}
+                        className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                        title="Not for me"
+                      >
+                        <ThumbsDown className="w-3.5 h-3.5" />
+                      </button>
+                    </>
+                  ) : feedbackGiven === 'positive' ? (
+                    <span className="text-xs text-green-600">Noted ✓</span>
+                  ) : (
+                    <span className="text-xs text-gray-500">Got it — fewer of these.</span>
+                  )}
+                </div>
               </div>
             </div>
           </CardContent>

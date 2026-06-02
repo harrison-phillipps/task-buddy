@@ -117,93 +117,94 @@ export function getPersonalizedMessage(userProgress, context, user = null) {
   const needsBrainDumps = tasksCompleted > 10 && brainDumps < 2;
 
   // Base messages by personality type
+  // Tone principle: peer/coach, not cheerleader. Specific > generic. Never patronising.
   const messagesByPersonality = {
     motivational: {
       dashboard: [
-        `${displayName}, you're a ROCKSTAR! Ready to dominate today?`,
-        `Champions like you don't quit, ${displayName}! Let's GO!`,
-        `${displayName}, today is YOUR day to shine!`
+        `${displayName}, what's the one thing that actually moves the needle today?`,
+        `Back at it. What are you making happen today, ${displayName}?`,
+        `${displayName}, the hardest part is starting. You're already here.`
       ],
       focus_start: [
-        `Time to show this task who's BOSS, ${displayName}!`,
-        `${displayName}, you're about to CRUSH this! Ready?`,
-        `Focus mode: ACTIVATED! You've got this, ${displayName}!`
+        `${displayName}, close the tabs. This is your time.`,
+        `One task. Full attention. Go, ${displayName}.`,
+        `${displayName}, this window is yours. Make it count.`
       ],
       brain_dump: [
-        `Let it ALL out, ${displayName}! Every thought is POWERFUL!`,
-        `${displayName}, your brain is FULL of amazing ideas!`,
-        `Dump those thoughts and watch the MAGIC happen!`
+        `${displayName}, get it all out. Nothing's too small or too messy.`,
+        `No filtering, no judging. Just write, ${displayName}.`,
+        `Clear the mental backlog, ${displayName}. Everything out.`
       ],
       task_breakdown: [
-        `Let's SMASH this big task into bite-sized wins!`,
-        `${displayName}, we're about to make this task your victory!`,
-        `Breaking it down = Setting yourself up for SUCCESS!`
+        `${displayName}, let's find the first real step — not the whole staircase.`,
+        `Big tasks shrink fast once you start cutting, ${displayName}.`,
+        `${displayName}, let's find where to bite first.`
       ]
     },
     calm: {
       dashboard: [
-        `Welcome back, ${displayName}. Take a moment to breathe.`,
-        `${displayName}, there's no rush. Let's find your flow today.`,
-        `Gently now, ${displayName}. What feels right to work on?`
+        `Welcome back, ${displayName}. What feels manageable right now?`,
+        `${displayName}, no agenda — just whatever makes sense to start with.`,
+        `Take stock, ${displayName}. What needs your attention today?`
       ],
       focus_start: [
-        `${displayName}, settle in. Find your comfortable rhythm.`,
-        `No pressure, ${displayName}. Just you and this moment.`,
-        `Let's begin peacefully, ${displayName}. One breath at a time.`
+        `${displayName}, settle in. Distraction is normal — just return when it happens.`,
+        `No pressure on the outcome, ${displayName}. Just show up for the time.`,
+        `${displayName}, you don't need to be in the zone. Just begin.`
       ],
       brain_dump: [
-        `Let your thoughts flow freely, ${displayName}. No judgment.`,
-        `${displayName}, release what's on your mind. It's safe here.`,
-        `Gently unload your thoughts, ${displayName}. Take your time.`
+        `${displayName}, let it out without editing. You can sort it after.`,
+        `Whatever's in your head — useful or not — write it down, ${displayName}.`,
+        `${displayName}, this is a private page. Let it be honest.`
       ],
       task_breakdown: [
-        `Let's softly break this down, ${displayName}. Step by step.`,
-        `${displayName}, we'll approach this gently together.`,
-        `No rush. Let's find the natural pieces of this task.`
+        `${displayName}, one concrete next action. That's all we need right now.`,
+        `Let's find the first step that doesn't require perfect conditions, ${displayName}.`,
+        `${displayName}, small is fine. Small still moves things forward.`
       ]
     },
     witty: {
       dashboard: [
-        `${displayName}! Back for more productivity shenanigans? 😄`,
-        `Plot twist: ${displayName} returns to conquer tasks!`,
-        `${displayName}, your to-do list doesn't stand a chance!`
+        `${displayName}, your task list hasn't given up on you. Time to return the favour.`,
+        `Back? Great. Your procrastination has been noted and forgiven, ${displayName}.`,
+        `${displayName}, the to-do list is holding. What are you doing about it?`
       ],
       focus_start: [
-        `${displayName}, time to focus... or as I call it, "task wizardry"!`,
-        `Focus mode? More like "becoming a legend" mode, ${displayName}!`,
-        `${displayName}'s focusing? Someone alert the productivity hall of fame!`
+        `${displayName}, phone face-down. Tabs closed. Let's pretend it's 1987 and there's no internet.`,
+        `Focus mode: the part where ${displayName} actually does the thing.`,
+        `${displayName}, time to make the browser tabs feel ignored.`
       ],
       brain_dump: [
-        `${displayName}'s brain buffet is now open! Dump away!`,
-        `Time to empty that beautiful brain, ${displayName}!`,
-        `Let the thought avalanche begin, ${displayName}! 🏔️`
+        `${displayName}, open the mental floodgates. We'll sort the mess later.`,
+        `Thinking about 12 things at once again, ${displayName}? Great — write them all.`,
+        `${displayName}, give the inside of your head a good shake onto this page.`
       ],
       task_breakdown: [
-        `Let's slice this task like a productivity ninja, ${displayName}!`,
-        `${displayName}, time to turn this mountain into molehills!`,
-        `Task surgery incoming! Dr. ${displayName} is ready! 🔪`
+        `${displayName}, let's cut this thing into pieces small enough to actually do.`,
+        `Big task, ${displayName}? Not for long.`,
+        `${displayName}, we eat the elephant one bite at a time. Which bite first?`
       ]
     },
     direct: {
       dashboard: [
-        `${displayName}. Ready to work. What's the priority?`,
-        `Welcome, ${displayName}. Let's see what needs doing.`,
-        `${displayName}, checking in. Tasks are waiting.`
+        `${displayName}. What's the priority right now?`,
+        `Three tasks max today, ${displayName}. Which three?`,
+        `${displayName}, what's blocking progress? Let's fix it.`
       ],
       focus_start: [
-        `${displayName}, focus session ready. Let's begin.`,
-        `Timer set. Focus mode active, ${displayName}.`,
-        `${displayName}, task selected. Time to execute.`
+        `${displayName}, task locked. Timer set. Begin.`,
+        `Focus session active. No switching, ${displayName}.`,
+        `${displayName}, single task. Full attention. Go.`
       ],
       brain_dump: [
-        `${displayName}, write your thoughts. I'll organize them.`,
-        `Brain dump time. List everything, ${displayName}.`,
-        `${displayName}, clear your mind. Put it all here.`
+        `${displayName}, write everything. Prioritise after.`,
+        `All of it, ${displayName}. Unfiltered. Now.`,
+        `${displayName}, capture first. Organise second.`
       ],
       task_breakdown: [
-        `${displayName}, let's break this down efficiently.`,
-        `Task received. Creating actionable steps.`,
-        `${displayName}, we'll divide this into clear steps.`
+        `${displayName}, what's the first physical action?`,
+        `Break it until each step takes under 30 minutes, ${displayName}.`,
+        `${displayName}, concrete steps only. No vague goals.`
       ]
     }
   };
@@ -230,21 +231,21 @@ export function getPersonalizedMessage(userProgress, context, user = null) {
     );
   } else if (hasLostStreak) {
     messages.dashboard.push(
-      `${displayName}, you had a ${longestStreak}-day streak before - you can do it again! Fresh start today? 💪`,
-      `Hey ${displayName}, streaks break sometimes, and that's okay! What matters is starting again. 🌅`,
-      `${displayName}, every expert was once a beginner who kept coming back. Ready to restart? 🔄`
+      `${displayName}, you hit ${longestStreak} days before. That didn't disappear — the capacity is still there.`,
+      `Streaks end. The ones who matter start again, ${displayName}.`,
+      `${displayName}, ${longestStreak} days is proof you can. Today's the reset.`
     );
   } else if (isStreakStruggling) {
     messages.dashboard.push(
-      `${displayName}, try setting a daily reminder to check in, even for 5 minutes! ⏰`,
-      `Small daily wins build big streaks, ${displayName}. What's one tiny thing you can do today?`,
-      `Consistency beats intensity, ${displayName}! Even a 2-minute task keeps the streak alive. 🎯`
+      `${displayName}, even 5 minutes today keeps the thread alive. Don't overthink it.`,
+      `Consistency doesn't require perfection, ${displayName}. It just requires showing up.`,
+      `${displayName}, one small task. That's all a streak needs today.`
     );
   } else if (isConsistent) {
     messages.dashboard.push(
-      `${displayName}, ${streak} days strong! Your consistency is your superpower! 🔥`,
-      `Amazing ${streak}-day streak, ${displayName}! You're building incredible habits! 🏆`,
-      `${displayName}, your dedication is inspiring! Keep riding this momentum! ⚡`
+      `${displayName}, that's a ${streak}-day streak. That's not luck — that's a system working.`,
+      `${streak} days, ${displayName}. Most people don't make it this far.`,
+      `${displayName}, ${streak} days straight. You're building something real here.`
     );
   }
 
@@ -269,98 +270,98 @@ export function getPersonalizedMessage(userProgress, context, user = null) {
     );
   }
 
-  // Level-based encouragement
+  // Level-based — specific and grounded, not gushing
   if (level >= 15) {
-    messages.dashboard.push(`Level ${level} master! Your journey inspires others! 👑`);
+    messages.dashboard.push(`Level ${level}, ${displayName}. You're in the top tier of users who stick with this.`);
   } else if (level >= 10) {
-    messages.dashboard.push(`Level ${level}! You've come so far - incredible! 🌟`);
+    messages.dashboard.push(`Level ${level}. ${displayName}, most people quit before they get here.`);
   } else if (level >= 5) {
-    messages.dashboard.push(`Level ${level} and growing! Keep up the great work! 💫`);
+    messages.dashboard.push(`Level ${level}, ${displayName}. The early gains are compounding now.`);
   }
 
   // Default dashboard messages
   messages.dashboard.push(
-    `Ready to tackle today, ${displayName}? I'm here with you!`,
-    `Let's make progress together, ${displayName}!`,
-    `Every step counts, ${displayName}. What shall we work on?`
+    `${displayName}, what's the highest-value thing you can do in the next hour?`,
+    `What's on your plate today, ${displayName}?`,
+    `${displayName}, let's see what's next.`
   );
 
   // Focus start messages - personalized
   if (focusSessions === 0) {
     messages.focus_start.push(
-      `${displayName}, your first focus session! Start with just 10-15 minutes. You've got this! 🎯`,
-      `Tip for ${displayName}: Remove distractions before starting. Phone on silent helps! 📵`,
-      `First time focusing together, ${displayName}! Remember: it's okay to take breaks! 💚`
+      `${displayName}, first session. Start with 10–15 minutes — shorter than you think you need.`,
+      `${displayName}, phone down, one tab open. That's it.`,
+      `No system yet, ${displayName}? That's fine — this is session one. Just see how it feels.`
     );
   } else if (focusSessions < 5) {
     messages.focus_start.push(
-      `${displayName}, you're building a great focus habit! Each session gets easier. 💪`,
-      `${displayName}, if you get distracted, gently bring your attention back. No judgment!`,
-      `Focus session #${focusSessions + 1}, ${displayName}! You're on your way to mastery! 🚀`
+      `${displayName}, session ${focusSessions + 1}. Still early — the habit is forming.`,
+      `${displayName}, distraction will happen. Just return when it does. No drama.`,
+      `${displayName}, you've done ${focusSessions} of these. You know you can get through it.`
     );
   } else if (focusSessions >= 25) {
     messages.focus_start.push(
-      `${displayName}, focus veteran! Your concentration powers are legendary! ⚡`,
-      `${displayName}, ${focusSessions} sessions completed! You know exactly what works for you! 🏆`,
-      `A true focus master at work, ${displayName}! Let's make this session count! 👑`
+      `${displayName}, ${focusSessions} sessions in. You're past the part where people quit.`,
+      `${displayName}, you know what works for you by now. Trust it.`,
+      `${focusSessions} sessions logged, ${displayName}. This is just what you do now.`
     );
   }
 
   if (totalFocusMinutes >= 500) {
     messages.focus_start.push(
-      `${totalFocusMinutes} minutes of focus logged! That's serious dedication! ⏱️`
+      `${displayName}, ${totalFocusMinutes} minutes of focus time logged. That's a real number.`
     );
   }
 
   messages.focus_start.push(
-    `Let's focus together, ${displayName}! You've got this!`,
-    `I'll be right here cheering you on, ${displayName}!`,
-    `Time to shine, ${displayName}! Let's do this!`
+    `${displayName}, pick the task. Set the timer. Start.`,
+    `${displayName}, you've got this window — use it.`,
+    `One thing at a time, ${displayName}. That's the whole strategy.`
   );
 
-  // Brain dump messages - personalized
+  // Brain dump messages - grounded, not cheerful
   if (brainDumps === 0) {
     messages.brain_dump.push(
-      "First brain dump! Just write everything - no filtering needed! 🧠",
-      "Tip: Don't organize as you write. Just let it all flow out!",
-      "This is a judgment-free zone. Dump ALL your thoughts! 💭"
+      "First one. No structure required — the goal is empty head, full page.",
+      "Write without filtering. You can throw half of it away later.",
+      "Capture everything. Useful, pointless, half-formed — it all goes in."
     );
   } else if (brainDumps >= 10) {
     messages.brain_dump.push(
-      "Brain dump pro! You know the power of clearing your mind! 🌟",
-      `${brainDumps} brain dumps! You've mastered the art of mental clarity! 🧘`
+      `${displayName}, ${brainDumps} brain dumps in. You know what this does for you.`,
+      `${displayName}, clear the backlog. You know the process.`
     );
   }
 
   if (tasksCompleted > 20 && brainDumps < 5) {
     messages.brain_dump.push(
-      "Tip: Regular brain dumps can help you discover hidden tasks and reduce anxiety!"
+      `${displayName}, with that many tasks done, a regular brain dump would surface the stuff slipping through the cracks.`
     );
   }
 
   messages.brain_dump.push(
-    `Pour out everything on your mind, ${displayName}. I'll help organize it!`,
-    `No thought is too small, ${displayName}. Let it all out!`,
-    `Brain feeling full, ${displayName}? Let's empty it together!`
+    `${displayName}, what's taking up mental space right now? Get it out.`,
+    `${displayName}, everything — not just the important stuff. Go.`,
+    `Clear it out, ${displayName}. Organise after.`
   );
 
   // Task breakdown messages
   if (tasksCompleted < 5) {
     messages.task_breakdown.push(
-      "Breaking tasks down is the secret to getting things done! Let me help! ✨",
-      "Tip: Smaller steps = less overwhelm. Let's make this manageable!",
-      "Big tasks can feel scary. Let's chop this into tiny, doable pieces! 🔪"
+      "The trick: make each step small enough that you can't argue with starting it.",
+      "Smaller steps aren't cheating. They're the strategy.",
+      "What's the smallest thing that would count as real progress here?"
     );
   } else {
     messages.task_breakdown.push(
-      "You know the drill! Let's break this down into easy steps! 💪",
-      "Another task to conquer! Small steps lead to big wins! 🏆"
+      `${displayName}, you've broken down tasks before. Find the first step.`,
+      `${displayName}, cut until each piece is under 30 minutes. That's the threshold.`
     );
   }
 
   messages.task_breakdown.push(
-    `Let's turn this big task into small, doable steps, ${displayName}!`,
-    `I'll help you break this down into manageable pieces, ${displayName}!`
+    `${displayName}, what's the actual first action — not the plan, the action?`,
+    `${displayName}, let's find where this gets stuck and work backwards from there.`
   );
 
   const contextMessages = messages[context] || messages.dashboard;
@@ -492,12 +493,12 @@ export function getProductivityTip(userProgress, context = null, additionalData 
     });
   }
 
-  // Milestone celebrations
+  // Milestone — peer tone, specific, no exclamation marks at the end of sentences
   if (tasksCompleted === 1) {
     tips.push({
       type: "milestone",
-      title: "First Task Complete! 🎉",
-      message: "You just completed your first task! Every journey starts with a single step. Keep going!",
+      title: "First task done.",
+      message: "One task completed. That's not nothing — starting is the part most people skip.",
       priority: "high"
     });
   }
@@ -505,8 +506,8 @@ export function getProductivityTip(userProgress, context = null, additionalData 
   if (tasksCompleted === 10) {
     tips.push({
       type: "milestone",
-      title: "10 Tasks Done! 🏆",
-      message: "Double digits! You're building real momentum now. This is where habits form!",
+      title: "10 tasks completed.",
+      message: "Double digits. You've crossed the point where most people stop. Keep the same approach.",
       priority: "high"
     });
   }
@@ -514,8 +515,8 @@ export function getProductivityTip(userProgress, context = null, additionalData 
   if (tasksCompleted === 25) {
     tips.push({
       type: "milestone",
-      title: "25 Tasks Completed! 🌟",
-      message: "WOW! 25 tasks! You've proven you can stick with this. You're a productivity champion!",
+      title: "25 tasks done.",
+      message: "25 tasks completed. That's a consistent pattern, not a lucky streak.",
       priority: "high"
     });
   }
@@ -523,8 +524,8 @@ export function getProductivityTip(userProgress, context = null, additionalData 
   if (streak === 7) {
     tips.push({
       type: "milestone",
-      title: "One Week Streak! 🔥",
-      message: "7 days in a row! You've officially built a habit. This is where transformation happens!",
+      title: "7-day streak.",
+      message: "One week straight. Research puts habit formation at around 21 days — you're a third of the way there.",
       priority: "high"
     });
   }
