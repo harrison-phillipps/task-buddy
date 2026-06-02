@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
-import { Sparkles, Play, Pause, RotateCcw, CheckCircle2, ArrowRight, Zap, Clock, Brain } from "lucide-react";
+import { Sparkles, Play, Pause, RotateCcw, CheckCircle2, ArrowRight, Zap, Clock, Brain, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // ─── Step constants ───────────────────────────────────────────────────────────
@@ -104,6 +104,8 @@ export default function GuestSession() {
   const [completedSteps, setCompletedSteps] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
+  const [sessionInsight, setSessionInsight] = useState(null);
+  const sessionStartTime = useRef(new Date());
 
   // ── AI breakdown ──────────────────────────────────────────────────────────
   const fetchBreakdown = async () => {
