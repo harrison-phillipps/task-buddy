@@ -35,7 +35,7 @@ ${pendingTasks.slice(0, 15).map((t, i) =>
 Return ONLY:
 - task_title: exact title from the list
 - estimated_time: number in minutes
-- short_label: MAX 4 words describing why (e.g. "Low energy · quick win", "Overdue · high priority", "High impact · 10 min"). No sentences. No verbs. Just descriptive tags separated by ·`;
+- short_label: MAX 4 words describing why (e.g. "Low energy · quick win", "High impact · 10 min", "Quick win · high priority"). No sentences. No verbs. Just descriptive tags separated by ·. NEVER use the word "Overdue".`;
 
         const result = await base44.integrations.Core.InvokeLLM({
           prompt,

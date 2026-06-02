@@ -1,5 +1,6 @@
-import { Zap } from "lucide-react";
+import { Zap, Plus } from "lucide-react";
 import { createPageUrl } from "@/utils";
+import { Link } from "react-router-dom";
 
 const PRIORITY_ORDER = { urgent: 0, high: 1, medium: 2, low: 3 };
 const TASK_PRIORITY_ORDER = { must_do: 0, should_do: 1, could_do: 2 };
@@ -30,7 +31,24 @@ function getMostUrgentTask(tasks) {
 
 export default function QuickStartFocus({ tasks }) {
   const task = getMostUrgentTask(tasks);
-  if (!task) return null;
+
+  if (!task) return (
+    <div className="w-full flex items-center gap-4 px-5 py-4 bg-white/80 dark:bg-gray-800/80 border border-purple-100 dark:border-gray-700 rounded-2xl">
+      <div className="w-11 h-11 bg-purple-100 dark:bg-purple-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
+        <Zap className="w-6 h-6 text-purple-500" />
+      </div>
+      <div className="flex-1 text-left min-w-0">
+        <p className="font-semibold text-gray-800 dark:text-gray-100 text-sm leading-snug">Ready to tackle something?</p>
+        <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">Add your first task and we'll break it down for you.</p>
+      </div>
+      <Link to={createPageUrl("Tasks")} className="flex-shrink-0">
+        <button className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold px-3 py-2 rounded-xl transition-colors">
+          <Plus className="w-4 h-4" />
+          Add a task
+        </button>
+      </Link>
+    </div>
+  );
 
   const handleQuickStart = () => {
     const url =

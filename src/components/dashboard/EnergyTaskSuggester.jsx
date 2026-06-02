@@ -35,7 +35,7 @@ const energyBadge = {
 export default function EnergyTaskSuggester({ tasks = [], onStart }) {
   const [energySlider, setEnergySlider] = useState([3]);
   const [timeAvailable, setTimeAvailable] = useState(60);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   const energyLevel = ENERGY_LEVELS[energySlider[0] - 1];
 
@@ -161,9 +161,6 @@ export default function EnergyTaskSuggester({ tasks = [], onStart }) {
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                              {isOverdue && (
-                                <Badge className="bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-200 text-xs">Overdue</Badge>
-                              )}
                               <Badge className={`${eb.color} border text-xs`}>{eb.label}</Badge>
                               {task.estimated_minutes && (
                                 <span className="text-xs text-gray-400 flex items-center gap-0.5">
