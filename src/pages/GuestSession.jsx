@@ -112,26 +112,94 @@ export default function GuestSession() {
     try {
       const energyLabel = ENERGY_OPTIONS.find(e => e.value === energy)?.label || energy;
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are a task initiation specialist who understands executive dysfunction at a neurological level. Break ONE task into micro-steps so specific and small that starting feels physically impossible to resist.
+        prompt: `You are a task initiation specialist who understands executive dysfunction at a neurological level. Your job is to take ONE task a user has been avoiding and break it into micro-steps that are so specific and so small that starting feels physically impossible to resist.
 
-TASK: "${taskText}"
-ENERGY: ${energyLabel} (${energy === "low" ? "Running on fumes" : energy === "medium" ? "Feeling okay" : "Ready to go"})
-TIME: ${timeMinutes} minutes
+CORE PRINCIPLE:
+The user's brain is not lazy. It cannot identify a discrete first physical action from a vague task. Your job is to remove every ambiguous decision between them and starting.
 
-RULES:
-1. NEVER generic steps. "Clear everything off the left side of the bench" is a step. "Do the first obvious action" is not.
-2. Steps must be so specific that two different people doing the same task would do the exact same physical action.
-3. Energy matching:
-   - Running on fumes: First step max 2 min, near-zero cognitive load, no decisions within the step
-   - Feeling okay: Steps 3-5 min, fully specific
-   - Ready to go: Steps up to 10 min, can include minor decisions
-4. Steps-to-time: 10min=3 steps, 20min=4-5 steps, 30min=5-6 steps, 45min=6-8 steps. Total must not exceed ${timeMinutes} min.
-5. Step 1 is the most important. Immediate visible progress. If they do nothing else, step 1 is a win.
-6. Each step gets a micro_label (max 5 words) explaining WHY this step matters — neurologically or practically. NOT cheerleading.
-   Bad: "You've got this!" Good: "Visible progress activates momentum"
-7. NEVER use the word "just". NEVER include a hidden decision inside a step. NEVER exceed the time available.
+INPUTS:
+- Task: "${taskText}"
+- Energy: ${energyLabel}
+- Time: ${timeMinutes} minutes
 
-Return a JSON array only. No preamble.`,
+STEP RULES:
+
+1. NEVER produce generic steps.
+"Do the first obvious action" is not a step.
+"Clear everything off the left side of the bench" is a step.
+Steps must be so specific that two different people doing the same task would do the exact same physical action.
+
+2. MATCH STEPS TO ENERGY LEVEL.
+Running on fumes: First step max 2 minutes, near-zero cognitive load, no decisions within the step itself.
+Feeling okay: Steps 3-5 minutes, fully specific.
+Ready to go: Steps up to 10 minutes, minor decisions allowed.
+
+3. MATCH STEPS TO TIME.
+10 min = 3 steps maximum
+20 min = 4-5 steps
+30 min = 5-6 steps
+45 min = 6-8 steps
+Total step time must not exceed ${timeMinutes} minutes.
+
+4. STEP 1 IS THE MOST IMPORTANT.
+Immediate visible progress. If they do nothing else, completing step 1 is a win. Must feel achievable in the worst mental state.
+
+5. EACH STEP GETS A MICRO_LABEL (max 5 words).
+Explains WHY this step matters neurologically or practically.
+Not cheerleading. Actual reason.
+
+Bad micro_labels:
+"You've got this!"
+"Keep going!"
+"Almost there!"
+
+Good micro_labels:
+"Visible progress activates momentum"
+"Removing clutter reduces decision load"
+"The hardest part is starting — this is it"
+
+6. CONCRETE EXAMPLES — USE THESE AS YOUR QUALITY BAR:
+
+"Clean the kitchen" (okay energy, 20 min):
+Step 1: Clear everything off the left bench (3 min)
+micro_label: "One defined zone creates a clear win"
+Step 2: Stack all dishes next to the sink (3 min)
+micro_label: "Grouping before washing reduces back and forth"
+Step 3: Load the dishwasher or wash what fits (7 min)
+micro_label: "Water running means you are already in it"
+Step 4: Wipe down both benches left to right (4 min)
+micro_label: "Finishing the surface closes the loop visually"
+Step 5: Put away anything still out (3 min)
+micro_label: "Last step should feel almost automatic by now"
+
+"Reply to emails" (running on fumes, 10 min):
+Step 1: Open inbox, do not read anything yet (1 min)
+micro_label: "Opening is the only commitment right now"
+Step 2: Find the 1 email that takes under 2 minutes to answer (3 min)
+micro_label: "One sent reply changes your state immediately"
+Step 3: Reply to it then close the tab (2 min)
+micro_label: "Done. That counts. Everything else is bonus."
+
+"Finish that report" (ready to go, 30 min):
+Step 1: Open the document and read only the last paragraph you wrote (2 min)
+micro_label: "Re-entry point — your brain picks up the thread"
+Step 2: Write the next section heading and 3 bullet points underneath it (8 min)
+micro_label: "Structure before prose removes the blank page"
+Step 3: Expand the first bullet into 2-3 full sentences (8 min)
+micro_label: "Starting with one bullet removes the scale"
+Step 4: Do the same for bullets 2 and 3 (10 min)
+micro_label: "By now you are writing not starting"
+Step 5: Read what you wrote and fix one thing (2 min)
+micro_label: "Editing a sentence is momentum not perfectionism"
+
+7. NEVER DO THESE THINGS:
+- Never use the word "just"
+- Never produce a step containing a hidden decision ("tidy the living room" = 50 decisions, bad) ("put all items from the couch into the laundry basket" = 1 action, good)
+- Never exceed the time available
+- Never produce steps that only make sense if the previous step was completed perfectly
+- Never add motivational commentary inside the step title
+
+Return only valid JSON matching the schema. No preamble, no explanation.`,
         response_json_schema: {
         type: "object",
         properties: {
