@@ -69,7 +69,7 @@ export default function Onboarding() {
 
   if (showCalendarStep) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-teal-50 to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-teal-50 to-blue-50 dark:from-[#1a1025] dark:via-[#0f1a1f] dark:to-[#0d1220] flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -131,7 +131,7 @@ export default function Onboarding() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        <Card className="bg-white/90 backdrop-blur-sm border-purple-100 shadow-xl">
+        <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-purple-100 dark:border-gray-700 shadow-xl">
           <CardHeader className="text-center pb-2">
             <motion.div
               initial={{ scale: 0 }}
@@ -146,7 +146,7 @@ export default function Onboarding() {
             <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">
               Welcome to TaskBuddy! 💜
             </CardTitle>
-            <p className="text-gray-600 mt-2">Let's get to know you a little better</p>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">Let's get to know you a little better</p>
           </CardHeader>
 
           <CardContent className="space-y-6 pt-4">

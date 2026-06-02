@@ -162,7 +162,7 @@ export default function AdaptiveOnboardingFlow({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-teal-50 to-blue-50 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-teal-50 to-blue-50 dark:from-[#1a1025] dark:via-[#0f1a1f] dark:to-[#0d1220] p-4 md:p-8">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Progress Header */}
         <motion.div
@@ -173,11 +173,11 @@ export default function AdaptiveOnboardingFlow({
           <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent mb-2">
             Welcome to TaskBuddy! 🎉
           </h1>
-          <p className="text-gray-600 mb-4">
+          <p className="text-gray-600 dark:text-gray-300 mb-4">
             Let's personalize your experience
           </p>
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm text-gray-600">
+            <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300">
               <span>Step {step} of {totalSteps}</span>
               <span>{Math.round(progress)}%</span>
             </div>
@@ -203,7 +203,7 @@ export default function AdaptiveOnboardingFlow({
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <Card className="bg-white/80 backdrop-blur-sm border-purple-100 shadow-xl">
+            <Card className="bg-white/80 dark:bg-gray-800/90 backdrop-blur-sm border-purple-100 dark:border-gray-700 shadow-xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   {step === 1 && "👋 What should we call you?"}
@@ -227,7 +227,7 @@ export default function AdaptiveOnboardingFlow({
                       className="text-lg"
                       autoFocus
                     />
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                       This helps us personalize your experience and make it feel more friendly!
                     </p>
                   </div>
@@ -236,7 +236,7 @@ export default function AdaptiveOnboardingFlow({
                 {/* Step 2: Goals */}
                 {step === 2 && (
                   <div className="space-y-4">
-                    <p className="text-sm text-gray-600">Select all that apply:</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Select all that apply:</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {GOAL_OPTIONS.map(option => (
                         <div
@@ -244,13 +244,13 @@ export default function AdaptiveOnboardingFlow({
                           onClick={() => toggleArrayItem("primaryGoals", option.id)}
                           className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
                             responses.primaryGoals?.includes(option.id)
-                              ? "border-purple-500 bg-purple-50"
-                              : "border-gray-200 hover:border-purple-300"
+                              ? "border-purple-500 bg-purple-50 dark:bg-purple-900/30"
+                              : "border-gray-200 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-500"
                           }`}
                         >
                           <div className="flex items-center gap-3">
                             <span className="text-2xl">{option.emoji}</span>
-                            <span className="font-medium text-gray-900">{option.label}</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{option.label}</span>
                           </div>
                         </div>
                       ))}
@@ -261,7 +261,7 @@ export default function AdaptiveOnboardingFlow({
                 {/* Step 3: Challenge */}
                 {step === 3 && (
                   <div className="space-y-4">
-                    <p className="text-sm text-gray-600">Choose one that resonates most:</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Choose one that resonates most:</p>
                     <div className="space-y-2">
                       {CHALLENGE_OPTIONS.map(option => (
                         <div
@@ -269,13 +269,13 @@ export default function AdaptiveOnboardingFlow({
                           onClick={() => updateResponse("mainChallenge", option.id)}
                           className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
                             responses.mainChallenge === option.id
-                              ? "border-teal-500 bg-teal-50"
-                              : "border-gray-200 hover:border-teal-300"
+                              ? "border-teal-500 bg-teal-50 dark:bg-teal-900/30"
+                              : "border-gray-200 dark:border-gray-600 hover:border-teal-300 dark:hover:border-teal-500"
                           }`}
                         >
                           <div className="flex items-center gap-3">
                             <span className="text-2xl">{option.emoji}</span>
-                            <span className="font-medium text-gray-900">{option.label}</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{option.label}</span>
                           </div>
                         </div>
                       ))}
@@ -286,7 +286,7 @@ export default function AdaptiveOnboardingFlow({
                 {/* Step 4: Work Style */}
                 {step === 4 && (
                   <div className="space-y-4">
-                    <p className="text-sm text-gray-600">How do you work best?</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">How do you work best?</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {WORK_STYLE_OPTIONS.map(option => (
                         <div
@@ -294,13 +294,13 @@ export default function AdaptiveOnboardingFlow({
                           onClick={() => updateResponse("workStyle", option.id)}
                           className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
                             responses.workStyle === option.id
-                              ? "border-purple-500 bg-purple-50"
-                              : "border-gray-200 hover:border-purple-300"
+                              ? "border-purple-500 bg-purple-50 dark:bg-purple-900/30"
+                              : "border-gray-200 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-500"
                           }`}
                         >
                           <div className="flex items-center gap-3">
                             <span className="text-2xl">{option.emoji}</span>
-                            <span className="font-medium text-gray-900">{option.label}</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{option.label}</span>
                           </div>
                         </div>
                       ))}
@@ -311,7 +311,7 @@ export default function AdaptiveOnboardingFlow({
                 {/* Step 5: Calendar Sync */}
                 {step === 5 && (
                   <div className="space-y-4">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                       Connect your calendar so the AI Smart Plan can schedule tasks around your existing commitments. You can skip this and connect later in Settings.
                     </p>
 
@@ -330,12 +330,12 @@ export default function AdaptiveOnboardingFlow({
                         <button
                           onClick={() => syncCalendar("google")}
                           disabled={isSyncingCalendar}
-                          className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-blue-200 bg-blue-50 hover:bg-blue-100 transition-all disabled:opacity-60"
+                          className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all disabled:opacity-60"
                         >
                           <span className="text-3xl">📅</span>
                           <div className="flex-1 text-left">
-                            <p className="font-semibold text-gray-900">Google Calendar</p>
-                            <p className="text-sm text-gray-600">Connect your Google account</p>
+                            <p className="font-semibold text-gray-900 dark:text-gray-100">Google Calendar</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Connect your Google account</p>
                           </div>
                           {isSyncingCalendar ? (
                             <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
@@ -347,12 +347,12 @@ export default function AdaptiveOnboardingFlow({
                         <button
                           onClick={() => syncCalendar("outlook")}
                           disabled={isSyncingCalendar}
-                          className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 transition-all disabled:opacity-60"
+                          className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-indigo-200 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all disabled:opacity-60"
                         >
                           <span className="text-3xl">📧</span>
                           <div className="flex-1 text-left">
-                            <p className="font-semibold text-gray-900">Outlook / Microsoft 365</p>
-                            <p className="text-sm text-gray-600">Connect your Microsoft account</p>
+                            <p className="font-semibold text-gray-900 dark:text-gray-100">Outlook / Microsoft 365</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Connect your Microsoft account</p>
                           </div>
                           {isSyncingCalendar ? (
                             <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
