@@ -148,11 +148,11 @@ Bad: "Since your peak productive hours are at 11:00 and 5:00, try scheduling a f
     };
     switch (coachingTip.priority) {
       case "high": return {
-        card: "bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/30 border-red-200 dark:border-red-700",
-        icon: "bg-red-500",
-        title: "text-red-900 dark:text-red-100",
-        dot: "bg-red-500",
-        action: "text-red-700 dark:text-red-300"
+        card: "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border-blue-200 dark:border-blue-700",
+        icon: "bg-blue-500",
+        title: "text-blue-900 dark:text-blue-100",
+        dot: "bg-blue-500",
+        action: "text-blue-700 dark:text-blue-300"
       };
       case "medium": return {
         card: "bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 border-orange-200 dark:border-orange-700",
