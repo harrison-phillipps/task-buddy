@@ -348,7 +348,19 @@ Return a JSON object.`,
                   and keep you on a streak. You've already felt what it can do.
                 </p>
                 <button
-                  onClick={() => base44.auth.redirectToLogin("/Dashboard")}
+                  onClick={() => {
+                    // Persist session data so GuestWelcome can read it after login
+                    try {
+                      sessionStorage.setItem("guest_session", JSON.stringify({
+                        task: taskText,
+                        energy,
+                        timeMinutes,
+                        steps,
+                        completedSteps,
+                      }));
+                    } catch {}
+                    base44.auth.redirectToLogin("/GuestWelcome");
+                  }}
                   className="w-full bg-white text-purple-700 font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-purple-50 transition-colors"
                 >
                   Save my progress — it's free

@@ -14,6 +14,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { lazy } from 'react';
 const Home = lazy(() => import('./pages/Home'));
 const GuestSession = lazy(() => import('./pages/GuestSession'));
+const GuestWelcome = lazy(() => import('./pages/GuestWelcome'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -83,6 +84,7 @@ const AuthenticatedApp = () => {
       {/* Guest / public routes — no layout wrapper */}
       <Route path="/Home" element={<Home />} />
       <Route path="/GuestSession" element={<GuestSession />} />
+      <Route path="/GuestWelcome" element={<GuestWelcome />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </Suspense>

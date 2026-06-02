@@ -29,6 +29,14 @@ export default function Onboarding() {
       try {
         const user = await base44.auth.me();
         setCurrentUser(user);
+
+        // If they came from guest mode, send them to the personalized welcome first
+        const hasGuestSession = !!sessionStorage.getItem("guest_session");
+        if (hasGuestSession && !user.display_name) {
+          navigate("/GuestWelcome");
+          return;
+        }
+
         if (user.display_name) {
           if (!user.companion_type) {
             navigate(createPageUrl("CharacterSelection"));
