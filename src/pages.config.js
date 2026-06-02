@@ -33,6 +33,7 @@ const Teams = lazy(() => import('./pages/Teams'));
 const VoiceTask = lazy(() => import('./pages/VoiceTask'));
 const QuickAdd = lazy(() => import('./pages/QuickAdd'));
 const GuestSession = lazy(() => import('./pages/GuestSession'));
+const GuestWelcome = lazy(() => import('./pages/GuestWelcome'));
 
 export const PAGES = {
     "AITaskGenerator": AITaskGenerator,

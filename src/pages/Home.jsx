@@ -1,11 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 
 export default function Home() {
   const [task, setTask] = useState("");
   const navigate = useNavigate();
+
+  // If already logged in, skip the landing page and go straight to Dashboard
+  useEffect(() => {
+    base44.auth.isAuthenticated().then((authed) => {
+      if (authed) navigate("/Dashboard", { replace: true });
+    }).catch(() => {});
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();

@@ -24,12 +24,18 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
 
+// Routes that don't require authentication
+const PUBLIC_PATHS = ['/', '/Home', '/GuestSession', '/GuestWelcome'];
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
   const location = useLocation();
 
+  const isPublicPath = PUBLIC_PATHS.includes(location.pathname);
+
   // Show loading spinner while checking app public settings or auth
-  if (isLoadingPublicSettings || isLoadingAuth) {
+  // But don't block public pages waiting for auth
+  if ((isLoadingPublicSettings || isLoadingAuth) && !isPublicPath) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
@@ -38,7 +44,7 @@ const AuthenticatedApp = () => {
   }
 
   // Handle authentication errors
-  if (authError) {
+  if (authError && !isPublicPath) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
@@ -65,11 +71,11 @@ const AuthenticatedApp = () => {
       </div>
     }>
     <Routes location={location}>
-      <Route path="/" element={
-        <LayoutWrapper currentPageName={mainPageKey}>
-          <MainPage />
-        </LayoutWrapper>
-      } />
+      {/* Public landing page — no auth, no layout */}
+      <Route path="/" element={<Home />} />
+      <Route path="/Home" element={<Home />} />
+      <Route path="/GuestSession" element={<GuestSession />} />
+      <Route path="/GuestWelcome" element={<GuestWelcome />} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}
@@ -81,10 +87,6 @@ const AuthenticatedApp = () => {
           }
         />
       ))}
-      {/* Guest / public routes — no layout wrapper */}
-      <Route path="/Home" element={<Home />} />
-      <Route path="/GuestSession" element={<GuestSession />} />
-      <Route path="/GuestWelcome" element={<GuestWelcome />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </Suspense>
