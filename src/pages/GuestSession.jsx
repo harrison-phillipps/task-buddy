@@ -112,32 +112,26 @@ export default function GuestSession() {
     try {
       const energyLabel = ENERGY_OPTIONS.find(e => e.value === energy)?.label || energy;
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are an ADHD coach breaking down a task into specific, concrete steps for someone who is struggling to start.
+        prompt: `You are a task initiation specialist who understands executive dysfunction at a neurological level. Break ONE task into micro-steps so specific and small that starting feels physically impossible to resist.
 
-Task: "${taskText}"
-Energy level: ${energyLabel}
-Time available: ${timeMinutes} minutes
+TASK: "${taskText}"
+ENERGY: ${energyLabel} (${energy === "low" ? "Running on fumes" : energy === "medium" ? "Feeling okay" : "Ready to go"})
+TIME: ${timeMinutes} minutes
 
-STEP 1 RULE — Momentum Starter: The very first step must be an ultra-simple, physical action that takes 1-3 minutes, requires almost zero thinking, and directly sets up "${taskText}". It should feel almost TOO easy.
+RULES:
+1. NEVER generic steps. "Clear everything off the left side of the bench" is a step. "Do the first obvious action" is not.
+2. Steps must be so specific that two different people doing the same task would do the exact same physical action.
+3. Energy matching:
+   - Running on fumes: First step max 2 min, near-zero cognitive load, no decisions within the step
+   - Feeling okay: Steps 3-5 min, fully specific
+   - Ready to go: Steps up to 10 min, can include minor decisions
+4. Steps-to-time: 10min=3 steps, 20min=4-5 steps, 30min=5-6 steps, 45min=6-8 steps. Total must not exceed ${timeMinutes} min.
+5. Step 1 is the most important. Immediate visible progress. If they do nothing else, step 1 is a win.
+6. Each step gets a micro_label (max 5 words) explaining WHY this step matters — neurologically or practically. NOT cheerleading.
+   Bad: "You've got this!" Good: "Visible progress activates momentum"
+7. NEVER use the word "just". NEVER include a hidden decision inside a step. NEVER exceed the time available.
 
-Examples by task type (use the pattern, not the examples verbatim):
-- Cleaning task: "Grab the cleaning spray and a cloth and carry them to [room]"
-- Study/work task: "Open [specific document/app] and write the title of what you're working on at the top"
-- Creative task: "Lay out your [specific materials] on the table in front of you"
-- Cooking: "Pull every ingredient for [dish] out of the fridge/pantry and line them up on the bench"
-- Exercise: "Put on your [workout clothes/shoes] and fill your water bottle"
-- Admin/email: "Open [specific app/inbox] and search for the most recent email about [topic]"
-- Packing/moving: "Get a box or bag and put it open on the floor in [room]"
-
-After the momentum starter, write 3-4 more steps that are equally specific to "${taskText}". Each step must:
-- Name actual objects, locations, or sub-tasks from "${taskText}" — not abstract actions
-- Have a clear finish line (you know when it's done)
-- Be sized for ${energyLabel} energy: ${energy === "low" ? "small, low-effort, forgiving" : energy === "high" ? "can be bigger and more demanding" : "moderate, achievable"}
-- Fit within ${timeMinutes} minutes total
-
-NEVER write generic steps like "do the first obvious action", "keep going", "clear your space", or "take a break". Every step must be unmistakably about "${taskText}".
-
-Return JSON: { steps: [ { title: string, duration_minutes: number, tip: string } ] }`,
+Return a JSON array only. No preamble.`,
         response_json_schema: {
         type: "object",
         properties: {
@@ -148,21 +142,22 @@ Return JSON: { steps: [ { title: string, duration_minutes: number, tip: string }
             properties: {
               title: { type: "string" },
               duration_minutes: { type: "number" },
-              tip: { type: "string" }
+              micro_label: { type: "string" }
             }
           }
         }
         }
         }
       });
-      setSteps(result.steps || []);
+      // normalise: support both micro_label and tip field names
+      setSteps((result.steps || []).map(s => ({ ...s, tip: s.micro_label || s.tip })));
       setStep(STEP_BREAKDOWN);
     } catch (err) {
       console.error("Breakdown failed, trying second attempt:", err);
       // Second attempt with simpler prompt
       try {
         const result2 = await base44.integrations.Core.InvokeLLM({
-          prompt: `Break "${taskText}" into 4 steps. Step 1: a 1-3 minute physical setup action specific to this task (e.g. gathering materials, opening the right app, putting on the right clothes). Steps 2-4: concrete actions that directly work on "${taskText}", naming real objects or sub-tasks involved. Energy: ${energy}, Time: ${timeMinutes} min. Return JSON: { steps: [{ title: string, duration_minutes: number, tip: string }] }`,
+          prompt: `Break "${taskText}" into steps for someone with ${energy} energy and ${timeMinutes} minutes. Step 1: ultra-specific physical action, max 2 min, zero decisions. Remaining steps: concrete actions naming real objects/sub-tasks of "${taskText}". Each step includes a micro_label (max 5 words, why it matters, not cheerleading). Return JSON: { steps: [{ title: string, duration_minutes: number, micro_label: string }] }`,
           response_json_schema: {
             type: "object",
             properties: {
@@ -180,7 +175,7 @@ Return JSON: { steps: [ { title: string, duration_minutes: number, tip: string }
             }
           }
         });
-        setSteps(result2.steps || []);
+        setSteps((result2.steps || []).map(s => ({ ...s, tip: s.micro_label || s.tip })));
       } catch (err2) {
         console.error("Second attempt also failed:", err2);
         setSteps([
