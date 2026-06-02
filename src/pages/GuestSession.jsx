@@ -112,14 +112,30 @@ export default function GuestSession() {
     try {
       const energyLabel = ENERGY_OPTIONS.find(e => e.value === energy)?.label || energy;
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Break down "${taskText}" into 4-5 specific micro-steps for someone with ${energyLabel} energy and ${timeMinutes} minutes.
+        prompt: `You are an ADHD coach breaking down a task into specific, concrete steps for someone who is struggling to start.
 
-Each step MUST be specific to "${taskText}" — name the actual objects, actions, or sub-tasks involved. Someone reading only the steps (with no context) should immediately know they're doing "${taskText}".
+Task: "${taskText}"
+Energy level: ${energyLabel}
+Time available: ${timeMinutes} minutes
 
-Bad example (generic, never do this): "Do the first obvious action"
-Good example for "clean the kitchen": "Stack dirty dishes into the dishwasher"
+STEP 1 RULE — Momentum Starter: The very first step must be an ultra-simple, physical action that takes 1-3 minutes, requires almost zero thinking, and directly sets up "${taskText}". It should feel almost TOO easy.
 
-Energy ${energyLabel}: ${energy === "low" ? "Keep steps small and low-effort" : energy === "high" ? "Steps can be bigger and more demanding" : "Mix of easy and moderate steps"}
+Examples by task type (use the pattern, not the examples verbatim):
+- Cleaning task: "Grab the cleaning spray and a cloth and carry them to [room]"
+- Study/work task: "Open [specific document/app] and write the title of what you're working on at the top"
+- Creative task: "Lay out your [specific materials] on the table in front of you"
+- Cooking: "Pull every ingredient for [dish] out of the fridge/pantry and line them up on the bench"
+- Exercise: "Put on your [workout clothes/shoes] and fill your water bottle"
+- Admin/email: "Open [specific app/inbox] and search for the most recent email about [topic]"
+- Packing/moving: "Get a box or bag and put it open on the floor in [room]"
+
+After the momentum starter, write 3-4 more steps that are equally specific to "${taskText}". Each step must:
+- Name actual objects, locations, or sub-tasks from "${taskText}" — not abstract actions
+- Have a clear finish line (you know when it's done)
+- Be sized for ${energyLabel} energy: ${energy === "low" ? "small, low-effort, forgiving" : energy === "high" ? "can be bigger and more demanding" : "moderate, achievable"}
+- Fit within ${timeMinutes} minutes total
+
+NEVER write generic steps like "do the first obvious action", "keep going", "clear your space", or "take a break". Every step must be unmistakably about "${taskText}".
 
 Return JSON: { steps: [ { title: string, duration_minutes: number, tip: string } ] }`,
         response_json_schema: {
@@ -146,7 +162,7 @@ Return JSON: { steps: [ { title: string, duration_minutes: number, tip: string }
       // Second attempt with simpler prompt
       try {
         const result2 = await base44.integrations.Core.InvokeLLM({
-          prompt: `Give me 4 specific steps to: "${taskText}". Each step must directly reference the actual task. Energy: ${energy}, Time: ${timeMinutes} min. Return JSON with steps array, each having title (specific action for this task), duration_minutes (number), tip (string).`,
+          prompt: `Break "${taskText}" into 4 steps. Step 1: a 1-3 minute physical setup action specific to this task (e.g. gathering materials, opening the right app, putting on the right clothes). Steps 2-4: concrete actions that directly work on "${taskText}", naming real objects or sub-tasks involved. Energy: ${energy}, Time: ${timeMinutes} min. Return JSON: { steps: [{ title: string, duration_minutes: number, tip: string }] }`,
           response_json_schema: {
             type: "object",
             properties: {
