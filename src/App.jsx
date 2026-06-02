@@ -11,6 +11,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import { lazy } from 'react';
+const Home = lazy(() => import('./pages/Home'));
+const GuestSession = lazy(() => import('./pages/GuestSession'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -77,6 +80,9 @@ const AuthenticatedApp = () => {
           }
         />
       ))}
+      {/* Guest / public routes — no layout wrapper */}
+      <Route path="/Home" element={<Home />} />
+      <Route path="/GuestSession" element={<GuestSession />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </Suspense>
