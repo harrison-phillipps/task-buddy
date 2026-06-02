@@ -111,6 +111,7 @@ export default function GuestSession() {
     setLoading(true);
     try {
       const energyLabel = ENERGY_OPTIONS.find(e => e.value === energyValue)?.label || energyValue;
+      console.log("[GuestSession] fetchBreakdown called — energy:", energyValue, "| energyLabel:", energyLabel, "| timeValue:", timeValue, "| task:", taskText);
       const result = await base44.integrations.Core.InvokeLLM({
         prompt: `You are a task initiation specialist who understands executive dysfunction at a neurological level. Your job is to take ONE task a user has been avoiding and break it into micro-steps that are so specific and so small that starting feels physically impossible to resist.
 
@@ -246,11 +247,11 @@ Return only valid JSON matching the schema. No preamble, no explanation.`,
         setSteps((result2.steps || []).map(s => ({ ...s, tip: s.micro_label || s.tip })));
       } catch (err2) {
         console.error("Second attempt also failed:", err2);
+        console.error("[GuestSession] Both AI attempts failed. energyValue:", energyValue, "timeValue:", timeValue);
+        // Show minimal error state rather than fake generic steps
         setSteps([
-          { title: `Open up "${taskText}" and look at it for 60 seconds`, duration_minutes: 2, tip: "Starting is the hardest part." },
-          { title: `Do the first physical action required for "${taskText}"`, duration_minutes: 5, tip: "One concrete move." },
-          { title: `Continue working on "${taskText}" — pick the next obvious piece`, duration_minutes: 5, tip: "Keep the momentum." },
-          { title: `Finish or pause "${taskText}" at a natural stopping point`, duration_minutes: 3, tip: "Leave it in a state you can return to." },
+          { title: `AI is unavailable right now — but you can still start. Open or locate everything you need for "${taskText}" and put it in one place.`, duration_minutes: 3, tip: "Physical preparation reduces the mental barrier to starting." },
+          { title: `Set a timer for ${Math.floor(timeValue / 2)} minutes and work on the single most concrete piece of "${taskText}" you can name right now.`, duration_minutes: Math.floor(timeValue / 2), tip: "A named, bounded action is easier to start than an open-ended one." },
         ]);
       }
       setStep(STEP_BREAKDOWN);
