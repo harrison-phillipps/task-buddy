@@ -333,21 +333,59 @@ Rules:
 
           {/* ── STEP: Focus timer ────────────────────────────── */}
           {step === STEP_FOCUS && (
-            <motion.div key="focus" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
-              <h2 className="text-2xl font-bold text-gray-900 mb-1 text-center">You're doing it 🎯</h2>
-              <p className="text-gray-500 text-center mb-8">Focus time. Refer to your steps above when needed.</p>
+            <motion.div key="focus" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-gray-900 mb-1">You're doing it 🎯</h2>
+                <p className="text-gray-500 text-sm">Check off each step as you complete it.</p>
+              </div>
 
+              {/* Timer */}
               <MiniTimer minutes={timeMinutes} onComplete={() => {
                 generateSessionInsight(completedSteps.length, steps.length, energy, timeMinutes);
                 setStep(STEP_DONE);
               }} />
+
+              {/* Steps checklist during focus */}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Your steps</p>
+                {steps.map((s, i) => (
+                  <motion.button
+                    key={i}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.06 }}
+                    onClick={() => toggleStep(i)}
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all ${
+                      completedSteps.includes(i)
+                        ? "border-green-300 bg-green-50"
+                        : i === completedSteps.length
+                          ? "border-purple-400 bg-purple-50 shadow-sm"
+                          : "border-gray-200 bg-white hover:border-purple-200"
+                    }`}
+                  >
+                    <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                      completedSteps.includes(i) ? "border-green-500 bg-green-500" : "border-gray-300"
+                    }`}>
+                      {completedSteps.includes(i) && <CheckCircle2 className="w-4 h-4 text-white" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-semibold text-sm ${completedSteps.includes(i) ? "line-through text-gray-400" : "text-gray-800"}`}>
+                        {s.title}
+                      </p>
+                    </div>
+                    <span className="flex-shrink-0 text-xs text-gray-400 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />{s.duration_minutes}m
+                    </span>
+                  </motion.button>
+                ))}
+              </div>
 
               <button
                 onClick={() => {
                   generateSessionInsight(completedSteps.length, steps.length, energy, timeMinutes);
                   setStep(STEP_DONE);
                 }}
-                className="mt-6 w-full text-center text-sm text-gray-400 hover:text-purple-600 transition-colors"
+                className="w-full text-center text-sm text-gray-400 hover:text-purple-600 transition-colors py-1"
               >
                 I'm done early →
               </button>
