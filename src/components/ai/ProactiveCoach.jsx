@@ -78,37 +78,27 @@ export default function ProactiveCoach({
 
         const availableTypes = Object.values(COACHING_TYPES).filter(t => !suppressedTypes.includes(t));
 
-        const prompt = `You are a sharp, peer-level productivity coach. Your tone is direct, specific, and treats the user as a capable adult. Never be patronising or use corporate wellness language.
+        const prompt = `You are a sharp, peer-level coach. Direct, specific, treats the user as a capable adult.
 
 CONTEXT: ${timeOfDay} (${hourOfDay}:00)
-USER LEVEL: ${Math.floor(userProgress.total_points / 200) + 1}
 STREAK: ${userProgress.current_streak || 0} days
+TODAY: ${completedTasksToday} tasks done, ${totalFocusMinutes} focus min, ${pendingTasks} pending (${highPriorityTasks} high priority)
+ALL-TIME: ${userProgress.tasks_completed || 0} tasks, ${userProgress.total_focus_minutes || 0} focus min
 
-TODAY:
-- Tasks completed: ${completedTasksToday}
-- Focus sessions: ${focusSessionsToday} (${totalFocusMinutes} min total)
-- Pending tasks: ${pendingTasks} (${highPriorityTasks} high priority)
-
-HISTORY:
-- All-time tasks: ${userProgress.tasks_completed || 0}
-- All-time focus sessions: ${userProgress.focus_sessions_completed || 0}
-- Total focus time: ${userProgress.total_focus_minutes || 0} min
-
-GOALS: ${goals.length > 0 ? goals.map(g => `${g.title} (${g.status})`).join(', ') : 'None set'}
-
-AVOID THESE INSIGHT TYPES (user gave negative feedback): ${suppressedTypes.length > 0 ? suppressedTypes.join(', ') : 'none'}
+AVOID TYPES: ${suppressedTypes.length > 0 ? suppressedTypes.join(', ') : 'none'}
 AVAILABLE TYPES: ${availableTypes.join(', ')}
 
-Generate ONE insight. Rules:
-1. Lead with the data point — put the number or fact in the first 5 words
-2. Max 2 sentences. No padding.
-3. No phrases like "To boost your...", "Remember to...", "Don't forget...", "Great job..."
-4. No exclamation marks unless quoting something
-5. Sound like a coach who respects the user's intelligence, not a wellness app
-6. The title should be 3–5 words, factual, no hype
+Generate ONE insight. STRICT RULES:
+1. EXACTLY 2 sentences. Not 1, not 3. Two.
+2. Sentence 1: lead with the specific data point (number, time, pattern). 
+3. Sentence 2: one concrete action for today. No generic advice.
+4. Never use the word "just". No corporate wellness language. No exclamation marks.
+5. No phrases like "To boost your...", "Remember to...", "Don't forget...", "Great job...", "Try to..."
+6. Title: 3–5 words, factual, no hype.
 
-Good example: "Your brain runs best at 11am. That's today — use it."
-Bad example: "To boost your productivity, try scheduling focused sessions at your peak hour of 11am..."`;
+Good: "Your brain peaks at 11am and 5pm. That's your window — use it today."
+Good: "You've done ${completedTasksToday} tasks today with ${totalFocusMinutes} focused minutes. One more session before ${hourOfDay < 17 ? 'evening' : 'bed'} keeps the streak alive."
+Bad: "Since your peak productive hours are at 11:00 and 5:00, try scheduling a focused household or personal task right before these times to leverage your natural energy peaks."`;
 
         const result = await base44.integrations.Core.InvokeLLM({
           prompt,
