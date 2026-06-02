@@ -5,6 +5,7 @@ import { Flame, Sun, Moon, Zap, Trophy } from "lucide-react";
 import RoutineSection from "../components/habits/RoutineSection";
 import AddHabitSheet from "../components/habits/AddHabitSheet";
 import WinsJournal from "../components/habits/WinsJournal";
+import HabitTemplates from "../components/habits/HabitTemplates";
 
 const TODAY = new Date().toISOString().split("T")[0];
 
@@ -90,6 +91,9 @@ export default function Habits() {
           </div>
         </div>
       )}
+
+      {/* Quick-start templates */}
+      <HabitTemplates onSuccess={refresh} />
 
       {/* Routine sections */}
       <div className="space-y-4">
