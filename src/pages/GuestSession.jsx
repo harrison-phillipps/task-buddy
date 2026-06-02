@@ -171,6 +171,40 @@ Return a JSON object.`,
 
   const allStepsDone = steps.length > 0 && completedSteps.length === steps.length;
 
+  const generateSessionInsight = async (completedCount, totalCount, energyVal, mins) => {
+    const hour = new Date().getHours();
+    const timeOfDay = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
+    const energyLabel = ENERGY_OPTIONS.find(e => e.value === energyVal)?.label?.toLowerCase() || energyVal;
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Write ONE short, specific insight (2 sentences max) about what this single productivity session reveals about this person.
+
+Facts:
+- Task: "${taskText}"
+- Completed ${completedCount} of ${totalCount} steps
+- Energy when they started: ${energyLabel}
+- Time committed: ${mins} minutes
+- Time of day: ${timeOfDay}
+
+Rules:
+- Be specific — use their actual numbers and energy level
+- Sound like you're noticing something real about them, not complimenting them generically
+- Reference the energy level contrast if they did well on low energy — that's the most powerful signal
+- Do NOT say "great job" or "well done" or anything generic
+- End with a single forward-looking sentence about what this pattern will look like over time
+- Keep it under 50 words total`,
+      });
+      setSessionInsight(typeof result === "string" ? result : result?.insight || result?.text || null);
+    } catch {
+      // Specific fallback based on actual data
+      if (energyVal === "low" && completedCount >= totalCount * 0.6) {
+        setSessionInsight(`You completed ${completedCount} of ${totalCount} steps while running on low energy — that's actually above average for most people on a hard day. That gap between how you felt and what you did? That's your real baseline.`);
+      } else {
+        setSessionInsight(`You committed ${mins} minutes to "${taskText}" and followed through on ${completedCount} of ${totalCount} steps. One session in, and there's already something to build on.`);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-teal-50 flex flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-lg">
@@ -303,10 +337,16 @@ Return a JSON object.`,
               <h2 className="text-2xl font-bold text-gray-900 mb-1 text-center">You're doing it 🎯</h2>
               <p className="text-gray-500 text-center mb-8">Focus time. Refer to your steps above when needed.</p>
 
-              <MiniTimer minutes={timeMinutes} onComplete={() => setStep(STEP_DONE)} />
+              <MiniTimer minutes={timeMinutes} onComplete={() => {
+                generateSessionInsight(completedSteps.length, steps.length, energy, timeMinutes);
+                setStep(STEP_DONE);
+              }} />
 
               <button
-                onClick={() => setStep(STEP_DONE)}
+                onClick={() => {
+                  generateSessionInsight(completedSteps.length, steps.length, energy, timeMinutes);
+                  setStep(STEP_DONE);
+                }}
                 className="mt-6 w-full text-center text-sm text-gray-400 hover:text-purple-600 transition-colors"
               >
                 I'm done early →
@@ -321,37 +361,64 @@ Return a JSON object.`,
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
-              className="text-center"
             >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.1 }}
-                className="text-7xl mb-4"
-              >
-                🎉
-              </motion.div>
-              <h2 className="text-3xl font-extrabold text-gray-900 mb-2">You did it.</h2>
-              <p className="text-gray-500 text-lg mb-2">
-                You just started <span className="font-semibold text-gray-700">"{taskText}"</span>.
-              </p>
-              <p className="text-gray-400 text-sm mb-8">
-                That momentum you feel? That's real. Keep it going.
-              </p>
+              {/* Completion header */}
+              <div className="text-center mb-6">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.1 }}
+                  className="text-6xl mb-3"
+                >
+                  🎯
+                </motion.div>
+                <h2 className="text-3xl font-extrabold text-gray-900 mb-1">That's your first session.</h2>
+                <p className="text-gray-500">
+                  {completedSteps.length} of {steps.length} steps done ·{" "}
+                  {ENERGY_OPTIONS.find(e => e.value === energy)?.label?.toLowerCase()} energy ·{" "}
+                  {timeMinutes} min
+                </p>
+              </div>
 
-              {/* Signup nudge card */}
-              <div className="bg-gradient-to-br from-purple-600 to-teal-500 rounded-3xl p-6 text-white text-left shadow-xl mb-5">
+              {/* Personalised insight — the "we see you" moment */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-white border-2 border-purple-100 rounded-2xl p-5 mb-4"
+              >
                 <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="w-5 h-5" />
-                  <span className="font-bold text-lg">Want to track your progress?</span>
+                  <Eye className="w-4 h-4 text-purple-500" />
+                  <span className="text-xs font-semibold text-purple-600 uppercase tracking-wide">What this session tells us</span>
                 </div>
-                <p className="text-purple-100 text-sm mb-4 leading-relaxed">
-                  Create a free account and TaskBuddy will remember your wins, spot your patterns,
-                  and keep you on a streak. You've already felt what it can do.
+                {sessionInsight ? (
+                  <p className="text-gray-700 text-sm leading-relaxed">{sessionInsight}</p>
+                ) : (
+                  <div className="flex items-center gap-2 text-gray-400 text-sm">
+                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="w-4 h-4 rounded-full border-2 border-gray-200 border-t-purple-500 flex-shrink-0" />
+                    Analysing your session...
+                  </div>
+                )}
+              </motion.div>
+
+              {/* Loss-aversion signup card */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.45 }}
+                className="bg-gradient-to-br from-purple-600 to-teal-500 rounded-3xl p-6 text-white text-left shadow-xl mb-4"
+              >
+                <p className="font-bold text-lg mb-2 leading-snug">
+                  That's your first mood shift tracked. Don't lose it.
+                </p>
+                <p className="text-purple-100 text-sm mb-5 leading-relaxed">
+                  Imagine what this looks like after 30 sessions — your peak hours, your patterns,
+                  what kind of day you actually perform best on. That data starts now.
+                  Close this tab and it's gone.
                 </p>
                 <button
                   onClick={() => {
-                    // Persist session data so GuestWelcome can read it after login
                     try {
                       sessionStorage.setItem("guest_session", JSON.stringify({
                         task: taskText,
@@ -359,22 +426,24 @@ Return a JSON object.`,
                         timeMinutes,
                         steps,
                         completedSteps,
+                        insight: sessionInsight,
                       }));
                     } catch {}
                     base44.auth.redirectToLogin("/GuestWelcome");
                   }}
-                  className="w-full bg-white text-purple-700 font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-purple-50 transition-colors"
+                  className="w-full bg-white text-purple-700 font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-purple-50 transition-colors"
                 >
-                  Save my progress — it's free
+                  <Sparkles className="w-4 h-4" />
+                  Save this session — it's free
                   <ArrowRight className="w-4 h-4" />
                 </button>
-              </div>
+              </motion.div>
 
               <button
                 onClick={() => navigate("/")}
-                className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+                className="w-full text-center text-sm text-gray-400 hover:text-gray-600 transition-colors py-2"
               >
-                Not now — go back to start
+                Not now — I'll start fresh next time
               </button>
             </motion.div>
           )}
