@@ -22,7 +22,6 @@ const TIME_OPTIONS = [
   { value: 10, label: "10 min", sub: "Quick sprint" },
   { value: 20, label: "20 min", sub: "Good chunk" },
   { value: 30, label: "30 min", sub: "Deep dive" },
-  { value: 45, label: "45 min", sub: "Full focus" },
 ];
 
 // ─── Mini timer ───────────────────────────────────────────────────────────────
@@ -113,18 +112,22 @@ export default function GuestSession() {
     try {
       const energyLabel = ENERGY_OPTIONS.find(e => e.value === energy)?.label || energy;
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Break down this task into 4-6 small, concrete micro-steps that someone can actually do right now. 
+        prompt: `Break down this SPECIFIC task into 4-6 concrete micro-steps that are UNIQUE to exactly this task and nothing else.
+
 Task: "${taskText}"
 Energy level: ${energyLabel}
 Time available: ${timeMinutes} minutes
 
-Rules:
-- Each step should take 2-8 minutes max
-- Be very specific and action-oriented (start with a verb)
-- Match the energy level — low energy = gentler steps
-- Steps must fit within the total time of ${timeMinutes} minutes
+CRITICAL RULES:
+- Every step must be SPECIFIC to "${taskText}" — if someone read just the steps with no context, they would know exactly what task was being broken down
+- NEVER use generic steps like "do the first obvious action" or "keep going" — these could apply to any task
+- Steps must name specific physical actions or objects relevant to THIS task
+- Start every step with a strong action verb
+- Match energy level: low energy = smaller, gentler steps; high energy = bolder steps
+- All steps combined must fit within ${timeMinutes} minutes (each step 2-8 min)
+- The "tip" field should be a one-line coaching nudge specific to that step
 
-Return a JSON object.`,
+Return a JSON object with steps array and a short encouragement string.`,
         response_json_schema: {
           type: "object",
           properties: {
@@ -177,7 +180,7 @@ Return a JSON object.`,
     const energyLabel = ENERGY_OPTIONS.find(e => e.value === energyVal)?.label?.toLowerCase() || energyVal;
     try {
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Write ONE short, specific insight (2 sentences max) about what this single productivity session reveals about this person.
+        prompt: `Write ONE short insight (2 sentences max) that makes this person feel genuinely seen using their specific data.
 
 Facts:
 - Task: "${taskText}"
@@ -187,20 +190,22 @@ Facts:
 - Time of day: ${timeOfDay}
 
 Rules:
-- Be specific — use their actual numbers and energy level
-- Sound like you're noticing something real about them, not complimenting them generically
-- Reference the energy level contrast if they did well on low energy — that's the most powerful signal
-- Do NOT say "great job" or "well done" or anything generic
-- End with a single forward-looking sentence about what this pattern will look like over time
-- Keep it under 50 words total`,
+- Lead with their SPECIFIC numbers and energy level in a way that creates comparison ("Most people stop at X on ${energyLabel} energy. You didn't.")
+- Use contrast to make them feel their result means something — compare their output to a realistic average
+- NEVER say "great job", "well done", "amazing", or anything generic
+- Do NOT compliment them — observe them. Sound like data, not a cheerleader.
+- End with one forward-looking sentence that implies a pattern forming, not a one-off win
+- Under 45 words total`,
       });
       setSessionInsight(typeof result === "string" ? result : result?.insight || result?.text || null);
     } catch {
       // Specific fallback based on actual data
       if (energyVal === "low" && completedCount >= totalCount * 0.6) {
-        setSessionInsight(`You completed ${completedCount} of ${totalCount} steps while running on low energy — that's actually above average for most people on a hard day. That gap between how you felt and what you did? That's your real baseline.`);
+        setSessionInsight(`${completedCount} of ${totalCount} steps on low energy. Most people bail at step 1 when they're running on fumes. That gap between how you felt and what you actually did — that's your real baseline.`);
+      } else if (completedCount === totalCount) {
+        setSessionInsight(`${completedCount} of ${totalCount} steps done. Most people leave at least one. You finished the set — that's not nothing, especially on a ${energyLabel} day.`);
       } else {
-        setSessionInsight(`You committed ${mins} minutes to "${taskText}" and followed through on ${completedCount} of ${totalCount} steps. One session in, and there's already something to build on.`);
+        setSessionInsight(`${completedCount} of ${totalCount} steps in ${mins} minutes on ${energyLabel} energy. That's a real data point — not a fluke, not a perfect day. Just what you're capable of on an ordinary one.`);
       }
     }
   };
@@ -251,15 +256,15 @@ Rules:
             <motion.div key="time" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">How much time do you have?</h2>
               <p className="text-gray-500 mb-6">We'll fit your steps into this window.</p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-3">
                 {TIME_OPTIONS.map(opt => (
                   <button
                     key={opt.value}
                     onClick={() => handleTimeSelect(opt.value)}
-                    className="flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-purple-200 bg-white hover:border-purple-500 hover:bg-purple-50 transition-all hover:scale-[1.02]"
+                    className="flex items-center justify-between px-6 py-4 rounded-2xl border-2 border-purple-200 bg-white hover:border-purple-500 hover:bg-purple-50 transition-all hover:scale-[1.01]"
                   >
                     <span className="text-2xl font-bold text-purple-700">{opt.label}</span>
-                    <span className="text-sm text-gray-500 mt-1">{opt.sub}</span>
+                    <span className="text-sm text-gray-500">{opt.sub}</span>
                   </button>
                 ))}
               </div>

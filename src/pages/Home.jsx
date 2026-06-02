@@ -123,7 +123,7 @@ export default function Home() {
         </a>
       </motion.p>
 
-      {/* Social proof */}
+      {/* Honest tagline */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -131,7 +131,7 @@ export default function Home() {
         className="mt-8 flex items-center gap-2 text-xs text-gray-400"
       >
         <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-        <span>Trusted by thousands of people who just needed a little push</span>
+        <span>Built for brains that struggle to start</span>
       </motion.div>
     </div>
   );
