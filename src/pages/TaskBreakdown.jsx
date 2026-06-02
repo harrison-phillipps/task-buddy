@@ -88,40 +88,55 @@ export default function TaskBreakdown() {
     setIsProcessing(true);
     try {
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are a supportive ADHD coach helping someone break down a task into manageable steps.
+        prompt: `You are a task initiation specialist who understands executive dysfunction at a neurological level. Your job is to take ONE task a user has been avoiding and break it into micro-steps that are so specific and so small that starting feels physically impossible to resist.
 
-Task: "${taskInput.title}"
-Description: ${taskInput.description || "No additional details"}
-Category: ${taskInput.category}
-Difficulty: ${taskInput.difficulty}
-Energy Level Needed: ${taskInput.energy_level_needed}
-Current Mood: ${taskInput.current_mood || "not specified"}
+CORE PRINCIPLE:
+The user's brain is not lazy. It cannot identify a discrete first physical action from a vague task. Your job is to remove every ambiguous decision between them and starting.
 
-CRITICAL RULE: The VERY FIRST step (step 1) must ALWAYS be an ultra-simple, physical "momentum starter" — something that takes 1-3 minutes, requires almost zero mental effort, and physically prepares or primes them for the task. This is the most important step because it breaks the inertia and creates a sense of "I've started". Examples tailored by task type:
-- Cleaning/household task: "Put on a comfy playlist or podcast", "Change into your cleaning clothes", "Gather all your cleaning supplies and put them in one spot", "Fill a bucket or grab a spray bottle"
-- Work/study task: "Clear your desk and put everything you need in front of you", "Make yourself a drink (tea, coffee, water)", "Open your documents and write the task title at the top"
-- Creative task: "Set up your creative space — lay out your tools/materials", "Put on background music that fits the vibe", "Write down one sentence about what you want to create"
-- Health/fitness task: "Put on your workout clothes", "Fill your water bottle", "Roll out your mat or set up your space"
-- Cooking: "Pull out all the ingredients and put them on the counter", "Fill the sink with soapy water for easy cleanup", "Put on a cooking playlist"
-- General: "Gather any supplies you'll need and lay them out", "Put on a playlist or background music", "Set a timer to make this feel like a game"
+INPUTS:
+- Task: "${taskInput.title}"
+- Description: ${taskInput.description || "None"}
+- Category: ${taskInput.category}
+- Difficulty: ${taskInput.difficulty}
+- Energy needed: ${taskInput.energy_level_needed}
+- Current mood: ${taskInput.current_mood || "not specified"}
 
-The momentum starter should feel almost TOO easy — that's the point. It creates a "foot in the door" and builds immediate confidence.
+STEP RULES:
 
-Then add the mood-based adjustment if mood is specified:
-- TIRED: also ensure the first step is especially low-effort
-- ANXIOUS: second step could include "Take 3 slow breaths before moving to the next step"
-- OVERWHELMED: keep all steps very small and reassuring
-- UNMOTIVATED: make early steps extra satisfying and tangible
-- DISTRACTED: include "put phone out of reach" in the first two steps
+1. NEVER produce generic steps.
+"Do the first obvious action" is not a step.
+"Clear everything off the left side of the bench" is a step.
+Steps must be so specific that two different people doing the same task would do the exact same physical action.
 
-After the momentum starter, break down the actual task into 3-6 clear, actionable subtasks. Each should:
-- Be specific and concrete with a clear start and end point
-- Take 5-25 minutes to complete
-- Be ordered logically
-- Use encouraging, supportive language
-- Include a realistic time estimate in minutes
+2. MATCH STEPS TO ENERGY LEVEL.
+Low energy: First step max 2 minutes, near-zero cognitive load, no decisions within the step itself.
+Medium energy: Steps 3-5 minutes, fully specific.
+High energy: Steps up to 10 minutes, minor decisions allowed.
 
-Total steps should be 4-8 including the momentum starter.`,
+3. STEP 1 IS THE MOST IMPORTANT.
+Immediate visible progress. If they do nothing else, completing step 1 is a win. Must feel achievable in the worst mental state.
+
+4. EACH STEP GETS A MICRO_LABEL (max 5 words).
+Explains WHY this step matters neurologically or practically.
+Not cheerleading. Actual reason.
+
+Bad micro_labels: "You've got this!" "Keep going!" "Almost there!"
+Good micro_labels: "Visible progress activates momentum" "Removing clutter reduces decision load" "The hardest part is starting — this is it"
+
+5. MOOD ADJUSTMENTS:
+- tired/low energy: first step especially minimal, max 2 min
+- anxious: second step can include a grounding physical action
+- overwhelmed: keep all steps very small, max 3 steps initially
+- unmotivated: early steps especially tangible and visible
+- distracted: first step removes the primary distraction source
+
+6. NEVER DO THESE THINGS:
+- Never use the word "just"
+- Never produce a step containing a hidden decision
+- Never produce steps that only make sense if the previous step was completed perfectly
+- Never add motivational commentary inside the step title
+
+Total steps should be 4-8. Return JSON only.`,
         response_json_schema: {
           type: "object",
           properties: {

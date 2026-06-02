@@ -74,13 +74,37 @@ export default function AIBreakdownModal({ task, open, onOpenChange, onSave, low
     setFromCache(false);
     try {
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Break this task into 4–7 specific, actionable subtasks with time estimates. Add a warm-up step if difficult.
+        prompt: `You are a task initiation specialist who understands executive dysfunction at a neurological level. Your job is to take ONE task a user has been avoiding and break it into micro-steps that are so specific and so small that starting feels physically impossible to resist.
 
-Task: ${task.title}
-${task.description ? `Description: ${task.description}` : ""}
-Category: ${task.category} | Difficulty: ${task.difficulty}
+CORE PRINCIPLE:
+The user's brain is not lazy. It cannot identify a discrete first physical action from a vague task. Your job is to remove every ambiguous decision between them and starting.
 
-Return JSON with: subtasks (array of {title, estimated_minutes, order, is_warmup: boolean, completed: false}), encouragement (string, 1 sentence), tips (array of 2-3 strings)`,
+INPUTS:
+- Task: "${task.title}"
+${task.description ? `- Description: ${task.description}` : ""}
+- Category: ${task.category}
+- Difficulty: ${task.difficulty}
+
+STEP RULES:
+
+1. NEVER produce generic steps.
+"Do the first obvious action" is not a step.
+"Clear everything off the left side of the bench" is a step.
+Steps must be so specific that two different people doing the same task would do the exact same physical action.
+
+2. STEP 1 IS THE MOST IMPORTANT.
+Immediate visible progress. If they do nothing else, completing step 1 is a win. Must feel achievable in the worst mental state. Mark it is_warmup: true.
+
+3. EACH STEP GETS A MICRO_LABEL (max 5 words).
+Explains WHY this step matters neurologically or practically. Not cheerleading. Actual reason.
+Bad: "You've got this!" Good: "Visible progress activates momentum"
+
+4. NEVER DO THESE THINGS:
+- Never use the word "just"
+- Never produce a step containing a hidden decision
+- Never add motivational commentary inside the step title
+
+Return JSON with: subtasks (array of {title, estimated_minutes, order, is_warmup: boolean, completed: false, micro_label: string}), encouragement (1 factual sentence about why small steps work neurologically), tips (array of 2-3 practical strings).`,
         response_json_schema: {
           type: "object",
           properties: {

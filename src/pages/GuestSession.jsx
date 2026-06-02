@@ -107,10 +107,10 @@ export default function GuestSession() {
   const sessionStartTime = useRef(new Date());
 
   // ── AI breakdown ──────────────────────────────────────────────────────────
-  const fetchBreakdown = async () => {
+  const fetchBreakdown = async (energyValue, timeValue) => {
     setLoading(true);
     try {
-      const energyLabel = ENERGY_OPTIONS.find(e => e.value === energy)?.label || energy;
+      const energyLabel = ENERGY_OPTIONS.find(e => e.value === energyValue)?.label || energyValue;
       const result = await base44.integrations.Core.InvokeLLM({
         prompt: `You are a task initiation specialist who understands executive dysfunction at a neurological level. Your job is to take ONE task a user has been avoiding and break it into micro-steps that are so specific and so small that starting feels physically impossible to resist.
 
@@ -120,7 +120,7 @@ The user's brain is not lazy. It cannot identify a discrete first physical actio
 INPUTS:
 - Task: "${taskText}"
 - Energy: ${energyLabel}
-- Time: ${timeMinutes} minutes
+- Time: ${timeValue} minutes
 
 STEP RULES:
 
@@ -139,7 +139,7 @@ Ready to go: Steps up to 10 minutes, minor decisions allowed.
 20 min = 4-5 steps
 30 min = 5-6 steps
 45 min = 6-8 steps
-Total step time must not exceed ${timeMinutes} minutes.
+Total step time must not exceed ${timeValue} minutes.
 
 4. STEP 1 IS THE MOST IMPORTANT.
 Immediate visible progress. If they do nothing else, completing step 1 is a win. Must feel achievable in the worst mental state.
@@ -225,7 +225,7 @@ Return only valid JSON matching the schema. No preamble, no explanation.`,
       // Second attempt with simpler prompt
       try {
         const result2 = await base44.integrations.Core.InvokeLLM({
-          prompt: `Break "${taskText}" into steps for someone with ${energy} energy and ${timeMinutes} minutes. Step 1: ultra-specific physical action, max 2 min, zero decisions. Remaining steps: concrete actions naming real objects/sub-tasks of "${taskText}". Each step includes a micro_label (max 5 words, why it matters, not cheerleading). Return JSON: { steps: [{ title: string, duration_minutes: number, micro_label: string }] }`,
+          prompt: `Break "${taskText}" into steps for someone with ${energyValue} energy and ${timeValue} minutes. Step 1: ultra-specific physical action, max 2 min, zero decisions. Remaining steps: concrete actions naming real objects/sub-tasks of "${taskText}". Each step includes a micro_label (max 5 words, why it matters, not cheerleading). Return JSON: { steps: [{ title: string, duration_minutes: number, micro_label: string }] }`,
           response_json_schema: {
             type: "object",
             properties: {
@@ -260,7 +260,7 @@ Return only valid JSON matching the schema. No preamble, no explanation.`,
 
   const handleTimeSelect = (mins) => {
     setTimeMinutes(mins);
-    fetchBreakdown();
+    fetchBreakdown(energy, mins);
   };
 
   const toggleStep = (idx) => {

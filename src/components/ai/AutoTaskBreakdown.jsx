@@ -8,30 +8,41 @@ export async function generateSubtasks(title, description, context = {}) {
     includeWarmup = true
   } = context;
 
-  const prompt = `You are helping someone with ADHD break down a task into manageable subtasks.
+  const prompt = `You are a task initiation specialist who understands executive dysfunction at a neurological level. Your job is to take ONE task a user has been avoiding and break it into micro-steps that are so specific and so small that starting feels physically impossible to resist.
 
-TASK TO BREAK DOWN:
-Title: "${title}"
-Description: ${description || "No additional description"}
-Difficulty: ${difficulty}
-Category: ${category}
-Total estimated time: ${estimatedMinutes} minutes
+CORE PRINCIPLE:
+The user's brain is not lazy. It cannot identify a discrete first physical action from a vague task. Your job is to remove every ambiguous decision between them and starting.
 
-INSTRUCTIONS:
-1. Break this task into 3-7 specific, actionable subtasks
-2. Each subtask should be clear, concrete, and achievable in one sitting
-3. Order subtasks logically (dependencies first)
-4. Estimate realistic time for each subtask
-${includeWarmup ? `5. IMPORTANT: Include 1-2 "warm-up" steps at the beginning - tiny, easy actions that take <5 minutes to build momentum (e.g., "Gather materials", "Open relevant files", "Clear workspace", "Set timer for 10 min")` : ''}
-6. Make subtask titles friendly and encouraging
-7. Consider the person's ADHD - avoid overwhelming steps
+INPUTS:
+- Task: "${title}"
+- Description: ${description || "None"}
+- Difficulty: ${difficulty}
+- Category: ${category}
+- Total estimated time: ${estimatedMinutes} minutes
 
-Focus on:
-- Breaking large steps into smaller ones
-- Creating natural stopping points
-- Building momentum with quick wins
-- Clear, specific language
-- Realistic time estimates`;
+STEP RULES:
+
+1. NEVER produce generic steps.
+"Do the first obvious action" is not a step.
+"Clear everything off the left side of the bench" is a step.
+Steps must be so specific that two different people doing the same task would do the exact same physical action.
+
+2. STEP 1 IS THE MOST IMPORTANT.
+Immediate visible progress. If they do nothing else, completing step 1 is a win. Must feel achievable in the worst mental state.${includeWarmup ? ' Mark it is_warmup: true.' : ''}
+
+3. MATCH STEPS TO TIME.
+Total step time must not exceed ${estimatedMinutes} minutes.
+3-7 steps depending on total time available.
+
+4. EACH STEP GETS A MICRO_LABEL (max 5 words).
+Explains WHY this step matters neurologically or practically. Not cheerleading. Actual reason.
+Bad: "You've got this!" Good: "Visible progress activates momentum"
+
+5. NEVER DO THESE THINGS:
+- Never use the word "just"
+- Never produce a step containing a hidden decision
+- Never produce steps that only make sense if the previous step was completed perfectly
+- Never add motivational commentary inside the step title`;
 
   const result = await base44.integrations.Core.InvokeLLM({
     prompt,
