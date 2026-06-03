@@ -96,7 +96,7 @@ export default function PostSessionSummary({
       className="space-y-6"
     >
       {/* Main Summary Card */}
-      <Card className="bg-gradient-to-br from-purple-50 via-white to-teal-50 border-purple-200 overflow-hidden">
+      <Card className="bg-gradient-to-br from-purple-50 via-white to-teal-50 dark:from-purple-900/20 dark:via-gray-800 dark:to-teal-900/20 border-purple-200 dark:border-gray-700 overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-200 to-teal-200 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/2" />
         
         <CardHeader className="text-center relative">
@@ -120,7 +120,7 @@ export default function PostSessionSummary({
           <CardTitle className="text-2xl font-bold">
             {allStepsComplete ? "Task Complete! 🎉" : "Great Session!"}
           </CardTitle>
-          <p className="text-gray-600 mt-1">{taskTitle}</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">{taskTitle}</p>
         </CardHeader>
 
         <CardContent className="space-y-6">
@@ -130,22 +130,22 @@ export default function PostSessionSummary({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-white p-3 rounded-xl border border-purple-100 text-center"
+              className="bg-white dark:bg-gray-700/50 p-3 rounded-xl border border-purple-100 dark:border-gray-600 text-center"
             >
               <CheckCircle className="w-5 h-5 text-green-500 mx-auto mb-1" />
-              <p className="text-2xl font-bold text-gray-900">{subtasksCompleted}/{totalSubtasks}</p>
-              <p className="text-xs text-gray-500">Steps Done</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{subtasksCompleted}/{totalSubtasks}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Steps Done</p>
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white p-3 rounded-xl border border-purple-100 text-center"
+              className="bg-white dark:bg-gray-700/50 p-3 rounded-xl border border-purple-100 dark:border-gray-600 text-center"
             >
               <Clock className="w-5 h-5 text-teal-500 mx-auto mb-1" />
-              <p className="text-2xl font-bold text-gray-900">{totalMinutes}</p>
-              <p className="text-xs text-gray-500">Minutes</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{totalMinutes}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Minutes</p>
             </motion.div>
 
             {focusTechnique === "pomodoro" && (
@@ -153,11 +153,11 @@ export default function PostSessionSummary({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-white p-3 rounded-xl border border-orange-100 text-center"
+                className="bg-white dark:bg-gray-700/50 p-3 rounded-xl border border-orange-100 dark:border-gray-600 text-center"
               >
                 <span className="text-xl">🍅</span>
-                <p className="text-2xl font-bold text-gray-900">{pomodorosCompleted}</p>
-                <p className="text-xs text-gray-500">Pomodoros</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{pomodorosCompleted}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Pomodoros</p>
               </motion.div>
             )}
 
@@ -165,13 +165,13 @@ export default function PostSessionSummary({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="bg-white p-3 rounded-xl border border-purple-100 text-center"
+              className="bg-white dark:bg-gray-700/50 p-3 rounded-xl border border-purple-100 dark:border-gray-600 text-center"
             >
               <TrendingUp className="w-5 h-5 text-purple-500 mx-auto mb-1" />
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {totalSubtasks > 0 ? Math.round((subtasksCompleted / totalSubtasks) * 100) : 0}%
               </p>
-              <p className="text-xs text-gray-500">Progress</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Progress</p>
             </motion.div>
           </div>
 
@@ -183,14 +183,14 @@ export default function PostSessionSummary({
               transition={{ delay: 0.5 }}
               className={`p-4 rounded-xl border ${
                 goalAchieved 
-                  ? 'bg-green-50 border-green-200' 
-                  : 'bg-orange-50 border-orange-200'
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+                  : 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Target className={`w-5 h-5 ${goalAchieved ? 'text-green-600' : 'text-orange-600'}`} />
-                  <span className="font-semibold text-gray-800">Session Goal</span>
+                  <span className="font-semibold text-gray-800 dark:text-gray-200">Session Goal</span>
                 </div>
                 <Badge className={goalAchieved ? 'bg-green-500' : 'bg-orange-500'}>
                   {goalAchieved ? '✓ Achieved!' : 'Keep Going!'}
@@ -198,7 +198,7 @@ export default function PostSessionSummary({
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">
+                  <span className="text-gray-600 dark:text-gray-400">
                     {goalType === "subtasks" && `Complete ${goalValue} steps`}
                     {goalType === "time" && `Focus for ${goalValue} minutes`}
                     {goalType === "pomodoros" && `Complete ${goalValue} pomodoros`}
@@ -217,11 +217,11 @@ export default function PostSessionSummary({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            className="p-4 bg-white rounded-xl border border-purple-100"
+            className="p-4 bg-white dark:bg-gray-700/50 rounded-xl border border-purple-100 dark:border-gray-600"
           >
             <div className="flex items-center gap-2 mb-3">
               <Brain className="w-5 h-5 text-purple-500" />
-              <span className="font-semibold text-gray-800">Mood Journey</span>
+              <span className="font-semibold text-gray-800 dark:text-gray-200">Mood Journey</span>
             </div>
             
             <div className="flex items-center justify-center gap-4 mb-3">
@@ -236,7 +236,7 @@ export default function PostSessionSummary({
               </div>
             </div>
             
-            <p className="text-sm text-gray-600 text-center bg-purple-50 p-2 rounded-lg">
+            <p className="text-sm text-gray-600 dark:text-gray-400 text-center bg-purple-50 dark:bg-purple-900/20 p-2 rounded-lg">
               {getMoodInsight()}
             </p>
           </motion.div>
@@ -246,15 +246,15 @@ export default function PostSessionSummary({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
-            className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border border-yellow-200"
+            className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800"
           >
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center flex-shrink-0">
                 <Zap className="w-4 h-4 text-white" />
               </div>
               <div>
-                <p className="font-semibold text-gray-800 mb-1">Productivity Tip</p>
-                <p className="text-sm text-gray-600">{getProductivityTip()}</p>
+                <p className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Productivity Tip</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{getProductivityTip()}</p>
               </div>
             </div>
           </motion.div>

@@ -1609,7 +1609,7 @@ export default function FocusSession() {
                               onClick={handleCompleteEarly}
                               variant="outline"
                               size="lg"
-                              className="border-green-200 text-green-700 hover:bg-green-50"
+                              className="border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30"
                             >
                               <CheckCircle className="w-5 h-5 mr-2" />
                               Complete
@@ -1618,7 +1618,7 @@ export default function FocusSession() {
                               onClick={handleNeedMoreTime}
                               variant="outline"
                               size="lg"
-                              className="border-orange-200 text-orange-700 hover:bg-orange-50"
+                              className="border-orange-200 dark:border-orange-700 text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/30"
                             >
                               <Clock className="w-5 h-5 mr-2" />
                               +More Time

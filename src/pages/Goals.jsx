@@ -122,7 +122,7 @@ export default function GoalsPage() {
             <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">
               Goals & Objectives
             </h1>
-            <p className="text-gray-600 mt-1">Define big goals and track your progress</p>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">Define big goals and track your progress</p>
           </div>
           <div className="flex gap-2 flex-wrap justify-end">
             <GoogleTasksSyncButton goals={goals} />
@@ -150,7 +150,7 @@ export default function GoalsPage() {
           transition={{ delay: 0.1 }}
         >
           <Tabs value={filter} onValueChange={setFilter}>
-            <TabsList className="bg-white/80 backdrop-blur-sm border border-purple-100">
+            <TabsList className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-purple-100 dark:border-gray-700">
               <TabsTrigger value="all">All ({statusCounts.all})</TabsTrigger>
               <TabsTrigger value="not_started">Not Started ({statusCounts.not_started})</TabsTrigger>
               <TabsTrigger value="in_progress">In Progress ({statusCounts.in_progress})</TabsTrigger>
@@ -163,7 +163,7 @@ export default function GoalsPage() {
         {isLoading ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto"></div>
-            <p className="text-gray-600 mt-4">Loading your goals...</p>
+            <p className="text-gray-600 dark:text-gray-400 mt-4">Loading your goals...</p>
           </div>
         ) : filteredGoals.length === 0 ? (
           <motion.div
@@ -174,8 +174,8 @@ export default function GoalsPage() {
             <div className="w-32 h-32 bg-gradient-to-br from-purple-200 to-teal-200 rounded-full mx-auto mb-6 flex items-center justify-center">
               <Target className="w-16 h-16 text-purple-600" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">No goals yet</h3>
-            <p className="text-gray-600 mb-6">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">No goals yet</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               {filter === "all" 
                 ? "Start by defining your first big objective!"
                 : `You don't have any ${filter.replace('_', ' ')} goals`}

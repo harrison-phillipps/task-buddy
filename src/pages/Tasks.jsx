@@ -582,13 +582,13 @@ export default function Tasks() {
   };
 
   const categoryColors = {
-    work: "from-blue-100 to-blue-50 border-blue-200",
-    personal: "from-purple-100 to-purple-50 border-purple-200",
-    health: "from-green-100 to-green-50 border-green-200",
-    creative: "from-pink-100 to-pink-50 border-pink-200",
-    learning: "from-yellow-100 to-yellow-50 border-yellow-200",
-    household: "from-orange-100 to-orange-50 border-orange-200",
-    other: "from-gray-100 to-gray-50 border-gray-200"
+    work: "from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-900/10 border-blue-200 dark:border-blue-800",
+    personal: "from-purple-100 to-purple-50 dark:from-purple-900/30 dark:to-purple-900/10 border-purple-200 dark:border-purple-800",
+    health: "from-green-100 to-green-50 dark:from-green-900/30 dark:to-green-900/10 border-green-200 dark:border-green-800",
+    creative: "from-pink-100 to-pink-50 dark:from-pink-900/30 dark:to-pink-900/10 border-pink-200 dark:border-pink-800",
+    learning: "from-yellow-100 to-yellow-50 dark:from-yellow-900/30 dark:to-yellow-900/10 border-yellow-200 dark:border-yellow-800",
+    household: "from-orange-100 to-orange-50 dark:from-orange-900/30 dark:to-orange-900/10 border-orange-200 dark:border-orange-800",
+    other: "from-gray-100 to-gray-50 dark:from-gray-800/50 dark:to-gray-800/30 border-gray-200 dark:border-gray-700"
   };
 
   // Trigger confetti when celebration shows
@@ -846,7 +846,7 @@ export default function Tasks() {
           transition={{ delay: 0.1 }}
         >
           <Tabs value={filter} onValueChange={setFilter}>
-            <TabsList className="bg-white/80 backdrop-blur-sm border border-purple-100 w-full grid grid-cols-2 sm:grid-cols-4 h-auto">
+            <TabsList className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-purple-100 dark:border-gray-700 w-full grid grid-cols-2 sm:grid-cols-4 h-auto">
               <TabsTrigger value="all" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-teal-500 data-[state=active]:text-white text-xs sm:text-sm">
                 All ({statusCounts.all})
               </TabsTrigger>
@@ -868,7 +868,7 @@ export default function Tasks() {
         {isLoading ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto"></div>
-            <p className="text-gray-600 mt-4">Loading your tasks...</p>
+            <p className="text-gray-600 dark:text-gray-400 mt-4">Loading your tasks...</p>
           </div>
         ) : filteredTasks.length === 0 ? (
           <motion.div
@@ -879,10 +879,10 @@ export default function Tasks() {
             <div className="w-32 h-32 bg-gradient-to-br from-purple-200 to-teal-200 rounded-full mx-auto mb-6 flex items-center justify-center text-6xl">
               {filter === "completed" ? "🎉" : "📝"}
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
               {filter === "completed" ? "No completed tasks yet" : "No tasks here"}
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               {filter === "all"
                 ? "Get started by breaking down your first task!"
                 : `You don't have any ${filter.replace('_', ' ')} tasks`}
@@ -981,10 +981,10 @@ export default function Tasks() {
                   >
                     <AccordionTrigger className="px-6 py-4 hover:no-underline">
                       <div className="flex items-center justify-between w-full pr-4">
-                        <span className="text-lg font-semibold text-gray-800">
+                        <span className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                           {categoryLabels[category] || category}
                         </span>
-                        <span className="text-sm font-medium text-gray-600 bg-white px-3 py-1 rounded-full">
+                        <span className="text-sm font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 px-3 py-1 rounded-full">
                           {categoryTasks.length} {categoryTasks.length === 1 ? 'task' : 'tasks'}
                         </span>
                       </div>
@@ -1107,7 +1107,7 @@ export default function Tasks() {
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Select a task that must be completed before "{selectedDependencyTask?.title}"
               </p>
               <div className="space-y-2">

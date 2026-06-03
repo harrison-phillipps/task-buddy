@@ -768,9 +768,9 @@ export default function VirtualCompanion({
             initial={{ opacity: 0, scale: 0.9, y: -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: -10 }}
-            className="bg-gradient-to-r from-purple-50 to-teal-50 px-4 py-2 rounded-xl shadow-md border border-purple-100"
+            className="bg-gradient-to-r from-purple-50 to-teal-50 dark:from-purple-900/30 dark:to-teal-900/30 px-4 py-2 rounded-xl shadow-md border border-purple-100 dark:border-purple-700"
           >
-            <p className="text-xs text-gray-600 flex items-center gap-2">
+            <p className="text-xs text-gray-600 dark:text-gray-300 flex items-center gap-2">
               <span className="text-lg">{currentActivity.emoji}</span>
               <span>I'm {currentActivity.text}...</span>
             </p>
