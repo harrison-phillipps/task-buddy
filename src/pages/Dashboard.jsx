@@ -118,48 +118,8 @@ export default function Dashboard() {
           <p className="text-gray-500 dark:text-gray-400 mt-1">What's been sitting on your list?</p>
         </motion.div>
 
-        {/* ── 2. QUICK START ─────────────────────────────────── */}
+        {/* ── 2. COMPANION + LEVEL BADGE (greeting) ──────────── */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-          <QuickStartFocus tasks={tasks} />
-          {tasks.filter(t => t.status !== 'completed').length === 0 && (
-            <QuickAddTask currentUser={currentUser} />
-          )}
-        </motion.div>
-
-        {/* ── 3. WHAT SHOULD I WORK ON (energy matcher) ──────── */}
-        {tasks.filter(t => t.status !== 'completed').length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <EnergyTaskSuggester tasks={tasks} />
-          </motion.div>
-        )}
-
-        {/* ── 4. BEST NEXT TASK (AI) — Pro+ ──────────────────── */}
-        {hasFeatureAccess(currentUser?.subscription_tier, "smart_recommendations") && tasks.filter(t => t.status !== 'completed').length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-            <SmartTaskRecommender
-              tasks={tasks.filter(t => t.status !== 'completed')}
-              userProgress={userProgress}
-              currentUser={currentUser}
-            />
-          </motion.div>
-        )}
-
-        {/* ── 5. PERSONALISED INSIGHT — Pro+ ─────────────────── */}
-        {hasFeatureAccess(currentUser?.subscription_tier, "proactive_coaching") && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <ProactiveCoach
-              userProgress={userProgress}
-              recentTasks={tasks}
-              recentSessions={sessions}
-              goals={[]}
-              context="dashboard"
-              userTier={currentUser?.subscription_tier || "free"}
-            />
-          </motion.div>
-        )}
-
-        {/* ── 6. COMPANION + LEVEL BADGE (bottom reward) ─────── */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="pb-6">
           {currentUser.companion_type && (
             <VirtualCompanion
               mood={completedToday.length > 0 ? "celebrating" : "supportive"}
@@ -184,6 +144,46 @@ export default function Dashboard() {
             </div>
           )}
         </motion.div>
+
+        {/* ── 3. QUICK START ─────────────────────────────────── */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <QuickStartFocus tasks={tasks} />
+          {tasks.filter(t => t.status !== 'completed').length === 0 && (
+            <QuickAddTask currentUser={currentUser} />
+          )}
+        </motion.div>
+
+        {/* ── 4. WHAT SHOULD I WORK ON (energy matcher) ──────── */}
+        {tasks.filter(t => t.status !== 'completed').length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+            <EnergyTaskSuggester tasks={tasks} />
+          </motion.div>
+        )}
+
+        {/* ── 5. BEST NEXT TASK (AI) — Pro+ ──────────────────── */}
+        {hasFeatureAccess(currentUser?.subscription_tier, "smart_recommendations") && tasks.filter(t => t.status !== 'completed').length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <SmartTaskRecommender
+              tasks={tasks.filter(t => t.status !== 'completed')}
+              userProgress={userProgress}
+              currentUser={currentUser}
+            />
+          </motion.div>
+        )}
+
+        {/* ── 6. PERSONALISED INSIGHT — Pro+ ─────────────────── */}
+        {hasFeatureAccess(currentUser?.subscription_tier, "proactive_coaching") && (
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="pb-6">
+            <ProactiveCoach
+              userProgress={userProgress}
+              recentTasks={tasks}
+              recentSessions={sessions}
+              goals={[]}
+              context="dashboard"
+              userTier={currentUser?.subscription_tier || "free"}
+            />
+          </motion.div>
+        )}
 
       </div>
     </div>
