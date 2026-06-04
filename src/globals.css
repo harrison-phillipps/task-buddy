@@ -96,14 +96,7 @@ a {
   color: #f1f0f5;
 }
 
-/* Input / select fields in dark mode */
-.dark input:not([type="range"]),
-.dark textarea,
-.dark select {
-  background-color: #1e1b2c !important;
-  color: #e2e0ec !important;
-  border-color: #3d3656 !important;
-}
+/* Input / select fields in dark mode — handled via component classes */
 .dark input::placeholder,
 .dark textarea::placeholder {
   color: #7c748f !important;
