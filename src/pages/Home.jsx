@@ -81,7 +81,7 @@ export default function Home() {
           <button
             type="submit"
             disabled={!task.trim()}
-            className="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-teal-500 text-white font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-40 whitespace-nowrap"
+            className="flex items-center justify-center gap-2 bg-[#7c5cbf] hover:bg-[#9270d3] text-white font-semibold px-6 py-3 rounded-xl transition-colors disabled:opacity-40 whitespace-nowrap"
           >
             Let's break it down
             <ArrowRight className="w-4 h-4" />

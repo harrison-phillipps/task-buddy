@@ -1161,7 +1161,7 @@ export default function FocusSession() {
               exit={{ opacity: 0, y: -20, scale: 0.9 }}
               className="fixed top-24 left-1/2 transform -translate-x-1/2 z-50"
             >
-              <div className="bg-gradient-to-r from-purple-500 to-teal-500 text-white px-6 py-3 rounded-full shadow-2xl border-2 border-white">
+              <div className="bg-[#7c5cbf] text-white px-6 py-3 rounded-full shadow-2xl border-2 border-white">
                 <p className="font-medium text-sm">{currentEncouragement}</p>
               </div>
             </motion.div>
@@ -1345,7 +1345,7 @@ export default function FocusSession() {
                       key={mood}
                       variant={moodBefore === mood ? "default" : "outline"}
                       onClick={() => setMoodBefore(mood)}
-                      className={`flex flex-col h-auto py-3 gap-1 text-xs capitalize min-h-[56px] ${moodBefore === mood ? "bg-gradient-to-r from-purple-500 to-teal-500 text-white border-transparent" : "dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"}`}
+                      className={`flex flex-col h-auto py-3 gap-1 text-xs capitalize min-h-[56px] ${moodBefore === mood ? "bg-[#7c5cbf] hover:bg-[#9270d3] text-white border-transparent" : "dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"}`}
                     >
                       <span className="text-lg">{emoji}</span>
                       {mood}
@@ -1391,7 +1391,7 @@ export default function FocusSession() {
               <Button
                 onClick={startSession}
                 disabled={!selectedTaskId || !moodBefore}
-                className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 disabled:opacity-40 text-white font-semibold py-6 text-lg shadow-lg"
+                className="w-full bg-[#7c5cbf] hover:bg-[#9270d3] disabled:opacity-40 text-white font-semibold py-6 text-lg shadow-lg"
               >
                 <Play className="w-5 h-5 mr-2" />
                 Start Focus Session
@@ -1588,7 +1588,7 @@ export default function FocusSession() {
                         <Button
                           onClick={togglePause}
                           size="lg"
-                          className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white"
+                          className="w-full bg-[#7c5cbf] hover:bg-[#9270d3] text-white"
                         >
                           {isActive ? <Pause className="w-5 h-5 mr-2" /> : <Play className="w-5 h-5 mr-2" />}
                           {isActive ? "Pause" : "Resume"}

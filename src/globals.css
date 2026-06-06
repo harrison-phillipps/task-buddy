@@ -1,3 +1,24 @@
+/* ============ BUTTON GRADIENT → SOLID PURPLE OVERRIDE ============
+   Replaces visually overwhelming purple→teal gradients on action buttons
+   with a calm solid #7c5cbf (slight lighten on hover). */
+.bg-gradient-to-r.from-purple-500.to-teal-500,
+.bg-gradient-to-r.from-purple-600.to-teal-500,
+.bg-gradient-to-r.from-purple-600.to-teal-600,
+.bg-gradient-to-r.from-purple-500.to-teal-500.hover\:from-purple-600,
+button.bg-gradient-to-r,
+a.bg-gradient-to-r {
+  background-image: none !important;
+  background-color: #7c5cbf !important;
+}
+.bg-gradient-to-r.from-purple-500.to-teal-500:hover,
+.bg-gradient-to-r.from-purple-600.to-teal-500:hover,
+.bg-gradient-to-r.from-purple-600.to-teal-600:hover,
+button.bg-gradient-to-r:hover,
+a.bg-gradient-to-r:hover {
+  background-color: #9270d3 !important;
+}
+/* ============ END BUTTON GRADIENT OVERRIDE ============ */
+
 /* Smooth theme transitions — applied globally */
 *, *::before, *::after {
   transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;

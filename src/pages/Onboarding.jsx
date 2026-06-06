@@ -184,7 +184,7 @@ export default function Onboarding() {
                           onClick={() => setGender(option.value)}
                           className={`h-auto py-3 ${
                             gender === option.value
-                              ? "bg-gradient-to-r from-purple-500 to-teal-500 text-white"
+                              ? "bg-[#7c5cbf] hover:bg-[#9270d3] text-white"
                               : "hover:bg-purple-50"
                           }`}
                         >
@@ -197,7 +197,7 @@ export default function Onboarding() {
                   <Button
                     onClick={handleNext}
                     disabled={!name.trim()}
-                    className="w-full bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold py-6 text-lg shadow-lg"
+                    className="w-full bg-[#7c5cbf] hover:bg-[#9270d3] text-white font-semibold py-6 text-lg shadow-lg"
                   >
                     Next <ChevronRight className="w-5 h-5 ml-2" />
                   </Button>
@@ -230,7 +230,7 @@ export default function Onboarding() {
                     <Button
                       onClick={handleSubmit}
                       disabled={isSubmitting}
-                      className="flex-1 bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white font-semibold py-6 text-lg shadow-lg"
+                      className="flex-1 bg-[#7c5cbf] hover:bg-[#9270d3] text-white font-semibold py-6 text-lg shadow-lg"
                     >
                       {isSubmitting ? "Saving..." : <><Sparkles className="w-5 h-5 mr-2" />Continue</>}
                     </Button>
