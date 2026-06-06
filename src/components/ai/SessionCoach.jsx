@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,16 +14,18 @@ export default function SessionCoach({
   pauseCount = 0
 }) {
   const [tip, setTip] = useState(null);
-  const [lastTipTime, setLastTipTime] = useState(Date.now());
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const generateSessionTip = async () => {
-      try {
-        const progressPercent = (elapsedMinutes / sessionDuration) * 100;
-        const completedSubtasks = task?.subtasks?.filter(s => s.completed).length || 0;
-        const totalSubtasks = task?.subtasks?.length || 0;
+  const generateSessionTip = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
+    try {
+      const progressPercent = (elapsedMinutes / sessionDuration) * 100;
+      const completedSubtasks = task?.subtasks?.filter(s => s.completed).length || 0;
+      const totalSubtasks = task?.subtasks?.length || 0;
 
-        const prompt = `You are a real-time ADHD focus coach monitoring an active work session.
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `You are a real-time ADHD focus coach monitoring an active work session.
 
 SESSION STATUS:
 - Task: ${task?.title || "Focus session"}
@@ -33,60 +35,23 @@ SESSION STATUS:
 - Current mood: ${mood || "not specified"}
 - Pause count: ${pauseCount}
 
-Generate ONE brief, real-time coaching tip (1-2 sentences) that:
-1. Acknowledges current progress
-2. Provides specific encouragement or micro-strategy
-3. Is contextual to the session phase (start/middle/ending)
-4. Matches their mood and pause patterns
-
-Examples:
-- If early in session: "Great start! Try the first subtask before checking anything else."
-- If paused multiple times: "Those breaks show self-awareness. One more focused push!"
-- If nearing end: "You're almost there! Finish strong for that completion boost."
-- If struggling: "Take 2 deep breaths. Progress over perfection today."
-
-Be brief, warm, and action-focused.`;
-
-        const result = await base44.integrations.Core.InvokeLLM({
-          prompt,
-          response_json_schema: {
-            type: "object",
-            properties: {
-              message: { type: "string" },
-              icon: {
-                type: "string",
-                enum: ["brain", "target", "clock", "zap", "heart", "sparkles"]
-              },
-              timing: {
-                type: "string",
-                enum: ["immediate", "next_milestone"]
-              }
-            }
+Generate ONE brief coaching tip (1-2 sentences), contextual to the session phase and mood. Be brief and action-focused.`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            message: { type: "string" },
+            icon: { type: "string", enum: ["brain", "target", "clock", "zap", "heart", "sparkles"] }
           }
-        });
+        }
+      });
 
-        setTip(result);
-        setLastTipTime(Date.now());
-      } catch (error) {
-        console.error("Error generating session tip:", error);
-      }
-    };
-
-    // Generate tip at key moments: start, 25%, 50%, 75%, near end
-    const progressPercent = sessionDuration > 0 ? (elapsedMinutes / sessionDuration) * 100 : 0;
-    const timeSinceLastTip = Date.now() - lastTipTime;
-    const shouldGenerateTip = 
-      elapsedMinutes === 1 || // Start
-      (progressPercent >= 25 && progressPercent < 30 && timeSinceLastTip > 60000) ||
-      (progressPercent >= 50 && progressPercent < 55 && timeSinceLastTip > 60000) ||
-      (progressPercent >= 75 && progressPercent < 80 && timeSinceLastTip > 60000) ||
-      (progressPercent >= 90 && timeSinceLastTip > 60000) ||
-      pauseCount > 0; // After pause
-
-    if (shouldGenerateTip) {
-      generateSessionTip();
+      setTip(result);
+    } catch (error) {
+      console.error("Error generating session tip:", error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [elapsedMinutes, sessionDuration, pauseCount, task, mood]);
+  };
 
   const getIconComponent = () => {
     if (!tip) return Sparkles;
@@ -103,7 +68,21 @@ Be brief, warm, and action-focused.`;
     return iconMap[tip.icon] || Sparkles;
   };
 
-  if (!tip) return null;
+  if (!tip) return (
+    <div className="mb-4 flex justify-center">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={generateSessionTip}
+        disabled={isLoading}
+        className="gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300 text-xs"
+      >
+        {isLoading
+          ? <><div className="w-3 h-3 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" /> Getting tip...</>
+          : <><Sparkles className="w-3 h-3" /> Get a tip</>}
+      </Button>
+    </div>
+  );
 
   const Icon = getIconComponent();
 

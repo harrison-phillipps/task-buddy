@@ -15,16 +15,7 @@ export default function RealTimeAICoach({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [lastAnalysis, setLastAnalysis] = useState(null);
 
-  useEffect(() => {
-    // Analyze every 10 minutes during active session
-    if (!sessionState.isActive || sessionState.isBreakTime) return;
-
-    const analyzeInterval = setInterval(() => {
-      analyzeFocusState();
-    }, 600000); // 10 minutes
-
-    return () => clearInterval(analyzeInterval);
-  }, [sessionState]);
+  // Auto-interval removed — user taps "Get AI Insight" button to trigger analysis
 
   const analyzeFocusState = async () => {
     if (isAnalyzing) return;
