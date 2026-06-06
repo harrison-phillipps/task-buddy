@@ -4,13 +4,15 @@ Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
 
   // Allow both scheduled (service role) and manual admin triggers
+  // If a user token is present, they must be admin. Scheduler calls have no user token.
   try {
     const user = await base44.auth.me();
-    if (user?.role !== 'admin') {
+    if (user !== null && user?.role !== 'admin') {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
-  } catch {
-    // Called by scheduler without user context — use service role only
+  } catch (authErr) {
+    // No user token present (scheduler context) — safe to proceed with service role
+    console.log('[sendDeadlineReminders] No user context, running as scheduler');
   }
 
   const now = new Date();
