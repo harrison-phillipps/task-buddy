@@ -10,10 +10,7 @@ export default function GoalCoach({ goal, tasks = [], userProgress, onApplySugge
   const [analysis, setAnalysis] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (!goal) return;
-    analyzeGoal();
-  }, [goal?.id, tasks.length]);
+  // Auto-trigger removed — user must click "Analyse Goal" button
 
   const analyzeGoal = async () => {
     if (!goal) return;
@@ -166,7 +163,21 @@ Be supportive but realistic. Focus on psychological factors (momentum, motivatio
     );
   }
 
-  if (!analysis) return null;
+  if (!analysis) {
+    return (
+      <Card className="bg-gradient-to-br from-purple-50 to-teal-50 border-purple-200">
+        <CardContent className="p-6 text-center">
+          <Button
+            onClick={analyzeGoal}
+            className="bg-gradient-to-r from-purple-500 to-teal-500 text-white"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Analyse Goal
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const statusConfig = getStatusConfig();
   const Icon = statusConfig.icon;
