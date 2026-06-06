@@ -18,24 +18,7 @@ export default function FocusBoosterBot({
   const [isLoading, setIsLoading] = useState(false);
   const [lastTipTime, setLastTipTime] = useState(0);
 
-  useEffect(() => {
-    // Auto-generate tip at session start
-    if (isActive && !tip && showBot) {
-      generateTip();
-    }
-
-    // Generate new tip every 10 minutes during active session
-    if (isActive && showBot) {
-      const interval = setInterval(() => {
-        const now = Date.now();
-        if (now - lastTipTime > 600000) { // 10 minutes
-          generateTip();
-        }
-      }, 60000); // Check every minute
-
-      return () => clearInterval(interval);
-    }
-  }, [isActive, showBot]);
+  // No auto-trigger — user must click "Get focus tip"
 
   const generateTip = async () => {
     setIsLoading(true);
@@ -89,6 +72,22 @@ Return just the tip text.`,
 
   return (
     <AnimatePresence>
+      {!tip && !isLoading && (
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.95 }}
+          className="fixed bottom-6 right-6 z-50"
+        >
+          <Button
+            onClick={generateTip}
+            className="bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-lg"
+          >
+            <Zap className="w-4 h-4 mr-2" />
+            Get focus tip
+          </Button>
+        </motion.div>
+      )}
       {(tip || isLoading) && (
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.95 }}

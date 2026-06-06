@@ -11,12 +11,7 @@ export default function HabitFormationBot({ recurringTasks, userProgress }) {
   const [insights, setInsights] = useState(null);
   const [showBot, setShowBot] = useState(true);
 
-  useEffect(() => {
-    // Auto-analyze on mount if there are recurring tasks
-    if (recurringTasks?.length > 0 && !insights) {
-      analyzeHabits();
-    }
-  }, []);
+  // No auto-trigger — user must click "Analyse my habits"
 
   const analyzeHabits = async () => {
     setIsAnalyzing(true);
@@ -186,7 +181,7 @@ Be personal, encouraging, and focus on progress over perfection!`,
             className="w-full bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white"
           >
             <Target className="w-4 h-4 mr-2" />
-            Analyze My Habits
+            Analyse my habits
           </Button>
         )}
       </CardContent>

@@ -23,9 +23,7 @@ export default function StrategicProgressCoach({ tasks, sessions, userProgress, 
   const [timeframe, setTimeframe] = useState('weekly'); // 'weekly' or 'monthly'
   const [feedbackGiven, setFeedbackGiven] = useState(false);
 
-  useEffect(() => {
-    analyzeProgress();
-  }, [timeframe]);
+  // No auto-trigger — user must click "Get strategic insight"
 
   const analyzeProgress = async () => {
     setLoading(true);
@@ -174,7 +172,22 @@ Be honest but encouraging. Focus on actionable strategic advice.`,
     );
   }
 
-  if (!analysis) return null;
+  if (!analysis) {
+    return (
+      <Card className="border-blue-200 dark:border-blue-700 dark:bg-gray-800">
+        <CardContent className="p-8 text-center">
+          <Target className="w-10 h-10 text-blue-500 mx-auto mb-3" />
+          <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
+            Get a strategic analysis of your {timeframe} productivity trends.
+          </p>
+          <Button onClick={analyzeProgress} className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+            <Sparkles className="w-4 h-4 mr-2" />
+            Get strategic insight
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-blue-200 dark:border-blue-700 dark:bg-gray-800">
@@ -312,7 +325,7 @@ Be honest but encouraging. Focus on actionable strategic advice.`,
 
         <Button onClick={analyzeProgress} variant="outline" size="sm" className="w-full">
           <RefreshCw className="w-4 h-4 mr-2" />
-          Refresh Analysis
+          Get strategic insight
         </Button>
       </CardContent>
     </Card>

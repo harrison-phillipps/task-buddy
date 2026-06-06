@@ -110,11 +110,7 @@ Focus on practical, actionable learning paths!`,
     setIsAnalyzing(false);
   };
 
-  useEffect(() => {
-    if (tasks?.length > 3 && !recommendations) {
-      analyzeSkillGaps();
-    }
-  }, []);
+  // No auto-trigger — user must click "Analyse my progress"
 
   if (!showBot || !tasks?.length) return null;
 
@@ -262,7 +258,7 @@ Focus on practical, actionable learning paths!`,
             className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
           >
             <GraduationCap className="w-4 h-4 mr-2" />
-            Analyze My Skills
+            Analyse my progress
           </Button>
         )}
       </CardContent>

@@ -93,11 +93,7 @@ Be specific and time-aware!`,
     return 'night';
   };
 
-  useEffect(() => {
-    if (tasks?.length > 0 && sessions?.length > 2 && !energyPlan) {
-      analyzeEnergyPatterns();
-    }
-  }, []);
+  // No auto-trigger — user must click "Analyse my energy"
 
   if (!showBot || !tasks?.length || sessions?.length < 2) return null;
 
@@ -241,7 +237,7 @@ Be specific and time-aware!`,
             className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
           >
             <Battery className="w-4 h-4 mr-2" />
-            Analyze Energy Patterns
+            Analyse my energy
           </Button>
         )}
       </CardContent>

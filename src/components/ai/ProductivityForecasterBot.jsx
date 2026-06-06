@@ -106,11 +106,7 @@ Be specific and data-driven!`,
     setIsAnalyzing(false);
   };
 
-  useEffect(() => {
-    if (tasks?.length > 5 && !forecast) {
-      analyzeTrends();
-    }
-  }, []);
+  // No auto-trigger — user must click "Forecast my week"
 
   if (!showBot || !tasks?.length) return null;
 
@@ -242,7 +238,7 @@ Be specific and data-driven!`,
             className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white"
           >
             <BarChart3 className="w-4 h-4 mr-2" />
-            Generate Forecast
+            Forecast my week
           </Button>
         )}
       </CardContent>
