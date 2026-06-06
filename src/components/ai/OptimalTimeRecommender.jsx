@@ -6,12 +6,8 @@ import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
 export default function OptimalTimeRecommender() {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [recommendations, setRecommendations] = useState(null);
-
-  useEffect(() => {
-    loadRecommendations();
-  }, []);
 
   const loadRecommendations = async () => {
     setIsLoading(true);
@@ -44,6 +40,24 @@ export default function OptimalTimeRecommender() {
     health: "💪"
   };
 
+  if (!recommendations && !isLoading) {
+    return (
+      <Card className="bg-white/80 backdrop-blur-sm border-purple-200">
+        <CardContent className="p-6 text-center">
+          <Clock className="w-8 h-8 text-purple-500 mx-auto mb-3" />
+          <p className="text-sm text-gray-600 mb-4">Discover your peak productivity windows based on your session history.</p>
+          <button
+            onClick={loadRecommendations}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            <Sparkles className="w-4 h-4" />
+            Find my optimal times
+          </button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (isLoading) {
     return (
       <Card className="bg-white/80 backdrop-blur-sm border-purple-200">
@@ -56,8 +70,6 @@ export default function OptimalTimeRecommender() {
       </Card>
     );
   }
-
-  if (!recommendations) return null;
 
   return (
     <Card className="bg-gradient-to-br from-purple-50 to-teal-50 border-purple-200">

@@ -23,23 +23,7 @@ export default function AITaskBreakdownSuggestion({
   const debounceRef = useRef(null);
   const lastAnalyzedTitle = useRef("");
 
-  // Auto-analyze when title is long enough and changes significantly
-  useEffect(() => {
-    if (!autoAnalyze || !taskTitle || taskTitle.trim().length < 8) return;
-    if (suggestions) return; // don't re-analyze if already have results
-    if (taskTitle.trim() === lastAnalyzedTitle.current) return;
-
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      if (taskTitle.trim().length >= 8 && !isAnalyzing) {
-        setAutoTriggered(true);
-        analyzeTask(true);
-        lastAnalyzedTitle.current = taskTitle.trim();
-      }
-    }, 1800); // 1.8s debounce after user stops typing
-
-    return () => clearTimeout(debounceRef.current);
-  }, [taskTitle, taskDescription]);
+  // No auto-trigger — user must click "Get AI suggestion"
 
   const analyzeTask = async (silent = false) => {
     if (!taskTitle || taskTitle.trim().length < 3) {
@@ -152,7 +136,7 @@ Also provide an overall time estimate, a complexity score (1-10), and one practi
         {isAnalyzing ? (
           <><Loader2 className="w-3 h-3 mr-2 animate-spin" />Analyzing...</>
         ) : (
-          <><Sparkles className="w-3 h-3 mr-2" />AI Auto-Breakdown</>
+          <><Sparkles className="w-3 h-3 mr-2" />Get AI suggestion</>
         )}
       </Button>
     );
@@ -187,7 +171,7 @@ Also provide an overall time estimate, a complexity score (1-10), and one practi
               className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
             >
               <Sparkles className="w-4 h-4 mr-2" />
-              AI Auto-Breakdown Subtasks
+              Get AI suggestion
             </Button>
           </motion.div>
         )}
