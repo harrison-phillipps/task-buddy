@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Brain, BookOpen, TrendingUp, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import SkillTracker from "../components/skills/SkillTracker";
-import SkillAnalyzer from "../components/skills/SkillAnalyzer";
+// SkillAnalyzer hidden (simplification)
 import LearningPathCreator from "../components/skills/LearningPathCreator";
 import LearningPathViewer from "../components/skills/LearningPathViewer";
 
@@ -70,14 +70,7 @@ export default function SkillDevelopment() {
           </p>
         </motion.div>
 
-        {/* AI Analyzer */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <SkillAnalyzer tasks={tasks} goals={goals} />
-        </motion.div>
+        {/* SkillAnalyzer hidden (simplification) */}
 
         {/* Main Content Tabs */}
         <motion.div

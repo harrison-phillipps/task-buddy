@@ -13,12 +13,8 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import VirtualCompanion from "../components/VirtualCompanion";
 import { getPersonalizedMessage } from "../components/companionUtils";
-import AIEnhancedTextarea from "../components/ai/AIEnhancedTextarea";
-import { generateTaskDescription } from "../components/ai/AIContentGenerator";
 import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
-import AITaskBreakdownSuggestion from "../components/tasks/AITaskBreakdownSuggestion";
-import ProactiveCoach from "../components/ai/ProactiveCoach";
-import AITimeEstimator from "../components/tasks/AITimeEstimator";
+// AIEnhancedTextarea, AITaskBreakdownSuggestion, ProactiveCoach, AITimeEstimator hidden (simplification)
 
 export default function TaskBreakdown() {
   const navigate = useNavigate();
@@ -274,15 +270,7 @@ Total steps should be 4-8. Return JSON only.`,
               />
             </motion.div>
 
-            <div className={taskInput.title ? undefined : "hidden"}>
-              <ProactiveCoach 
-                userProgress={userProgress}
-                recentTasks={[]}
-                recentSessions={[]}
-                goals={[]}
-                context="task_breakdown"
-              />
-            </div>
+            {/* ProactiveCoach hidden (simplification) */}
 
             <Card className="bg-white/80 backdrop-blur-sm border-purple-100">
               <CardHeader>
@@ -301,16 +289,12 @@ Total steps should be 4-8. Return JSON only.`,
                 </div>
 
                 <div className="space-y-2">
-                  <AIEnhancedTextarea
-                    label="Any extra details? (optional)"
+                  <Label htmlFor="description">Any extra details? (optional)</Label>
+                  <Textarea
+                    id="description"
                     placeholder="Add any context that might help break this down..."
                     value={taskInput.description}
-                    onChange={(value) => setTaskInput({...taskInput, description: value})}
-                    onAIGenerate={async () => {
-                      if (!taskInput.title) return "";
-                      return await generateTaskDescription(taskInput.title, "");
-                    }}
-                    generateLabel="Generate Description"
+                    onChange={(e) => setTaskInput({...taskInput, description: e.target.value})}
                     rows={4}
                   />
                 </div>
@@ -412,36 +396,7 @@ Total steps should be 4-8. Return JSON only.`,
                   </div>
                 )}
 
-                <div className={taskInput.title ? undefined : "hidden"}>
-                  <AITimeEstimator
-                    task={taskInput}
-                    onApplyEstimate={(minutes) => setTaskInput(prev => ({ ...prev, estimated_minutes: minutes }))}
-                  />
-                </div>
-
-                <AITaskBreakdownSuggestion
-                  taskTitle={taskInput.title}
-                  taskDescription={taskInput.description}
-                  taskDifficulty={taskInput.difficulty}
-                  taskCategory={taskInput.category}
-                  autoAnalyze={true}
-                  onApplySuggestions={(subtasks) => {
-                    setBreakdownResult({
-                      subtasks: subtasks,
-                      encouragement: "Perfect! I've created an AI breakdown for you. Feel free to customize it! ✨"
-                    });
-                    setEditingSubtasks(subtasks);
-                  }}
-                />
-
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-gray-200" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white px-2 text-gray-500">Or use smart breakdown</span>
-                  </div>
-                </div>
+                {/* AITimeEstimator, AITaskBreakdownSuggestion hidden (simplification) */}
 
                 <Button
                   onClick={handleBreakdown}

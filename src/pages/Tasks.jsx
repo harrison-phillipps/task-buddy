@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Calendar, Link as LinkIcon, CheckCircle2, Sparkles, RefreshCw, Pin, UserPlus, BookTemplate, Trash2, CheckSquare, Square, X, Tag, Zap } from "lucide-react";
 import TaskFilterSortBar from "../components/tasks/TaskFilterSortBar";
 import toast from "react-hot-toast";
-import { analyzeTaskPriority } from "../components/ai/TaskPrioritizer";
+// analyzeTaskPriority hidden (simplification, AIPriorityEngine removed from UI)
 import {
   Accordion,
   AccordionContent,
@@ -48,7 +48,7 @@ import AIBreakdownModal from "../components/tasks/AIBreakdownModal";
 import { enqueueOp, upsertCachedEntity, removeCachedEntity, cacheEntities, getCachedEntities } from "../components/offlineStore";
 import { useOfflineSync } from "../components/useOfflineSync";
 import OfflineIndicator from "../components/OfflineIndicator";
-import { AIPriorityViewToggle, AIStrategyBanner, AIPriorityScoreBadge, PinButton, AIStrategySelector, STRATEGY_PROMPTS } from "../components/tasks/AIPriorityEngine";
+import { PinButton } from "../components/tasks/AIPriorityEngine";
 import PullToRefresh from "../components/PullToRefresh";
 import SharedTaskListInviteModal from "../components/collaboration/SharedTaskListInviteModal";
 import TeamMemberAvatars from "../components/collaboration/TeamMemberAvatars";
@@ -138,9 +138,6 @@ export default function Tasks() {
   const handleViewModeChange = async (mode) => {
     setViewMode(mode);
     localStorage.setItem('tasks_view_mode', mode);
-    if (mode === "ai" && !aiPrioritizedTasks) {
-      handleAIPrioritization();
-    }
     if (currentUser) {
       base44.auth.updateMe({ tasks_view_mode: mode }).catch(() => {});
     }
@@ -476,27 +473,7 @@ export default function Tasks() {
     toast.success(`Task priority updated to ${priority.replace('_', ' ')}`);
   };
 
-  const handleAIPrioritization = async () => {
-    if (!currentUser) return;
-    setIsAnalyzingPriority(true);
-    try {
-      const preferences = currentUser.ai_prioritization_preferences || {};
-      const allUserTasks = await base44.entities.Task.filter({ created_by: currentUser.email }, '-updated_date', 200);
-      const activeTasks = rawTasks.filter(t => t.status !== 'completed');
-      const strategyHint = STRATEGY_PROMPTS[aiStrategyKey] || "";
-      const result = await analyzeTaskPriority(activeTasks, allUserTasks, preferences, strategyHint, goals, skills);
-      setAiPrioritizedTasks(result.tasks);
-      setAiStrategy(result.strategy);
-      setAiRecommendedFocus(result.recommended_focus);
-      setShowAIInsights(true);
-      toast.success("AI prioritization complete! ✨");
-      if (result.goal_insights) setAiStrategy(prev => prev + (prev ? '\n\n' : '') + '🎯 ' + result.goal_insights);
-    } catch (error) {
-      console.error("AI prioritization error:", error);
-      toast.error("Failed to analyze priorities");
-    }
-    setIsAnalyzingPriority(false);
-  };
+  // handleAIPrioritization hidden (AIPriorityEngine removed from UI)
 
   const DIFFICULTY_ORDER = { easy: 0, medium: 1, hard: 2 };
   const PRIORITY_ORDER = { must_do: 0, should_do: 1, could_do: 2 };
@@ -668,16 +645,6 @@ export default function Tasks() {
             </div>
           )}
           <div className="flex gap-2 flex-wrap items-center">
-            <AIPriorityViewToggle
-              viewMode={viewMode}
-              onToggle={handleViewModeChange}
-              isAnalyzing={isAnalyzingPriority}
-              hasAIData={!!aiPrioritizedTasks}
-              onRunAI={handleAIPrioritization}
-            />
-            {viewMode === "ai" && (
-              <AIStrategySelector value={aiStrategyKey} onChange={handleStrategyChange} />
-            )}
             <Button
               variant="outline"
               onClick={() => setShowCalendarSync(true)}
@@ -722,13 +689,7 @@ export default function Tasks() {
           showSourceFilter={selectedTeamId === "personal"}
         />
 
-        {showAIInsights && viewMode === "ai" && (
-          <AIStrategyBanner
-            strategy={aiStrategy}
-            recommendedFocus={aiRecommendedFocus}
-            onDismiss={() => setShowAIInsights(false)}
-          />
-        )}
+        {/* AIStrategyBanner hidden (simplification) */}
 
         {/* Bulk action bar */}
         <AnimatePresence>
@@ -928,7 +889,6 @@ export default function Tasks() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-1">
                           <PinButton isPinned={pinnedTaskIds.includes(task.id)} onToggle={() => handleTogglePin(task.id)} />
-                          <AIPriorityScoreBadge task={task} showRationale />
                           {pinnedTaskIds.includes(task.id) && (
                             <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">📌 Pinned</span>
                           )}

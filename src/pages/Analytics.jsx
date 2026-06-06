@@ -18,7 +18,7 @@ import CategoryChart from "@/components/analytics/CategoryChart";
 import DifficultyChart from "@/components/analytics/DifficultyChart";
 import WeeklyTrendsChart from "@/components/analytics/WeeklyTrendsChart";
 import PeakProductivityDashboard from "@/components/analytics/PeakProductivityDashboard";
-import AITipsSection from "@/components/analytics/AITipsSection";
+// AITipsSection hidden (simplification)
 
 export default function Analytics() {
   const [timeRange, setTimeRange] = useState("30d");
@@ -184,12 +184,7 @@ export default function Analytics() {
           <UpgradePrompt feature="Productivity Score" requiredTier="pro" />
         )}
 
-        {/* AI Insights Section */}
-        <AITipsSection 
-          tasks={tasks} 
-          focusSessions={focusSessions} 
-          userProgress={userProgress} 
-        />
+        {/* AITipsSection hidden (simplification) */}
 
         {/* Peak Productivity — Pro+ */}
         {hasAdvanced && <PeakProductivityDashboard focusSessions={focusSessions} />}

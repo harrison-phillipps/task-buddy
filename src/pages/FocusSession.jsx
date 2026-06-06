@@ -21,20 +21,20 @@ import { POINTS_SYSTEM, checkNewAchievements, calculateLevel } from "@/component
 import { getPersonalizedMessage } from "@/components/companionUtils";
 import SessionGoals from "../components/focus/SessionGoals";
 import PostSessionSummary from "../components/focus/PostSessionSummary";
-import FocusBoosterBot from "../components/ai/FocusBoosterBot";
+// FocusBoosterBot hidden (simplification)
 import FocusSessionTemplates from "../components/focus/FocusSessionTemplates";
 import SessionHistoryAnalyzer from "../components/focus/SessionHistoryAnalyzer";
-import DynamicTemplateGenerator from "../components/focus/DynamicTemplateGenerator";
-import RealTimeAICoach from "../components/focus/RealTimeAICoach";
+// DynamicTemplateGenerator hidden (simplification)
+// RealTimeAICoach hidden (simplification)
 import AdvancedControls from "../components/focus/AdvancedControls";
 import MindfulnessBreak from "../components/focus/MindfulnessBreak";
-import PersonalizedJourneyAnalyzer from "../components/focus/PersonalizedJourneyAnalyzer";
-import JourneyRecommendations from "../components/focus/JourneyRecommendations";
-import MoodCoach from "../components/focus/MoodCoach";
+// PersonalizedJourneyAnalyzer hidden (simplification)
+// JourneyRecommendations hidden (simplification)
+// MoodCoach hidden (simplification)
 import PostSessionMoodReflection from "../components/focus/PostSessionMoodReflection";
-import AdaptiveBreakSuggestion from "../components/focus/AdaptiveBreakSuggestion";
+// AdaptiveBreakSuggestion hidden (simplification)
 import GuidedBreakFlow from "../components/focus/GuidedBreakFlow";
-import SmartTimerRecommendations from "../components/focus/SmartTimerRecommendations";
+// SmartTimerRecommendations hidden (simplification)
 import CalendarFocusBlocker from "../components/focus/CalendarFocusBlocker";
 import SessionCoach from "../components/ai/SessionCoach";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -1069,21 +1069,7 @@ export default function FocusSession() {
         isSyncing={isSyncing}
         onRetry={flushQueue}
       />
-      <AdaptiveBreakSuggestion
-        sessionState={{
-          isActive,
-          isBreakTime,
-          timeLeft,
-          sessionStartTime,
-          moodBefore,
-          focusTechnique,
-          completedSubtasks: completedSubtasks.size,
-          totalSubtasks: selectedTask?.subtasks?.length || 0,
-          pauseCount
-        }}
-        journeyData={journeyData}
-        onTakeBreak={handleAdaptiveBreak}
-      />
+      {/* AdaptiveBreakSuggestion hidden (simplification) */}
       {sessionStarted && selectedTask && (
         <SessionCoach 
           task={selectedTask}
@@ -1095,30 +1081,8 @@ export default function FocusSession() {
         />
       )}
       
-      <RealTimeAICoach
-        sessionState={{
-          isActive,
-          isBreakTime,
-          timeLeft,
-          sessionStartTime,
-          moodBefore,
-          ambientSound,
-          focusTechnique,
-          completedSubtasks,
-          totalSubtasks: selectedTask?.subtasks?.length || 0,
-          pauseCount
-        }}
-        onSuggestion={handleAISuggestion}
-      />
-      <FocusBoosterBot
-        currentTask={selectedTask}
-        timeLeft={timeLeft}
-        isActive={isActive}
-        moodBefore={moodBefore}
-        sessionDuration={focusTechnique === "pomodoro" ? workInterval * 60 : (currentSubtask?.estimated_minutes || 10) * 60}
-        showBot={showFocusBot && sessionStarted && !isBreakTime}
-        onDismiss={() => setShowFocusBot(false)}
-      />
+      {/* RealTimeAICoach hidden (simplification) */}
+      {/* FocusBoosterBot hidden (simplification) */}
       <AchievementNotification 
         achievement={showAchievement} 
         onClose={() => {
@@ -1298,18 +1262,7 @@ export default function FocusSession() {
                 <UpgradePrompt feature="Smartwatch & Cross-Device Notifications" requiredTier="pro" compact />
               )}
 
-              <SmartTimerRecommendations
-                currentMood={moodBefore}
-                energyLevel={selectedTask?.energy_level_needed}
-                taskDifficulty={selectedTask?.difficulty}
-                journeyData={journeyData}
-                onApplyRecommendation={(settings) => {
-                  setWorkInterval(settings.workInterval);
-                  setBreakInterval(settings.breakInterval);
-                  setFocusTechnique(settings.focusTechnique);
-                  setAmbientSound(settings.ambientSound);
-                }}
-              />
+              {/* SmartTimerRecommendations hidden (simplification) */}
 
               {selectedTask && (
                 <CalendarFocusBlocker
@@ -1404,41 +1357,7 @@ export default function FocusSession() {
 
             <TabsContent value="dynamic">
               <div className="space-y-4">
-                <MoodCoach
-                  currentMood={moodBefore}
-                  journeyData={journeyData}
-                  onSuggestRitual={(ritual) => {
-                    setPreSessionRitual(ritual);
-                    toast("Pre-session ritual suggested! 🧘", { duration: 3000 });
-                  }}
-                />
-
-                <PersonalizedJourneyAnalyzer
-                  currentUser={currentUser}
-                  journeyData={journeyData}
-                />
-
-                <JourneyRecommendations
-                  currentMood={moodBefore}
-                  currentEnergy={selectedTask?.energy_level_needed}
-                  taskDifficulty={selectedTask?.difficulty}
-                  journeyData={journeyData}
-                  onApplyRecommendation={(settings) => {
-                    setFocusTechnique(settings.focusTechnique);
-                    setWorkInterval(settings.workInterval);
-                    setBreakInterval(settings.breakInterval);
-                    setAmbientSound(settings.ambientSound);
-                    setIncludeMindfulness(settings.includeMindfulness);
-                    setMindfulnessType(settings.mindfulnessType);
-                  }}
-                />
-                
-                <DynamicTemplateGenerator
-                  selectedTask={selectedTask}
-                  currentMood={moodBefore}
-                  currentEnergy={selectedTask?.energy_level_needed}
-                  onApplyTemplate={handleApplyTemplate}
-                />
+                {/* MoodCoach, PersonalizedJourneyAnalyzer, JourneyRecommendations, DynamicTemplateGenerator hidden (simplification) */}
                 
                 {selectedTaskId && (
                   <AdvancedControls
