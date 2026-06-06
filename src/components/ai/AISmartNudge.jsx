@@ -43,20 +43,12 @@ export default function AISmartNudge({ userProgress, tasks, sessions, currentUse
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const checkForNudge = async () => {
+  // Auto-trigger removed — nudges no longer fire on page load
+
+  const checkForNudge = async () => {
       if (!currentUser || loading) return;
       // Free users don't get AI nudges
       if (!userTier || userTier === "free") return;
-
-      // Check if we should show a nudge (not too frequently)
-      const lastNudge = localStorage.getItem('last_nudge_time');
-      const now = Date.now();
-      const nudgeInterval = 30 * 60 * 1000; // 30 minutes
-
-      if (lastNudge && now - parseInt(lastNudge) < nudgeInterval) {
-        return;
-      }
 
       setLoading(true);
 
@@ -136,7 +128,7 @@ Return a nudge type and message.`,
         if (response.message) {
           setNudge(response);
           setVisible(true);
-          localStorage.setItem('last_nudge_time', now.toString());
+          localStorage.setItem('last_nudge_time', Date.now().toString());
         }
       } catch (error) {
         console.error("Error generating nudge:", error);
@@ -146,10 +138,6 @@ Return a nudge type and message.`,
     };
 
     // Check for nudge after initial load
-    const timer = setTimeout(checkForNudge, 5000);
-    return () => clearTimeout(timer);
-  }, [currentUser, tasks, sessions, userProgress]);
-
   const handleDismiss = () => {
     setVisible(false);
     setTimeout(() => setNudge(null), 300);

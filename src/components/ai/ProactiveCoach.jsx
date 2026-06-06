@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,15 +26,13 @@ export default function ProactiveCoach({
   const [isDismissed, setIsDismissed] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState(null); // 'positive' | 'negative'
 
-  useEffect(() => {
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const generateCoachingTip = async () => {
     if (!userProgress || isDismissed) return;
     if (!userTier || userTier === "free") return;
-
-    const sessionKey = 'proactive_coach_shown_' + new Date().toDateString();
-    if (sessionStorage.getItem(sessionKey)) return;
-
-    const generateCoachingTip = async () => {
-      try {
+    setIsGenerating(true);
+    try {
         const now = new Date();
         const hourOfDay = now.getHours();
         const timeOfDay = hourOfDay < 12 ? "morning" : hourOfDay < 17 ? "afternoon" : "evening";
@@ -117,14 +115,12 @@ Bad: "Since your peak productive hours are at 11:00 and 5:00, try scheduling a f
 
         setCoachingTip(result);
         setIsVisible(true);
-        sessionStorage.setItem(sessionKey, '1');
       } catch (error) {
         console.error("Error generating coaching tip:", error);
+      } finally {
+        setIsGenerating(false);
       }
-    };
-
-    generateCoachingTip();
-  }, [userProgress, isDismissed]);
+  };
 
   const getIcon = () => {
     if (!coachingTip) return Sparkles;
@@ -197,7 +193,20 @@ Bad: "Since your peak productive hours are at 11:00 and 5:00, try scheduling a f
     }
   };
 
-  if (!coachingTip || !isVisible) return null;
+  if (!coachingTip || !isVisible) return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={generateCoachingTip}
+      disabled={isGenerating || !userProgress || !userTier || userTier === "free"}
+      className="gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300"
+    >
+      {isGenerating
+        ? <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+        : <Brain className="w-4 h-4" />}
+      {isGenerating ? "Generating insight..." : "Get Coaching Insight"}
+    </Button>
+  );
 
   const Icon = getIcon();
   const colorClasses = getColorClasses();

@@ -13,10 +13,9 @@ export default function SmartTaskRecommender({ tasks, userProgress, currentUser 
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const generate = async () => {
-      if (!tasks || tasks.length === 0 || !currentUser) return;
-      setIsLoading(true);
+  const generate = async () => {
+    if (!tasks || tasks.length === 0 || !currentUser) return;
+    setIsLoading(true);
       try {
         const now = new Date();
         const hourOfDay = now.getHours();
@@ -54,9 +53,7 @@ Return ONLY:
         console.error("SmartTaskRecommender error:", error);
       }
       setIsLoading(false);
-    };
-    generate();
-  }, [tasks, currentUser]);
+  };
 
   const handleStart = () => {
     const task = tasks.find(t =>
@@ -66,7 +63,19 @@ Return ONLY:
     if (task) navigate(createPageUrl("FocusSession") + `?taskId=${task.id}`);
   };
 
-  if (isLoading || !recommendation) return null;
+  if (!recommendation && !isLoading) return (
+    <Button variant="outline" size="sm" onClick={generate} disabled={isLoading} className="gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300">
+      {isLoading ? <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" /> : <Sparkles className="w-4 h-4" />}
+      {isLoading ? "Finding best task..." : "Suggest Best Task"}
+    </Button>
+  );
+
+  if (isLoading) return (
+    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 py-2">
+      <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+      Finding your best next task…
+    </div>
+  );
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>

@@ -98,11 +98,7 @@ export default function AdaptiveCompanionAI({ currentUser, userTier = "free", ta
     loadLearningProfile();
   }, [currentUser?.id]);
 
-  // Auto-trigger insight when we have enough data
-  useEffect(() => {
-    if (!learningProfile || tasks.length < 3) return;
-    checkAndTriggerInsight();
-  }, [learningProfile, tasks.length]);
+  // Auto-trigger removed — user must tap "Get Insight" button
 
   const loadLearningProfile = async () => {
     try {

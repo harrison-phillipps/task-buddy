@@ -29,9 +29,7 @@ export default function EnergyAwareCoach({ tasks, sessions, currentUser, userPro
   const [loading, setLoading] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState(false);
 
-  useEffect(() => {
-    predictEnergy();
-  }, []);
+  // Auto-trigger removed — user must tap "Analyse Energy" to trigger
 
   const predictEnergy = async () => {
     setLoading(true);
