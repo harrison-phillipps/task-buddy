@@ -1134,8 +1134,9 @@ export default function FocusSession() {
 
         {showPostSummary && sessionSummaryData ? (
           <PostSessionSummary
-            sessionData={sessionSummaryData}
+            sessionData={{ ...sessionSummaryData, taskCategory: selectedTask?.category || lockedTask?.category }}
             goalData={sessionSummaryData.goalData}
+            userProgress={userProgress}
             onClose={() => {
               resetSession();
               window.location.href = "/Dashboard";

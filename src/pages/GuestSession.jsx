@@ -2,9 +2,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
-import { Sparkles, Play, Pause, RotateCcw, CheckCircle2, ArrowRight, Zap, Clock, Brain, Eye } from "lucide-react";
+import { Sparkles, Play, Pause, RotateCcw, CheckCircle2, ArrowRight, Zap, Clock, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EditableStepList from "@/components/tasks/EditableStepList";
+import SessionCelebration from "@/components/focus/SessionCelebration";
+import StreakDisplay from "@/components/focus/StreakDisplay";
 
 // ─── Step constants ───────────────────────────────────────────────────────────
 const STEP_ENERGY = "energy";
@@ -105,6 +107,7 @@ export default function GuestSession() {
   const [loading, setLoading] = useState(false);
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [sessionInsight, setSessionInsight] = useState(null);
+  const [celebDone, setCelebDone] = useState(false);
   const sessionStartTime = useRef(new Date());
 
   // ── AI breakdown ──────────────────────────────────────────────────────────
@@ -179,8 +182,18 @@ Rules:
     }
   };
 
+  const goToDone = () => {
+    generateSessionInsight(completedSteps.length, steps.length, energy, timeMinutes);
+    setCelebDone(false);
+    setStep(STEP_DONE);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-teal-50 flex flex-col items-center justify-center px-4 py-10">
+      <SessionCelebration
+        visible={step === STEP_DONE && !celebDone}
+        onDone={() => setCelebDone(true)}
+      />
       <div className="w-full max-w-lg">
         {/* Logo bar */}
         <div className="flex items-center gap-2 mb-8">
@@ -286,10 +299,7 @@ Rules:
               </div>
 
               {/* Timer */}
-              <MiniTimer minutes={timeMinutes} onComplete={() => {
-                generateSessionInsight(completedSteps.length, steps.length, energy, timeMinutes);
-                setStep(STEP_DONE);
-              }} />
+              <MiniTimer minutes={timeMinutes} onComplete={goToDone} />
 
               {/* Steps checklist during focus */}
               <div className="space-y-2">
@@ -327,10 +337,7 @@ Rules:
               </div>
 
               <button
-                onClick={() => {
-                  generateSessionInsight(completedSteps.length, steps.length, energy, timeMinutes);
-                  setStep(STEP_DONE);
-                }}
+                onClick={goToDone}
                 className="w-full text-center text-sm text-gray-400 hover:text-purple-600 transition-colors py-1"
               >
                 I'm done early →
@@ -342,39 +349,66 @@ Rules:
           {step === STEP_DONE && (
             <motion.div
               key="done"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: celebDone ? 1 : 0, scale: 1 }}
               exit={{ opacity: 0 }}
+              className="space-y-4"
             >
-              {/* Completion header */}
-              <div className="text-center mb-6">
+              {/* Hero card */}
+              <div className="rounded-3xl bg-gradient-to-br from-purple-600 via-purple-700 to-teal-600 p-6 text-white text-center shadow-xl relative overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.12)_0%,_transparent_60%)]" />
+
                 <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.1 }}
-                  className="text-6xl mb-3"
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 14, delay: 0.1 }}
+                  className="text-6xl mb-3 relative z-10"
                 >
                   🎯
                 </motion.div>
-                <h2 className="text-3xl font-extrabold text-gray-900 mb-1">That's your first session.</h2>
-                <p className="text-gray-500">
-                  {completedSteps.length} of {steps.length} steps done ·{" "}
-                  {ENERGY_OPTIONS.find(e => e.value === energy)?.label?.toLowerCase()} energy ·{" "}
-                  {timeMinutes} min
-                </p>
+
+                <motion.h2
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-xl font-bold mb-1 relative z-10"
+                >
+                  That's your first session.
+                </motion.h2>
+
+                {/* One-line stat */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="inline-flex items-center gap-2 bg-white/15 rounded-full px-4 py-1.5 text-sm font-medium relative z-10 mt-2"
+                >
+                  <span>{completedSteps.length}/{steps.length} steps</span>
+                  <span className="opacity-60">·</span>
+                  <span>{timeMinutes} min</span>
+                  <span className="opacity-60">·</span>
+                  <span>{ENERGY_OPTIONS.find(e => e.value === energy)?.emoji} {ENERGY_OPTIONS.find(e => e.value === energy)?.label}</span>
+                </motion.div>
+
+                {/* Streak row — guests start at 1 */}
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="mt-5 relative z-10"
+                >
+                  <StreakDisplay streak={1} justCompleted={true} />
+                </motion.div>
               </div>
 
-              {/* Personalised insight — the "we see you" moment */}
+              {/* Insight card */}
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="bg-white border-2 border-purple-100 rounded-2xl p-5 mb-4"
+                transition={{ delay: 0.35 }}
+                className="bg-white border-2 border-purple-100 rounded-2xl p-5"
               >
-                <div className="flex items-center gap-2 mb-3">
-                  <Eye className="w-4 h-4 text-purple-500" />
-                  <span className="text-xs font-semibold text-purple-600 uppercase tracking-wide">What this session tells us</span>
-                </div>
+                <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-2">What this session tells us</p>
                 {sessionInsight ? (
                   <p className="text-gray-700 text-sm leading-relaxed">{sessionInsight}</p>
                 ) : (
@@ -386,12 +420,12 @@ Rules:
                 )}
               </motion.div>
 
-              {/* Loss-aversion signup card */}
+              {/* Signup nudge */}
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.45 }}
-                className="bg-gradient-to-br from-purple-600 to-teal-500 rounded-3xl p-6 text-white text-left shadow-xl mb-4"
+                transition={{ delay: 0.5 }}
+                className="bg-gradient-to-br from-purple-600 to-teal-500 rounded-3xl p-6 text-white shadow-xl"
               >
                 <p className="font-bold text-lg mb-2 leading-snug">
                   That's your first mood shift tracked. Don't lose it.
@@ -405,12 +439,7 @@ Rules:
                   onClick={() => {
                     try {
                       sessionStorage.setItem("guest_session", JSON.stringify({
-                        task: taskText,
-                        energy,
-                        timeMinutes,
-                        steps,
-                        completedSteps,
-                        insight: sessionInsight,
+                        task: taskText, energy, timeMinutes, steps, completedSteps, insight: sessionInsight,
                       }));
                     } catch {}
                     base44.auth.redirectToLogin("/GuestWelcome");
