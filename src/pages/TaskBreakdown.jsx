@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, CheckCircle, Edit2, Trash2, Plus, Clock, Users } from "lucide-react";
+import { Sparkles, Loader2, CheckCircle, Clock, Users } from "lucide-react";
+import EditableStepList from "@/components/tasks/EditableStepList";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -217,23 +218,6 @@ Total steps should be 4-8. Return JSON only.`,
     setShowDuplicateDialog(false);
     setPendingTaskData(null);
     setDuplicateCheck(null);
-  };
-
-  const updateSubtask = (index, field, value) => {
-    const updated = [...editingSubtasks];
-    updated[index] = { ...updated[index], [field]: value };
-    setEditingSubtasks(updated);
-  };
-
-  const removeSubtask = (index) => {
-    setEditingSubtasks(editingSubtasks.filter((_, i) => i !== index));
-  };
-
-  const addSubtask = () => {
-    setEditingSubtasks([
-      ...editingSubtasks,
-      { title: "", completed: false, order: editingSubtasks.length + 1, estimated_minutes: 10 }
-    ]);
   };
 
   const getTotalTime = () => {
@@ -453,59 +437,10 @@ Total steps should be 4-8. Return JSON only.`,
                       <span>Step 1 is your momentum starter — super easy, just to get you moving!</span>
                     </div>
                   )}
-                  {editingSubtasks?.map((subtask, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className={`flex items-start gap-3 p-4 rounded-xl ${index === 0 ? 'bg-gradient-to-r from-green-50 to-teal-50 border-2 border-green-200' : 'bg-gradient-to-r from-purple-50 to-teal-50'}`}
-                    >
-                      {index === 0 && (
-                        <div className="absolute -top-2 left-4">
-                        </div>
-                      )}
-                      <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${index === 0 ? 'bg-gradient-to-br from-green-400 to-teal-500' : 'bg-gradient-to-br from-purple-500 to-teal-500'}`}>
-                        {index === 0 ? '🚀' : index + 1}
-                      </div>
-                      <div className="flex-1 space-y-2">
-                        <Input
-                          value={subtask.title}
-                          onChange={(e) => updateSubtask(index, 'title', e.target.value)}
-                          className="bg-white"
-                          placeholder="Step description"
-                        />
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-gray-500" />
-                          <Input
-                            type="number"
-                            min="1"
-                            max="120"
-                            value={subtask.estimated_minutes || 10}
-                            onChange={(e) => updateSubtask(index, 'estimated_minutes', parseInt(e.target.value))}
-                            className="bg-white w-20"
-                          />
-                          <span className="text-sm text-gray-600">minutes</span>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeSubtask(index)}
-                      >
-                        <Trash2 className="w-4 h-4 text-red-500" />
-                      </Button>
-                    </motion.div>
-                  ))}
-
-                  <Button
-                    variant="outline"
-                    onClick={addSubtask}
-                    className="w-full border-dashed border-2 border-purple-300"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Another Step
-                  </Button>
+                  <EditableStepList
+                    steps={editingSubtasks || []}
+                    onChange={setEditingSubtasks}
+                  />
 
                   <div className="flex gap-3 pt-4">
                     <Button

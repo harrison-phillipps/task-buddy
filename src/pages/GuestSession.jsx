@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { Sparkles, Play, Pause, RotateCcw, CheckCircle2, ArrowRight, Zap, Clock, Brain, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import EditableStepList from "@/components/tasks/EditableStepList";
 
 // ─── Step constants ───────────────────────────────────────────────────────────
 const STEP_ENERGY = "energy";
@@ -259,38 +260,10 @@ Rules:
                 <Sparkles className="w-5 h-5 text-purple-500" />
                 <h2 className="text-2xl font-bold text-gray-900">Here's your plan</h2>
               </div>
-              <p className="text-gray-500 mb-6">Check off each step as you go. You've got {timeMinutes} minutes.</p>
+              <p className="text-gray-500 mb-4">Tap a step title to edit it, or add/remove steps. You've got {timeMinutes} minutes.</p>
 
-              <div className="space-y-3 mb-6">
-                {steps.map((s, i) => (
-                  <motion.button
-                    key={i}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.08 }}
-                    onClick={() => toggleStep(i)}
-                    className={`w-full flex items-start gap-3 p-4 rounded-2xl border-2 text-left transition-all ${
-                      completedSteps.includes(i)
-                        ? "border-green-300 bg-green-50"
-                        : "border-gray-200 bg-white hover:border-purple-300"
-                    }`}
-                  >
-                    <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center mt-0.5 transition-all ${
-                      completedSteps.includes(i) ? "border-green-500 bg-green-500" : "border-gray-300"
-                    }`}>
-                      {completedSteps.includes(i) && <CheckCircle2 className="w-4 h-4 text-white" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-semibold text-sm ${completedSteps.includes(i) ? "line-through text-gray-400" : "text-gray-800"}`}>
-                        {s.title}
-                      </p>
-                      {s.tip && <p className="text-xs text-gray-400 mt-0.5">{s.tip}</p>}
-                    </div>
-                    <span className="flex-shrink-0 text-xs text-gray-400 flex items-center gap-1 mt-0.5">
-                      <Clock className="w-3 h-3" />{s.duration_minutes}m
-                    </span>
-                  </motion.button>
-                ))}
+              <div className="mb-6">
+                <EditableStepList steps={steps} onChange={setSteps} />
               </div>
 
               <Button
