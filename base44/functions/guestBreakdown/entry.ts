@@ -1,5 +1,3 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-
 // Simple in-memory rate limiter: { ip -> [timestamp, ...] }
 const rateLimitStore = new Map();
 const MAX_REQUESTS = 5;
@@ -22,6 +20,42 @@ const ENERGY_LABELS = {
   medium: "Feeling okay",
   high: "Ready to go!",
 };
+
+// Context-aware fallback steps if Anthropic call fails
+function getFallbackSteps(taskText, energyValue, timeValue) {
+  const isLow = energyValue === "low";
+  const isHigh = energyValue === "high";
+
+  if (timeValue <= 10) {
+    return [
+      { title: `Open whatever you need to start "${taskText}"`, duration_minutes: 2, micro_label: "Opening is the only commitment" },
+      { title: "Do the single most visible first action", duration_minutes: 4, micro_label: "Visible progress creates momentum" },
+      { title: "Stop — note what you completed", duration_minutes: 1, micro_label: "Closing the loop matters" },
+    ];
+  }
+  if (isLow) {
+    return [
+      { title: `Sit down and open what you need for "${taskText}" — nothing else yet`, duration_minutes: 2, micro_label: "Opening is the only commitment" },
+      { title: "Do the one thing that takes under 3 minutes", duration_minutes: 3, micro_label: "One action changes your state" },
+      { title: "Write down the next 2 actions before you stop", duration_minutes: 2, micro_label: "Externalising reduces cognitive load" },
+    ];
+  }
+  if (isHigh) {
+    return [
+      { title: `Clear your space and open everything you need for "${taskText}"`, duration_minutes: 3, micro_label: "Environment primes the brain" },
+      { title: "Complete the first full section or sub-task", duration_minutes: Math.floor(timeValue * 0.35), micro_label: "Momentum builds from completion" },
+      { title: "Do the next logical chunk without stopping", duration_minutes: Math.floor(timeValue * 0.35), micro_label: "Flow state needs uninterrupted time" },
+      { title: "Review what you did and identify what remains", duration_minutes: Math.floor(timeValue * 0.15), micro_label: "Closing the loop reduces anxiety" },
+    ];
+  }
+  // medium energy default
+  return [
+    { title: `Set up your space and open what you need for "${taskText}"`, duration_minutes: 3, micro_label: "Preparation removes the first barrier" },
+    { title: "Complete the most concrete first action", duration_minutes: Math.floor(timeValue * 0.3), micro_label: "Specific actions beat vague intentions" },
+    { title: "Continue with the next discrete step", duration_minutes: Math.floor(timeValue * 0.3), micro_label: "Each step should feel achievable" },
+    { title: "Finish or clearly mark your stopping point", duration_minutes: Math.floor(timeValue * 0.2), micro_label: "A defined end reduces resistance" },
+  ];
+}
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
@@ -58,11 +92,8 @@ Deno.serve(async (req) => {
   }
 
   const energyLabel = ENERGY_LABELS[energyValue];
-  const base44 = createClientFromRequest(req);
 
-  try {
-    const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
-      prompt: `You are a task initiation specialist who understands executive dysfunction at a neurological level. Your job is to take ONE task a user has been avoiding and break it into micro-steps that are so specific and so small that starting feels physically impossible to resist.
+  const prompt = `You are a task initiation specialist who understands executive dysfunction at a neurological level. Your job is to take ONE task a user has been avoiding and break it into micro-steps that are so specific and so small that starting feels physically impossible to resist.
 
 CORE PRINCIPLE:
 The user's brain is not lazy. It cannot identify a discrete first physical action from a vague task. Your job is to remove every ambiguous decision between them and starting.
@@ -149,29 +180,45 @@ micro_label: "Editing a sentence is momentum not perfectionism"
 - Never produce steps that only make sense if the previous step was completed perfectly
 - Never add motivational commentary inside the step title
 
-Return only valid JSON matching the schema. No preamble, no explanation.`,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          steps: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                title: { type: "string" },
-                duration_minutes: { type: "number" },
-                micro_label: { type: "string" }
-              }
-            }
-          }
-        }
-      }
+Return only valid JSON matching the schema. No preamble, no explanation.`;
+
+  try {
+    const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": Deno.env.get("ANTHROPIC_API_KEY"),
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }],
+      }),
     });
 
+    if (!anthropicRes.ok) {
+      const errText = await anthropicRes.text();
+      console.error(`[guestBreakdown] Anthropic API error — status: ${anthropicRes.status}, body: ${errText}`);
+      return Response.json({ steps: getFallbackSteps(taskText, energyValue, timeValue) });
+    }
+
+    const anthropicData = await anthropicRes.json();
+    const rawText = anthropicData.content?.[0]?.text || "";
+
+    let parsed;
+    try {
+      parsed = JSON.parse(rawText);
+    } catch {
+      const match = rawText.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error("No valid JSON found in response");
+      parsed = JSON.parse(match[0]);
+    }
+
     console.log(`[guestBreakdown] Success — ip: ${ip}, task: "${taskText}", energy: ${energyValue}, time: ${timeValue}`);
-    return Response.json({ steps: result.steps || [] });
+    return Response.json({ steps: parsed.steps || [] });
   } catch (error) {
     console.error(`[guestBreakdown] LLM error — ip: ${ip}, error: ${error.message}`);
-    return Response.json({ error: "LLM call failed", detail: error.message }, { status: 500 });
+    return Response.json({ steps: getFallbackSteps(taskText, energyValue, timeValue) });
   }
 });
