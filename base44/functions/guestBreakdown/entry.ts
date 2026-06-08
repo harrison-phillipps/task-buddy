@@ -183,6 +183,8 @@ micro_label: "Editing a sentence is momentum not perfectionism"
 Return only valid JSON matching the schema. No preamble, no explanation.`;
 
   try {
+    console.log("[debug] key:", Deno.env.get("ANTHROPIC_API_KEY")?.slice(0, 8) ?? "UNDEFINED");
+
     const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -193,17 +195,21 @@ Return only valid JSON matching the schema. No preamble, no explanation.`;
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1000,
+        system: "You are a task breakdown engine. You receive a complete task breakdown request and ALWAYS respond with valid JSON only — no preamble, no questions, no explanation. The format is: {\"steps\": [{\"title\": string, \"duration_minutes\": number, \"micro_label\": string}]}",
         messages: [{ role: "user", content: prompt }],
       }),
     });
 
+    console.log("[debug] status:", anthropicRes.status);
+    const responseText = await anthropicRes.text();
+    console.log("[debug] response:", responseText);
+
     if (!anthropicRes.ok) {
-      const errText = await anthropicRes.text();
-      console.error(`[guestBreakdown] Anthropic API error — status: ${anthropicRes.status}, body: ${errText}`);
+      console.error(`[guestBreakdown] Anthropic API error — status: ${anthropicRes.status}, body: ${responseText}`);
       return Response.json({ steps: getFallbackSteps(taskText, energyValue, timeValue) });
     }
 
-    const anthropicData = await anthropicRes.json();
+    const anthropicData = JSON.parse(responseText);
     const rawText = anthropicData.content?.[0]?.text || "";
 
     let parsed;
