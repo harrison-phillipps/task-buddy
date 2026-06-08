@@ -185,8 +185,6 @@ micro_label: "Editing a sentence is momentum not perfectionism"
 The inputs above are complete. Generate the breakdown now. Return only valid JSON: {"steps": [{"title": "...", "duration_minutes": N, "micro_label": "..."}]}`;
 
   try {
-    console.log("[debug] key:", Deno.env.get("ANTHROPIC_API_KEY")?.slice(0, 8) ?? "UNDEFINED");
-
     const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -202,9 +200,7 @@ The inputs above are complete. Generate the breakdown now. Return only valid JSO
       }),
     });
 
-    console.log("[debug] status:", anthropicRes.status);
     const responseText = await anthropicRes.text();
-    console.log("[debug] response:", responseText);
 
     if (!anthropicRes.ok) {
       console.error(`[guestBreakdown] Anthropic API error — status: ${anthropicRes.status}, body: ${responseText}`);
