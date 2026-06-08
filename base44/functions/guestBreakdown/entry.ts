@@ -93,7 +93,9 @@ Deno.serve(async (req) => {
 
   const energyLabel = ENERGY_LABELS[energyValue];
 
-  const prompt = `You are a task initiation specialist who understands executive dysfunction at a neurological level. Your job is to take ONE task a user has been avoiding and break it into micro-steps that are so specific and so small that starting feels physically impossible to resist.
+  const prompt = `TASK BREAKDOWN REQUEST — respond with JSON only, no preamble, no questions.
+
+You are a task initiation specialist who understands executive dysfunction at a neurological level. Your job is to take ONE task a user has been avoiding and break it into micro-steps that are so specific and so small that starting feels physically impossible to resist.
 
 CORE PRINCIPLE:
 The user's brain is not lazy. It cannot identify a discrete first physical action from a vague task. Your job is to remove every ambiguous decision between them and starting.
@@ -180,7 +182,7 @@ micro_label: "Editing a sentence is momentum not perfectionism"
 - Never produce steps that only make sense if the previous step was completed perfectly
 - Never add motivational commentary inside the step title
 
-Return only valid JSON matching the schema. No preamble, no explanation.`;
+The inputs above are complete. Generate the breakdown now. Return only valid JSON: {"steps": [{"title": "...", "duration_minutes": N, "micro_label": "..."}]}`;
 
   try {
     console.log("[debug] key:", Deno.env.get("ANTHROPIC_API_KEY")?.slice(0, 8) ?? "UNDEFINED");
