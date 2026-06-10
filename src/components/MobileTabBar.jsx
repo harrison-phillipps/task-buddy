@@ -1,5 +1,6 @@
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useRef, useEffect, useState } from "react";
+import { base44 } from "@/api/base44Client";
 import {
   LayoutDashboard, ListTodo, Play, Target, MoreHorizontal,
   Brain, Settings, Calendar, Users, Award, Zap, X, Plus,
@@ -42,6 +43,7 @@ function loadSavedKeys() {
 export default function MobileTabBar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [isClinician, setIsClinician] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState(loadSavedKeys);
@@ -49,12 +51,22 @@ export default function MobileTabBar() {
   const scrollPositions = useRef({});
   const prevPath = useRef(location.pathname);
 
+  useEffect(() => {
+    base44.auth.me().then(user => {
+      if (user) {
+        base44.entities.ClinicianProfile.filter({ user_id: user.id })
+          .then(list => setIsClinician(list.length > 0))
+          .catch(() => setIsClinician(false));
+      }
+    }).catch(() => {});
+  }, []);
+
   const activeTabs = selectedKeys
     .map(k => ALL_TABS.find(t => t.key === k))
     .filter(Boolean);
 
   const tabHistory = useRef(
-    Object.fromEntries(activeTabs.map(t => [t.key, createPageUrl(t.key)]))
+    Object.fromEntries(activeTabs.map(t => [t.key, t.key === "Dashboard" && isClinician ? createPageUrl("ClinicianDashboard") : createPageUrl(t.key)]))
   );
 
   useEffect(() => {
@@ -198,7 +210,7 @@ export default function MobileTabBar() {
           /* More grid — pages not in tab bar */
           <div className="grid grid-cols-3 gap-3 px-4 pb-6">
             {moreTabs.map((tab) => {
-              const url = createPageUrl(tab.key);
+              const url = tab.key === "Dashboard" && isClinician ? createPageUrl("ClinicianDashboard") : createPageUrl(tab.key);
               const active = location.pathname === url;
               return (
                 <Link
@@ -225,7 +237,7 @@ export default function MobileTabBar() {
       <nav className="mobile-tab-bar fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-t border-purple-100 dark:border-gray-700 flex md:hidden">
         {/* First 2 tabs */}
         {activeTabs.slice(0, 2).map(tab => {
-          const url = createPageUrl(tab.key);
+          const url = tab.key === "Dashboard" && isClinician ? createPageUrl("ClinicianDashboard") : createPageUrl(tab.key);
           const active = location.pathname === url || location.pathname.startsWith(url + '/');
           return (
             <button
@@ -258,7 +270,7 @@ export default function MobileTabBar() {
 
         {/* Last 2 tabs */}
         {activeTabs.slice(2, 4).map(tab => {
-          const url = createPageUrl(tab.key);
+          const url = tab.key === "Dashboard" && isClinician ? createPageUrl("ClinicianDashboard") : createPageUrl(tab.key);
           const active = location.pathname === url || location.pathname.startsWith(url + '/');
           return (
             <button
