@@ -32,7 +32,7 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
     if (!open || !client || !hasEmail) return;
     setLoading(true);
     Promise.all([
-      base44.entities.Task.filter({ created_by_id: client.client_user_id }, "-created_date", 20),
+      base44.entities.Task.filter({ created_by: client.client_email }, "-created_date", 20),
       base44.entities.UserProgress.filter({ user_id: client.client_user_id }),
     ]).then(([fetchedTasks, progressList]) => {
       setTasks(fetchedTasks || []);
