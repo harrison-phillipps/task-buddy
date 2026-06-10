@@ -26,13 +26,13 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const hasEmail = !!client?.client_email;
+  const hasData = !!client?.client_user_id;
 
   useEffect(() => {
-    if (!open || !client || !hasEmail) return;
+    if (!open || !client || !hasData) return;
     setLoading(true);
     Promise.all([
-      base44.entities.Task.filter({ created_by: client.client_email }, "-created_date", 20),
+      base44.entities.Task.filter({ created_by_id: client.client_user_id }, "-created_date", 20),
       base44.entities.UserProgress.filter({ user_id: client.client_user_id }),
     ]).then(([fetchedTasks, progressList]) => {
       setTasks(fetchedTasks || []);
@@ -83,9 +83,9 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
           </DialogTitle>
         </DialogHeader>
 
-        {!hasEmail ? (
+        {!hasData ? (
           <p className="text-center text-amber-600 dark:text-amber-400 py-12 text-sm px-2">
-            Client email not available — please ask the client to reconnect via Settings to enable progress viewing.
+            Unable to load progress — client data is incomplete. Please ask the client to reconnect.
           </p>
         ) : loading ? (
           <div className="flex items-center justify-center py-16">
