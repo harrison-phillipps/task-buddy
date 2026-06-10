@@ -1,14 +1,87 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Loader2, CalendarDays, Target } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { UserPlus, Loader2, CalendarDays, Target, Pencil, Check } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { format } from "date-fns";
 
-export default function ClinicianClientsList({ profile, currentUser, onReportGenerated }) {
+function ClientGoalEditor({ client, profile, onSaved }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(client.goal_description || "");
+  const [saving, setSaving] = useState(false);
+
+  const startEdit = () => {
+    setValue(client.goal_description || "");
+    setEditing(true);
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const updatedClients = (profile.clients || []).map(c =>
+        c.client_user_id === client.client_user_id
+          ? { ...c, goal_description: value }
+          : c
+      );
+      await base44.entities.ClinicianProfile.update(profile.id, { clients: updatedClients });
+      toast.success("Goal updated");
+      onSaved(updatedClients);
+      setEditing(false);
+    } catch {
+      toast.error("Failed to update goal");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-2 mt-1">
+        <Target className="w-3 h-3 shrink-0 text-gray-400" />
+        <Input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className="h-7 text-xs bg-white/80 dark:bg-white/10 flex-1"
+          autoFocus
+          onKeyDown={(e) => e.key === "Enter" && handleSave()}
+        />
+        <Button size="sm" className="h-7 px-2 text-xs bg-purple-600 hover:bg-purple-700 text-white" onClick={handleSave} disabled={saving}>
+          {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-400">
+      <Target className="w-3 h-3 mt-0.5 shrink-0" />
+      {client.goal_description ? (
+        <span className="line-clamp-2 flex-1">{client.goal_description}</span>
+      ) : (
+        <span
+          className="italic text-gray-400 dark:text-gray-500 cursor-pointer flex-1"
+          onClick={startEdit}
+        >
+          No goal set — click to add
+        </span>
+      )}
+      <button onClick={startEdit} className="ml-1 text-gray-400 hover:text-purple-600 transition-colors shrink-0">
+        <Pencil className="w-3 h-3" />
+      </button>
+    </div>
+  );
+}
+
+export default function ClinicianClientsList({ profile: initialProfile, currentUser, onReportGenerated }) {
   const [generatingFor, setGeneratingFor] = useState(null);
+  const [profile, setProfile] = useState(initialProfile);
 
   const clients = profile?.clients || [];
+
+  const handleGoalSaved = (updatedClients) => {
+    setProfile(prev => ({ ...prev, clients: updatedClients }));
+  };
 
   const handleGenerateReport = async (client) => {
     setGeneratingFor(client.client_user_id);
@@ -21,12 +94,17 @@ export default function ClinicianClientsList({ profile, currentUser, onReportGen
       });
       toast.success(`Report generated for ${client.client_display_name}`);
       onReportGenerated();
-    } catch (err) {
+    } catch {
       toast.error("Failed to generate report");
     } finally {
       setGeneratingFor(null);
     }
   };
+
+  // Sync if parent profile prop changes
+  useEffect(() => {
+    setProfile(initialProfile);
+  }, [initialProfile]);
 
   return (
     <section>
@@ -72,12 +150,11 @@ export default function ClinicianClientsList({ profile, currentUser, onReportGen
                 </div>
               )}
 
-              {client.goal_description && (
-                <div className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-400">
-                  <Target className="w-3 h-3 mt-0.5 shrink-0" />
-                  <span className="line-clamp-2">{client.goal_description}</span>
-                </div>
-              )}
+              <ClientGoalEditor
+                client={client}
+                profile={profile}
+                onSaved={handleGoalSaved}
+              />
 
               <div className="flex gap-2 pt-1">
                 <Button size="sm" variant="outline" className="flex-1 text-xs border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300">
