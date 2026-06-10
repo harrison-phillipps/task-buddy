@@ -42,10 +42,13 @@ function LayoutContent({ children, currentPageName }) {
   const [currentUser, setCurrentUser] = React.useState(null);
   const [userProgress, setUserProgress] = React.useState(null);
   const [showPersonalityModal, setShowPersonalityModal] = React.useState(false);
+  const [isClinician, setIsClinician] = React.useState(false);
 
   const [showMoreMenu, setShowMoreMenu] = React.useState(false);
 
   const userTier = currentUser?.subscription_tier || "free";
+
+  const CLINICIAN_HIDDEN_ITEMS = new Set(["Goals", "Calendar", "Gap Filler", "Skill Development"]);
 
   const moreItems = [
     { title: "Smart Plan", url: createPageUrl("SmartPlan"), icon: CalendarDays, feature: "smart_plan" },
@@ -61,7 +64,7 @@ function LayoutContent({ children, currentPageName }) {
     { title: "Teams", url: createPageUrl("Teams"), icon: Users, feature: "team_features" },
     { title: "Integrations", url: createPageUrl("Integrations"), icon: Sparkles, feature: null },
     { title: "Settings", url: createPageUrl("Settings"), icon: Settings, feature: null },
-  ];
+  ].filter(item => !(isClinician && CLINICIAN_HIDDEN_ITEMS.has(item.title)));
 
   React.useEffect(() => {
     const fetchUser = async () => {
@@ -71,6 +74,9 @@ function LayoutContent({ children, currentPageName }) {
         base44.entities.UserProgress.filter({ user_id: user.id }).then(list => {
           setUserProgress(list.length > 0 ? list[0] : null);
         }).catch(() => setUserProgress(null));
+        base44.entities.ClinicianProfile.filter({ user_id: user.id }).then(list => {
+          setIsClinician(list.length > 0);
+        }).catch(() => setIsClinician(false));
       } catch (error) {
         console.error("Error fetching user or user progress:", error);
         setCurrentUser(null);
@@ -168,21 +174,27 @@ function LayoutContent({ children, currentPageName }) {
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {navigationItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        asChild
-                        className={`hover:bg-purple-50 hover:text-purple-700 transition-all duration-300 rounded-xl mb-2 ${
-                          location.pathname === item.url ? 'bg-gradient-to-r from-purple-500 to-teal-500 text-white shadow-md' : ''
-                        }`}
-                      >
-                        <Link to={item.url} className="flex items-center gap-3 px-4 py-4" onClick={handleNavClick}>
-                          <item.icon className="w-6 h-6" />
-                          <span className="font-semibold text-base">{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                  {navigationItems
+                    .filter(item => !(isClinician && item.title === "Focus Now"))
+                    .map((item) => {
+                      const url = (item.title === "Home" && isClinician) ? "/ClinicianDashboard" : item.url;
+                      const isActive = location.pathname === url;
+                      return (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarMenuButton
+                            asChild
+                            className={`hover:bg-purple-50 hover:text-purple-700 transition-all duration-300 rounded-xl mb-2 ${
+                              isActive ? 'bg-gradient-to-r from-purple-500 to-teal-500 text-white shadow-md' : ''
+                            }`}
+                          >
+                            <Link to={url} className="flex items-center gap-3 px-4 py-4" onClick={handleNavClick}>
+                              <item.icon className="w-6 h-6" />
+                              <span className="font-semibold text-base">{item.title}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
