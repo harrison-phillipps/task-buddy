@@ -15,6 +15,7 @@ import { lazy } from 'react';
 const Home = lazy(() => import('./pages/Home'));
 const GuestSession = lazy(() => import('./pages/GuestSession'));
 const GuestWelcome = lazy(() => import('./pages/GuestWelcome'));
+const ClinicianDashboard = lazy(() => import('./pages/ClinicianDashboard'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -76,6 +77,7 @@ const AuthenticatedApp = () => {
       <Route path="/Home" element={<Home />} />
       <Route path="/GuestSession" element={<GuestSession />} />
       <Route path="/GuestWelcome" element={<GuestWelcome />} />
+      <Route path="/ClinicianDashboard" element={<LayoutWrapper currentPageName="ClinicianDashboard"><ClinicianDashboard /></LayoutWrapper>} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}
