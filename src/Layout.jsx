@@ -29,12 +29,6 @@ import OfflineIndicator from "@/components/OfflineIndicator";
 import { useGlobalOfflineSync } from "@/hooks/useGlobalOfflineSync";
 import { hasFeatureAccess } from "@/components/subscription/FeatureGate";
 
-const navigationItems = [
-  { title: "Home", url: createPageUrl("Dashboard"), icon: LayoutDashboard },
-  { title: "My Tasks", url: createPageUrl("Tasks"), icon: ListTodo },
-  { title: "Focus Now", url: createPageUrl("FocusSession"), icon: Play },
-];
-
 function LayoutContent({ children, currentPageName }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -43,6 +37,12 @@ function LayoutContent({ children, currentPageName }) {
   const [userProgress, setUserProgress] = React.useState(null);
   const [showPersonalityModal, setShowPersonalityModal] = React.useState(false);
   const [isClinician, setIsClinician] = React.useState(false);
+
+  const navigationItems = [
+    { title: "Home", url: isClinician ? createPageUrl("ClinicianDashboard") : createPageUrl("Dashboard"), icon: LayoutDashboard },
+    { title: "My Tasks", url: createPageUrl("Tasks"), icon: ListTodo },
+    { title: "Focus Now", url: createPageUrl("FocusSession"), icon: Play },
+  ];
 
   const [showMoreMenu, setShowMoreMenu] = React.useState(false);
 
@@ -117,6 +117,7 @@ function LayoutContent({ children, currentPageName }) {
   const rootRoutes = [
     '/',
     createPageUrl('Dashboard'),
+    createPageUrl('ClinicianDashboard'),
     createPageUrl('Tasks'),
     createPageUrl('FocusSession'),
     createPageUrl('Goals'),
@@ -176,25 +177,21 @@ function LayoutContent({ children, currentPageName }) {
                 <SidebarMenu>
                   {navigationItems
                     .filter(item => !(isClinician && item.title === "Focus Now"))
-                    .map((item) => {
-                      const url = (item.title === "Home" && isClinician) ? "/ClinicianDashboard" : item.url;
-                      const isActive = location.pathname === url;
-                      return (
-                        <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton
-                            asChild
-                            className={`hover:bg-purple-50 hover:text-purple-700 transition-all duration-300 rounded-xl mb-2 ${
-                              isActive ? 'bg-gradient-to-r from-purple-500 to-teal-500 text-white shadow-md' : ''
-                            }`}
-                          >
-                            <Link to={url} className="flex items-center gap-3 px-4 py-4" onClick={handleNavClick}>
-                              <item.icon className="w-6 h-6" />
-                              <span className="font-semibold text-base">{item.title}</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
+                    .map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          asChild
+                          className={`hover:bg-purple-50 hover:text-purple-700 transition-all duration-300 rounded-xl mb-2 ${
+                            location.pathname === item.url ? 'bg-gradient-to-r from-purple-500 to-teal-500 text-white shadow-md' : ''
+                          }`}
+                        >
+                          <Link to={item.url} className="flex items-center gap-3 px-4 py-4" onClick={handleNavClick}>
+                            <item.icon className="w-6 h-6" />
+                            <span className="font-semibold text-base">{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
