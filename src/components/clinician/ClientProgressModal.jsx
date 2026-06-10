@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, TrendingUp, Minus, Flame } from "lucide-react";
+import { Loader2, TrendingUp, Minus } from "lucide-react";
 import { format, subDays, isAfter, isBefore } from "date-fns";
 
 function StatCard({ label, value }) {
@@ -58,7 +58,6 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
   const currentStreak = progress?.current_streak ?? 0;
   const lastMonthInitiated = lastMonthTasks.length;
 
-  // Best time of day from ALL completed tasks
   const buckets = { morning: 0, afternoon: 0, evening: 0 };
   tasks.filter(t => t.status === "completed" && t.updated_date).forEach(t => {
     const h = new Date(t.updated_date).getHours();
@@ -71,12 +70,11 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
   const name = client.client_display_name || "Client";
   const trendUp = thisMonthInitiated > lastMonthInitiated;
   const trendEqual = thisMonthInitiated === lastMonthInitiated;
-
   const recentTasks = tasks.slice(0, 10);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border border-purple-100 dark:border-purple-900/40">
+      <DialogContent className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border border-purple-100 dark:border-purple-900/40">
         <DialogHeader>
           <DialogTitle className="text-gray-900 dark:text-gray-100 text-base font-semibold">
             {name} — Progress Overview
@@ -96,15 +94,13 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
         ) : (
           <div className="space-y-5 pt-1">
 
-            {/* Section 1 — Snapshot */}
             <div className="grid grid-cols-2 gap-2">
               <StatCard label="Tasks this month" value={thisMonthInitiated} />
               <StatCard label="Completed" value={thisMonthCompleted} />
               <StatCard label="Streak" value={`${currentStreak}d`} />
-              <StatCard label="Rate" value={`${completionRate}%`} />
+              <StatCard label="Completion rate" value={`${completionRate}%`} />
             </div>
 
-            {/* Section 2 — Trend */}
             <div className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm ${
               trendEqual
                 ? "bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400"
@@ -119,7 +115,6 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
               </span>
             </div>
 
-            {/* Section 3 — Best time of day */}
             <div>
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Best time of day</p>
               <div className="space-y-2">
@@ -138,7 +133,6 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
               </div>
             </div>
 
-            {/* Section 4 — Recent tasks */}
             <div>
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Recent Tasks</p>
               <div className="space-y-1.5">
@@ -152,13 +146,13 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
               </div>
             </div>
 
-            {/* Generate Report button */}
             <Button
               className="w-full bg-purple-600 hover:bg-purple-700 text-white"
               onClick={() => { onGenerateReport(); onClose(); }}
             >
               Generate Report
             </Button>
+
           </div>
         )}
       </DialogContent>
