@@ -7,9 +7,18 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ChevronRight, ChevronLeft, Sparkles, CheckCircle, Calendar, Loader2 } from "lucide-react";
+import { ChevronRight, ChevronLeft, Sparkles, CheckCircle, Calendar, Loader2, User, ClipboardList } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AIOnboardingAssistant from "./AIOnboardingAssistant";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const CLINICIAN_ROLES = [
+  { value: "occupational_therapist", label: "Occupational Therapist" },
+  { value: "developmental_educator", label: "Developmental Educator" },
+  { value: "disability_support_worker", label: "Disability Support Worker" },
+  { value: "youth_mentor", label: "Youth Mentor" },
+  { value: "other", label: "Other" },
+];
 
 const GOAL_OPTIONS = [
   { id: "productivity", label: "Boost my productivity", emoji: "⚡" },
@@ -45,7 +54,7 @@ export default function AdaptiveOnboardingFlow({
   const [aiSuggestions, setAiSuggestions] = useState(null);
   const [isCreatingProfile, setIsCreatingProfile] = useState(false);
 
-  const totalSteps = 6;
+  const totalSteps = 7;
   const progress = (step / totalSteps) * 100;
   const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
   const [calendarSynced, setCalendarSynced] = useState(null); // null | "google" | "outlook" | "skipped"
@@ -90,10 +99,7 @@ export default function AdaptiveOnboardingFlow({
           description: "Starter task from onboarding",
           subtasks: []
         }));
-
-        await Promise.all(
-          tasksToCreate.map(task => base44.entities.Task.create(task))
-        );
+        await Promise.all(tasksToCreate.map(task => base44.entities.Task.create(task)));
       }
 
       // Create suggested goals
@@ -105,13 +111,11 @@ export default function AdaptiveOnboardingFlow({
           status: "not_started",
           priority: "medium"
         }));
-
-        await Promise.all(
-          goalsToCreate.map(goal => base44.entities.Goal.create(goal))
-        );
+        await Promise.all(goalsToCreate.map(goal => base44.entities.Goal.create(goal)));
       }
 
       // Update user profile with onboarding data
+      const me = await base44.auth.me();
       await base44.auth.updateMe({
         display_name: responses.displayName,
         onboarding_completed: true,
@@ -122,6 +126,19 @@ export default function AdaptiveOnboardingFlow({
           onboarding_date: new Date().toISOString()
         }
       });
+
+      // If clinician, create ClinicianProfile and redirect there
+      if (responses.userType === "clinician") {
+        await base44.entities.ClinicianProfile.create({
+          user_id: me.id,
+          organisation_name: responses.clinicianOrg,
+          role_type: responses.clinicianRole,
+          ndis_provider: false,
+          clients: []
+        });
+        onComplete({ ...aiSuggestions, _isClinician: true });
+        return;
+      }
 
       onComplete(aiSuggestions);
     } catch (error) {
@@ -152,11 +169,18 @@ export default function AdaptiveOnboardingFlow({
   const canProceed = () => {
     switch (step) {
       case 1: return responses.displayName?.trim().length > 0;
-      case 2: return responses.primaryGoals?.length > 0;
-      case 3: return responses.mainChallenge;
-      case 4: return responses.workStyle;
-      case 5: return true; // calendar step is optional
-      case 6: return true;
+      case 2: {
+        if (!responses.userType) return false;
+        if (responses.userType === "clinician") {
+          return responses.clinicianOrg?.trim().length > 0 && !!responses.clinicianRole;
+        }
+        return true;
+      }
+      case 3: return responses.primaryGoals?.length > 0;
+      case 4: return responses.mainChallenge;
+      case 5: return responses.workStyle;
+      case 6: return true; // calendar step is optional
+      case 7: return true;
       default: return false;
     }
   };
@@ -186,7 +210,7 @@ export default function AdaptiveOnboardingFlow({
         </motion.div>
 
         {/* AI Assistant */}
-        {step >= 3 && step < 6 && (
+        {step >= 4 && step < 7 && (
           <AIOnboardingAssistant
             userResponses={responses}
             currentStep={step}
@@ -207,11 +231,12 @@ export default function AdaptiveOnboardingFlow({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   {step === 1 && "👋 What should we call you?"}
-                  {step === 2 && "🎯 What are your main goals?"}
-                  {step === 3 && "💭 What's your biggest challenge?"}
-                  {step === 4 && "⚡ How do you prefer to work?"}
-                  {step === 5 && "📅 Sync your calendar (optional)"}
-                  {step === 6 && "✨ Your Personalized Setup"}
+                  {step === 2 && "🙋 How are you using TaskBuddy?"}
+                  {step === 3 && "🎯 What are your main goals?"}
+                  {step === 4 && "💭 What's your biggest challenge?"}
+                  {step === 5 && "⚡ How do you prefer to work?"}
+                  {step === 6 && "📅 Sync your calendar (optional)"}
+                  {step === 7 && "✨ Your Personalized Setup"}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -233,8 +258,90 @@ export default function AdaptiveOnboardingFlow({
                   </div>
                 )}
 
-                {/* Step 2: Goals */}
+                {/* Step 2: User Type */}
                 {step === 2 && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 gap-3">
+                      {/* For myself */}
+                      <div
+                        onClick={() => updateResponse("userType", "self")}
+                        className={`p-5 rounded-xl border-2 cursor-pointer transition-all ${
+                          responses.userType === "self"
+                            ? "border-purple-500 bg-purple-50 dark:bg-purple-900/30"
+                            : "border-gray-200 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-500"
+                        }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center flex-shrink-0">
+                            <User className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-gray-100">For myself</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">I want help initiating and completing my own tasks</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Clinician */}
+                      <div
+                        onClick={() => updateResponse("userType", "clinician")}
+                        className={`p-5 rounded-xl border-2 cursor-pointer transition-all ${
+                          responses.userType === "clinician"
+                            ? "border-teal-500 bg-teal-50 dark:bg-teal-900/30"
+                            : "border-gray-200 dark:border-gray-600 hover:border-teal-300 dark:hover:border-teal-500"
+                        }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center flex-shrink-0">
+                            <ClipboardList className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-gray-100">As a clinician or support worker</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">I support clients and want to track their progress</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Clinician extra fields */}
+                    {responses.userType === "clinician" && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-4 pt-2 border-t border-gray-200 dark:border-gray-700"
+                      >
+                        <div className="space-y-2">
+                          <Label htmlFor="clinicianOrg">Organisation name</Label>
+                          <Input
+                            id="clinicianOrg"
+                            placeholder="e.g. Baptist Care, Generation Youth"
+                            value={responses.clinicianOrg || ""}
+                            onChange={(e) => updateResponse("clinicianOrg", e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Role</Label>
+                          <Select
+                            value={responses.clinicianRole || ""}
+                            onValueChange={(val) => updateResponse("clinicianRole", val)}
+                          >
+                            <SelectTrigger className="bg-white dark:bg-gray-800">
+                              <SelectValue placeholder="Select your role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CLINICIAN_ROLES.map((r) => (
+                                <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+                )}
+
+                {/* Step 3: Goals */}
+                {step === 3 && (
                   <div className="space-y-4">
                     <p className="text-sm text-gray-600 dark:text-gray-400">Select all that apply:</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -258,8 +365,8 @@ export default function AdaptiveOnboardingFlow({
                   </div>
                 )}
 
-                {/* Step 3: Challenge */}
-                {step === 3 && (
+                {/* Step 4: Challenge */}
+                {step === 4 && (
                   <div className="space-y-4">
                     <p className="text-sm text-gray-600 dark:text-gray-400">Choose one that resonates most:</p>
                     <div className="space-y-2">
@@ -283,8 +390,8 @@ export default function AdaptiveOnboardingFlow({
                   </div>
                 )}
 
-                {/* Step 4: Work Style */}
-                {step === 4 && (
+                {/* Step 5: Work Style */}
+                {step === 5 && (
                   <div className="space-y-4">
                     <p className="text-sm text-gray-600 dark:text-gray-400">How do you work best?</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -308,8 +415,8 @@ export default function AdaptiveOnboardingFlow({
                   </div>
                 )}
 
-                {/* Step 5: Calendar Sync */}
-                {step === 5 && (
+                {/* Step 6: Calendar Sync */}
+                {step === 6 && (
                   <div className="space-y-4">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Connect your calendar so the AI Smart Plan can schedule tasks around your existing commitments. You can skip this and connect later in Settings.
@@ -376,8 +483,8 @@ export default function AdaptiveOnboardingFlow({
                   </div>
                 )}
 
-                {/* Step 6: Summary */}
-                {step === 6 && aiSuggestions && (
+                {/* Step 7: Summary */}
+                {step === 7 && aiSuggestions && (
                   <div className="space-y-4">
                     {/* Recommended Companion */}
                     {aiSuggestions.companion_recommendation && (

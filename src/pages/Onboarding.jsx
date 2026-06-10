@@ -52,6 +52,10 @@ export default function Onboarding() {
   }, [navigate]);
 
   const handleAdaptiveComplete = async (aiSuggestions) => {
+    if (aiSuggestions?._isClinician) {
+      navigate("/ClinicianDashboard");
+      return;
+    }
     let destination = "CharacterSelection";
     if (aiSuggestions?.companion_recommendation?.type) {
       await base44.auth.updateMe({
