@@ -65,9 +65,13 @@ export default function MobileTabBar() {
     .map(k => ALL_TABS.find(t => t.key === k))
     .filter(Boolean);
 
-  const tabHistory = useRef(
-    Object.fromEntries(activeTabs.map(t => [t.key, t.key === "Dashboard" && isClinician ? createPageUrl("ClinicianDashboard") : createPageUrl(t.key)]))
-  );
+  const tabHistory = useRef({});
+
+  const getTabUrl = (key) => {
+    return key === "Dashboard" && isClinician
+      ? createPageUrl("ClinicianDashboard")
+      : createPageUrl(key);
+  };
 
   useEffect(() => {
     const incoming = location.pathname;
@@ -244,7 +248,7 @@ export default function MobileTabBar() {
               key={tab.key}
               onClick={() => {
                 if (active) { navigate(url, { replace: true }); }
-                else { navigate(tabHistory.current[tab.key] || url); }
+                else { navigate(tabHistory.current[tab.key] || getTabUrl(tab.key)); }
               }}
               className={cn(
                 "flex-1 flex flex-col items-center justify-center gap-1 py-2 text-xs font-medium transition-colors min-h-[56px]",
@@ -277,7 +281,7 @@ export default function MobileTabBar() {
               key={tab.key}
               onClick={() => {
                 if (active) { navigate(url, { replace: true }); }
-                else { navigate(tabHistory.current[tab.key] || url); }
+                else { navigate(tabHistory.current[tab.key] || getTabUrl(tab.key)); }
               }}
               className={cn(
                 "flex-1 flex flex-col items-center justify-center gap-1 py-2 text-xs font-medium transition-colors min-h-[56px]",
