@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { UserPlus, Loader2, CalendarDays, Target, Pencil, Check } from "lucide-react";
+import { UserPlus, Loader2, CalendarDays, Target, Pencil, Check, RefreshCw } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { format } from "date-fns";
 import ClientProgressModal from "./ClientProgressModal";
@@ -74,7 +74,7 @@ function ClientGoalEditor({ client, profile, onSaved }) {
   );
 }
 
-export default function ClinicianClientsList({ profile: initialProfile, currentUser, onReportGenerated }) {
+export default function ClinicianClientsList({ profile: initialProfile, currentUser, onReportGenerated, onProfileRefresh }) {
   const [generatingFor, setGeneratingFor] = useState(null);
   const [profile, setProfile] = useState(initialProfile);
   const [viewingClient, setViewingClient] = useState(null);
@@ -111,7 +111,14 @@ export default function ClinicianClientsList({ profile: initialProfile, currentU
 
   return (
     <section>
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">My Clients</h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">My Clients</h2>
+        {onProfileRefresh && (
+          <button onClick={onProfileRefresh} className="text-gray-400 hover:text-purple-600 transition-colors">
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        )}
+      </div>
 
       {clients.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-purple-200 dark:border-purple-800 p-10 text-center bg-white/50 dark:bg-white/5">

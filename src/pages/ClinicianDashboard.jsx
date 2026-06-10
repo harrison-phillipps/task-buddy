@@ -42,6 +42,12 @@ export default function ClinicianDashboard() {
     init();
   }, []);
 
+  const refreshProfile = async () => {
+    if (!currentUser) return;
+    const profiles = await base44.entities.ClinicianProfile.filter({ user_id: currentUser.id });
+    if (profiles.length > 0) setProfile(profiles[0]);
+  };
+
   const refreshReports = async () => {
     if (!currentUser) return;
     const allReports = await base44.entities.ClinicianReport.filter(
@@ -100,7 +106,7 @@ export default function ClinicianDashboard() {
 
       <ClinicianStatsBar clientCount={clientCount} reportsThisMonth={reportsThisMonth} />
 
-      <ClinicianClientsList profile={profile} currentUser={currentUser} onReportGenerated={refreshReports} />
+      <ClinicianClientsList profile={profile} currentUser={currentUser} onReportGenerated={refreshReports} onProfileRefresh={refreshProfile} />
 
       <ClinicianInviteForm profile={profile} currentUser={currentUser} onInviteSent={() => {}} />
 
