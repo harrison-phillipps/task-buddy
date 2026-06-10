@@ -17,12 +17,18 @@ export default function ClinicianInviteForm({ profile, currentUser }) {
   const [supportType, setSupportType] = useState("assistive technology and task support");
   const [submitting, setSubmitting] = useState(false);
   const [generatedCode, setGeneratedCode] = useState(null);
+  const [goalError, setGoalError] = useState(false);
 
   const handleSendInvite = async () => {
     if (!clientEmail.trim()) {
       toast.error("Client email is required");
       return;
     }
+    if (!goalDescription.trim()) {
+      setGoalError(true);
+      return;
+    }
+    setGoalError(false);
 
     setSubmitting(true);
     try {
@@ -45,6 +51,7 @@ export default function ClinicianInviteForm({ profile, currentUser }) {
       setClientEmail("");
       setGoalDescription("");
       setSupportType("assistive technology and task support");
+      setGoalError(false);
       toast.success("Invite created successfully");
     } catch (err) {
       toast.error("Failed to create invite");
@@ -86,13 +93,20 @@ export default function ClinicianInviteForm({ profile, currentUser }) {
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Goal Description</label>
+          <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            Goal Description <span className="text-red-500">*</span>
+          </label>
           <Textarea
             placeholder="e.g. Building capacity to manage daily living tasks independently"
             value={goalDescription}
-            onChange={(e) => setGoalDescription(e.target.value)}
-            className="bg-white/80 dark:bg-white/10 resize-none h-20"
+            onChange={(e) => { setGoalDescription(e.target.value); if (goalError) setGoalError(false); }}
+            className={`bg-white/80 dark:bg-white/10 resize-none h-20 ${goalError ? "border-red-400 focus:border-red-400" : ""}`}
           />
+          {goalError && (
+            <p className="text-xs text-red-500 mt-1">
+              Please enter a support goal before sending the invite — this is needed for NDIS reporting
+            </p>
+          )}
         </div>
 
         <div className="space-y-1">
