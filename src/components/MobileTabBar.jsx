@@ -61,10 +61,6 @@ export default function MobileTabBar() {
     }).catch(() => {});
   }, []);
 
-  const activeTabs = selectedKeys
-    .map(k => ALL_TABS.find(t => t.key === k))
-    .filter(Boolean);
-
   const tabHistory = useRef({});
 
   const getTabUrl = (key) => {
@@ -72,6 +68,17 @@ export default function MobileTabBar() {
       ? createPageUrl("ClinicianDashboard")
       : createPageUrl(key);
   };
+
+  const CLINICIAN_HIDDEN_TABS = new Set([
+    "FocusSession", "FocusMode", "Goals", "Achievements",
+    "CalendarView", "CalendarGapFiller", "Habits",
+    "SkillDevelopment", "LeaderboardPage", "BrainDump"
+  ]);
+
+  const activeTabs = selectedKeys
+    .map(k => ALL_TABS.find(t => t.key === k))
+    .filter(Boolean)
+    .filter(tab => !(isClinician && CLINICIAN_HIDDEN_TABS.has(tab.key)));
 
   useEffect(() => {
     const incoming = location.pathname;
@@ -115,7 +122,9 @@ export default function MobileTabBar() {
   };
 
   // Tabs not in selected (shown in more drawer)
-  const moreTabs = ALL_TABS.filter(t => !selectedKeys.includes(t.key));
+  const moreTabs = ALL_TABS
+    .filter(t => !selectedKeys.includes(t.key))
+    .filter(t => !(isClinician && CLINICIAN_HIDDEN_TABS.has(t.key)));
 
   return (
     <>
