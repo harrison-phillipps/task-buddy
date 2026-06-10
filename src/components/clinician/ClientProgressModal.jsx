@@ -26,8 +26,10 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const hasEmail = !!client?.client_email;
+
   useEffect(() => {
-    if (!open || !client) return;
+    if (!open || !client || !hasEmail) return;
     setLoading(true);
     Promise.all([
       base44.entities.Task.filter({ created_by_id: client.client_user_id }, "-created_date", 20),
@@ -81,7 +83,11 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
           </DialogTitle>
         </DialogHeader>
 
-        {loading ? (
+        {!hasEmail ? (
+          <p className="text-center text-amber-600 dark:text-amber-400 py-12 text-sm px-2">
+            Client email not available — please ask the client to reconnect via Settings to enable progress viewing.
+          </p>
+        ) : loading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
           </div>
