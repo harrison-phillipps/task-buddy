@@ -41,12 +41,12 @@ export default function ClinicianConnect({ currentUser }) {
       // Find a pending, non-expired invite with this code
       const invites = await base44.entities.ClientInvite.filter({
         invite_code: code,
-        status: "pending",
       });
 
       const now = new Date();
       const valid = invites.find(
-        (inv) => !inv.expires_at || new Date(inv.expires_at) > now
+        (inv) => (inv.status === "pending" || inv.status === "declined") &&
+        (!inv.expires_at || new Date(inv.expires_at) > now)
       );
 
       if (!valid) {
@@ -108,7 +108,7 @@ export default function ClinicianConnect({ currentUser }) {
     setDisconnecting(true);
     try {
       await base44.entities.ClientInvite.update(connectedInvite.id, {
-        status: "declined",
+        status: "pending",
       });
 
       // Remove from clinician's clients array
