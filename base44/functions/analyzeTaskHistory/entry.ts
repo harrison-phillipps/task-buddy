@@ -52,8 +52,19 @@ Deno.serve(async (req) => {
     let result;
 
     if (analysisType === 'time_estimation') {
-      result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze these completed tasks and focus sessions to provide accurate time estimation patterns:
+      const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": Deno.env.get("ANTHROPIC_API_KEY"),
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 500,
+          messages: [{
+            role: "user",
+            content: `Analyze these completed tasks and focus sessions to provide accurate time estimation patterns.
 
 Completed Tasks: ${JSON.stringify(completedTasks.slice(0, 50).map(t => ({
   title: t.title,
@@ -69,35 +80,32 @@ Focus Sessions: ${JSON.stringify(focusSessions.slice(0, 50).map(s => ({
   completed: s.completed
 })))}
 
-Provide time estimation insights by category and difficulty.`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            category_estimates: {
-              type: "object",
-              properties: {
-                work: { type: "number" },
-                personal: { type: "number" },
-                health: { type: "number" },
-                creative: { type: "number" },
-                learning: { type: "number" }
-              }
-            },
-            difficulty_multipliers: {
-              type: "object",
-              properties: {
-                easy: { type: "number" },
-                medium: { type: "number" },
-                hard: { type: "number" }
-              }
-            },
-            insights: { type: "string" }
-          }
-        }
+Respond with ONLY a JSON object, no preamble, no markdown. Format:
+{
+  "category_estimates": { "work": number, "personal": number, "health": number, "creative": number, "learning": number },
+  "difficulty_multipliers": { "easy": number, "medium": number, "hard": number },
+  "insights": "string"
+}`
+          }]
+        })
       });
+      const anthropicData = await anthropicRes.json();
+      const rawText = anthropicData.content[0].text.replace(/```json|```/g, '').trim();
+      result = JSON.parse(rawText);
     } else if (analysisType === 'optimal_times') {
-      result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze when this user is most productive based on their focus session history:
+      const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": Deno.env.get("ANTHROPIC_API_KEY"),
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 500,
+          messages: [{
+            role: "user",
+            content: `Analyze when this user is most productive based on their focus session history.
 
 Focus Sessions: ${JSON.stringify(focusSessions.map(s => ({
   created_date: s.created_date,
@@ -109,31 +117,19 @@ Focus Sessions: ${JSON.stringify(focusSessions.map(s => ({
   mood_after: s.mood_after
 })))}
 
-Identify:
-1. Best times of day for different task categories
-2. Productivity patterns by day of week
-3. Optimal session durations for each task type`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            time_of_day_recommendations: {
-              type: "object",
-              properties: {
-                work: { type: "string" },
-                personal: { type: "string" },
-                creative: { type: "string" },
-                learning: { type: "string" }
-              }
-            },
-            best_days: {
-              type: "array",
-              items: { type: "string" }
-            },
-            optimal_session_length: { type: "number" },
-            productivity_insights: { type: "string" }
-          }
-        }
+Respond with ONLY a JSON object, no preamble, no markdown. Format:
+{
+  "time_of_day_recommendations": { "work": "string", "personal": "string", "creative": "string", "learning": "string" },
+  "best_days": ["string"],
+  "optimal_session_length": number,
+  "productivity_insights": "string"
+}`
+          }]
+        })
       });
+      const anthropicData = await anthropicRes.json();
+      const rawText = anthropicData.content[0].text.replace(/```json|```/g, '').trim();
+      result = JSON.parse(rawText);
     } else if (analysisType === 'productivity_report') {
       const now = new Date();
       const startDate = new Date(now);
@@ -151,8 +147,19 @@ Identify:
         new Date(s.created_date) >= startDate
       );
 
-      result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Generate a comprehensive productivity report for this ${period} period:
+      const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": Deno.env.get("ANTHROPIC_API_KEY"),
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 800,
+          messages: [{
+            role: "user",
+            content: `Generate a comprehensive productivity report for this ${period} period.
 
 Completed Tasks (${periodTasks.length}): ${JSON.stringify(periodTasks.map(t => ({
   title: t.title,
@@ -169,48 +176,24 @@ Focus Sessions (${periodSessions.length}): ${JSON.stringify(periodSessions.map(s
   completed: s.completed
 })))}
 
-Provide:
-1. Overall productivity score (0-100)
-2. Task completion rate by category
-3. Total time spent (minutes)
-4. Most productive categories
-5. Areas for improvement (specific, actionable)
-6. Achievements and highlights
-7. Trends compared to previous period
-8. Personalized recommendations`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            overall_score: { type: "number" },
-            total_tasks_completed: { type: "number" },
-            total_time_minutes: { type: "number" },
-            completion_rate_by_category: {
-              type: "object",
-              additionalProperties: { type: "number" }
-            },
-            most_productive_category: { type: "string" },
-            achievements: {
-              type: "array",
-              items: { type: "string" }
-            },
-            areas_for_improvement: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  area: { type: "string" },
-                  suggestion: { type: "string" }
-                }
-              }
-            },
-            trends: { type: "string" },
-            recommendations: {
-              type: "array",
-              items: { type: "string" }
-            }
-          }
-        }
+Respond with ONLY a JSON object, no preamble, no markdown. Format:
+{
+  "overall_score": number,
+  "total_tasks_completed": number,
+  "total_time_minutes": number,
+  "completion_rate_by_category": { "category": number },
+  "most_productive_category": "string",
+  "achievements": ["string"],
+  "areas_for_improvement": [{ "area": "string", "suggestion": "string" }],
+  "trends": "string",
+  "recommendations": ["string"]
+}`
+          }]
+        })
       });
+      const anthropicData = await anthropicRes.json();
+      const rawText = anthropicData.content[0].text.replace(/```json|```/g, '').trim();
+      result = JSON.parse(rawText);
     } else {
       return Response.json({ error: 'Invalid analysis type' }, { status: 400 });
     }
