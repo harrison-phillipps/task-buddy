@@ -81,7 +81,7 @@ export default function ClinicianConnect({ currentUser }) {
                 client_display_name: currentUser.full_name || currentUser.email,
                 client_email: currentUser.email,
                 linked_date: new Date().toISOString().split("T")[0],
-                goal_description: "",
+                goal_description: valid.goal_description || "",
                 status: "active",
               },
             ],
