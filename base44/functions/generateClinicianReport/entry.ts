@@ -86,18 +86,44 @@ Deno.serve(async (req) => {
 
     const periodLabel = period === "quarterly" ? "90 days" : "30 days";
 
-    // Generate narrative via LLM
-    const llmResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
-      prompt: `You are writing a professional progress report for a disability support or allied health context. Write a single paragraph (3-4 sentences) in plain, professional English. Do not use clinical jargon. The paragraph should read naturally and be suitable for inclusion in an NDIS plan review or progress note. Use this data: Client initiated ${tasks_initiated} tasks and completed ${tasks_completed} of them (${completion_rate}%) over the past ${periodLabel}. Their current streak is ${current_streak} days. Their most productive time of day is ${best_time_of_day}. Their support goal is: ${goal_description || "general task engagement and daily living skills"}. Their support type includes: ${support_type}. Start the paragraph with 'Over the past ${periodLabel},' and end with a sentence about what this indicates for their goal progress.`,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          narrative: { type: "string" },
-        },
+    // Generate narrative via direct Anthropic API call
+    const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": Deno.env.get("ANTHROPIC_API_KEY"),
+        "anthropic-version": "2023-06-01",
       },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 300,
+        messages: [
+          {
+            role: "user",
+            content: `You are writing a professional progress report for a disability support or allied health context. Write a single paragraph (3-4 sentences) in plain, professional English. Do not use clinical jargon. The paragraph should be suitable for inclusion in an NDIS plan review or progress note.
+
+Use this data:
+- Tasks initiated: ${tasks_initiated}
+- Tasks completed: ${tasks_completed}
+- Completion rate: ${completion_rate}%
+- Current streak: ${current_streak} days
+- Most productive time: ${best_time_of_day}
+- Support goal: ${goal_description || "general task engagement and daily living skills"}
+- Support type: ${support_type}
+- Period: ${periodLabel}
+
+Start with "Over the past ${periodLabel}," and end with a sentence about what this indicates for their goal progress. Return only the paragraph, no preamble.`,
+          },
+        ],
+      }),
     });
 
-    const narrative_summary = llmResult?.narrative || "";
+    const anthropicData = await anthropicResponse.json();
+    if (!anthropicResponse.ok) {
+      console.error(`[generateClinicianReport] Anthropic error: ${JSON.stringify(anthropicData)}`);
+      throw new Error(anthropicData?.error?.message || "Anthropic API error");
+    }
+    const narrative_summary = anthropicData.content[0].text;
 
     // Fetch client display name
     let client_display_name = "";
