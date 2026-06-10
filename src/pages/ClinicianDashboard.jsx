@@ -18,7 +18,6 @@ export default function ClinicianDashboard() {
       try {
         const user = await base44.auth.me();
         setCurrentUser(user);
-
         const profiles = await base44.entities.ClinicianProfile.filter({ user_id: user.id });
         if (profiles.length === 0) {
           setAccessDenied(true);
@@ -26,7 +25,6 @@ export default function ClinicianDashboard() {
           return;
         }
         setProfile(profiles[0]);
-
         const allReports = await base44.entities.ClinicianReport.filter(
           { clinician_user_id: user.id },
           "-generated_date",
@@ -44,8 +42,12 @@ export default function ClinicianDashboard() {
 
   const refreshProfile = async () => {
     if (!currentUser) return;
-    const profiles = await base44.entities.ClinicianProfile.filter({ user_id: currentUser.id });
-    if (profiles.length > 0) setProfile(profiles[0]);
+    try {
+      const profiles = await base44.entities.ClinicianProfile.filter({ user_id: currentUser.id });
+      if (profiles.length > 0) setProfile(profiles[0]);
+    } catch {
+      toast.error("Failed to refresh client list");
+    }
   };
 
   const refreshReports = async () => {
@@ -79,7 +81,6 @@ export default function ClinicianDashboard() {
     );
   }
 
-  // Count reports this month
   const now = new Date();
   const reportsThisMonth = reports.filter((r) => {
     const d = new Date(r.generated_date);
@@ -106,7 +107,12 @@ export default function ClinicianDashboard() {
 
       <ClinicianStatsBar clientCount={clientCount} reportsThisMonth={reportsThisMonth} />
 
-      <ClinicianClientsList profile={profile} currentUser={currentUser} onReportGenerated={refreshReports} onProfileRefresh={refreshProfile} />
+      <ClinicianClientsList
+        profile={profile}
+        currentUser={currentUser}
+        onReportGenerated={refreshReports}
+        onProfileRefresh={refreshProfile}
+      />
 
       <ClinicianInviteForm profile={profile} currentUser={currentUser} onInviteSent={() => {}} />
 

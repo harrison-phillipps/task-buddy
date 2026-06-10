@@ -78,11 +78,19 @@ export default function ClinicianClientsList({ profile: initialProfile, currentU
   const [generatingFor, setGeneratingFor] = useState(null);
   const [profile, setProfile] = useState(initialProfile);
   const [viewingClient, setViewingClient] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const clients = profile?.clients || [];
 
   const handleGoalSaved = (updatedClients) => {
     setProfile(prev => ({ ...prev, clients: updatedClients }));
+  };
+
+  const handleRefresh = async () => {
+    if (!onProfileRefresh) return;
+    setRefreshing(true);
+    await onProfileRefresh();
+    setRefreshing(false);
   };
 
   const handleGenerateReport = async (client) => {
@@ -104,7 +112,6 @@ export default function ClinicianClientsList({ profile: initialProfile, currentU
     }
   };
 
-  // Sync if parent profile prop changes
   useEffect(() => {
     setProfile(initialProfile);
   }, [initialProfile]);
@@ -113,11 +120,14 @@ export default function ClinicianClientsList({ profile: initialProfile, currentU
     <section>
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">My Clients</h2>
-        {onProfileRefresh && (
-          <button onClick={onProfileRefresh} className="text-gray-400 hover:text-purple-600 transition-colors">
-            <RefreshCw className="w-4 h-4" />
-          </button>
-        )}
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="text-gray-400 hover:text-purple-600 transition-colors disabled:opacity-50"
+          title="Refresh client list"
+        >
+          <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+        </button>
       </div>
 
       {clients.length === 0 ? (
@@ -167,7 +177,12 @@ export default function ClinicianClientsList({ profile: initialProfile, currentU
               />
 
               <div className="flex gap-2 pt-1">
-                <Button size="sm" variant="outline" className="flex-1 text-xs border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300" onClick={() => setViewingClient(client)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 text-xs border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300"
+                  onClick={() => setViewingClient(client)}
+                >
                   View Progress
                 </Button>
                 <Button
@@ -185,6 +200,7 @@ export default function ClinicianClientsList({ profile: initialProfile, currentU
           ))}
         </div>
       )}
+
       <ClientProgressModal
         client={viewingClient}
         open={!!viewingClient}
