@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { UserPlus, Loader2, CalendarDays, Target, Pencil, Check } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { format } from "date-fns";
+import ClientProgressModal from "./ClientProgressModal";
 
 function ClientGoalEditor({ client, profile, onSaved }) {
   const [editing, setEditing] = useState(false);
@@ -76,6 +77,7 @@ function ClientGoalEditor({ client, profile, onSaved }) {
 export default function ClinicianClientsList({ profile: initialProfile, currentUser, onReportGenerated }) {
   const [generatingFor, setGeneratingFor] = useState(null);
   const [profile, setProfile] = useState(initialProfile);
+  const [viewingClient, setViewingClient] = useState(null);
 
   const clients = profile?.clients || [];
 
@@ -158,7 +160,7 @@ export default function ClinicianClientsList({ profile: initialProfile, currentU
               />
 
               <div className="flex gap-2 pt-1">
-                <Button size="sm" variant="outline" className="flex-1 text-xs border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300">
+                <Button size="sm" variant="outline" className="flex-1 text-xs border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300" onClick={() => setViewingClient(client)}>
                   View Progress
                 </Button>
                 <Button
@@ -176,6 +178,12 @@ export default function ClinicianClientsList({ profile: initialProfile, currentU
           ))}
         </div>
       )}
+      <ClientProgressModal
+        client={viewingClient}
+        open={!!viewingClient}
+        onClose={() => setViewingClient(null)}
+        onGenerateReport={() => viewingClient && handleGenerateReport(viewingClient)}
+      />
     </section>
   );
 }
