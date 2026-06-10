@@ -16,9 +16,9 @@ function StatCard({ label, value }) {
 }
 
 function StatusBadge({ status }) {
-  if (status === "completed") return <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs">Completed</Badge>;
-  if (status === "in_progress") return <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-xs">In progress</Badge>;
-  return <Badge className="bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 text-xs">Not started</Badge>;
+  if (status === "completed") return <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs shrink-0">Completed</Badge>;
+  if (status === "in_progress") return <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-xs shrink-0">In progress</Badge>;
+  return <Badge className="bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 text-xs shrink-0">Not started</Badge>;
 }
 
 export default function ClientProgressModal({ client, open, onClose, onGenerateReport }) {
@@ -74,9 +74,9 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border border-purple-100 dark:border-purple-900/40">
+      <DialogContent className="w-[95vw] max-w-lg max-h-[90vh] overflow-x-hidden overflow-y-auto bg-white dark:bg-gray-900 border border-purple-100 dark:border-purple-900/40">
         <DialogHeader>
-          <DialogTitle className="text-gray-900 dark:text-gray-100 text-base font-semibold">
+          <DialogTitle className="text-gray-900 dark:text-gray-100 text-base font-semibold pr-6">
             {name} — Progress Overview
           </DialogTitle>
         </DialogHeader>
@@ -92,7 +92,7 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
         ) : tasks.length === 0 ? (
           <p className="text-center text-gray-400 dark:text-gray-500 py-12 text-sm">No task data yet for this client.</p>
         ) : (
-          <div className="space-y-5 pt-1">
+          <div className="space-y-5 pt-1 w-full overflow-x-hidden">
 
             <div className="grid grid-cols-2 gap-2">
               <StatCard label="Tasks this month" value={thisMonthInitiated} />
@@ -101,45 +101,44 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
               <StatCard label="Completion rate" value={`${completionRate}%`} />
             </div>
 
-            <div className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm ${
+            <div className={`flex items-start gap-2 rounded-xl px-4 py-3 text-sm w-full ${
               trendEqual
                 ? "bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400"
                 : trendUp
                   ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
                   : "bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400"
             }`}>
-              {trendUp ? <TrendingUp className="w-4 h-4 shrink-0" /> : <Minus className="w-4 h-4 shrink-0" />}
-              <span>
-                This month <strong>{name}</strong> initiated <strong>{thisMonthInitiated}</strong> tasks
-                {" "}compared to <strong>{lastMonthInitiated}</strong> last month.
+              {trendUp ? <TrendingUp className="w-4 h-4 shrink-0 mt-0.5" /> : <Minus className="w-4 h-4 shrink-0 mt-0.5" />}
+              <span className="flex-1 min-w-0 break-words">
+                This month <strong>{name}</strong> initiated <strong>{thisMonthInitiated}</strong> tasks compared to <strong>{lastMonthInitiated}</strong> last month.
               </span>
             </div>
 
-            <div>
+            <div className="w-full">
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Best time of day</p>
               <div className="space-y-2">
                 {[["Morning", buckets.morning], ["Afternoon", buckets.afternoon], ["Evening", buckets.evening]].map(([label, count]) => (
-                  <div key={label} className="flex items-center gap-3">
-                    <span className="w-20 text-xs text-gray-500 dark:text-gray-400 shrink-0">{label}</span>
-                    <div className="flex-1 bg-purple-100 dark:bg-purple-900/20 rounded-full h-2 overflow-hidden">
+                  <div key={label} className="flex items-center gap-2">
+                    <span className="w-16 text-xs text-gray-500 dark:text-gray-400 shrink-0">{label}</span>
+                    <div className="flex-1 bg-purple-100 dark:bg-purple-900/20 rounded-full h-2 overflow-hidden min-w-0">
                       <div
                         className="h-full bg-purple-500 dark:bg-purple-400 rounded-full transition-all"
                         style={{ width: `${Math.round((count / maxBucket) * 100)}%` }}
                       />
                     </div>
-                    <span className="w-5 text-right text-xs text-gray-400">{count}</span>
+                    <span className="w-4 text-right text-xs text-gray-400 shrink-0">{count}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div>
+            <div className="w-full">
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Recent Tasks</p>
               <div className="space-y-1.5">
                 {recentTasks.map(task => (
-                  <div key={task.id} className="flex items-center justify-between gap-2 py-1.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
-                    <span className="text-sm text-gray-700 dark:text-gray-300 truncate flex-1">{task.title}</span>
-                    <span className="text-xs text-gray-400 shrink-0">{format(new Date(task.created_date), "d MMM")}</span>
+                  <div key={task.id} className="flex items-center gap-2 py-1.5 border-b border-gray-100 dark:border-gray-800 last:border-0 w-full min-w-0">
+                    <span className="text-sm text-gray-700 dark:text-gray-300 truncate flex-1 min-w-0">{task.title}</span>
+                    <span className="text-xs text-gray-400 shrink-0 ml-1">{format(new Date(task.created_date), "d MMM")}</span>
                     <StatusBadge status={task.status} />
                   </div>
                 ))}
