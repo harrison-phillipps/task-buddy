@@ -97,7 +97,7 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
           <div className="space-y-5 pt-1">
 
             {/* Section 1 — Snapshot */}
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <StatCard label="Tasks this month" value={thisMonthInitiated} />
               <StatCard label="Completed" value={thisMonthCompleted} />
               <StatCard label="Streak" value={`${currentStreak}d`} />
