@@ -37,6 +37,9 @@
           "client_display_name": {
             "type": "string"
           },
+          "client_email": {
+            "type": "string"
+          },
           "linked_date": {
             "type": "string",
             "format": "date"
