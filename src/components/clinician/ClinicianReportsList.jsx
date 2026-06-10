@@ -66,7 +66,7 @@ function exportReportPDF(report) {
     doc.setFontSize(10);
     doc.setTextColor(...grey);
     doc.setFont(undefined, "normal");
-    doc.text(`${label}`, margin, y);
+    doc.text(`${label} `, margin, y);
     doc.setTextColor(...dark);
     doc.setFont(undefined, "bold");
     const labelWidth = doc.getTextWidth(`${label} `);
@@ -103,7 +103,7 @@ function exportReportPDF(report) {
     doc.setFontSize(10);
     doc.setTextColor(...grey);
     doc.setFont(undefined, "normal");
-    doc.text(`${label}`, margin, y);
+    doc.text(`${label} `, margin, y);
     doc.setTextColor(...dark);
     const lw = doc.getTextWidth(`${label} `);
     doc.text(String(value ?? "—"), margin + lw, y);
