@@ -314,7 +314,7 @@ export default function AdaptiveOnboardingFlow({
                           <Label htmlFor="clinicianOrg">Organisation name</Label>
                           <Input
                             id="clinicianOrg"
-                            placeholder="e.g. Baptist Care, Generation Youth"
+                            placeholder="Your organisation name"
                             value={responses.clinicianOrg || ""}
                             onChange={(e) => updateResponse("clinicianOrg", e.target.value)}
                           />
