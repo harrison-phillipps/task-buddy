@@ -1,0 +1,61 @@
+{
+  "name": "ClinicianReport",
+  "type": "object",
+  "properties": {
+    "clinician_user_id": {
+      "type": "string",
+      "description": "User ID of the clinician who generated the report"
+    },
+    "client_user_id": {
+      "type": "string",
+      "description": "User ID of the client this report is about"
+    },
+    "client_display_name": {
+      "type": "string"
+    },
+    "report_period_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "report_period_end": {
+      "type": "string",
+      "format": "date"
+    },
+    "tasks_initiated": {
+      "type": "number"
+    },
+    "tasks_completed": {
+      "type": "number"
+    },
+    "completion_rate": {
+      "type": "number",
+      "description": "Percentage"
+    },
+    "current_streak": {
+      "type": "number"
+    },
+    "best_time_of_day": {
+      "type": "string"
+    },
+    "goal_description": {
+      "type": "string",
+      "description": "The NDIS or support goal this links to"
+    },
+    "narrative_summary": {
+      "type": "string",
+      "description": "AI-generated plain English paragraph"
+    },
+    "support_type": {
+      "type": "string",
+      "description": "e.g. mentor support, OT support, assistive technology"
+    },
+    "generated_date": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "clinician_user_id",
+    "client_user_id"
+  ]
+}

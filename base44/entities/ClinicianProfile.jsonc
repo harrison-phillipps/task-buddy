@@ -1,0 +1,61 @@
+{
+  "name": "ClinicianProfile",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Links to the Base44 user"
+    },
+    "organisation_name": {
+      "type": "string",
+      "description": "e.g. Baptist Care, Generation Youth"
+    },
+    "role_type": {
+      "type": "string",
+      "enum": [
+        "occupational_therapist",
+        "developmental_educator",
+        "disability_support_worker",
+        "youth_mentor",
+        "other"
+      ]
+    },
+    "ndis_provider": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether they are a registered NDIS provider"
+    },
+    "clients": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "properties": {
+          "client_user_id": {
+            "type": "string"
+          },
+          "client_display_name": {
+            "type": "string"
+          },
+          "linked_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "goal_description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "user_id"
+  ]
+}
