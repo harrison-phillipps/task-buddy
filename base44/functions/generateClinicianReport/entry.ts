@@ -22,6 +22,7 @@ Deno.serve(async (req) => {
 
     const {
       client_user_id,
+      client_name = "",
       period = "monthly",
       goal_description = "",
       support_type = "assistive technology and task support",
@@ -103,6 +104,7 @@ Deno.serve(async (req) => {
             content: `You are writing a professional progress report for a disability support or allied health context. Write a single paragraph (3-4 sentences) in plain, professional English. Do not use clinical jargon. The paragraph should be suitable for inclusion in an NDIS plan review or progress note.
 
 Use this data:
+- Client name: ${client_name || "the participant"}
 - Tasks initiated: ${tasks_initiated}
 - Tasks completed: ${tasks_completed}
 - Completion rate: ${completion_rate}%
@@ -112,7 +114,7 @@ Use this data:
 - Support type: ${support_type}
 - Period: ${periodLabel}
 
-Start with "Over the past ${periodLabel}," and end with a sentence about what this indicates for their goal progress. Return only the paragraph, no preamble.`,
+Use the client's name throughout the paragraph instead of "[participant name]" or generic pronouns. Start with "Over the past ${periodLabel}," and end with a sentence about what this indicates for their goal progress. Return only the paragraph, no preamble.`,
           },
         ],
       }),

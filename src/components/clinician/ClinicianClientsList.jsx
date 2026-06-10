@@ -88,6 +88,7 @@ export default function ClinicianClientsList({ profile: initialProfile, currentU
     try {
       await base44.functions.invoke("generateClinicianReport", {
         client_user_id: client.client_user_id,
+        client_name: client.client_display_name || "the participant",
         period: "monthly",
         goal_description: client.goal_description || "",
         support_type: "assistive technology and task support",
