@@ -74,8 +74,7 @@ export default function AIBreakdownModal({ task, open, onOpenChange, onSave, low
     setIsGenerating(true);
     setFromCache(false);
     try {
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are a task initiation specialist who understands executive dysfunction at a neurological level. Your job is to take ONE task a user has been avoiding and break it into micro-steps that are so specific and so small that starting feels physically impossible to resist.
+      const prompt = `You are a task initiation specialist who understands executive dysfunction at a neurological level. Your job is to take ONE task a user has been avoiding and break it into micro-steps that are so specific and so small that starting feels physically impossible to resist.
 
 CORE PRINCIPLE:
 The user's brain is not lazy. It cannot identify a discrete first physical action from a vague task. Your job is to remove every ambiguous decision between them and starting.
@@ -105,31 +104,23 @@ Bad: "You've got this!" Good: "Visible progress activates momentum"
 - Never produce a step containing a hidden decision
 - Never add motivational commentary inside the step title
 
-Return JSON with: subtasks (array of {title, estimated_minutes, order, is_warmup: boolean, completed: false, micro_label: string}), encouragement (1 factual sentence about why small steps work neurologically), tips (array of 2-3 practical strings).`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            subtasks: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  title: { type: "string" },
-                  estimated_minutes: { type: "number" },
-                  order: { type: "number" },
-                  is_warmup: { type: "boolean" },
-                  completed: { type: "boolean" }
-                }
-              }
-            },
-            encouragement: { type: "string" },
-            tips: {
-              type: "array",
-              items: { type: "string" }
-            }
-          }
-        }
+Return JSON only (no markdown, no commentary) with: subtasks (array of {title, estimated_minutes, order, is_warmup: boolean, completed: false, micro_label: string}), encouragement (1 factual sentence about why small steps work neurologically), tips (array of 2-3 practical strings).`;
+
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: prompt }]
+        })
       });
+      const responseData = await response.json();
+      const rawText = responseData.content[0].text.replace(/```json|```/g, '').trim();
+      const result = JSON.parse(rawText);
 
       const data = {
         subtasks: result.subtasks || [],
