@@ -64,19 +64,22 @@ Based on the task details and user's historical pace, provide:
 Be realistic and use the user's history to calibrate. If no history exists, use general productivity research.
 For difficulty: easy tasks ~ 15-45 min, medium ~ 30-90 min, hard ~ 60-180 min.`;
 
-        const result = await base44.integrations.Core.InvokeLLM({
-            prompt,
-            response_json_schema: {
-                type: "object",
-                properties: {
-                    total_estimate_minutes: { type: "number" },
-                    session_duration_minutes: { type: "number" },
-                    sessions_needed: { type: "number" },
-                    confidence: { type: "string", enum: ["low", "medium", "high"] },
-                    reasoning: { type: "string" },
-                }
-            }
+        const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-api-key": Deno.env.get("ANTHROPIC_API_KEY"),
+                "anthropic-version": "2023-06-01"
+            },
+            body: JSON.stringify({
+                model: "claude-haiku-4-5-20251001",
+                max_tokens: 512,
+                messages: [{ role: "user", content: prompt + "\n\nRespond with JSON only, no markdown." }]
+            })
         });
+        const anthropicData = await anthropicRes.json();
+        const rawText = anthropicData.content[0].text.replace(/```json|```/g, '').trim();
+        const result = JSON.parse(rawText);
 
         return Response.json({ success: true, estimate: result });
 
