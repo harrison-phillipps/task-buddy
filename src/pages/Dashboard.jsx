@@ -15,6 +15,7 @@ import SmartTaskRecommender from "../components/ai/SmartTaskRecommender";
 import EnergyTaskSuggester from "../components/dashboard/EnergyTaskSuggester";
 import { hasFeatureAccess } from "../components/subscription/FeatureGate";
 import QuickStartFocus from "../components/dashboard/QuickStartFocus";
+import SuggestedTaskChips from "../components/dashboard/SuggestedTaskChips";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -149,7 +150,13 @@ export default function Dashboard() {
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <QuickStartFocus tasks={tasks} />
           {tasks.filter(t => t.status !== 'completed').length === 0 && (
-            <QuickAddTask currentUser={currentUser} />
+            <div className="space-y-3 mt-3">
+              <SuggestedTaskChips
+                currentUser={currentUser}
+                onTaskAdded={() => queryClient.invalidateQueries({ queryKey: ['tasks'] })}
+              />
+              <QuickAddTask currentUser={currentUser} />
+            </div>
           )}
         </motion.div>
 

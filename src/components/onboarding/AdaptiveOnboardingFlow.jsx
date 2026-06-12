@@ -45,6 +45,12 @@ const WORK_STYLE_OPTIONS = [
   { id: "flexible", label: "Flexible and adaptive", emoji: "🔄" }
 ];
 
+const PROFILE_TYPES = [
+  { value: "child", label: "Child", ages: "Ages 5–12", emoji: "🌟" },
+  { value: "teen", label: "Teen", ages: "Ages 13–17", emoji: "⚡" },
+  { value: "adult", label: "Adult", ages: "18+", emoji: "🙌" },
+];
+
 export default function AdaptiveOnboardingFlow({ 
   currentUser, 
   onComplete 
@@ -54,22 +60,36 @@ export default function AdaptiveOnboardingFlow({
   const [aiSuggestions, setAiSuggestions] = useState(null);
   const [isCreatingProfile, setIsCreatingProfile] = useState(false);
 
-  const totalSteps = 7;
-  const progress = (step / totalSteps) * 100;
+  // Steps: 1=name, 2=userType, 3=profileType(self only), 4=goals, 5=challenge, 6=workStyle, 7=calendar, 8=summary
+  const totalSteps = responses.userType === "clinician" ? 7 : 8;
+  // Compute effective step number accounting for skipped profileType step for clinicians
+  const effectiveStep = responses.userType === "clinician" && step >= 3 ? step - 1 : step;
+  const progress = (effectiveStep / totalSteps) * 100;
   const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
   const [calendarSynced, setCalendarSynced] = useState(null); // null | "google" | "outlook" | "skipped"
   const [calendarSyncError, setCalendarSyncError] = useState(null);
 
+  const getNextStep = (s) => {
+    if (s === 2 && responses.userType === "clinician") return 4; // skip profileType for clinicians
+    return s + 1;
+  };
+
+  const getPrevStep = (s) => {
+    if (s === 4 && responses.userType === "clinician") return 2; // skip back over profileType for clinicians
+    return s - 1;
+  };
+
   const handleNext = () => {
-    if (step < totalSteps) {
-      setStep(step + 1);
-    } else {
+    const next = getNextStep(step);
+    if (next > 8) {
       completeOnboarding();
+    } else {
+      setStep(next);
     }
   };
 
   const handleBack = () => {
-    if (step > 1) setStep(step - 1);
+    if (step > 1) setStep(getPrevStep(step));
   };
 
   const updateResponse = (key, value) => {
@@ -119,6 +139,7 @@ export default function AdaptiveOnboardingFlow({
       await base44.auth.updateMe({
         display_name: responses.displayName,
         onboarding_completed: true,
+        profile_type: responses.profileType || null,
         onboarding_data: {
           goals: responses.primaryGoals,
           challenges: responses.mainChallenge,
@@ -176,11 +197,12 @@ export default function AdaptiveOnboardingFlow({
         }
         return true;
       }
-      case 3: return responses.primaryGoals?.length > 0;
-      case 4: return responses.mainChallenge;
-      case 5: return responses.workStyle;
-      case 6: return true; // calendar step is optional
-      case 7: return true;
+      case 3: return !!responses.profileType; // profileType (self only)
+      case 4: return responses.primaryGoals?.length > 0;
+      case 5: return responses.mainChallenge;
+      case 6: return responses.workStyle;
+      case 7: return true; // calendar step is optional
+      case 8: return true; // summary
       default: return false;
     }
   };
@@ -202,7 +224,7 @@ export default function AdaptiveOnboardingFlow({
           </p>
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300">
-              <span>Step {step} of {totalSteps}</span>
+              <span>Step {effectiveStep} of {totalSteps}</span>
               <span>{Math.round(progress)}%</span>
             </div>
             <Progress value={progress} className="h-2" />
@@ -210,7 +232,7 @@ export default function AdaptiveOnboardingFlow({
         </motion.div>
 
         {/* AI Assistant */}
-        {step >= 4 && step < 7 && (
+        {step >= 4 && step < 8 && (
           <AIOnboardingAssistant
             userResponses={responses}
             currentStep={step}
@@ -232,11 +254,12 @@ export default function AdaptiveOnboardingFlow({
                 <CardTitle className="flex items-center gap-2">
                   {step === 1 && "👋 What should we call you?"}
                   {step === 2 && "🙋 How are you using TaskBuddy?"}
-                  {step === 3 && "🎯 What are your main goals?"}
-                  {step === 4 && "💭 What's your biggest challenge?"}
-                  {step === 5 && "⚡ How do you prefer to work?"}
-                  {step === 6 && "📅 Sync your calendar (optional)"}
-                  {step === 7 && "✨ Your Personalized Setup"}
+                  {step === 3 && responses.userType === "self" && "🎂 Who is this for?"}
+                  {step === 4 && "🎯 What are your main goals?"}
+                  {step === 5 && "💭 What's your biggest challenge?"}
+                  {step === 6 && "⚡ How do you prefer to work?"}
+                  {step === 7 && "📅 Sync your calendar (optional)"}
+                  {step === 8 && "✨ Your Personalized Setup"}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -340,10 +363,35 @@ export default function AdaptiveOnboardingFlow({
                   </div>
                 )}
 
-                {/* Step 3: Goals */}
-                {step === 3 && (
+                {/* Step 3: Profile Type (self users only) */}
+                {step === 3 && responses.userType === "self" && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">This helps us tailor the language and task suggestions.</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      {PROFILE_TYPES.map(pt => (
+                        <div
+                          key={pt.value}
+                          onClick={() => updateResponse("profileType", pt.value)}
+                          className={`p-4 rounded-xl border-2 cursor-pointer transition-all text-center ${
+                            responses.profileType === pt.value
+                              ? "border-purple-500 bg-purple-50 dark:bg-purple-900/30"
+                              : "border-gray-200 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-500"
+                          }`}
+                        >
+                          <div className="text-3xl mb-2">{pt.emoji}</div>
+                          <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{pt.label}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{pt.ages}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 4: Goals */}
+                {step === 4 && (
                   <div className="space-y-4">
                     <p className="text-sm text-gray-600 dark:text-gray-400">Select all that apply:</p>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {GOAL_OPTIONS.map(option => (
                         <div
@@ -365,8 +413,8 @@ export default function AdaptiveOnboardingFlow({
                   </div>
                 )}
 
-                {/* Step 4: Challenge */}
-                {step === 4 && (
+                {/* Step 5: Challenge */}
+                {step === 5 && (
                   <div className="space-y-4">
                     <p className="text-sm text-gray-600 dark:text-gray-400">Choose one that resonates most:</p>
                     <div className="space-y-2">
@@ -390,8 +438,8 @@ export default function AdaptiveOnboardingFlow({
                   </div>
                 )}
 
-                {/* Step 5: Work Style */}
-                {step === 5 && (
+                {/* Step 6: Work Style */}
+                {step === 6 && (
                   <div className="space-y-4">
                     <p className="text-sm text-gray-600 dark:text-gray-400">How do you work best?</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -415,8 +463,8 @@ export default function AdaptiveOnboardingFlow({
                   </div>
                 )}
 
-                {/* Step 6: Calendar Sync */}
-                {step === 6 && (
+                {/* Step 7: Calendar Sync */}
+                {step === 7 && (
                   <div className="space-y-4">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Connect your calendar so the AI Smart Plan can schedule tasks around your existing commitments. You can skip this and connect later in Settings.
@@ -483,8 +531,8 @@ export default function AdaptiveOnboardingFlow({
                   </div>
                 )}
 
-                {/* Step 7: Summary */}
-                {step === 7 && aiSuggestions && (
+                {/* Step 8: Summary */}
+                {step === 8 && aiSuggestions && (
                   <div className="space-y-4">
                     {/* Recommended Companion */}
                     {aiSuggestions.companion_recommendation && (
@@ -569,7 +617,7 @@ export default function AdaptiveOnboardingFlow({
                 <Sparkles className="w-4 h-4 mr-2 animate-pulse" />
                 Creating your experience...
               </>
-            ) : step === totalSteps ? (
+            ) : step === 8 || (responses.userType === "clinician" && step === 7) ? (
               <>
                 <CheckCircle className="w-4 h-4 mr-2" />
                 Let's Go!

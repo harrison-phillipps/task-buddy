@@ -79,6 +79,17 @@ export default function TaskBreakdown() {
     },
   });
 
+  const getProfileToneInstructions = () => {
+    const profileType = currentUser?.profile_type || "adult";
+    if (profileType === "child") {
+      return `TONE: This is for a child aged 5-12. Use very simple, warm, encouraging language. Keep steps SHORT (max 1 sentence each). Use friendly words like "Let's", "First", "Then", "All done!". Avoid adult vocabulary. Make steps feel like a fun game or adventure. Use emojis in step titles. Max 4-5 steps total.`;
+    }
+    if (profileType === "teen") {
+      return `TONE: This is for a teenager aged 13-17. Use casual, direct language. Do NOT be patronising or preachy. No "you've got this!" energy. Be straightforward and practical. No unnecessary explanation. Treat them like a capable person who just needs clear steps. Max 5-7 steps.`;
+    }
+    return `TONE: Standard adult tone. Clear, specific, non-patronising. Focus on removing ambiguity and reducing decision load.`;
+  };
+
   const handleBreakdown = async () => {
     if (!taskInput.title.trim()) return;
 
@@ -89,6 +100,8 @@ export default function TaskBreakdown() {
 
 CORE PRINCIPLE:
 The user's brain is not lazy. It cannot identify a discrete first physical action from a vague task. Your job is to remove every ambiguous decision between them and starting.
+
+${getProfileToneInstructions()}
 
 INPUTS:
 - Task: "${taskInput.title}"
@@ -113,25 +126,18 @@ High energy: Steps up to 10 minutes, minor decisions allowed.
 3. STEP 1 IS THE MOST IMPORTANT.
 Immediate visible progress. If they do nothing else, completing step 1 is a win. Must feel achievable in the worst mental state.
 
-4. EACH STEP GETS A MICRO_LABEL (max 5 words).
-Explains WHY this step matters neurologically or practically.
-Not cheerleading. Actual reason.
-
-Bad micro_labels: "You've got this!" "Keep going!" "Almost there!"
-Good micro_labels: "Visible progress activates momentum" "Removing clutter reduces decision load" "The hardest part is starting — this is it"
-
-5. MOOD ADJUSTMENTS:
+4. MOOD ADJUSTMENTS:
 - tired/low energy: first step especially minimal, max 2 min
 - anxious: second step can include a grounding physical action
 - overwhelmed: keep all steps very small, max 3 steps initially
 - unmotivated: early steps especially tangible and visible
 - distracted: first step removes the primary distraction source
 
-6. NEVER DO THESE THINGS:
+5. NEVER DO THESE THINGS:
 - Never use the word "just"
 - Never produce a step containing a hidden decision
 - Never produce steps that only make sense if the previous step was completed perfectly
-- Never add motivational commentary inside the step title
+- Never add motivational commentary inside the step title (unless child profile)
 
 Total steps should be 4-8. Return JSON only.`,
         response_json_schema: {

@@ -18,6 +18,15 @@
     },
     "calendar_connected": {
       "type": "boolean"
+    },
+    "profile_type": {
+      "type": "string",
+      "enum": [
+        "child",
+        "teen",
+        "adult"
+      ],
+      "description": "Age-based profile type for personalisation"
     }
   },
   "required": [
