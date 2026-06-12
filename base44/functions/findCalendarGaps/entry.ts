@@ -158,8 +158,7 @@ Deno.serve(async (req) => {
     let suggestions = [];
     if (gaps.length > 0 && activeTasks.length > 0) {
       try {
-        const aiResult = await base44.integrations.Core.InvokeLLM({
-          prompt: `You are a productivity scheduler. Match tasks to calendar free slots for ${targetDate}.
+        const aiPrompt = `You are a productivity scheduler. Match tasks to calendar free slots for ${targetDate}.
 
 FREE GAPS (indexed):
 ${gaps.map((g, i) => `[${i}] ${g.start_time}–${g.end_time} (${g.duration_minutes} min free)`).join('\n')}
@@ -175,24 +174,24 @@ Rules:
 - Provide up to 3 task suggestions per gap (best fit first)
 - Only suggest tasks whose estimated_minutes <= gap duration_minutes
 
-Return gap_index matching the list above.`,
-          response_json_schema: {
-            type: 'object',
-            properties: {
-              suggestions: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    gap_index: { type: 'number' },
-                    task_ids: { type: 'array', items: { type: 'string' } },
-                    reasoning: { type: 'string' },
-                  },
-                },
-              },
-            },
+Return gap_index matching the list above. Return JSON only with no markdown.`;
+
+        const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": Deno.env.get("ANTHROPIC_API_KEY"),
+            "anthropic-version": "2023-06-01",
           },
+          body: JSON.stringify({
+            model: "claude-haiku-4-5-20251001",
+            max_tokens: 1000,
+            messages: [{ role: "user", content: aiPrompt }],
+          }),
         });
+        const aiData = await aiResponse.json();
+        const rawText = aiData.content[0].text.replace(/```json|```/g, '').trim();
+        const aiResult = JSON.parse(rawText);
         suggestions = aiResult.suggestions || [];
         console.log(`AI generated ${suggestions.length} gap suggestions`);
       } catch (e) {
