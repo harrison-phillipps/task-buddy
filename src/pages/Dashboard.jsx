@@ -4,7 +4,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import PullToRefresh from "../components/PullToRefresh";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles } from "lucide-react";
+import { Sparkles, ArrowLeftRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import VirtualCompanion from "../components/VirtualCompanion";
 import { motion } from "framer-motion";
 import { getPersonalizedMessage } from "@/components/companionUtils";
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const [currentUser, setCurrentUser] = useState(null);
   const [userProgress, setUserProgress] = useState(null);
+  const [isClinician, setIsClinician] = useState(false);
 
 
   const { data: tasks = [] } = useQuery({
@@ -49,6 +51,9 @@ export default function Dashboard() {
         if (!user.display_name) { navigate(createPageUrl("Onboarding")); return; }
         if (!user.companion_type) { navigate(createPageUrl("CharacterSelection")); return; }
         
+        const clinicianProfiles = await base44.entities.ClinicianProfile.filter({ user_id: user.id });
+        setIsClinician(clinicianProfiles.length > 0);
+
         const progressList = await base44.entities.UserProgress.filter({ user_id: user.id });
 
         if (progressList.length > 0) {
@@ -113,10 +118,25 @@ export default function Dashboard() {
 
         {/* ── 1. HERO HEADER ─────────────────────────────────── */}
         <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="pt-4 pb-1">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {getGreeting()}, {currentUser.display_name?.split(" ")[0] || "there"} 👋
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">What's been sitting on your list?</p>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {getGreeting()}, {currentUser.display_name?.split(" ")[0] || "there"} 👋
+              </h1>
+              <p className="text-gray-500 dark:text-gray-400 mt-1">What's been sitting on your list?</p>
+            </div>
+            {isClinician && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(createPageUrl("ClinicianDashboard"))}
+                className="shrink-0 text-xs border-teal-200 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/20"
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5 mr-1.5" />
+                Clinician View
+              </Button>
+            )}
+          </div>
         </motion.div>
 
         {/* ── 2. COMPANION + LEVEL BADGE (greeting) ──────────── */}

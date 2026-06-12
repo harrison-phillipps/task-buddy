@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { ArrowLeftRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import ClinicianStatsBar from "@/components/clinician/ClinicianStatsBar";
 import ClinicianClientsList from "@/components/clinician/ClinicianClientsList";
 import ClinicianInviteForm from "@/components/clinician/ClinicianInviteForm";
 import ClinicianReportsList from "@/components/clinician/ClinicianReportsList";
 
 export default function ClinicianDashboard() {
+  const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [reports, setReports] = useState([]);
@@ -91,18 +96,29 @@ export default function ClinicianDashboard() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-8">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
-          Clinician Dashboard
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-          {profile?.organisation_name || "Your practice"} · {profile?.role_type?.replace(/_/g, " ") || "Clinician"}
-          {profile?.ndis_provider && (
-            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">
-              NDIS Provider
-            </span>
-          )}
-        </p>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+            Clinician Dashboard
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+            {profile?.organisation_name || "Your practice"} · {profile?.role_type?.replace(/_/g, " ") || "Clinician"}
+            {profile?.ndis_provider && (
+              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">
+                NDIS Provider
+              </span>
+            )}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate(createPageUrl("Dashboard"))}
+          className="shrink-0 text-xs border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/20"
+        >
+          <ArrowLeftRight className="w-3.5 h-3.5 mr-1.5" />
+          My Tasks
+        </Button>
       </div>
 
       <ClinicianStatsBar clientCount={clientCount} reportsThisMonth={reportsThisMonth} />
