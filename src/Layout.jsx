@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, ListTodo, Play, LayoutDashboard, User, RefreshCw, Brain, Award, MessageSquare, Calendar, Users, Target, Settings, PanelLeft, ChevronDown, ChevronUp, Maximize2, Mic, CalendarDays, Zap, ArrowLeft, Flame } from "lucide-react";
+import { Sparkles, ListTodo, Play, LayoutDashboard, User, RefreshCw, Brain, Award, MessageSquare, Calendar, Users, Target, Settings, PanelLeft, ChevronDown, ChevronUp, Maximize2, Mic, CalendarDays, Zap, ArrowLeft, Flame, LogOut } from "lucide-react";
 import MobileTabBar from "@/components/MobileTabBar";
 import { base44 } from "@/api/base44Client";
 import {
@@ -288,6 +288,13 @@ function LayoutContent({ children, currentPageName }) {
                 <p className="text-xs text-gray-500 dark:text-gray-400">Doing great today!</p>
               </div>
             </div>
+            <button
+              onClick={() => base44.auth.logout("/")}
+              className="flex items-center gap-2 px-2 py-2 w-full text-red-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors text-sm mt-1"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </button>
           </SidebarFooter>
         </Sidebar>
 

@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { hasFeatureAccess, UpgradePrompt } from "@/components/subscription/FeatureGate";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
-import { Bell, CreditCard, Calendar, Sparkles, UserX, Bot, Link2 } from "lucide-react";
+import { Bell, CreditCard, Calendar, Sparkles, UserX, Bot, Link2, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import NotificationSettings from "./NotificationSettings";
 import Subscription from "./Subscription";
@@ -126,7 +127,22 @@ export default function Settings() {
             </TabsContent>
 
             <TabsContent value="account">
-              <div className="space-y-6">
+             <div className="space-y-6">
+               {/* Sign Out */}
+               <div className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                 <div>
+                   <p className="font-semibold text-gray-900 dark:text-gray-100">Sign out</p>
+                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">You'll need to sign in again to access your account.</p>
+                 </div>
+                 <Button
+                   variant="outline"
+                   onClick={() => base44.auth.logout("/")}
+                   className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950/30 shrink-0"
+                 >
+                   <LogOut className="w-4 h-4 mr-2" />
+                   Sign Out
+                 </Button>
+               </div>
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-sm text-blue-700 dark:text-blue-300">
                   <strong>Account Management</strong> — manage your personal account data and deletion options.
                 </div>
