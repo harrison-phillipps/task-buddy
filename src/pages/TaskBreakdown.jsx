@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sparkles, Loader2, CheckCircle, Clock, Users } from "lucide-react";
 import EditableStepList from "@/components/tasks/EditableStepList";
+import ExportEasyStepsButton from "@/components/tasks/ExportEasySteps";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -448,7 +449,13 @@ Total steps should be 4-8. Return JSON only.`,
                     onChange={setEditingSubtasks}
                   />
 
-                  <div className="flex gap-3 pt-4">
+                  <div className="flex flex-col gap-3 pt-4">
+                  <ExportEasyStepsButton
+                    taskTitle={taskInput.title}
+                    steps={editingSubtasks || []}
+                    className="w-full"
+                  />
+                  <div className="flex gap-3">
                     <Button
                       variant="outline"
                       onClick={() => {
@@ -476,6 +483,7 @@ Total steps should be 4-8. Return JSON only.`,
                         </>
                       )}
                     </Button>
+                  </div>
                   </div>
                 </CardContent>
               </Card>

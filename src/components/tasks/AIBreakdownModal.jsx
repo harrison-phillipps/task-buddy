@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, RefreshCw, Edit2, Trash2, Check, Clock, Loader2, BatteryLow, DatabaseZap } from "lucide-react";
+import ExportEasyStepsButton from "./ExportEasySteps";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
@@ -338,6 +339,7 @@ Return JSON with: subtasks (array of {title, estimated_minutes, order, is_warmup
                       Loaded from cache · <button className="underline hover:text-purple-600" onClick={() => handleGenerate(true)}>Regenerate fresh</button>
                     </div>
                   )}
+                  <ExportEasyStepsButton taskTitle={task?.title || ""} steps={subtasks} className="w-full" />
                   <div className="flex gap-2">
                   <Button
                     variant="outline"
