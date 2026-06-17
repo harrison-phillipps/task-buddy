@@ -3,6 +3,18 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    // Allow scheduler context (no token) or admin users only
+    try {
+      const user = await base44.auth.me();
+      if (user !== null && user?.role !== 'admin') {
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } catch (authErr) {
+      // No user token present (scheduler context) — safe to proceed
+      console.log('[dailyTaskDigest] No user context, running as scheduler');
+    }
+
     const client = base44.asServiceRole;
 
     const now = new Date();

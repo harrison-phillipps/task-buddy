@@ -35,6 +35,20 @@ Deno.serve(async (req) => {
       return Response.json({ error: "period must be monthly or quarterly" }, { status: 400 });
     }
 
+    // Validate that client_user_id belongs to this clinician's client list
+    const clinicianProfiles = await base44.entities.ClinicianProfile.filter({ user_id: user.id });
+    if (clinicianProfiles.length === 0) {
+      return Response.json({ error: "Clinician profile not found" }, { status: 403 });
+    }
+    const clinicianProfile = clinicianProfiles[0];
+    const isAuthorizedClient = (clinicianProfile.clients || []).some(
+      (c) => c.client_user_id === client_user_id
+    );
+    if (!isAuthorizedClient) {
+      console.warn(`[generateClinicianReport] Unauthorized: clinician ${user.id} attempted to access client ${client_user_id}`);
+      return Response.json({ error: "Forbidden: client not linked to your profile" }, { status: 403 });
+    }
+
     // Calculate date range
     const now = new Date();
     const daysBack = period === "quarterly" ? 90 : 30;
