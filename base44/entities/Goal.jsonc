@@ -81,6 +81,15 @@
       "type": "boolean",
       "default": false,
       "description": "Whether this goal is synced to calendar"
+    },
+    "added_by_clinician": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this goal was added by a clinician on behalf of the client"
+    },
+    "added_by_clinician_name": {
+      "type": "string",
+      "description": "Display name of the clinician who added this goal"
     }
   },
   "required": [

@@ -217,15 +217,16 @@ export default function Tasks() {
 
       let fetched = [];
       if (selectedTeamId === "personal") {
-        // Personal tasks created by this user + team tasks assigned to this user
-        const [personalTasks, assignedTasks] = await Promise.all([
+        // Personal tasks created by this user + team tasks assigned + clinician-added tasks
+        const [personalTasks, assignedTasks, clinicianAddedTasks] = await Promise.all([
           base44.entities.Task.filter({ created_by: currentUser.email, team_id: null }, '-created_date'),
           base44.entities.Task.filter({ assigned_to: currentUser.id }, '-created_date'),
+          base44.entities.Task.filter({ created_by_id: currentUser.id, added_by_clinician: true }, '-created_date'),
         ]);
         // Also grab tasks where user is in assigned_to_users for their teams
         const userTeamIds = teams.map(t => t.id);
         const seen = new Set();
-        fetched = [...personalTasks, ...assignedTasks].filter(t => {
+        fetched = [...personalTasks, ...assignedTasks, ...clinicianAddedTasks].filter(t => {
           // Exclude team tasks that don't belong to the user's own teams
           if (t.team_id && !userTeamIds.includes(t.team_id)) return false;
           if (seen.has(t.id)) return false;

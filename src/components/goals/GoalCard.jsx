@@ -68,6 +68,11 @@ export default function GoalCard({ goal, tasks = [], onUpdate, onDelete, onBreak
                 <Target className="w-5 h-5 text-purple-600" />
                 {goal.title}
               </CardTitle>
+              {goal.added_by_clinician && (
+                <p className="text-xs text-blue-600 mt-1">
+                  🩺 Added by {goal.added_by_clinician_name || "your clinician"}
+                </p>
+              )}
               {goal.description && (
                 <p className="text-sm text-gray-600 mt-2">{goal.description}</p>
               )}

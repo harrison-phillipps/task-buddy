@@ -46,7 +46,19 @@ export default function GoalsPage() {
 
   const { data: goals = [], isLoading } = useQuery({
     queryKey: ['goals', currentUser?.email],
-    queryFn: () => currentUser ? base44.entities.Goal.filter({ created_by: currentUser.email }, '-created_date') : [],
+    queryFn: async () => {
+      if (!currentUser) return [];
+      const [ownGoals, clinicianGoals] = await Promise.all([
+        base44.entities.Goal.filter({ created_by: currentUser.email }, '-created_date'),
+        base44.entities.Goal.filter({ created_by_id: currentUser.id, added_by_clinician: true }, '-created_date'),
+      ]);
+      const seen = new Set();
+      return [...ownGoals, ...clinicianGoals].filter(g => {
+        if (seen.has(g.id)) return false;
+        seen.add(g.id);
+        return true;
+      });
+    },
     enabled: !!currentUser,
   });
 

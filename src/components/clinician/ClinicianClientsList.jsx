@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { UserPlus, Loader2, CalendarDays, Target, Pencil, Check, RefreshCw } from "lucide-react";
+import { UserPlus, Loader2, CalendarDays, Target, Pencil, Check, RefreshCw, ListTodo, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { format } from "date-fns";
 import ClientProgressModal from "./ClientProgressModal";
+import ClinicianAddItemModal from "./ClinicianAddItemModal";
 
 function ClientGoalEditor({ client, profile, onSaved }) {
   const [editing, setEditing] = useState(false);
@@ -79,6 +80,8 @@ export default function ClinicianClientsList({ profile: initialProfile, currentU
   const [profile, setProfile] = useState(initialProfile);
   const [viewingClient, setViewingClient] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [addItemModal, setAddItemModal] = useState(null); // { client, type: 'task'|'goal' }
+  const [clinicianTasks, setClinicianTasks] = useState({}); // keyed by client_user_id
 
   const clients = profile?.clients || [];
 
@@ -114,6 +117,28 @@ export default function ClinicianClientsList({ profile: initialProfile, currentU
 
   useEffect(() => {
     setProfile(initialProfile);
+  }, [initialProfile]);
+
+  // Load clinician-added tasks for all clients to show status
+  useEffect(() => {
+    const loadClinicianTasks = async () => {
+      const clients = initialProfile?.clients || [];
+      if (clients.length === 0) return;
+      const results = {};
+      await Promise.all(clients.map(async (client) => {
+        try {
+          const tasks = await base44.entities.Task.filter({
+            created_by_id: client.client_user_id,
+            added_by_clinician: true,
+          });
+          results[client.client_user_id] = tasks;
+        } catch {
+          results[client.client_user_id] = [];
+        }
+      }));
+      setClinicianTasks(results);
+    };
+    loadClinicianTasks();
   }, [initialProfile]);
 
   return (
@@ -176,7 +201,50 @@ export default function ClinicianClientsList({ profile: initialProfile, currentU
                 onSaved={handleGoalSaved}
               />
 
-              <div className="flex gap-2 pt-1">
+              {/* Clinician-added tasks summary */}
+              {(() => {
+                const ctasks = clinicianTasks[client.client_user_id] || [];
+                if (ctasks.length === 0) return null;
+                const completed = ctasks.filter(t => t.status === "completed").length;
+                const pending = ctasks.length - completed;
+                return (
+                  <div className="flex items-center gap-3 text-xs bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-lg px-3 py-2">
+                    <ListTodo className="w-3 h-3 text-teal-600 dark:text-teal-400 shrink-0" />
+                    <span className="text-teal-700 dark:text-teal-300 font-medium">Your tasks:</span>
+                    {completed > 0 && (
+                      <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                        <CheckCircle2 className="w-3 h-3" />{completed} done
+                      </span>
+                    )}
+                    {pending > 0 && (
+                      <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                        <Clock className="w-3 h-3" />{pending} pending
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
+
+              <div className="flex gap-2 pt-1 flex-wrap">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20"
+                  onClick={() => setAddItemModal({ client, type: "task" })}
+                >
+                  + Add Task
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                  onClick={() => setAddItemModal({ client, type: "goal" })}
+                >
+                  + Add Goal
+                </Button>
+              </div>
+
+              <div className="flex gap-2">
                 <Button
                   size="sm"
                   variant="outline"
@@ -206,6 +274,22 @@ export default function ClinicianClientsList({ profile: initialProfile, currentU
         open={!!viewingClient}
         onClose={() => setViewingClient(null)}
         onGenerateReport={() => viewingClient && handleGenerateReport(viewingClient)}
+      />
+
+      <ClinicianAddItemModal
+        open={!!addItemModal}
+        onOpenChange={(open) => { if (!open) setAddItemModal(null); }}
+        itemType={addItemModal?.type}
+        client={addItemModal?.client}
+        clinicianName={currentUser?.full_name || "Your clinician"}
+        onSuccess={() => {
+          // Refresh clinician tasks for that client
+          const client = addItemModal?.client;
+          if (!client) return;
+          base44.entities.Task.filter({ created_by_id: client.client_user_id, added_by_clinician: true })
+            .then(tasks => setClinicianTasks(prev => ({ ...prev, [client.client_user_id]: tasks })))
+            .catch(() => {});
+        }}
       />
     </section>
   );

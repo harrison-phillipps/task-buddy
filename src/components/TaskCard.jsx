@@ -164,6 +164,11 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                     Team
                   </Badge>
                 )}
+                {task.added_by_clinician && (
+                  <Badge className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1">
+                    🩺 Added by {task.added_by_clinician_name || "clinician"}
+                  </Badge>
+                )}
                 <DifficultyIcon className={`w-4 h-4 ${difficultyColor}`} />
               </div>
               <CardTitle className={`text-lg font-bold text-gray-900 dark:text-gray-100 ${isCompleted ? 'line-through text-gray-500 dark:text-gray-400' : ''}`}>
