@@ -9,8 +9,9 @@ Deno.serve(async (req) => {
     console.log('[addClinicianItem] user.id:', user.id);
     console.log('[addClinicianItem] user.email:', user.email);
 
-    const { itemType, client_user_id, title, clinician_name,
+    const { itemType, client_user_id, title,
             category, estimated_minutes, energy_level, description } = await req.json();
+    const clinician_name = user.display_name || user.full_name || user.email;
 
     if (!client_user_id || !title || !itemType) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });

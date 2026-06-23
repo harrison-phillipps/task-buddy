@@ -38,10 +38,11 @@ export default function ClinicianInviteForm({ profile, currentUser }) {
 
       await base44.entities.ClientInvite.create({
         clinician_user_id: currentUser.id,
-        clinician_name: currentUser.full_name || "",
+        clinician_name: currentUser.display_name || currentUser.full_name || "",
         clinician_organisation: profile?.organisation_name || "",
         invite_code: code,
         client_email: clientEmail.trim(),
+        client_display_name: clientName.trim() || undefined,
         status: "pending",
         expires_at: expiresAt.toISOString(),
       });

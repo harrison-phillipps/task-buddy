@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { hasFeatureAccess, UpgradePrompt } from "@/components/subscription/FeatureGate";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
-import { Bell, CreditCard, Calendar, Sparkles, UserX, Bot, Link2, LogOut } from "lucide-react";
+import { Bell, CreditCard, Calendar, Sparkles, UserX, Bot, Link2, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import NotificationSettings from "./NotificationSettings";
+import ProfileSettings from "../components/settings/ProfileSettings";
 import Subscription from "./Subscription";
 import CalendarIntegrations from "../components/settings/CalendarIntegrations";
 import AIPrioritizationSettings from "../components/settings/AIPrioritizationSettings";
@@ -14,7 +15,7 @@ import CompanionAppearanceEditor from "../components/settings/CompanionAppearanc
 import ClinicianConnect from "../components/settings/ClinicianConnect";
 
 export default function Settings() {
-  const [activeTab, setActiveTab] = useState("notifications");
+  const [activeTab, setActiveTab] = useState("profile");
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
@@ -49,7 +50,12 @@ export default function Settings() {
           transition={{ delay: 0.1 }}
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-7 mb-6">
+            <TabsList className="grid w-full grid-cols-8 mb-6">
+              <TabsTrigger value="profile" className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline">Profile</span>
+                <span className="sm:hidden">Me</span>
+              </TabsTrigger>
               <TabsTrigger value="notifications" className="flex items-center gap-2">
                 <Bell className="w-4 h-4" />
                 <span className="hidden sm:inline">Notifications</span>
@@ -85,6 +91,16 @@ export default function Settings() {
                 <span className="sm:hidden">Acct</span>
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="profile">
+              <ProfileSettings
+                currentUser={currentUser}
+                onUpdate={async () => {
+                  const user = await base44.auth.me();
+                  setCurrentUser(user);
+                }}
+              />
+            </TabsContent>
 
             <TabsContent value="notifications">
               <NotificationSettings />

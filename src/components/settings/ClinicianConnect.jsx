@@ -78,7 +78,7 @@ export default function ClinicianConnect({ currentUser }) {
               ...existingClients,
               {
                 client_user_id: currentUser.id,
-                client_display_name: currentUser.full_name || currentUser.email,
+                client_display_name: currentUser.display_name || currentUser.full_name || currentUser.email,
                 client_email: currentUser.email,
                 linked_date: new Date().toISOString().split("T")[0],
                 goal_description: valid.goal_description || "",

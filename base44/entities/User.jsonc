@@ -1,36 +1,18 @@
 {
+  "name": "User",
   "type": "object",
   "properties": {
+    "display_name": {
+      "type": "string",
+      "description": "User-set display name shown throughout the app"
+    },
     "role": {
       "type": "string",
-      "description": "The role of the user in the app",
       "enum": [
         "admin",
         "user"
-      ]
-    },
-    "calendar_provider": {
-      "type": "string",
-      "enum": [
-        "google",
-        "outlook"
-      ]
-    },
-    "calendar_connected": {
-      "type": "boolean"
-    },
-    "profile_type": {
-      "type": "string",
-      "enum": [
-        "child",
-        "teen",
-        "adult"
       ],
-      "description": "Age-based profile type for personalisation"
+      "default": "user"
     }
-  },
-  "required": [
-    "role"
-  ],
-  "name": "User"
+  }
 }
