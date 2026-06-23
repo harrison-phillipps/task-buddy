@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import PersonalitySettingsModal from "@/components/PersonalitySettingsModal";
+import CompanionPickerModal from "@/components/companion/CompanionPickerModal";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import DevModeIndicator from "@/components/DevModeIndicator";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -36,6 +37,7 @@ function LayoutContent({ children, currentPageName }) {
   const [currentUser, setCurrentUser] = React.useState(null);
   const [userProgress, setUserProgress] = React.useState(null);
   const [showPersonalityModal, setShowPersonalityModal] = React.useState(false);
+  const [showCompanionPicker, setShowCompanionPicker] = React.useState(false);
   const [isClinician, setIsClinician] = React.useState(false);
 
   const navigationItems = [
@@ -86,7 +88,7 @@ function LayoutContent({ children, currentPageName }) {
     fetchUser();
   }, [location.pathname]);
 
-  const handleChangeCompanion = () => navigate(createPageUrl("CharacterSelection"));
+  const handleChangeCompanion = () => setShowCompanionPicker(true);
 
   const getCompanionEmoji = () => {
     const map = { cat: '🐱', dog: '🐶', orb: '🔮', robot: '🤖' };
@@ -333,6 +335,13 @@ function LayoutContent({ children, currentPageName }) {
             {children}
           </div>
         </main>
+
+        <CompanionPickerModal
+          open={showCompanionPicker}
+          onOpenChange={setShowCompanionPicker}
+          currentType={currentUser?.companion_type}
+          onSaved={refreshUser}
+        />
 
         <PersonalitySettingsModal
           open={showPersonalityModal}

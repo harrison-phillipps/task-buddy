@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { hasFeatureAccess, UpgradePrompt } from "@/components/subscription/FeatureGate";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
-import { Bell, CreditCard, UserX, Bot, LogOut, User, SlidersHorizontal } from "lucide-react";
+import { Bell, CreditCard, LogOut, User, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import NotificationSettings from "./NotificationSettings";
@@ -11,7 +11,6 @@ import Subscription from "./Subscription";
 import CalendarIntegrations from "../components/settings/CalendarIntegrations";
 import AIPrioritizationSettings from "../components/settings/AIPrioritizationSettings";
 import DeleteAccountFlow from "../components/settings/DeleteAccountFlow";
-import CompanionAppearanceEditor from "../components/settings/CompanionAppearanceEditor";
 import ClinicianConnect from "../components/settings/ClinicianConnect";
 
 export default function Settings() {
@@ -50,7 +49,7 @@ export default function Settings() {
           transition={{ delay: 0.1 }}
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-5 mb-6">
+            <TabsList className="grid w-full grid-cols-4 mb-6">
               <TabsTrigger value="account" className="flex items-center gap-2">
                 <User className="w-4 h-4" />
                 <span className="hidden sm:inline">Account</span>
@@ -65,11 +64,6 @@ export default function Settings() {
                 <SlidersHorizontal className="w-4 h-4" />
                 <span className="hidden sm:inline">Preferences</span>
                 <span className="sm:hidden">Prefs</span>
-              </TabsTrigger>
-              <TabsTrigger value="companion" className="flex items-center gap-2">
-                <Bot className="w-4 h-4" />
-                <span className="hidden sm:inline">Companion</span>
-                <span className="sm:hidden">Look</span>
               </TabsTrigger>
               <TabsTrigger value="subscription" className="flex items-center gap-2">
                 <CreditCard className="w-4 h-4" />
@@ -145,16 +139,6 @@ export default function Settings() {
                   <UpgradePrompt feature="AI Prioritization Settings" requiredTier="pro" />
                 )}
               </div>
-            </TabsContent>
-
-            <TabsContent value="companion">
-              <CompanionAppearanceEditor
-                currentUser={currentUser}
-                onUpdate={async () => {
-                  const user = await base44.auth.me();
-                  setCurrentUser(user);
-                }}
-              />
             </TabsContent>
 
             <TabsContent value="subscription">
