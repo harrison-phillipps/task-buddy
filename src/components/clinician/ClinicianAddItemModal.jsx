@@ -31,8 +31,8 @@ export default function ClinicianAddItemModal({ open, onOpenChange, itemType, cl
     onOpenChange(false);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    console.log('[modal] handleSubmit fired, title:', title, 'client:', client?.client_user_id);
     if (!title.trim()) return;
     setSaving(true);
     try {
@@ -68,7 +68,7 @@ export default function ClinicianAddItemModal({ open, onOpenChange, itemType, cl
             {isTask ? "➕ Add Task for" : "🎯 Add Goal for"} {client?.client_display_name}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+        <div className="space-y-4 mt-2">
           <div className="space-y-1.5">
             <Label>Title *</Label>
             <Input
@@ -144,11 +144,11 @@ export default function ClinicianAddItemModal({ open, onOpenChange, itemType, cl
             <Button type="button" variant="outline" className="flex-1" onClick={handleClose}>
               Cancel
             </Button>
-            <Button type="submit" className="flex-1 bg-purple-600 hover:bg-purple-700 text-white" disabled={saving || !title.trim()}>
+            <Button type="button" onClick={handleSubmit} className="flex-1 bg-purple-600 hover:bg-purple-700 text-white" disabled={saving || !title.trim()}>
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : `Add ${isTask ? "Task" : "Goal"}`}
             </Button>
           </div>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
