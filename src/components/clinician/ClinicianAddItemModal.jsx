@@ -36,28 +36,16 @@ export default function ClinicianAddItemModal({ open, onOpenChange, itemType, cl
     if (!title.trim()) return;
     setSaving(true);
     try {
-      if (isTask) {
-        await base44.asServiceRole.entities.Task.create({
-          title: title.trim(),
-          category,
-          estimated_minutes: estimatedMinutes ? Number(estimatedMinutes) : undefined,
-          energy_level_needed: energyLevel,
-          status: "not_started",
-          created_by_id: client.client_user_id,
-          added_by_clinician: true,
-          added_by_clinician_name: clinicianName,
-        });
-      } else {
-        await base44.asServiceRole.entities.Goal.create({
-          title: title.trim(),
-          description: description.trim() || undefined,
-          type: "personal",
-          status: "not_started",
-          created_by_id: client.client_user_id,
-          added_by_clinician: true,
-          added_by_clinician_name: clinicianName,
-        });
-      }
+      await base44.functions.invoke("addClinicianItem", {
+        itemType,
+        client_user_id: client.client_user_id,
+        title: title.trim(),
+        clinician_name: clinicianName,
+        category,
+        estimated_minutes: estimatedMinutes ? Number(estimatedMinutes) : undefined,
+        energy_level: energyLevel,
+        description: description.trim() || undefined,
+      });
       toast.success(`${isTask ? "Task" : "Goal"} added to ${client.client_display_name}'s account`);
       reset();
       onOpenChange(false);
