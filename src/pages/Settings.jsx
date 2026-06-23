@@ -66,15 +66,15 @@ export default function Settings() {
                 <span className="hidden sm:inline">Preferences</span>
                 <span className="sm:hidden">Prefs</span>
               </TabsTrigger>
-              <TabsTrigger value="subscription" className="flex items-center gap-2">
-                <CreditCard className="w-4 h-4" />
-                <span className="hidden sm:inline">Subscription</span>
-                <span className="sm:hidden">Plan</span>
-              </TabsTrigger>
               <TabsTrigger value="companion" className="flex items-center gap-2">
                 <Bot className="w-4 h-4" />
                 <span className="hidden sm:inline">Companion</span>
                 <span className="sm:hidden">Look</span>
+              </TabsTrigger>
+              <TabsTrigger value="subscription" className="flex items-center gap-2">
+                <CreditCard className="w-4 h-4" />
+                <span className="hidden sm:inline">Subscription</span>
+                <span className="sm:hidden">Plan</span>
               </TabsTrigger>
             </TabsList>
 
@@ -123,8 +123,6 @@ export default function Settings() {
                   </div>
                 </div>
 
-                {/* Clinician (only if clinician profile exists) */}
-                <ClinicianConnect currentUser={currentUser} />
               </div>
             </TabsContent>
 
@@ -149,10 +147,6 @@ export default function Settings() {
               </div>
             </TabsContent>
 
-            <TabsContent value="subscription">
-              <Subscription />
-            </TabsContent>
-
             <TabsContent value="companion">
               <CompanionAppearanceEditor
                 currentUser={currentUser}
@@ -161,6 +155,10 @@ export default function Settings() {
                   setCurrentUser(user);
                 }}
               />
+            </TabsContent>
+
+            <TabsContent value="subscription">
+              <Subscription />
             </TabsContent>
           </Tabs>
         </motion.div>
