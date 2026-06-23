@@ -76,6 +76,7 @@ function ClientGoalEditor({ client, profile, onSaved }) {
 }
 
 export default function ClinicianClientsList({ profile: initialProfile, currentUser, onReportGenerated, onProfileRefresh }) {
+  console.log("🩺 Full profile:", JSON.parse(JSON.stringify(initialProfile || {})));
   const [generatingFor, setGeneratingFor] = useState(null);
   const [profile, setProfile] = useState(initialProfile);
   const [viewingClient, setViewingClient] = useState(null);
