@@ -51,8 +51,10 @@ export default function ClinicianAddItemModal({ open, onOpenChange, itemType, cl
       onOpenChange(false);
       onSuccess?.();
     } catch (err) {
-      toast.error(`Failed to add ${isTask ? "task" : "goal"}`);
-      console.error(err);
+      console.error('[addClinicianItem] failed:', err);
+      console.error('[addClinicianItem] error message:', err?.message);
+      console.error('[addClinicianItem] error response:', JSON.stringify(err?.response || err?.data || {}));
+      toast.error(`Failed to add ${isTask ? "task" : "goal"}: ${err?.message || 'unknown error'}`);
     } finally {
       setSaving(false);
     }
