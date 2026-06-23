@@ -90,6 +90,10 @@
     "added_by_clinician_name": {
       "type": "string",
       "description": "Display name of the clinician who added this goal"
+    },
+    "client_user_id": {
+      "type": "string",
+      "description": "The client's user ID when a clinician adds this goal on their behalf"
     }
   },
   "required": [

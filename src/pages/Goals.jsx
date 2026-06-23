@@ -50,7 +50,7 @@ export default function GoalsPage() {
       if (!currentUser) return [];
       const [ownGoals, clinicianGoals] = await Promise.all([
         base44.entities.Goal.filter({ created_by: currentUser.email }, '-created_date'),
-        base44.entities.Goal.filter({ created_by_id: currentUser.id, added_by_clinician: true }, '-created_date'),
+        base44.entities.Goal.filter({ client_user_id: currentUser.id, added_by_clinician: true }, '-created_date'),
       ]);
       const seen = new Set();
       return [...ownGoals, ...clinicianGoals].filter(g => {

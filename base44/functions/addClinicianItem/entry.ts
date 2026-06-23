@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
         estimated_minutes: estimated_minutes ? Number(estimated_minutes) : undefined,
         energy_level_needed: energy_level || 'medium',
         status: 'not_started',
-        created_by_id: client_user_id,
+        assigned_to: client_user_id,
         added_by_clinician: true,
         added_by_clinician_name: clinician_name,
       });
@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
         description: description?.trim() || undefined,
         type: 'personal',
         status: 'not_started',
-        created_by_id: client_user_id,
+        client_user_id: client_user_id,
         added_by_clinician: true,
         added_by_clinician_name: clinician_name,
       });
