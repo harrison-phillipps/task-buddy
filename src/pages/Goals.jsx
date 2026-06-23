@@ -62,6 +62,7 @@ export default function GoalsPage() {
       });
     },
     enabled: !!currentUser,
+    staleTime: 0,
   });
 
   const { data: tasks = [] } = useQuery({
