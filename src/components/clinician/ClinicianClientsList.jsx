@@ -117,6 +117,9 @@ export default function ClinicianClientsList({ profile: initialProfile, currentU
 
   useEffect(() => {
     setProfile(initialProfile);
+    if (initialProfile?.clients?.length > 0) {
+      console.log("🩺 First client object:", JSON.parse(JSON.stringify(initialProfile.clients[0])));
+    }
   }, [initialProfile]);
 
   // Load clinician-added tasks for all clients to show status
