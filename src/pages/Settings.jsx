@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { hasFeatureAccess, UpgradePrompt } from "@/components/subscription/FeatureGate";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
-import { Bell, CreditCard, Calendar, Sparkles, UserX, Bot, Link2, LogOut, User } from "lucide-react";
+import { Bell, CreditCard, UserX, Bot, LogOut, User, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import NotificationSettings from "./NotificationSettings";
@@ -15,7 +15,7 @@ import CompanionAppearanceEditor from "../components/settings/CompanionAppearanc
 import ClinicianConnect from "../components/settings/ClinicianConnect";
 
 export default function Settings() {
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState("notifications");
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
@@ -50,10 +50,10 @@ export default function Settings() {
           transition={{ delay: 0.1 }}
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-8 mb-6">
-              <TabsTrigger value="profile" className="flex items-center gap-2">
+            <TabsList className="grid w-full grid-cols-5 mb-6">
+              <TabsTrigger value="account" className="flex items-center gap-2">
                 <User className="w-4 h-4" />
-                <span className="hidden sm:inline">Profile</span>
+                <span className="hidden sm:inline">Account</span>
                 <span className="sm:hidden">Me</span>
               </TabsTrigger>
               <TabsTrigger value="notifications" className="flex items-center gap-2">
@@ -61,14 +61,10 @@ export default function Settings() {
                 <span className="hidden sm:inline">Notifications</span>
                 <span className="sm:hidden">Alerts</span>
               </TabsTrigger>
-              <TabsTrigger value="ai" className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
-                <span className="hidden sm:inline">AI Priority</span>
-                <span className="sm:hidden">AI</span>
-              </TabsTrigger>
-              <TabsTrigger value="calendar" className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Calendar
+              <TabsTrigger value="preferences" className="flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4" />
+                <span className="hidden sm:inline">Preferences</span>
+                <span className="sm:hidden">Prefs</span>
               </TabsTrigger>
               <TabsTrigger value="subscription" className="flex items-center gap-2">
                 <CreditCard className="w-4 h-4" />
@@ -80,87 +76,33 @@ export default function Settings() {
                 <span className="hidden sm:inline">Companion</span>
                 <span className="sm:hidden">Look</span>
               </TabsTrigger>
-              <TabsTrigger value="clinician" className="flex items-center gap-2">
-                <Link2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Clinician</span>
-                <span className="sm:hidden">Clin</span>
-              </TabsTrigger>
-              <TabsTrigger value="account" className="flex items-center gap-2 text-red-500 data-[state=active]:text-red-600">
-                <UserX className="w-4 h-4" />
-                <span className="hidden sm:inline">Account</span>
-                <span className="sm:hidden">Acct</span>
-              </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="profile">
-              <ProfileSettings
-                currentUser={currentUser}
-                onUpdate={async () => {
-                  const user = await base44.auth.me();
-                  setCurrentUser(user);
-                }}
-              />
-            </TabsContent>
-
-            <TabsContent value="notifications">
-              <NotificationSettings />
-            </TabsContent>
-
-            <TabsContent value="ai">
-              {hasFeatureAccess(currentUser?.subscription_tier, "ai_prioritization") ? (
-                <AIPrioritizationSettings
+            <TabsContent value="account">
+              <div className="space-y-6">
+                {/* Profile / Display Name */}
+                <ProfileSettings
                   currentUser={currentUser}
                   onUpdate={async () => {
                     const user = await base44.auth.me();
                     setCurrentUser(user);
                   }}
                 />
-              ) : (
-                <UpgradePrompt feature="AI Prioritization Settings" requiredTier="pro" />
-              )}
-            </TabsContent>
 
-            <TabsContent value="calendar">
-              <CalendarIntegrations />
-            </TabsContent>
-
-            <TabsContent value="subscription">
-              <Subscription />
-            </TabsContent>
-
-            <TabsContent value="companion">
-              <CompanionAppearanceEditor
-                currentUser={currentUser}
-                onUpdate={async () => {
-                  const user = await base44.auth.me();
-                  setCurrentUser(user);
-                }}
-              />
-            </TabsContent>
-
-            <TabsContent value="clinician">
-              <ClinicianConnect currentUser={currentUser} />
-            </TabsContent>
-
-            <TabsContent value="account">
-             <div className="space-y-6">
-               {/* Sign Out */}
-               <div className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                 <div>
-                   <p className="font-semibold text-gray-900 dark:text-gray-100">Sign out</p>
-                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">You'll need to sign in again to access your account.</p>
-                 </div>
-                 <Button
-                   variant="outline"
-                   onClick={() => base44.auth.logout("/")}
-                   className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950/30 shrink-0"
-                 >
-                   <LogOut className="w-4 h-4 mr-2" />
-                   Sign Out
-                 </Button>
-               </div>
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-sm text-blue-700 dark:text-blue-300">
-                  <strong>Account Management</strong> — manage your personal account data and deletion options.
+                {/* Sign Out */}
+                <div className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100">Sign out</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">You'll need to sign in again to access your account.</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => base44.auth.logout("/")}
+                    className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950/30 shrink-0"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
                 </div>
 
                 {/* Danger Zone */}
@@ -180,7 +122,45 @@ export default function Settings() {
                     <DeleteAccountFlow />
                   </div>
                 </div>
+
+                {/* Clinician (only if clinician profile exists) */}
+                <ClinicianConnect currentUser={currentUser} />
               </div>
+            </TabsContent>
+
+            <TabsContent value="notifications">
+              <NotificationSettings />
+            </TabsContent>
+
+            <TabsContent value="preferences">
+              <div className="space-y-6">
+                <CalendarIntegrations />
+                {hasFeatureAccess(currentUser?.subscription_tier, "ai_prioritization") ? (
+                  <AIPrioritizationSettings
+                    currentUser={currentUser}
+                    onUpdate={async () => {
+                      const user = await base44.auth.me();
+                      setCurrentUser(user);
+                    }}
+                  />
+                ) : (
+                  <UpgradePrompt feature="AI Prioritization Settings" requiredTier="pro" />
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="subscription">
+              <Subscription />
+            </TabsContent>
+
+            <TabsContent value="companion">
+              <CompanionAppearanceEditor
+                currentUser={currentUser}
+                onUpdate={async () => {
+                  const user = await base44.auth.me();
+                  setCurrentUser(user);
+                }}
+              />
             </TabsContent>
           </Tabs>
         </motion.div>
