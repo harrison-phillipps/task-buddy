@@ -6,6 +6,9 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
+    console.log('[addClinicianItem] user.id:', user.id);
+    console.log('[addClinicianItem] user.email:', user.email);
+
     const { itemType, client_user_id, title, clinician_name,
             category, estimated_minutes, energy_level, description } = await req.json();
 
@@ -15,11 +18,20 @@ Deno.serve(async (req) => {
 
     // Validate caller has a ClinicianProfile that includes this client
     const profiles = await base44.asServiceRole.entities.ClinicianProfile.filter({ user_id: user.id });
+
+    console.log('[addClinicianItem] profiles found:', profiles.length);
+    console.log('[addClinicianItem] profile user_id:', profiles[0]?.user_id);
+
     if (profiles.length === 0) {
       return Response.json({ error: 'No clinician profile found' }, { status: 403 });
     }
     const profile = profiles[0];
     const isLinked = (profile.clients || []).some(c => c.client_user_id === client_user_id);
+
+    console.log('[addClinicianItem] client_user_id received:', client_user_id);
+    console.log('[addClinicianItem] clients in profile:', JSON.stringify(profile.clients));
+    console.log('[addClinicianItem] isLinked:', isLinked);
+
     if (!isLinked) {
       return Response.json({ error: 'Client not linked to this clinician' }, { status: 403 });
     }
