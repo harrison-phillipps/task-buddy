@@ -78,7 +78,7 @@ export default function TaskBreakdown() {
     mutationFn: async (taskData) => {
       // Check active task limit before creating
       const tier = currentUser?.subscription_tier || 'free';
-      const activeTasks = await base44.entities.Task.filter({ created_by: currentUser.email, status: ['not_started', 'in_progress', 'blocked'] });
+      const activeTasks = await base44.entities.Task.filter({ created_by: currentUser.email });
       const activeCount = activeTasks.filter(t => t.status !== 'completed').length;
       if (!isWithinLimit(tier, 'max_tasks', activeCount)) {
         setShowTaskLimitModal(true);
