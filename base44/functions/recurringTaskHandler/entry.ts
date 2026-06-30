@@ -14,7 +14,7 @@ function addMonths(date, n) {
 function formatDate(date) {
   return date.toISOString().split('T')[0];
 }
-function today() { return formatDate(new Date()); }
+function today() { return new Date().toLocaleDateString('en-CA'); }
 
 function calculateNextOccurrence(fromDate, template) {
   const base = new Date(fromDate + 'T00:00:00');

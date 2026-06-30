@@ -7,7 +7,7 @@ import AddHabitSheet from "../components/habits/AddHabitSheet";
 import WinsJournal from "../components/habits/WinsJournal";
 import HabitTemplates from "../components/habits/HabitTemplates";
 
-const TODAY = new Date().toISOString().split("T")[0];
+const TODAY = new Date().toLocaleDateString('en-CA');
 
 const ROUTINES = [
   { key: "morning", label: "Morning Routine", emoji: "🌅" },

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, Plus, Trash2, GripVertical, Flame } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const today = () => new Date().toISOString().split("T")[0];
+const today = () => new Date().toLocaleDateString('en-CA');
 
 export default function RoutineSection({ label, emoji, habits, completions, onAdd, onDelete, onComplete, onRefresh }) {
   const todayStr = today();
