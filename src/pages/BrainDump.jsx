@@ -115,9 +115,11 @@ export default function BrainDump() {
     const tier = currentUser?.subscription_tier || 'free';
     const limit = TIER_LIMITS[tier]?.max_brain_dumps_per_day;
     if (limit === undefined || limit === Infinity) return true;
-    const today = new Date().toISOString().split('T')[0];
+    // Use local calendar date so the reset happens at the user's midnight, not UTC midnight
+    const now = new Date();
+    const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const todaysDumps = await base44.entities.BrainDump.filter({ created_by: currentUser.email });
-    const count = todaysDumps.filter(d => d.created_date?.startsWith(today)).length;
+    const count = todaysDumps.filter(d => d.created_date?.startsWith(localToday)).length;
     if (count >= limit) {
       setShowBrainDumpLimitModal(true);
       return false;

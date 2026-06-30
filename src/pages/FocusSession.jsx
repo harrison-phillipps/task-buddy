@@ -627,9 +627,10 @@ export default function FocusSession() {
     const tier = currentUser?.subscription_tier || 'free';
     const sessionLimit = TIER_LIMITS[tier]?.max_focus_sessions_per_day;
     if (sessionLimit !== undefined && sessionLimit !== Infinity) {
-      const today = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       base44.entities.FocusSession.filter({ created_by: currentUser?.email }).then(all => {
-        const todayCount = all.filter(s => s.created_date?.startsWith(today)).length;
+        const todayCount = all.filter(s => s.created_date?.startsWith(localToday)).length;
         setIsOverDailyAILimit(todayCount >= sessionLimit);
       }).catch(() => {});
     }
