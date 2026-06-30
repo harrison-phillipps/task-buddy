@@ -18,6 +18,7 @@ import { getPersonalizedMessage } from "@/components/companionUtils";
 import VoiceToText from "../components/VoiceToText";
 import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
 import VoiceSchedulePrompt from "../components/braindump/VoiceSchedulePrompt";
+import { TIER_LIMITS, UpgradeModal } from "@/components/subscription/FeatureGate";
 
 export default function BrainDump() {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ export default function BrainDump() {
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const [showSchedulePrompt, setShowSchedulePrompt] = useState(false);
+  const [showBrainDumpLimitModal, setShowBrainDumpLimitModal] = useState(false);
 
   const { data: brainDumps = [] } = useQuery({
     queryKey: ['brainDumps', currentUser?.email],
@@ -109,9 +111,25 @@ export default function BrainDump() {
     },
   });
 
+  const checkDailyLimit = async () => {
+    const tier = currentUser?.subscription_tier || 'free';
+    const limit = TIER_LIMITS[tier]?.max_brain_dumps_per_day;
+    if (limit === undefined || limit === Infinity) return true;
+    const today = new Date().toISOString().split('T')[0];
+    const todaysDumps = await base44.entities.BrainDump.filter({ created_by: currentUser.email });
+    const count = todaysDumps.filter(d => d.created_date?.startsWith(today)).length;
+    if (count >= limit) {
+      setShowBrainDumpLimitModal(true);
+      return false;
+    }
+    return true;
+  };
+
   const handleProcess = async (overrideText) => {
     const text = overrideText || brainDumpText;
     if (!text?.trim()) return;
+
+    if (!(await checkDailyLimit())) return;
 
     setIsProcessing(true);
     try {
@@ -214,6 +232,8 @@ Rules:
   const handleVoiceDictationEnd = async () => {
     setIsVoiceActive(false);
     if (!brainDumpText.trim()) return;
+
+    if (!(await checkDailyLimit())) return;
 
     // Auto-process the brain dump after dictation ends
     setIsProcessing(true);
@@ -865,6 +885,12 @@ Rules:
           </AnimatePresence>
         )}
 
+        <UpgradeModal
+          open={showBrainDumpLimitModal}
+          onOpenChange={setShowBrainDumpLimitModal}
+          feature={`You've used all ${TIER_LIMITS[currentUser?.subscription_tier || 'free']?.max_brain_dumps_per_day} brain dumps for today on the free plan. Upgrade for more.`}
+          requiredTier="pro"
+        />
         <DuplicateTaskChecker
           open={showDuplicateDialog}
           onOpenChange={setShowDuplicateDialog}

@@ -46,7 +46,7 @@ import PomodoroTimer from "../components/focus/PomodoroTimer";
 import DistractionBlocker from "../components/focus/DistractionBlocker";
 import SessionMetrics from "../components/focus/SessionMetrics";
 import SpotifyPlayer from "../components/focus/SpotifyPlayer";
-import { hasFeatureAccess, UpgradePrompt } from "../components/subscription/FeatureGate";
+import { hasFeatureAccess, UpgradePrompt, TIER_LIMITS } from "../components/subscription/FeatureGate";
 import FocusCompanionChat from "../components/focus/FocusCompanionChat";
 import VoiceCommandListener from "../components/focus/VoiceCommandListener";
 import { useVoiceAnnouncements } from "../hooks/useVoiceAnnouncements";
@@ -158,6 +158,7 @@ export default function FocusSession() {
   const [adaptiveBreakConfig, setAdaptiveBreakConfig] = useState(null);
   const [showGuidedBreak, setShowGuidedBreak] = useState(false);
   const [isController, setIsController] = useState(false);
+  const [isOverDailyAILimit, setIsOverDailyAILimit] = useState(false);
   
   const [voiceAnnouncementsEnabled, setVoiceAnnouncementsEnabled] = useState(false);
   const { checkMilestone, announcePhase, reset: resetVoice } = useVoiceAnnouncements(voiceAnnouncementsEnabled);
@@ -622,6 +623,17 @@ export default function FocusSession() {
   const startSession = () => {
     if (!selectedTaskId || !moodBefore) return;
 
+    // Check daily AI limit (non-blocking — session still starts either way)
+    const tier = currentUser?.subscription_tier || 'free';
+    const sessionLimit = TIER_LIMITS[tier]?.max_focus_sessions_per_day;
+    if (sessionLimit !== undefined && sessionLimit !== Infinity) {
+      const today = new Date().toISOString().split('T')[0];
+      base44.entities.FocusSession.filter({ created_by: currentUser?.email }).then(all => {
+        const todayCount = all.filter(s => s.created_date?.startsWith(today)).length;
+        setIsOverDailyAILimit(todayCount >= sessionLimit);
+      }).catch(() => {});
+    }
+
     // Lock the task data so refetches don't cause a blank screen mid-session
     const taskToLock = tasks.find(t => t.id === selectedTaskId);
     if (!taskToLock) {
@@ -1078,6 +1090,7 @@ export default function FocusSession() {
           elapsedMinutes={sessionStartTime ? Math.floor((Date.now() - sessionStartTime) / 60000) : 0}
           mood={moodBefore}
           pauseCount={pauseCount}
+          isOverDailyAILimit={isOverDailyAILimit}
         />
       )}
       
@@ -1729,6 +1742,7 @@ export default function FocusSession() {
           isSessionActive={sessionStarted && isActive && !isBreakTime}
           taskTitle={selectedTask?.title}
           currentUser={currentUser}
+          isOverDailyAILimit={isOverDailyAILimit}
         />
 
         {showMindfulness && !showGuidedBreak && (

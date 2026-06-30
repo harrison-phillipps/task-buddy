@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { MessageCircle, X, Send, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function FocusCompanionChat({ isSessionActive, taskTitle, currentUser }) {
+export default function FocusCompanionChat({ isSessionActive, taskTitle, currentUser, isOverDailyAILimit = false }) {
   const [open, setOpen] = useState(false);
   const [conversation, setConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -15,10 +15,10 @@ export default function FocusCompanionChat({ isSessionActive, taskTitle, current
 
   // Auto-open and greet when session starts
   useEffect(() => {
-    if (isSessionActive && !conversation) {
+    if (isSessionActive && !conversation && !isOverDailyAILimit) {
       initConversation();
     }
-  }, [isSessionActive]);
+  }, [isSessionActive, isOverDailyAILimit]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -73,6 +73,16 @@ export default function FocusCompanionChat({ isSessionActive, taskTitle, current
 
   const visibleMessages = messages.filter(
     (m) => m.role === "user" || m.role === "assistant"
+  );
+
+  if (isOverDailyAILimit) return (
+    <div
+      className="fixed z-50 flex items-center justify-center w-13 h-13 rounded-full bg-gray-200 dark:bg-gray-700 shadow-xl p-3"
+      style={{ bottom: 'calc(6rem + env(safe-area-inset-bottom))', right: 'max(1rem, env(safe-area-inset-right))' }}
+      title="Upgrade for AI companion"
+    >
+      <MessageCircle className="w-6 h-6 text-gray-400" />
+    </div>
   );
 
   return (

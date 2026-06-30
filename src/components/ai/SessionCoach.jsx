@@ -11,7 +11,8 @@ export default function SessionCoach({
   currentProgress,
   elapsedMinutes,
   mood,
-  pauseCount = 0
+  pauseCount = 0,
+  isOverDailyAILimit = false
 }) {
   const [tip, setTip] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -67,6 +68,14 @@ Generate ONE brief coaching tip (1-2 sentences), contextual to the session phase
     
     return iconMap[tip.icon] || Sparkles;
   };
+
+  if (isOverDailyAILimit) return (
+    <div className="mb-4 flex justify-center">
+      <span className="text-xs text-gray-400 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-3 py-1">
+        ✨ Upgrade for AI coaching tips
+      </span>
+    </div>
+  );
 
   if (!tip) return (
     <div className="mb-4 flex justify-center">
