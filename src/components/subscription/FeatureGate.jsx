@@ -99,16 +99,8 @@ export const TIER_INFO = {
   }
 };
 
-// Check if we're in development mode
-const isDevelopmentMode = () => {
-  return import.meta.env.DEV || window.location.hostname === 'localhost';
-};
-
 // Check if user has access to a feature
 export function hasFeatureAccess(userTier, featureName) {
-  // In development mode, grant access to all features
-  if (isDevelopmentMode()) return true;
-  
   const tier = userTier || "free";
   const allowedTiers = FEATURE_ACCESS[featureName];
   if (!allowedTiers) return true; // Unknown features default to allowed
@@ -117,9 +109,6 @@ export function hasFeatureAccess(userTier, featureName) {
 
 // Check if user is within tier limits
 export function isWithinLimit(userTier, limitType, currentCount) {
-  // In development mode, no limits
-  if (isDevelopmentMode()) return true;
-  
   const tier = userTier || "free";
   const limit = TIER_LIMITS[tier]?.[limitType];
   if (limit === undefined || limit === Infinity) return true;

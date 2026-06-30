@@ -80,86 +80,28 @@ export default function TaskBreakdown() {
     },
   });
 
-  const getProfileToneInstructions = () => {
-    const profileType = currentUser?.profile_type || "adult";
-    if (profileType === "child") {
-      return `TONE: This is for a child aged 5-12. Use very simple, warm, encouraging language. Keep steps SHORT (max 1 sentence each). Use friendly words like "Let's", "First", "Then", "All done!". Avoid adult vocabulary. Make steps feel like a fun game or adventure. Use emojis in step titles. Max 4-5 steps total.`;
-    }
-    if (profileType === "teen") {
-      return `TONE: This is for a teenager aged 13-17. Use casual, direct language. Do NOT be patronising or preachy. No "you've got this!" energy. Be straightforward and practical. No unnecessary explanation. Treat them like a capable person who just needs clear steps. Max 5-7 steps.`;
-    }
-    return `TONE: Standard adult tone. Clear, specific, non-patronising. Focus on removing ambiguity and reducing decision load.`;
-  };
-
   const handleBreakdown = async () => {
     if (!taskInput.title.trim()) return;
 
     setIsProcessing(true);
     try {
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are a task initiation specialist who understands executive dysfunction at a neurological level. Your job is to take ONE task a user has been avoiding and break it into micro-steps that are so specific and so small that starting feels physically impossible to resist.
-
-CORE PRINCIPLE:
-The user's brain is not lazy. It cannot identify a discrete first physical action from a vague task. Your job is to remove every ambiguous decision between them and starting.
-
-${getProfileToneInstructions()}
-
-INPUTS:
-- Task: "${taskInput.title}"
-- Description: ${taskInput.description || "None"}
-- Category: ${taskInput.category}
-- Difficulty: ${taskInput.difficulty}
-- Energy needed: ${taskInput.energy_level_needed}
-- Current mood: ${taskInput.current_mood || "not specified"}
-
-STEP RULES:
-
-1. NEVER produce generic steps.
-"Do the first obvious action" is not a step.
-"Clear everything off the left side of the bench" is a step.
-Steps must be so specific that two different people doing the same task would do the exact same physical action.
-
-2. MATCH STEPS TO ENERGY LEVEL.
-Low energy: First step max 2 minutes, near-zero cognitive load, no decisions within the step itself.
-Medium energy: Steps 3-5 minutes, fully specific.
-High energy: Steps up to 10 minutes, minor decisions allowed.
-
-3. STEP 1 IS THE MOST IMPORTANT.
-Immediate visible progress. If they do nothing else, completing step 1 is a win. Must feel achievable in the worst mental state.
-
-4. MOOD ADJUSTMENTS:
-- tired/low energy: first step especially minimal, max 2 min
-- anxious: second step can include a grounding physical action
-- overwhelmed: keep all steps very small, max 3 steps initially
-- unmotivated: early steps especially tangible and visible
-- distracted: first step removes the primary distraction source
-
-5. NEVER DO THESE THINGS:
-- Never use the word "just"
-- Never produce a step containing a hidden decision
-- Never produce steps that only make sense if the previous step was completed perfectly
-- Never add motivational commentary inside the step title (unless child profile)
-
-Total steps should be 4-8. Return JSON only.`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            subtasks: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  title: { type: "string" },
-                  order: { type: "number" },
-                  estimated_minutes: { type: "number" }
-                }
-              }
-            },
-            estimated_minutes: { type: "number" },
-            encouragement: { type: "string" }
-          }
-        }
+      const response = await base44.functions.invoke('taskBreakdownAI', {
+        title: taskInput.title,
+        description: taskInput.description,
+        category: taskInput.category,
+        difficulty: taskInput.difficulty,
+        energy_level_needed: taskInput.energy_level_needed,
+        current_mood: taskInput.current_mood,
+        profile_type: currentUser?.profile_type || "adult",
       });
+
+      if (response.data?.upgrade_required) {
+        alert("This feature requires a Pro or Premium subscription. Upgrade in the Subscription page to unlock AI task breakdown.");
+        setIsProcessing(false);
+        return;
+      }
+
+      const result = response.data;
 
       const subtasksWithCompletion = result.subtasks.map(st => ({
         ...st,
