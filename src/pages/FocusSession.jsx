@@ -627,10 +627,12 @@ export default function FocusSession() {
     const tier = currentUser?.subscription_tier || 'free';
     const sessionLimit = TIER_LIMITS[tier]?.max_focus_sessions_per_day;
     if (sessionLimit !== undefined && sessionLimit !== Infinity) {
-      const now = new Date();
-      const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const localToday = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
       base44.entities.FocusSession.filter({ created_by: currentUser?.email }).then(all => {
-        const todayCount = all.filter(s => s.created_date?.startsWith(localToday)).length;
+        const todayCount = all.filter(s => {
+          if (!s.created_date) return false;
+          return new Date(s.created_date + 'Z').toLocaleDateString('en-CA') === localToday;
+        }).length;
         setIsOverDailyAILimit(todayCount >= sessionLimit);
       }).catch(() => {});
     }

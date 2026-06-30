@@ -115,11 +115,17 @@ export default function BrainDump() {
     const tier = currentUser?.subscription_tier || 'free';
     const limit = TIER_LIMITS[tier]?.max_brain_dumps_per_day;
     if (limit === undefined || limit === Infinity) return true;
-    // Use local calendar date so the reset happens at the user's midnight, not UTC midnight
-    const now = new Date();
-    const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    // created_date is stored as UTC (no Z suffix but value is UTC).
+    // Convert each record's created_date to the user's local calendar date before comparing,
+    // so the daily reset happens at local midnight regardless of timezone offset.
+    const localToday = new Date().toLocaleDateString('en-CA'); // 'en-CA' gives YYYY-MM-DD in local time
     const todaysDumps = await base44.entities.BrainDump.filter({ created_by: currentUser.email });
-    const count = todaysDumps.filter(d => d.created_date?.startsWith(localToday)).length;
+    const count = todaysDumps.filter(d => {
+      if (!d.created_date) return false;
+      // Append Z so JS parses it as UTC, then convert to local date string
+      const localDate = new Date(d.created_date + 'Z').toLocaleDateString('en-CA');
+      return localDate === localToday;
+    }).length;
     if (count >= limit) {
       setShowBrainDumpLimitModal(true);
       return false;
