@@ -12,15 +12,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Tier check — Pro or Premium only
-    const tier = user.subscription_tier || 'free';
-    if (tier === 'free') {
-      return Response.json({
-        error: "This feature requires a Pro or Premium subscription. Upgrade to unlock AI task breakdown.",
-        upgrade_required: true,
-      }, { status: 403 });
-    }
-
     let body;
     try {
       body = await req.json();
@@ -125,7 +116,7 @@ Total steps should be 4-8. Return JSON only in this format: {"subtasks": [{"titl
       parsed = JSON.parse(match[0]);
     }
 
-    console.log(`[taskBreakdownAI] Success — user: ${user.id}, tier: ${tier}, task: "${title}"`);
+    console.log(`[taskBreakdownAI] Success — user: ${user.id}, task: "${title}"`);
     return Response.json(parsed);
 
   } catch (error) {

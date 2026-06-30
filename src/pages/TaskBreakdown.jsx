@@ -16,6 +16,7 @@ import { createPageUrl } from "@/utils";
 import VirtualCompanion from "../components/VirtualCompanion";
 import { getPersonalizedMessage } from "../components/companionUtils";
 import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
+import { TIER_LIMITS, isWithinLimit, UpgradeModal } from "@/components/subscription/FeatureGate";
 // AIEnhancedTextarea, AITaskBreakdownSuggestion, ProactiveCoach, AITimeEstimator hidden (simplification)
 
 export default function TaskBreakdown() {
@@ -38,6 +39,7 @@ export default function TaskBreakdown() {
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const [pendingTaskData, setPendingTaskData] = useState(null);
   const [selectedTeam, setSelectedTeam] = useState(null);
+  const [showTaskLimitModal, setShowTaskLimitModal] = useState(false);
   const companionMessage = useMemo(() => getPersonalizedMessage(userProgress, "task_breakdown"), [userProgress?.total_points]);
 
   const { data: teams = [] } = useQuery({
@@ -73,7 +75,17 @@ export default function TaskBreakdown() {
   }, []);
 
   const createTaskMutation = useMutation({
-    mutationFn: (taskData) => base44.entities.Task.create(taskData),
+    mutationFn: async (taskData) => {
+      // Check active task limit before creating
+      const tier = currentUser?.subscription_tier || 'free';
+      const activeTasks = await base44.entities.Task.filter({ created_by: currentUser.email, status: ['not_started', 'in_progress', 'blocked'] });
+      const activeCount = activeTasks.filter(t => t.status !== 'completed').length;
+      if (!isWithinLimit(tier, 'max_tasks', activeCount)) {
+        setShowTaskLimitModal(true);
+        throw new Error('TASK_LIMIT_REACHED');
+      }
+      return base44.entities.Task.create(taskData);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       navigate(createPageUrl("TaskList"));
@@ -94,12 +106,6 @@ export default function TaskBreakdown() {
         current_mood: taskInput.current_mood,
         profile_type: currentUser?.profile_type || "adult",
       });
-
-      if (response.data?.upgrade_required) {
-        alert("This feature requires a Pro or Premium subscription. Upgrade in the Subscription page to unlock AI task breakdown.");
-        setIsProcessing(false);
-        return;
-      }
 
       const result = response.data;
 
@@ -433,6 +439,12 @@ export default function TaskBreakdown() {
           </AnimatePresence>
         )}
 
+        <UpgradeModal
+          open={showTaskLimitModal}
+          onOpenChange={setShowTaskLimitModal}
+          feature="You've reached your active task limit on the free plan. Upgrade to add more tasks."
+          requiredTier="pro"
+        />
         <DuplicateTaskChecker
           open={showDuplicateDialog}
           onOpenChange={setShowDuplicateDialog}

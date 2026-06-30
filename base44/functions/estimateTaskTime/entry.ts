@@ -9,15 +9,6 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Tier check — Pro or Premium only
-        const tier = user.subscription_tier || 'free';
-        if (tier === 'free') {
-            return Response.json({
-                error: 'This feature requires a Pro or Premium subscription.',
-                upgrade_required: true,
-            }, { status: 403 });
-        }
-
         const { task } = await req.json();
         if (!task) {
             return Response.json({ error: 'Task data required' }, { status: 400 });

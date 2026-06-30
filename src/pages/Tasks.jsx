@@ -54,6 +54,7 @@ import SharedTaskListInviteModal from "../components/collaboration/SharedTaskLis
 import TeamMemberAvatars from "../components/collaboration/TeamMemberAvatars";
 import AssignWithNotification from "../components/collaboration/AssignWithNotification";
 import RoutineTemplatesModal from "../components/tasks/RoutineTemplatesModal";
+import { TIER_LIMITS, isWithinLimit, UpgradeModal } from "@/components/subscription/FeatureGate";
 
 export default function Tasks() {
   const queryClient = useQueryClient();
@@ -91,6 +92,7 @@ export default function Tasks() {
   });
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showRoutineTemplates, setShowRoutineTemplates] = useState(false);
+  const [showTaskLimitModal, setShowTaskLimitModal] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [selectedTaskIds, setSelectedTaskIds] = useState(new Set());
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
@@ -452,6 +454,20 @@ export default function Tasks() {
 
   const handleLoadRoutineTemplate = async (template) => {
     const today = new Date().toISOString().split('T')[0];
+    const templateTaskCount = (template.tasks || []).length;
+
+    // Pre-flight: check if loading this template would exceed the tier's task limit
+    const tier = currentUser?.subscription_tier || 'free';
+    const limit = TIER_LIMITS[tier]?.max_tasks;
+    if (limit !== undefined && limit !== Infinity) {
+      const activeTasks = await base44.entities.Task.filter({ created_by: currentUser.email });
+      const activeCount = activeTasks.filter(t => t.status !== 'completed').length;
+      if (activeCount + templateTaskCount > limit) {
+        setShowTaskLimitModal(true);
+        return;
+      }
+    }
+
     for (const taskDef of (template.tasks || [])) {
       const newTask = {
         ...taskDef,
@@ -1137,6 +1153,12 @@ export default function Tasks() {
           }}
         />
 
+        <UpgradeModal
+          open={showTaskLimitModal}
+          onOpenChange={setShowTaskLimitModal}
+          feature="You've reached your active task limit on the free plan. Upgrade to add more tasks."
+          requiredTier="pro"
+        />
         <RoutineTemplatesModal
           open={showRoutineTemplates}
           onOpenChange={setShowRoutineTemplates}
