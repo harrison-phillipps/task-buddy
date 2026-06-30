@@ -158,7 +158,7 @@ export default function FocusSession() {
   const [adaptiveBreakConfig, setAdaptiveBreakConfig] = useState(null);
   const [showGuidedBreak, setShowGuidedBreak] = useState(false);
   const [isController, setIsController] = useState(false);
-  const [isOverDailyAILimit, setIsOverDailyAILimit] = useState(false);
+  const [isOverDailyAILimit, setIsOverDailyAILimit] = useState(true);
   
   const [voiceAnnouncementsEnabled, setVoiceAnnouncementsEnabled] = useState(false);
   const { checkMilestone, announcePhase, reset: resetVoice } = useVoiceAnnouncements(voiceAnnouncementsEnabled);
