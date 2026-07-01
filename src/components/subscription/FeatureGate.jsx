@@ -2,10 +2,11 @@ import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Lock, Sparkles, Zap, Crown, Check } from "lucide-react";
+import { Lock, Sparkles, Zap, Crown, Check, Smartphone } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { useIsBuildNatively } from "@/hooks/useIsBuildNatively";
 
 // Feature access configuration
 export const FEATURE_ACCESS = {
@@ -126,8 +127,29 @@ export function getRequiredTier(featureName) {
 // Upgrade prompt modal
 export function UpgradeModal({ open, onOpenChange, feature, requiredTier = "pro" }) {
   const navigate = useNavigate();
+  const isBuildNatively = useIsBuildNatively();
   const tierInfo = TIER_INFO[requiredTier];
   const TierIcon = tierInfo?.icon || Sparkles;
+
+  if (isBuildNatively) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                <Smartphone className="w-5 h-5 text-purple-600" />
+              </div>
+              Upgrade on the Web
+            </DialogTitle>
+            <DialogDescription>
+              To upgrade, visit taskbuddyapp.com.au on Safari. Once subscribed, your Pro access will sync automatically when you log back in.
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   const features = {
     pro: [
@@ -215,8 +237,35 @@ export function UpgradeModal({ open, onOpenChange, feature, requiredTier = "pro"
 // Inline upgrade prompt (for embedding in components)
 export function UpgradePrompt({ feature, requiredTier = "pro", compact = false }) {
   const [showModal, setShowModal] = React.useState(false);
+  const isBuildNatively = useIsBuildNatively();
   const tierInfo = TIER_INFO[requiredTier];
   const TierIcon = tierInfo?.icon || Sparkles;
+
+  if (isBuildNatively) {
+    if (compact) {
+      return (
+        <span className="flex items-center gap-1.5 px-2 py-1 bg-gray-100 rounded-full text-xs font-medium text-gray-500">
+          <Lock className="w-3 h-3" />
+          Web only
+        </span>
+      );
+    }
+    return (
+      <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+            <Smartphone className="w-5 h-5 text-gray-500" />
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900">Upgrade on the Web</p>
+            <p className="text-sm text-gray-600">
+              Visit taskbuddyapp.com.au on Safari to upgrade. Your Pro access will sync automatically when you log back in.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (compact) {
     return (
