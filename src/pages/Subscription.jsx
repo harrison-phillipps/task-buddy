@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import { TIER_INFO } from "../components/subscription/FeatureGate";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNativePlatform } from "@/hooks/useNativePlatform";
+import { useIsBuildNatively } from "@/hooks/useIsBuildNatively";
 import MobilePaymentGate from "@/components/subscription/MobilePaymentGate";
 
 const plansData = [
@@ -128,6 +129,7 @@ export default function Subscription() {
   }, []);
 
   const { isNative, isIOS, isAndroid, platform } = useNativePlatform();
+  const isBuildNatively = useIsBuildNatively();
   const currentTier = currentUser?.subscription_tier || "free";
 
   const handleSelectPlan = async (tier) => {
@@ -300,7 +302,13 @@ export default function Subscription() {
                       </div>
                     )}
 
-                    {isNative && !isCurrentPlan && plan.tier !== 'free' ? (
+                    {isBuildNatively && !isCurrentPlan && plan.tier !== 'free' ? (
+                      <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/30 rounded-xl border border-gray-200 dark:border-gray-700 text-center">
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                          To upgrade, visit <strong>taskbuddyapp.com.au</strong> on Safari. Once subscribed, your Pro access will sync automatically when you log back in.
+                        </p>
+                      </div>
+                    ) : isNative && !isCurrentPlan && plan.tier !== 'free' ? (
                       <MobilePaymentGate platform={platform} tier={plan.tier} billingPeriod={billingPeriod} />
                     ) : (
                       <Button
