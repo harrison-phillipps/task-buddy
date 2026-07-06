@@ -33,31 +33,20 @@ export default function DeleteAccountFlow() {
     setConfirmText("");
   };
 
+  const [error, setError] = useState("");
+
   const handleDelete = async () => {
     if (confirmText !== "DELETE" || deleting) return;
     setDeleting(true);
+    setError("");
     try {
-      const user = await base44.auth.me();
-      if (user) {
-        const [tasks, goals, sessions, dumps, progress] = await Promise.allSettled([
-          base44.entities.Task.filter({ created_by: user.email }),
-          base44.entities.Goal.filter({ created_by: user.email }),
-          base44.entities.FocusSession.filter({ created_by: user.email }),
-          base44.entities.BrainDump.filter({ created_by: user.email }),
-          base44.entities.UserProgress.filter({ user_id: user.id }),
-        ]);
-        await Promise.allSettled([
-          ...(tasks.value || []).map(t => base44.entities.Task.delete(t.id)),
-          ...(goals.value || []).map(g => base44.entities.Goal.delete(g.id)),
-          ...(sessions.value || []).map(s => base44.entities.FocusSession.delete(s.id)),
-          ...(dumps.value || []).map(b => base44.entities.BrainDump.delete(b.id)),
-          ...(progress.value || []).map(p => base44.entities.UserProgress.delete(p.id)),
-        ]);
-      }
-      await base44.users.deleteMe();
-      base44.auth.redirectToLogin();
+      const res = await base44.functions.invoke("deleteAccount", {});
+      if (res?.data?.error) throw new Error(res.data.error);
+      // Account anonymised + data deleted server-side; sign out
+      base44.auth.logout("/");
     } catch (err) {
       console.error("Account deletion error:", err);
+      setError(err.message || "Something went wrong. Please try again or contact support.");
       setDeleting(false);
     }
   };
@@ -134,6 +123,12 @@ export default function DeleteAccountFlow() {
 
               {confirmText.length > 0 && confirmText !== "DELETE" && (
                 <p className="text-xs text-red-500 text-center">Must match exactly: DELETE</p>
+              )}
+
+              {error && (
+                <p className="text-xs text-red-600 dark:text-red-400 text-center bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-lg p-2">
+                  {error}
+                </p>
               )}
 
               <div className="flex gap-3 pt-1">
