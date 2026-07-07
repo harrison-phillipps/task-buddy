@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+// Settings page — tabbed interface for account, notifications, preferences, subscription
 import { hasFeatureAccess, UpgradePrompt } from "@/components/subscription/FeatureGate";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
