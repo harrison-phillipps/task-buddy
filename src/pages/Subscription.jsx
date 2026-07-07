@@ -59,7 +59,7 @@ const plansData = [
     priceYearly: "A$199.99",
     savingsYearly: "Save A$40",
     period: "per month",
-    description: "For serious achievers & teams who want everything",
+    description: "For NDIS participants and support teams who want the complete picture",
     features: [
       "Unlimited active tasks",
       "Unlimited brain dumps and focus sessions",
