@@ -18,26 +18,18 @@ export const FEATURE_ACCESS = {
   basic_analytics: ["free", "pro", "premium"],
 
   // Pro features
-  ai_prioritization: ["pro", "premium"],
   advanced_ai_settings: ["pro", "premium"],
   calendar_sync: ["pro", "premium"],
   calendar_events: ["pro", "premium"],
   advanced_analytics: ["pro", "premium"],
   unlimited_tasks: ["pro", "premium"],
-  ambient_sounds: ["pro", "premium"],
-  spotify_player: ["pro", "premium"],
   cross_device_notifications: ["pro", "premium"],
-  smart_plan: ["pro", "premium"],
-  voice_tasks: ["pro", "premium"],
-  gap_filler: ["pro", "premium"],
-  daily_schedule_planner: ["pro", "premium"],
   proactive_coaching: ["pro", "premium"],
   smart_recommendations: ["pro", "premium"],
-
-  // Pro features (continued)
-  productivity_score: ["pro", "premium"],
   custom_focus_sounds: ["pro", "premium"],
   weekly_goals: ["pro", "premium"],
+  habit_tracking: ["pro", "premium"],
+  routine_templates: ["pro", "premium"],
 
   // AI credit-burning features — gated to paid tiers
   ai_companion_messages: ["pro", "premium"],
@@ -45,17 +37,15 @@ export const FEATURE_ACCESS = {
   ai_proactive_coach: ["pro", "premium"],
   ai_adaptive_companion: ["pro", "premium"],
 
+  // Available to all tiers (enforced by task count, not tier)
+  ai_task_breakdown: ["free", "pro", "premium"],
+
   // Premium features
-  ai_task_breakdown: ["premium"],
-  custom_companions: ["premium"],
+  clinician_dashboard: ["premium"],
   priority_support: ["premium"],
-  export_data: ["premium"],
-  team_features: ["premium"],
   strategic_coaching: ["premium"],
   energy_coaching: ["premium"],
   ai_coaching_bots: ["premium"],
-  team_workload: ["premium"],
-  at_mentions: ["premium"],
 };
 
 export const TIER_LIMITS = {
@@ -66,8 +56,8 @@ export const TIER_LIMITS = {
   },
   pro: {
     max_tasks: 100,
-    max_brain_dumps_per_day: 20,
-    max_focus_sessions_per_day: 50
+    max_brain_dumps_per_day: Infinity,
+    max_focus_sessions_per_day: Infinity
   },
   premium: {
     max_tasks: Infinity,
@@ -153,33 +143,21 @@ export function UpgradeModal({ open, onOpenChange, feature, requiredTier = "pro"
 
   const features = {
     pro: [
-      "AI Task Prioritisation",
-      "Google Calendar Sync",
-      "Smart Daily Plan",
-      "Calendar Gap Filler",
-      "Weekly Goal Tracking",
-      "Voice to Tasks",
-      "Advanced Analytics & Productivity Score",
-      "Ambient Focus Sounds",
-      "Proactive AI Coaching & Smart Recommendations",
-      "AI Companion Messages & Adaptive Companion",
-      "Cross-Device Notifications",
-      "Up to 100 Tasks",
-      "50 Focus Sessions & 20 Brain Dumps/day",
+      "Up to 100 active tasks",
+      "AI task breakdown — no daily limit",
+      "Brain dumps — no daily limit",
+      "Focus sessions with AI coaching — no daily limit",
+      "Goal tracking and visual progress",
+      "Habit and routine tracking",
+      "Calendar sync",
     ],
     premium: [
+      "Unlimited active tasks",
+      "Unlimited brain dumps and focus sessions",
       "Everything in Pro",
-      "Unlimited Tasks, Brain Dumps & Focus Sessions",
-      "AI Task Breakdown (auto subtasks)",
-      "Team Collaboration & Shared Tasks",
-      "Team Workload Dashboard",
-      "@mention Teammates",
-      "Energy-Aware AI Coaching",
-      "Strategic Goal Coaching",
-      "Full AI Coaching Bots Suite",
-      "Custom Companion Personalities",
-      "Data Export",
-      "Priority Support & Early Access",
+      "Clinician and mentor dashboard",
+      "Task and goal assignment from your support team",
+      "NDIS-ready progress reports in one click",
     ]
   };
 
