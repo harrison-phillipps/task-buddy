@@ -32,7 +32,7 @@ const plansData = [
       "No AI task prioritisation",
       "No calendar sync or smart daily plan",
       "No voice-to-task capture",
-      "No ambient focus sounds or Spotify"
+      "No ambient focus sounds"
     ],
     cta: "Current Plan",
     popular: false
@@ -53,7 +53,7 @@ const plansData = [
       "🎯 Weekly goal tracking & visual progress",
       "🎙️ Voice-to-task capture",
       "📊 Advanced analytics & productivity score",
-      "🎵 Ambient sounds + Spotify focus music",
+      "🎵 Ambient focus sounds",
       "💡 Proactive AI coaching & smart recommendations",
       "🤖 AI companion messages & adaptive companion",
       "📱 Cross-device session notifications",

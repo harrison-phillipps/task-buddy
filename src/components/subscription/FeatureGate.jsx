@@ -160,7 +160,7 @@ export function UpgradeModal({ open, onOpenChange, feature, requiredTier = "pro"
       "Weekly Goal Tracking",
       "Voice to Tasks",
       "Advanced Analytics & Productivity Score",
-      "Ambient Sounds & Spotify",
+      "Ambient Focus Sounds",
       "Proactive AI Coaching & Smart Recommendations",
       "AI Companion Messages & Adaptive Companion",
       "Cross-Device Notifications",
