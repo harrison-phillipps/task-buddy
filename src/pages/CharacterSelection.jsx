@@ -402,7 +402,7 @@ export default function CharacterSelection() {
         const user = await base44.auth.me();
         if (!user.display_name) navigate(createPageUrl("Onboarding"));
         else setSelectedCompanion(user.companion_type || null);
-      } catch {}
+      } catch (e) { /* ignored */ }
     };
     checkUser();
   }, [navigate]);
