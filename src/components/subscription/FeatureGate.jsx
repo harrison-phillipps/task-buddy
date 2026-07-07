@@ -153,28 +153,33 @@ export function UpgradeModal({ open, onOpenChange, feature, requiredTier = "pro"
 
   const features = {
     pro: [
-      "AI Task Prioritization",
+      "AI Task Prioritisation",
       "Google Calendar Sync",
-      "Advanced Analytics",
-      "Up to 100 Tasks",
-      "Unlimited Brain Dumps with Voice",
-      "Ambient Focus Sounds & Spotify",
       "Smart Daily Plan",
-      "Voice to Tasks",
       "Calendar Gap Filler",
-      "Daily Schedule Planner",
-      "Proactive AI Coaching",
-      "Smart Task Recommendations",
+      "Weekly Goal Tracking",
+      "Voice to Tasks",
+      "Advanced Analytics & Productivity Score",
+      "Ambient Sounds & Spotify",
+      "Proactive AI Coaching & Smart Recommendations",
+      "AI Companion Messages & Adaptive Companion",
+      "Cross-Device Notifications",
+      "Up to 100 Tasks",
+      "50 Focus Sessions & 20 Brain Dumps/day",
     ],
     premium: [
       "Everything in Pro",
-      "Unlimited Tasks",
+      "Unlimited Tasks, Brain Dumps & Focus Sessions",
       "AI Task Breakdown (auto subtasks)",
       "Team Collaboration & Shared Tasks",
+      "Team Workload Dashboard",
+      "@mention Teammates",
+      "Energy-Aware AI Coaching",
+      "Strategic Goal Coaching",
+      "Full AI Coaching Bots Suite",
       "Custom Companion Personalities",
-      "Priority Support",
       "Data Export",
-      "Early Access to New Features"
+      "Priority Support & Early Access",
     ]
   };
 

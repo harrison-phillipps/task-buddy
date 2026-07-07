@@ -22,15 +22,17 @@ const plansData = [
     description: "Dip your toes in — no credit card needed",
     features: [
       "10 active tasks to get you started",
-      "2 brain dumps per day with voice capture",
+      "2 brain dumps per day",
       "3 focus sessions per day",
       "Basic achievements & streaks",
+      "Basic analytics",
       "1 AI companion character"
     ],
     limitations: [
-      "No AI to prioritise your tasks for you",
-      "No calendar sync",
-      "No goals or daily planning"
+      "No AI task prioritisation",
+      "No calendar sync or smart daily plan",
+      "No voice-to-task capture",
+      "No ambient focus sounds or Spotify"
     ],
     cta: "Current Plan",
     popular: false
@@ -44,18 +46,19 @@ const plansData = [
     period: "per month",
     description: "Let AI do the heavy lifting — less stress, more done",
     features: [
-      "🧠 AI tells you exactly what to work on next",
-      "📅 Auto-syncs with Google Calendar",
-      "🗓️ Smart Daily Plan built for you every morning",
-      "⚡ Finds free time in your calendar & fills it",
-      "🎯 Set goals and track your progress visually",
-      "🎙️ Speak your tasks — AI captures & organises them",
-      "📊 See when you're most productive with analytics",
-      "🔁 Unlimited focus sessions & brain dumps",
-      "🎵 Focus music: ambient sounds + Spotify",
-      "💡 Proactive AI nudges to keep you on track",
-      "🏆 Unlock all achievements & rewards",
-      "Up to 100 active tasks"
+      "🧠 AI prioritises your tasks for you",
+      "📅 Google Calendar sync",
+      "🗓️ Smart Daily Plan built every morning",
+      "⚡ Calendar gap filler — finds & fills free time",
+      "🎯 Weekly goal tracking & visual progress",
+      "🎙️ Voice-to-task capture",
+      "📊 Advanced analytics & productivity score",
+      "🎵 Ambient sounds + Spotify focus music",
+      "💡 Proactive AI coaching & smart recommendations",
+      "🤖 AI companion messages & adaptive companion",
+      "📱 Cross-device session notifications",
+      "Up to 100 active tasks",
+      "50 focus sessions & 20 brain dumps per day"
     ],
     limitations: [],
     cta: "Start Getting More Done →",
@@ -71,6 +74,7 @@ const plansData = [
     description: "For serious achievers & teams who want everything",
     features: [
       "✅ Everything in Pro, plus…",
+      "♾️ Unlimited tasks, brain dumps & focus sessions",
       "🤖 AI auto-breaks big tasks into actionable steps",
       "👥 Collaborate with your team on shared tasks",
       "📋 Team workload dashboard & bottleneck alerts",
@@ -80,8 +84,7 @@ const plansData = [
       "🧬 Full AI coaching bots suite (habit, skill & more)",
       "🎨 Custom companion personalities & deep customisation",
       "📤 Export all your data anytime",
-      "⚡ Priority support & early access to new features",
-      "Unlimited tasks — no caps, ever"
+      "⚡ Priority support & early access to new features"
     ],
     limitations: [],
     cta: "Go Premium →",
