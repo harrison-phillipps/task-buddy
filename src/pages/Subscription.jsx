@@ -163,6 +163,9 @@ export default function Subscription() {
         setCurrentUser(prev => ({ ...prev, subscription_cancel_at: response.data.cancel_at }));
         setCancelConfirmOpen(false);
         alert(`Your subscription has been cancelled. You'll keep access to your current plan until ${cancelDate}.`);
+      } else if (response.data?.code === 'NO_SUBSCRIPTION') {
+        setCancelConfirmOpen(false);
+        alert('No active subscription found. If you believe this is an error, contact support@taskbuddy.app');
       } else {
         throw new Error(response.data?.error || 'Cancellation failed');
       }

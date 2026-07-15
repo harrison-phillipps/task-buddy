@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
 
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     if (!customers.data.length) {
-      return Response.json({ error: 'No subscription found' }, { status: 404 });
+      return Response.json({ error: 'No active subscription found', code: 'NO_SUBSCRIPTION' }, { status: 404 });
     }
 
     const customer = customers.data[0];
@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     });
 
     if (!subscriptions.data.length) {
-      return Response.json({ error: 'No active subscription found' }, { status: 404 });
+      return Response.json({ error: 'No active subscription found', code: 'NO_SUBSCRIPTION' }, { status: 404 });
     }
 
     const sub = subscriptions.data[0];
