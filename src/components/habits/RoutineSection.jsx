@@ -3,11 +3,27 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, Plus, Trash2, GripVertical, Flame } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { hasFeatureAccess, UpgradePrompt } from "@/components/subscription/FeatureGate";
 
 const today = () => new Date().toLocaleDateString('en-CA');
 
-export default function RoutineSection({ label, emoji, habits, completions, onAdd, onDelete, onComplete, onRefresh }) {
+export default function RoutineSection({ label, emoji, habits, completions, userTier, onAdd, onDelete, onComplete, onRefresh }) {
   const todayStr = today();
+  const hasTemplateAccess = hasFeatureAccess(userTier, "routine_templates");
+
+  if (!hasTemplateAccess) {
+    return (
+      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-purple-100 dark:border-gray-700 overflow-hidden">
+        <div className="px-5 py-4 flex items-center gap-3 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
+          <span className="text-2xl">{emoji}</span>
+          <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">{label}</h3>
+        </div>
+        <div className="p-5">
+          <UpgradePrompt feature="Routine Templates" requiredTier="pro" />
+        </div>
+      </div>
+    );
+  }
 
   const isCompleted = (habit) => {
     const c = completions.find(c => c.habit_id === habit.id && c.completion_date === todayStr);

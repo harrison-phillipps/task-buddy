@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Flame, Sun, Moon, Zap, Trophy } from "lucide-react";
+import { hasFeatureAccess, UpgradePrompt } from "@/components/subscription/FeatureGate";
 import RoutineSection from "../components/habits/RoutineSection";
 import AddHabitSheet from "../components/habits/AddHabitSheet";
 import WinsJournal from "../components/habits/WinsJournal";
@@ -17,7 +18,23 @@ const ROUTINES = [
 
 export default function Habits() {
   const [addRoutine, setAddRoutine] = useState(null); // which routine is being added to
+  const [currentUser, setCurrentUser] = useState(null);
   const queryClient = useQueryClient();
+
+  const userTier = currentUser?.subscription_tier || "free";
+  const hasHabitAccess = hasFeatureAccess(userTier, "habit_tracking");
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await base44.auth.me();
+        setCurrentUser(user);
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const { data: habits = [] } = useQuery({
     queryKey: ["habits"],
@@ -46,6 +63,21 @@ export default function Habits() {
   ).length;
   const totalToday = activeHabits.length;
   const bestStreak = activeHabits.reduce((max, h) => Math.max(max, h.current_streak || 0), 0);
+
+  if (!hasHabitAccess) {
+    return (
+      <div className="min-h-screen p-4 md:p-6 max-w-2xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <Flame className="w-6 h-6 text-orange-500" />
+            Habits & Routines
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Build consistent daily routines</p>
+        </div>
+        <UpgradePrompt feature="Habit and Routine Tracking" requiredTier="pro" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-4 md:p-6 max-w-2xl mx-auto">
@@ -109,6 +141,7 @@ export default function Habits() {
               emoji={routine.emoji}
               habits={routineHabits}
               completions={completions}
+              userTier={userTier}
               onAdd={() => setAddRoutine(routine.key)}
               onDelete={handleDelete}
               onRefresh={refresh}
