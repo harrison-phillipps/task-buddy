@@ -129,7 +129,7 @@ async function encryptPayload(payload, authB64, p256dhB64) {
 async function sendWebPush(subscription, payload) {
   const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
   const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
-  const vapidSubject = Deno.env.get('VAPID_SUBJECT') || 'mailto:support@taskbuddy.app';
+  const vapidSubject = Deno.env.get('VAPID_SUBJECT') || 'mailto:support@taskbuddyapp.com.au';
 
   const endpoint = subscription.endpoint;
   const { keys } = subscription;

@@ -165,13 +165,13 @@ export default function Subscription() {
         alert(`Your subscription has been cancelled. You'll keep access to your current plan until ${cancelDate}.`);
       } else if (response.data?.code === 'NO_SUBSCRIPTION') {
         setCancelConfirmOpen(false);
-        alert('No active subscription found. If you believe this is an error, contact support@taskbuddy.app');
+        alert('No active subscription found. If you believe this is an error, contact support@taskbuddyapp.com.au');
       } else {
         throw new Error(response.data?.error || 'Cancellation failed');
       }
     } catch (error) {
       console.error('Cancellation error:', error);
-      alert('Failed to cancel subscription. Please try again or contact support@taskbuddy.app');
+      alert('Failed to cancel subscription. Please try again or contact support@taskbuddyapp.com.au');
     } finally {
       setIsCancelling(false);
     }
@@ -379,7 +379,7 @@ export default function Subscription() {
             🔒 Secure payment via Stripe &nbsp;·&nbsp; Cancel anytime, no questions asked &nbsp;·&nbsp; 7-day free trial on all paid plans
           </p>
           <p className="text-gray-400 text-xs mt-2">
-            Questions? Reach us at support@taskbuddy.app — we reply within 24 hours.
+            Questions? Reach us at support@taskbuddyapp.com.au — we reply within 24 hours.
           </p>
         </motion.div>
 
