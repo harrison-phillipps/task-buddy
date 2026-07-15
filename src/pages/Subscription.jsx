@@ -376,7 +376,7 @@ export default function Subscription() {
           className="mt-8 text-center"
         >
           <p className="text-gray-500 text-sm">
-            🔒 Secure payment via Stripe &nbsp;·&nbsp; Cancel anytime, no questions asked &nbsp;·&nbsp; 14-day free trial on all paid plans
+            🔒 Secure payment via Stripe &nbsp;·&nbsp; Cancel anytime, no questions asked &nbsp;·&nbsp; 7-day free trial on all paid plans
           </p>
           <p className="text-gray-400 text-xs mt-2">
             Questions? Reach us at support@taskbuddy.app — we reply within 24 hours.
