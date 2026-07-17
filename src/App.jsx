@@ -6,7 +6,7 @@ import { queryClientInstance } from '@/lib/query-client'
 // VisualEditAgent removed - caused duplicate React chunk conflict
 // NavigationTracker removed - caused duplicate React chunk conflict
 import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
@@ -33,13 +33,23 @@ const AuthenticatedApp = () => {
   const location = useLocation();
 
   const isPublicPath = PUBLIC_PATHS.includes(location.pathname);
+  // Root guest entry points — must wait for auth to resolve so authenticated
+  // users never see the guest task input screen, even briefly.
+  const isGuestRoot = location.pathname === '/' || location.pathname === '/Home';
 
-  // Show loading spinner while checking app public settings or auth
-  // But don't block public pages waiting for auth
-  if ((isLoadingPublicSettings || isLoadingAuth) && !isPublicPath) {
+  // Show loading spinner while checking app public settings or auth.
+  // Gate protected paths (as before) AND the guest root (to prevent the flash).
+  // Other guest-flow pages (/GuestSession, /GuestWelcome) are only reached once
+  // the user is already known to be unauthenticated, so no gating needed there.
+  if ((isLoadingPublicSettings || isLoadingAuth) && (!isPublicPath || isGuestRoot)) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 via-white to-teal-50">
+        <img
+          src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68ff06728f59128717455ed3/947e987fc_Screenshot2025-12-08at84335AM.png"
+          alt="TaskBuddy"
+          className="w-12 h-12 rounded-2xl shadow-md object-cover mb-4"
+        />
+        <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -53,6 +63,12 @@ const AuthenticatedApp = () => {
       navigateToLogin();
       return null;
     }
+  }
+
+  // Authenticated user hitting the guest root — send straight to the app.
+  // Prevents the guest task input screen from ever rendering for logged-in users.
+  if (isAuthenticated && isGuestRoot) {
+    return <Navigate to="/Dashboard" replace />;
   }
 
   // Render the main app
