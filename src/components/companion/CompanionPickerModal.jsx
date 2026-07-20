@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,12 +17,16 @@ const companions = [
 export default function CompanionPickerModal({ open, onOpenChange, currentType, onSaved }) {
   const [selected, setSelected] = useState(currentType || null);
   const [saving, setSaving] = useState(false);
+  const { checkAppState } = useAuth();
 
   const handleSave = async () => {
     if (!selected) return;
     setSaving(true);
     try {
       await base44.auth.updateMe({ companion_type: selected });
+      // Refresh the shared user object in AuthContext so every consumer
+      // (sidebar, dashboard, etc.) updates reactively without a reload.
+      await checkAppState();
       toast.success("Companion updated!");
       onSaved?.();
       onOpenChange(false);

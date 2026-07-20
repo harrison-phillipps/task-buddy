@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import PullToRefresh from "../components/PullToRefresh";
 import { useNavigate } from "react-router-dom";
@@ -21,7 +22,7 @@ import SuggestedTaskChips from "../components/dashboard/SuggestedTaskChips";
 export default function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [currentUser, setCurrentUser] = useState(null);
+  const { user: currentUser } = useAuth();
   const [userProgress, setUserProgress] = useState(null);
   const [isClinician, setIsClinician] = useState(false);
 
@@ -42,38 +43,36 @@ export default function Dashboard() {
 
 
 
+  // Read the shared user from AuthContext (single source of truth) instead of
+  // a local base44.auth.me() fetch. This keeps companion_type (and other user
+  // fields) reactive across the app — e.g. the picker's checkAppState() call
+  // updates this view without a page reload.
   useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const user = await base44.auth.me();
-        setCurrentUser(user);
-        
-        if (!user.display_name) { navigate(createPageUrl("Onboarding")); return; }
-        if (!user.companion_type) { navigate(createPageUrl("CharacterSelection")); return; }
-        
-        const clinicianProfiles = await base44.entities.ClinicianProfile.filter({ user_id: user.id });
-        setIsClinician(clinicianProfiles.length > 0);
+    if (!currentUser) return;
+    if (!currentUser.display_name) { navigate(createPageUrl("Onboarding")); return; }
+    if (!currentUser.companion_type) { navigate(createPageUrl("CharacterSelection")); return; }
 
-        const progressList = await base44.entities.UserProgress.filter({ user_id: user.id });
+    let mounted = true;
+    (async () => {
+      const clinicianProfiles = await base44.entities.ClinicianProfile.filter({ user_id: currentUser.id });
+      if (mounted) setIsClinician(clinicianProfiles.length > 0);
 
-        if (progressList.length > 0) {
-          setUserProgress(progressList[0]);
-        } else {
-          const newProgress = await base44.entities.UserProgress.create({
-            user_id: user.id, total_points: 0, level: 1,
-            tasks_completed: 0, focus_sessions_completed: 0,
-            total_focus_minutes: 0, brain_dumps_created: 0,
-            current_streak: 0, longest_streak: 0
-          });
-          setUserProgress(newProgress);
-        }
-      } catch (error) {
-        console.error("Error fetching user:", error);
-        setCurrentUser({ id: 'error', email: 'error@example.com' });
+      const progressList = await base44.entities.UserProgress.filter({ user_id: currentUser.id });
+      if (!mounted) return;
+      if (progressList.length > 0) {
+        setUserProgress(progressList[0]);
+      } else {
+        const newProgress = await base44.entities.UserProgress.create({
+          user_id: currentUser.id, total_points: 0, level: 1,
+          tasks_completed: 0, focus_sessions_completed: 0,
+          total_focus_minutes: 0, brain_dumps_created: 0,
+          current_streak: 0, longest_streak: 0
+        });
+        if (mounted) setUserProgress(newProgress);
       }
-    };
-    checkUser();
-  }, [navigate]);
+    })();
+    return () => { mounted = false; };
+  }, [currentUser, navigate]);
 
   const completedToday = tasks.filter(t => {
     if (t.status !== 'completed') return false;
