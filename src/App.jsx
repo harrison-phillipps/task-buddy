@@ -11,11 +11,10 @@ import { AnimatePresence, motion } from 'framer-motion';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-import { lazy } from 'react';
-const Home = lazy(() => import('./pages/Home'));
-const GuestSession = lazy(() => import('./pages/GuestSession'));
-const GuestWelcome = lazy(() => import('./pages/GuestWelcome'));
-const ClinicianDashboard = lazy(() => import('./pages/ClinicianDashboard'));
+import Home from './pages/Home';
+import GuestSession from './pages/GuestSession';
+import GuestWelcome from './pages/GuestWelcome';
+import ClinicianDashboard from './pages/ClinicianDashboard';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
