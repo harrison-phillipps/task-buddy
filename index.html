@@ -56,6 +56,18 @@
     <!-- ===== Performance / Security ===== -->
     <!-- Disable DNS prefetch for privacy; re-enable if needed for perf -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <!-- ===== Natively SDK (native iOS/Android wrapper bridge) ===== -->
+    <!-- Inert in a regular browser/PWA; only bridges to the native shell inside Natively builds. -->
+    <script async onload="nativelyOnLoad()" src="https://cdn.jsdelivr.net/npm/natively@2/natively-frontend.min.js"></script>
+    <script>
+      function nativelyOnLoad() {
+        try {
+          if (window.natively && typeof window.natively.setDebug === 'function') window.natively.setDebug(false);
+          window.dispatchEvent(new CustomEvent('natively-loaded'));
+        } catch (e) { /* no-op in non-native contexts */ }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

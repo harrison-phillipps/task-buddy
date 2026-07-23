@@ -28,9 +28,13 @@ export default function PushNotificationSetup({ compact = false, onDismiss }) {
     }
     const result = await requestPermissionAndSubscribe(vapidKey);
     if (result.success) {
-      await sendTestNotification(result.subscription);
+      if (!result.native) {
+        await sendTestNotification(result.subscription);
+      }
       setStatus('success');
-      setStatusMsg('Push notifications enabled! A test notification was just sent.');
+      setStatusMsg(result.native
+        ? 'Push notifications enabled!'
+        : 'Push notifications enabled! A test notification was just sent.');
     } else if (result.reason === 'denied') {
       setStatus('error');
       setStatusMsg('Permission denied. Enable notifications in your browser settings.');
