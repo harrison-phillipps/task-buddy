@@ -11,7 +11,7 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 export function usePushNotifications() {
-  const [permission, setPermission] = useState(Notification.permission);
+  const [permission, setPermission] = useState(typeof Notification !== 'undefined' ? Notification.permission : 'default');
   const [subscription, setSubscription] = useState(null);
   const [isSupported] = useState('serviceWorker' in navigator && 'PushManager' in window);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -27,6 +27,9 @@ export function usePushNotifications() {
   }, [isSupported]);
 
   const requestPermissionAndSubscribe = useCallback(async (vapidPublicKeyFromServer) => {
+    if (typeof Notification === 'undefined') {
+      return { success: false, reason: 'not_supported' };
+    }
     if (!isSupported) return { success: false, reason: 'not_supported' };
     setIsRegistering(true);
 
