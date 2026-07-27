@@ -159,6 +159,39 @@ async function sendWebPush(subscription, payload) {
   return { status: response.status, ok: response.ok };
 }
 
+async function sendOneSignal(playerId, payload) {
+  const restKey = Deno.env.get('One_Signal_REST_API_Key');
+  const appId = Deno.env.get('One_Signal_APP_ID');
+  if (!restKey || !appId) {
+    console.error('OneSignal credentials not configured');
+    return { ok: false, status: 500, error: 'OneSignal credentials not configured' };
+  }
+
+  // Pass through deep-link / custom data fields under OneSignal's `data` block
+  const data = {};
+  if (payload.taskId != null) data.taskId = payload.taskId;
+  if (payload.taskTitle != null) data.taskTitle = payload.taskTitle;
+  if (payload.dueDate != null) data.dueDate = payload.dueDate;
+  if (payload.estimatedMinutes != null) data.estimatedMinutes = payload.estimatedMinutes;
+
+  const res = await fetch('https://onesignal.com/api/v1/notifications', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${restKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      app_id: appId,
+      include_player_ids: [playerId],
+      headings: { en: payload.title || 'TaskBuddy' },
+      contents: { en: payload.body || '' },
+      data,
+    }),
+  });
+
+  return { ok: res.ok, status: res.status };
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -166,14 +199,22 @@ Deno.serve(async (req) => {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
-    const { subscription, payload } = body;
+    const { subscription, playerId, payload } = body;
 
-    if (!subscription || !payload) {
-      return Response.json({ error: 'Missing subscription or payload' }, { status: 400 });
+    if (!payload) {
+      return Response.json({ error: 'Missing payload' }, { status: 400 });
     }
 
-    const result = await sendWebPush(subscription, payload);
-    console.log(`Push sent to ${user.email}: status=${result.status}`);
+    let result;
+    if (playerId) {
+      result = await sendOneSignal(playerId, payload);
+      console.log(`OneSignal push sent to ${user.email}: status=${result.status}`);
+    } else if (subscription) {
+      result = await sendWebPush(subscription, payload);
+      console.log(`VAPID push sent to ${user.email}: status=${result.status}`);
+    } else {
+      return Response.json({ error: 'Missing subscription or playerId' }, { status: 400 });
+    }
 
     return Response.json({ success: result.ok, status: result.status });
   } catch (error) {

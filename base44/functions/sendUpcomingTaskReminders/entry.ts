@@ -123,24 +123,35 @@ Deno.serve(async (req) => {
           sent_at: now.toISOString(),
         });
 
-        // Send browser push notification if user has a push subscription (must_do tasks always, others only if urgent)
+        // Send push notification if user has a push subscription (must_do tasks always, others only if urgent)
         if (isMustDo || task.priority === 'urgent') {
           try {
-            const pushSubRaw = user.push_subscription;
-            if (pushSubRaw) {
-              const pushSub = typeof pushSubRaw === 'string' ? JSON.parse(pushSubRaw) : pushSubRaw;
+            const pushPayload = {
+              title: isMustDo ? `🔴 Must Do: ${task.title}` : `⏰ ${task.title}`,
+              body: `Due ${timeLabel}${task.estimated_minutes ? ` · ~${task.estimated_minutes} min` : ''}. Tap to open or snooze.`,
+              taskId: task.id,
+              taskTitle: task.title,
+              estimatedMinutes: task.estimated_minutes || null,
+              dueDate: task.due_date,
+            };
+
+            // Native (OneSignal) takes precedence; fall back to VAPID web push
+            if (user.onesignal_player_id) {
               await base44.asServiceRole.functions.invoke('sendPushNotification', {
-                subscription: pushSub,
-                payload: {
-                  title: isMustDo ? `🔴 Must Do: ${task.title}` : `⏰ ${task.title}`,
-                  body: `Due ${timeLabel}${task.estimated_minutes ? ` · ~${task.estimated_minutes} min` : ''}. Tap to open or snooze.`,
-                  taskId: task.id,
-                  taskTitle: task.title,
-                  estimatedMinutes: task.estimated_minutes || null,
-                  dueDate: task.due_date,
-                },
+                playerId: user.onesignal_player_id,
+                payload: pushPayload,
               });
-              console.log(`Push notification sent to ${email} for task "${task.title}"`);
+              console.log(`OneSignal push sent to ${email} for task "${task.title}"`);
+            } else {
+              const pushSubRaw = user.push_subscription;
+              if (pushSubRaw) {
+                const pushSub = typeof pushSubRaw === 'string' ? JSON.parse(pushSubRaw) : pushSubRaw;
+                await base44.asServiceRole.functions.invoke('sendPushNotification', {
+                  subscription: pushSub,
+                  payload: pushPayload,
+                });
+                console.log(`VAPID push sent to ${email} for task "${task.title}"`);
+              }
             }
           } catch (pushErr) {
             console.error(`Push failed for ${email}:`, pushErr.message);
