@@ -92,15 +92,7 @@ export function usePushNotifications() {
       });
       if (!playerId) return { success: false, reason: 'no_player_id' };
 
-      // 3. Link the device to our user record via OneSignal external id
-      const user = await base44.auth.me();
-      if (user && user.id) {
-        await new Promise((resolve) => {
-          notifications.setExternalId(user.id, (resp) => resolve(resp));
-        });
-      }
-
-      // 4. Persist Player ID to the user record
+      // 3. Persist Player ID to the user record
       await base44.auth.updateMe({ onesignal_player_id: playerId });
       setSubscription({ playerId });
 
