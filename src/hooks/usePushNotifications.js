@@ -71,6 +71,36 @@ export function usePushNotifications() {
     });
   }, [isVapidSupported]);
 
+  // Rehydrate state for native (Natively) users: the browser Notification.permission
+  // value is meaningless inside the WebView, so read the real permission from the
+  // Natively SDK and restore any persisted OneSignal Player ID from the user record.
+  useEffect(() => {
+    if (!isNative || typeof NativelyNotifications === 'undefined') return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const user = await base44.auth.me();
+        if (cancelled) return;
+        if (user && user.onesignal_player_id) {
+          setSubscription({ playerId: user.onesignal_player_id });
+        }
+
+        const notifications = new NativelyNotifications();
+        const status = await new Promise((resolve) => {
+          notifications.getPermissionStatus((resp) => resolve(resp && resp.status));
+        });
+        if (cancelled) return;
+        // Map native status to Notification permission states
+        if (status === 'granted' || status === 'authorized') setPermission('granted');
+        else if (status === 'denied') setPermission('denied');
+        else setPermission('default');
+      } catch (err) {
+        console.error('Native permission rehydration error:', err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isNative]);
+
   const requestNativePermission = useCallback(async () => {
     if (typeof NativelyNotifications === 'undefined') {
       return { success: false, reason: 'natively_sdk_not_loaded' };
