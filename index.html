@@ -63,7 +63,7 @@
     <script>
       function nativelyOnLoad() {
         try {
-          if (window.natively && typeof window.natively.setDebug === 'function') window.natively.setDebug(false);
+          if (window.natively && typeof window.natively.setDebug === 'function') window.natively.setDebug(true);
           window.dispatchEvent(new CustomEvent('natively-loaded'));
         } catch (e) { /* no-op in non-native contexts */ }
       }
