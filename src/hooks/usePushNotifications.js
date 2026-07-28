@@ -86,14 +86,10 @@ export function usePushNotifications() {
         }
 
         const notifications = new NativelyNotifications();
-        const status = await new Promise((resolve) => {
-          notifications.getPermissionStatus((resp) => resolve(resp && resp.status));
+        const granted = await new Promise((resolve) => {
+          notifications.getPermissionStatus((resp) => resolve(!!(resp && resp.status)));
         });
-        if (cancelled) return;
-        // Map native status to Notification permission states
-        if (status === 'granted' || status === 'authorized') setPermission('granted');
-        else if (status === 'denied') setPermission('denied');
-        else setPermission('default');
+        setPermission(granted ? 'granted' : 'default');
       } catch (err) {
         console.error('Native permission rehydration error:', err);
       }
