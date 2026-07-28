@@ -89,6 +89,7 @@ export function usePushNotifications() {
         const granted = await new Promise((resolve) => {
           notifications.getPermissionStatus((resp) => resolve(!!(resp && resp.status)));
         });
+        if (cancelled) return;
         setPermission(granted ? 'granted' : 'default');
       } catch (err) {
         console.error('Native permission rehydration error:', err);
