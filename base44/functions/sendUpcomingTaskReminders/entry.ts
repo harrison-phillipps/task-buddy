@@ -6,24 +6,31 @@ Deno.serve(async (req) => {
     const client = base44.asServiceRole;
 
     const now = new Date();
-    const today = now.toISOString().split('T')[0];
+    const today = now.toLocaleDateString('en-CA'); // local YYYY-MM-DD, not UTC
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toLocaleDateString('en-CA');
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
 
-    console.log(`Checking tasks due today (${today}), current time ${currentHour}:${String(currentMinute).padStart(2,'0')}`);
+    console.log(`Checking tasks due ${today}..${tomorrowStr}, current time ${currentHour}:${String(currentMinute).padStart(2,'0')}`);
 
-    // Fetch incomplete tasks due today
-    const allTasks = await client.entities.Task.filter({ due_date: today });
+    // Fetch incomplete tasks due today or tomorrow (tomorrow covers the max
+    // supported task_reminder_minutes value of 1440 = 1 day lead time).
+    const allTasks = await client.entities.Task.filter({
+      due_date: { $gte: today, $lte: tomorrowStr }
+    });
     const tasksInWindow = allTasks.filter(t => t.status !== 'completed');
 
     if (tasksInWindow.length === 0) {
-      console.log('No tasks due today');
+      console.log('No tasks due today or tomorrow');
       return Response.json({ sent: 0 });
     }
 
-    // Check calendar events for time-specific due times
+    // Check calendar events for time-specific due times (today + tomorrow,
+    // so a task due tomorrow with a start_time is still matched)
     const calendarEvents = await client.entities.CalendarEvent.filter({
-      start_date: today,
+      start_date: { $gte: today, $lte: tomorrowStr },
       source: 'task'
     });
 
@@ -35,28 +42,44 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Determine which tasks are due in the 30-min window
+    // Fetch users + notification preferences up front so each owner's
+    // task_reminder_minutes can drive the per-task reminder window.
+    const users = await client.entities.User.list();
+    const userByEmail = Object.fromEntries(users.map(u => [u.email, u]));
+    const prefs = await client.entities.NotificationPreferences.list();
+    const prefByUserId = Object.fromEntries(prefs.map(p => [p.user_id, p]));
+
+    const DEFAULT_REMINDER_MINUTES = 60;
+    const TOLERANCE_MIN = 5; // matches the 5-minute cron cadence
+
+    // Determine which tasks fall within each user's chosen reminder window.
     const tasksToNotify = [];
     for (const task of tasksInWindow) {
       const eventTime = taskEventTime[task.id];
       if (eventTime) {
-        // Has a calendar event with a specific time — check 30-min window
-        const [h, m] = eventTime.split(':').map(Number);
-        const taskMinutes = h * 60 + m;
-        const nowMinutes = currentHour * 60 + currentMinute;
-        if (taskMinutes - nowMinutes >= 25 && taskMinutes - nowMinutes <= 35) {
+        // Specific due time — parse due_date + start_time as a local
+        // timestamp (runtime TZ aligns with toLocaleDateString('en-CA')
+        // above), then compare absolutely so day boundaries are handled.
+        const owner = task.created_by ? userByEmail[task.created_by] : null;
+        const pref = owner ? prefByUserId[owner.id] : null;
+        const leadMinutes = pref?.task_reminder_minutes ?? DEFAULT_REMINDER_MINUTES;
+
+        const dueTimestamp = new Date(`${task.due_date}T${eventTime}:00`);
+        const diffMinutes = (dueTimestamp.getTime() - now.getTime()) / 60000;
+        if (diffMinutes >= leadMinutes - TOLERANCE_MIN && diffMinutes <= leadMinutes + TOLERANCE_MIN) {
           tasksToNotify.push({ task, dueTime: eventTime });
         }
       } else {
-        // No specific time — send reminder at 8am for tasks due today
-        if (currentHour === 8 && currentMinute < 5) {
+        // No specific time — send reminder at 8am, but only for tasks
+        // actually due today (untimed tomorrow tasks wait for their own 8am).
+        if (task.due_date === today && currentHour === 8 && currentMinute < 5) {
           tasksToNotify.push({ task, dueTime: 'end of day' });
         }
       }
     }
 
     if (tasksToNotify.length === 0) {
-      console.log('No tasks matched the 30-min window');
+      console.log('No tasks matched the reminder window');
       return Response.json({ sent: 0 });
     }
 
@@ -68,14 +91,6 @@ Deno.serve(async (req) => {
       if (!byUser[email]) byUser[email] = [];
       byUser[email].push(item);
     }
-
-    // Fetch all users
-    const users = await client.entities.User.list();
-    const userByEmail = Object.fromEntries(users.map(u => [u.email, u]));
-
-    // Fetch notification preferences
-    const prefs = await client.entities.NotificationPreferences.list();
-    const prefByUserId = Object.fromEntries(prefs.map(p => [p.user_id, p]));
 
     let sent = 0;
 
@@ -96,7 +111,9 @@ Deno.serve(async (req) => {
         });
 
         const alreadySentToday = existing.some(n => {
-          const sentDate = n.created_date?.split('T')[0];
+          const sentDate = new Date(
+            n.created_date + (n.created_date?.includes('Z') ? '' : 'Z')
+          ).toLocaleDateString('en-CA');
           return sentDate === today;
         });
 
