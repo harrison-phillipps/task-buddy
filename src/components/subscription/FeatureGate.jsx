@@ -36,6 +36,11 @@ export const FEATURE_ACCESS = {
   ai_smart_analyzer: ["pro", "premium"],
   ai_proactive_coach: ["pro", "premium"],
   ai_adaptive_companion: ["pro", "premium"],
+  ai_prioritization: ["pro", "premium"],
+  smart_plan: ["pro", "premium"],
+  voice_tasks: ["free", "pro", "premium"],
+  gap_filler: ["pro", "premium"],
+  team_features: ["premium"],
 
   // Available to all tiers (enforced by task count, not tier)
   ai_task_breakdown: ["free", "pro", "premium"],
