@@ -45,7 +45,6 @@ import OfflineIndicator from "../components/OfflineIndicator";
 import PomodoroTimer from "../components/focus/PomodoroTimer";
 import DistractionBlocker from "../components/focus/DistractionBlocker";
 import SessionMetrics from "../components/focus/SessionMetrics";
-import SpotifyPlayer from "../components/focus/SpotifyPlayer";
 import { hasFeatureAccess, UpgradePrompt, TIER_LIMITS } from "../components/subscription/FeatureGate";
 import FocusCompanionChat from "../components/focus/FocusCompanionChat";
 import VoiceCommandListener from "../components/focus/VoiceCommandListener";
@@ -1267,10 +1266,6 @@ export default function FocusSession() {
                 )}
               </div>
 
-              {hasFeatureAccess(currentUser?.subscription_tier, "spotify_player") ? (
-                <SpotifyPlayer isSessionActive={false} />
-              ) : null}
-
               {hasFeatureAccess(currentUser?.subscription_tier, "cross_device_notifications") ? (
                 <FocusNotificationSettings
                   onPermissionChange={(granted) => setNotificationsEnabled(granted)}
@@ -1490,9 +1485,6 @@ export default function FocusSession() {
                     </div>
 
 
-                    {!isBreakTime && hasFeatureAccess(currentUser?.subscription_tier, "spotify_player") && (
-                      <SpotifyPlayer isSessionActive={isActive} compact />
-                    )}
                     {!isBreakTime && (
                       <DistractionBlocker isSessionActive={isActive} />
                     )}
