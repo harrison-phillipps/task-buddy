@@ -9,15 +9,20 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    // Find customer by email
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    if (!customers.data.length) {
-      return Response.json({ status: 'none' });
+    // Look up customer via stored stripe_customer_id, with email fallback backfill
+    let customerId = user.stripe_customer_id;
+    if (!customerId) {
+      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+      if (!customers.data.length) {
+        return Response.json({ status: 'none' });
+      }
+      customerId = customers.data[0].id;
+      await base44.auth.updateMe({ stripe_customer_id: customerId });
+      console.log(`Backfilled stripe_customer_id ${customerId} for user ${user.id}`);
     }
 
-    const customer = customers.data[0];
     const subscriptions = await stripe.subscriptions.list({
-      customer: customer.id,
+      customer: customerId,
       status: 'all',
       limit: 1,
       expand: ['data.items.data.price'],
@@ -28,6 +33,11 @@ Deno.serve(async (req) => {
     }
 
     const sub = subscriptions.data[0];
+    if (sub.metadata?.user_id && sub.metadata.user_id !== user.id) {
+      console.error(`Subscription ${sub.id} user_id mismatch: ${sub.metadata.user_id} vs ${user.id}`);
+      return Response.json({ error: 'Forbidden: subscription does not belong to this user' }, { status: 403 });
+    }
+
     const price = sub.items.data[0]?.price;
     const tier = sub.metadata?.tier || 'unknown';
 

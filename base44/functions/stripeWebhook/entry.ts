@@ -33,7 +33,12 @@ Deno.serve(async (req) => {
         const userId = session.metadata?.user_id;
         const tier = session.metadata?.tier;
         if (userId && tier) {
-          await base44.asServiceRole.entities.User.update(userId, { subscription_tier: tier });
+          const existing = await base44.asServiceRole.entities.User.get(userId);
+          const update = { subscription_tier: tier };
+          if (session.customer && !existing?.stripe_customer_id) {
+            update.stripe_customer_id = session.customer;
+          }
+          await base44.asServiceRole.entities.User.update(userId, update);
           console.log(`User ${userId} upgraded to ${tier}`);
         }
         break;

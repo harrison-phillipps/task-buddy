@@ -2,6 +2,10 @@
   "name": "User",
   "type": "object",
   "properties": {
+    "stripe_customer_id": {
+      "type": "string",
+      "description": "Stripe customer ID linked to this user"
+    },
     "display_name": {
       "type": "string",
       "description": "User-set display name shown throughout the app"

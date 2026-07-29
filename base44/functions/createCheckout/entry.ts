@@ -28,13 +28,25 @@ Deno.serve(async (req) => {
 
     const origin = req.headers.get('origin') || 'https://app.base44.com';
 
+    // Create or reuse a Stripe customer for this user
+    let customerId = user.stripe_customer_id;
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        metadata: { user_id: user.id },
+      });
+      customerId = customer.id;
+      await base44.asServiceRole.entities.User.update(user.id, { stripe_customer_id: customerId });
+      console.log(`Created Stripe customer ${customerId} for user ${user.id}`);
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${origin}/Subscription?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/Subscription?cancelled=true`,
-      customer_email: user.email,
+      customer: customerId,
       metadata: {
         base44_app_id: Deno.env.get('BASE44_APP_ID'),
         user_id: user.id,
