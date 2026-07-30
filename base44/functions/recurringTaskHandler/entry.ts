@@ -12,7 +12,7 @@ function addMonths(date, n) {
   return d;
 }
 function formatDate(date) {
-  return date.toISOString().split('T')[0];
+  return date.toLocaleDateString('en-CA');
 }
 function today() { return new Date().toLocaleDateString('en-CA'); }
 
