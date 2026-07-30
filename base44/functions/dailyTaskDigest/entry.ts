@@ -191,13 +191,13 @@ Deno.serve(async (req) => {
               ${upcomingSection}
 
               <div style="text-align:center; margin-top:32px;">
-                <a href="https://taskbuddy.app/Tasks" style="background: linear-gradient(135deg, #8B5CF6, #14B8A6); color:white; padding:12px 28px; border-radius:10px; text-decoration:none; display:inline-block; font-weight:600;">
+                <a href="https://taskbuddyapp.online/Tasks" style="background: linear-gradient(135deg, #8B5CF6, #14B8A6); color:white; padding:12px 28px; border-radius:10px; text-decoration:none; display:inline-block; font-weight:600;">
                   Open My Tasks →
                 </a>
               </div>
 
               <p style="font-size:12px; color:#9CA3AF; margin-top:28px; text-align:center;">
-                Manage notification preferences in <a href="https://taskbuddy.app/Settings" style="color:#8B5CF6;">Settings</a>
+                Manage notification preferences in <a href="https://taskbuddyapp.online/Settings" style="color:#8B5CF6;">Settings</a>
               </p>
             </div>
           `,

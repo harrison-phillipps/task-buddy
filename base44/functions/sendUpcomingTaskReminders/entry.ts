@@ -188,7 +188,7 @@ Deno.serve(async (req) => {
                   <p>Hi ${user.full_name || 'there'},</p>
                   <p>${message}</p>
                   ${task.description ? `<p style="color: #666;">${task.description}</p>` : ''}
-                  <a href="https://app.base44.com" style="background: #8B5CF6; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block; margin-top: 12px;">
+                  <a href="https://taskbuddyapp.online" style="background: #8B5CF6; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block; margin-top: 12px;">
                     Open TaskBuddy
                   </a>
                   <p style="font-size: 12px; color: #999; margin-top: 24px;">

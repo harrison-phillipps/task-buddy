@@ -76,6 +76,58 @@ Deno.serve(async (req) => {
       case 'invoice.payment_failed': {
         const invoice = event.data.object;
         console.warn(`Payment failed for customer ${invoice.customer}, subscription ${invoice.subscription}`);
+
+        // Look up user via stripe_customer_id (not email) — consistent with
+        // the ownership-verification pattern in cancelSubscription / getSubscriptionStatus.
+        const users = await base44.asServiceRole.entities.User.filter({
+          stripe_customer_id: invoice.customer,
+        });
+        const user = users[0];
+        if (!user) {
+          console.warn(`No user found for stripe_customer_id ${invoice.customer} — cannot notify`);
+          break;
+        }
+
+        const notifMessage = "Your subscription payment didn't go through. Please update your billing details to avoid losing access to your premium features.";
+
+        // 1. In-app notification
+        await base44.asServiceRole.entities.Notification.create({
+          user_id: user.id,
+          type: 'general',
+          title: '⚠️ Payment Failed',
+          message: notifMessage,
+          priority: 'high',
+          is_read: false,
+          action_url: '/Subscription',
+          sent_at: new Date().toISOString(),
+        });
+
+        // 2. Email notification
+        try {
+          await base44.asServiceRole.integrations.Core.SendEmail({
+            to: user.email,
+            subject: '⚠️ Action needed: Your TaskBuddy payment failed',
+            body: `
+              <div style="font-family: sans-serif; max-width: 480px; margin: auto; padding: 24px;">
+                <h2 style="color: #FB7185;">Payment Failed</h2>
+                <p>Hi ${user.full_name || 'there'},</p>
+                <p>${notifMessage}</p>
+                <p>Stripe will automatically retry the payment, but if it keeps failing your subscription will be cancelled and your account will revert to the free plan.</p>
+                <a href="https://taskbuddyapp.online/Subscription" style="background: #8B5CF6; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block; margin-top: 12px;">
+                  Update Billing Details
+                </a>
+                <p style="font-size: 12px; color: #999; margin-top: 24px;">
+                  You can manage your subscription in your TaskBuddy settings.
+                </p>
+              </div>
+            `,
+          });
+          console.log(`Payment failure email sent to ${user.email}`);
+        } catch (emailErr) {
+          console.error(`Failed to send payment failure email to ${user.email}:`, emailErr.message);
+        }
+
+        console.log(`Payment failure notification sent to user ${user.id} (${user.email})`);
         break;
       }
 
