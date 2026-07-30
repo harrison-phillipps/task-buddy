@@ -15,8 +15,7 @@ export const AuthProvider = ({ children }) => {
   const checkUserAuth = async () => {
     try {
       setIsLoadingAuth(true);
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
+      await refreshUser();
       setIsAuthenticated(true);
       setIsLoadingAuth(false);
     } catch (error) {
@@ -27,6 +26,12 @@ export const AuthProvider = ({ children }) => {
         setAuthError({ type: 'auth_required', message: 'Authentication required' });
       }
     }
+  };
+
+  const refreshUser = async () => {
+    const currentUser = await base44.auth.me();
+    setUser(currentUser);
+    return currentUser;
   };
 
   const checkAppState = async () => {
@@ -109,6 +114,7 @@ export const AuthProvider = ({ children }) => {
       logout,
       navigateToLogin,
       checkAppState,
+      refreshUser,
     }}>
       {children}
     </AuthContext.Provider>

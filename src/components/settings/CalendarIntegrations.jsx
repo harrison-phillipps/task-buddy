@@ -4,18 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Check, RefreshCw, Loader2, ArrowLeftRight, Info } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { toast } from "sonner";
 import { useIsNativeIOS } from "@/hooks/useIsNativeIOS";
 import IOSCalendarExport from "@/components/settings/IOSCalendarExport";
 
 export default function CalendarIntegrations() {
-  const [currentUser, setCurrentUser] = useState(null);
+  const { user: currentUser, refreshUser } = useAuth();
   const [isSyncing, setIsSyncing] = useState(null); // null | "google" | "outlook"
   const [lastSynced, setLastSynced] = useState({});
-
-  useEffect(() => {
-    base44.auth.me().then(setCurrentUser).catch(console.error);
-  }, []);
 
   const handleSync = async (provider) => {
     setIsSyncing(provider);
@@ -26,7 +23,7 @@ export default function CalendarIntegrations() {
       if (res.data?.success) {
         toast.success(`Synced ${res.data.events_synced} events from ${label}`);
         setLastSynced(prev => ({ ...prev, [provider]: new Date() }));
-        setCurrentUser(u => ({ ...u, calendar_connected: true, calendar_provider: provider }));
+        await refreshUser();
       } else {
         toast.error(res.data?.error || "Sync failed");
       }
