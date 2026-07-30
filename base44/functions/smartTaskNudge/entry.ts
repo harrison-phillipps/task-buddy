@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     const client = base44.asServiceRole;
 
     const now = new Date();
-    const today = now.toISOString().split('T')[0];
+    const today = now.toLocaleDateString('en-CA');
     const currentHour = now.getUTCHours();
     const nudgeType = req.headers.get('x-nudge-type') || 'free_slot'; // 'free_slot' or 'daily'
 

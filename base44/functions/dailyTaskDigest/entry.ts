@@ -18,16 +18,16 @@ Deno.serve(async (req) => {
     const client = base44.asServiceRole;
 
     const now = new Date();
-    const today = now.toISOString().split('T')[0];
+    const today = now.toLocaleDateString('en-CA');
 
     // Calculate yesterday and next 7 days for overdue/upcoming
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    const yesterdayStr = yesterday.toLocaleDateString('en-CA');
 
     const in7Days = new Date(now);
     in7Days.setDate(in7Days.getDate() + 7);
-    const in7DaysStr = in7Days.toISOString().split('T')[0];
+    const in7DaysStr = in7Days.toLocaleDateString('en-CA');
 
     console.log(`[dailyTaskDigest] Running for date: ${today}`);
 

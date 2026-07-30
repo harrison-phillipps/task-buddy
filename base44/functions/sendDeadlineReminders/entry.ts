@@ -18,8 +18,8 @@ Deno.serve(async (req) => {
   const now = new Date();
   const in7d = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-  const todayStr = now.toISOString().split('T')[0];
-  const in7dStr  = in7d.toISOString().split('T')[0];
+  const todayStr = now.toLocaleDateString('en-CA');
+  const in7dStr  = in7d.toLocaleDateString('en-CA');
 
   // Fetch all non-completed tasks with a due date within the next 7 days
   const tasks = await base44.asServiceRole.entities.Task.list('-due_date', 500);
