@@ -53,7 +53,8 @@ export default function AutoScheduleFocusBlock({ open, onOpenChange, task, onSch
       // Mark task as calendar synced
       await base44.entities.Task.update(task.id, {
         calendar_synced: true,
-        focus_block_scheduled: true
+        focus_block_scheduled: true,
+        due_date: format(scheduledDate, 'yyyy-MM-dd'),
       });
 
       toast.success(`Focus block scheduled for ${format(scheduledDate, 'MMM d')} at ${startTime}`);
