@@ -148,10 +148,13 @@ Deno.serve(async (req) => {
     }
 
     if (calendarEventId) {
-      await base44.asServiceRole.entities.Task.update(taskId, {
-        calendar_event_id: calendarEventId,
-        calendar_synced: true,
-      });
+      const needsUpdate = task.calendar_event_id !== calendarEventId || !task.calendar_synced;
+      if (needsUpdate) {
+        await base44.asServiceRole.entities.Task.update(taskId, {
+          calendar_event_id: calendarEventId,
+          calendar_synced: true,
+        });
+      }
     }
 
     return Response.json({ success: !!calendarEventId, calendar_event_id: calendarEventId, provider });
