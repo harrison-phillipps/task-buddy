@@ -43,10 +43,10 @@ Deno.serve(async (req) => {
     // Group tasks by owner
     const tasksByUser = {};
     for (const task of activeTasks) {
-      const email = task.created_by;
-      if (!email) continue;
-      if (!tasksByUser[email]) tasksByUser[email] = [];
-      tasksByUser[email].push(task);
+      const ownerId = task.created_by_id;
+      if (!ownerId) continue;
+      if (!tasksByUser[ownerId]) tasksByUser[ownerId] = [];
+      tasksByUser[ownerId].push(task);
     }
 
     // Fetch users and preferences
@@ -54,15 +54,15 @@ Deno.serve(async (req) => {
       client.entities.User.list(),
       client.entities.NotificationPreferences.list(),
     ]);
-    const userByEmail = Object.fromEntries(users.map(u => [u.email, u]));
+    const userById = Object.fromEntries(users.map(u => [u.id, u]));
     const prefByUserId = Object.fromEntries(prefs.map(p => [p.user_id, p]));
 
     const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
 
     let sent = 0;
 
-    for (const [email, tasks] of Object.entries(tasksByUser)) {
-      const user = userByEmail[email];
+    for (const [ownerId, tasks] of Object.entries(tasksByUser)) {
+      const user = userById[ownerId];
       if (!user) continue;
 
       // Only send digest to paid users (Pro/Premium) — free tier would be 1 credit/user/day at scale
@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
 
       try {
         await client.integrations.Core.SendEmail({
-          to: email,
+          to: user.email,
           subject,
           body: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 520px; margin: auto; padding: 32px 24px; background:#fff;">
@@ -202,10 +202,10 @@ Deno.serve(async (req) => {
             </div>
           `,
         });
-        console.log(`[dailyTaskDigest] Email sent to ${email}: ${overdue.length} overdue, ${dueToday.length} due today, ${upcoming.length} upcoming`);
+        console.log(`[dailyTaskDigest] Email sent to ${user.email}: ${overdue.length} overdue, ${dueToday.length} due today, ${upcoming.length} upcoming`);
         sent++;
       } catch (emailErr) {
-        console.error(`[dailyTaskDigest] Failed to email ${email}:`, emailErr.message);
+        console.error(`[dailyTaskDigest] Failed to email ${user.email}:`, emailErr.message);
       }
     }
 

@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     // Fetch users + notification preferences up front so each owner's
     // task_reminder_minutes can drive the per-task reminder window.
     const users = await client.entities.User.list();
-    const userByEmail = Object.fromEntries(users.map(u => [u.email, u]));
+    const userById = Object.fromEntries(users.map(u => [u.id, u]));
     const prefs = await client.entities.NotificationPreferences.list();
     const prefByUserId = Object.fromEntries(prefs.map(p => [p.user_id, p]));
 
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
         // Specific due time — parse due_date + start_time as a local
         // timestamp (runtime TZ aligns with toLocaleDateString('en-CA')
         // above), then compare absolutely so day boundaries are handled.
-        const owner = task.created_by ? userByEmail[task.created_by] : null;
+        const owner = task.created_by_id ? userById[task.created_by_id] : null;
         const pref = owner ? prefByUserId[owner.id] : null;
         const leadMinutes = pref?.task_reminder_minutes ?? DEFAULT_REMINDER_MINUTES;
 
@@ -83,19 +83,19 @@ Deno.serve(async (req) => {
       return Response.json({ sent: 0 });
     }
 
-    // Group by user (created_by email)
+    // Group by user (created_by_id)
     const byUser = {};
     for (const item of tasksToNotify) {
-      const email = item.task.created_by;
-      if (!email) continue;
-      if (!byUser[email]) byUser[email] = [];
-      byUser[email].push(item);
+      const ownerId = item.task.created_by_id;
+      if (!ownerId) continue;
+      if (!byUser[ownerId]) byUser[ownerId] = [];
+      byUser[ownerId].push(item);
     }
 
     let sent = 0;
 
-    for (const [email, items] of Object.entries(byUser)) {
-      const user = userByEmail[email];
+    for (const [ownerId, items] of Object.entries(byUser)) {
+      const user = userById[ownerId];
       if (!user) continue;
 
       const pref = prefByUserId[user.id];
@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
         });
 
         if (alreadySentToday) {
-          console.log(`Already notified user ${email} for task ${task.id} today`);
+          console.log(`Already notified user ${user.email} for task ${task.id} today`);
           continue;
         }
 
@@ -158,7 +158,7 @@ Deno.serve(async (req) => {
                 playerId: user.onesignal_player_id,
                 payload: pushPayload,
               });
-              console.log(`OneSignal push sent to ${email} for task "${task.title}"`);
+              console.log(`OneSignal push sent to ${user.email} for task "${task.title}"`);
             } else {
               const pushSubRaw = user.push_subscription;
               if (pushSubRaw) {
@@ -167,11 +167,11 @@ Deno.serve(async (req) => {
                   subscription: pushSub,
                   payload: pushPayload,
                 });
-                console.log(`VAPID push sent to ${email} for task "${task.title}"`);
+                console.log(`VAPID push sent to ${user.email} for task "${task.title}"`);
               }
             }
           } catch (pushErr) {
-            console.error(`Push failed for ${email}:`, pushErr.message);
+            console.error(`Push failed for ${user.email}:`, pushErr.message);
           }
         }
 
@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
         if (pref?.email_notifications !== false) {
           try {
             await client.integrations.Core.SendEmail({
-              to: email,
+              to: user.email,
               subject: `⏰ Reminder: "${task.title}" is due soon`,
               body: `
                 <div style="font-family: sans-serif; max-width: 480px; margin: auto; padding: 24px;">
@@ -196,14 +196,14 @@ Deno.serve(async (req) => {
                 </div>
               `,
             });
-            console.log(`Email sent to ${email} for task "${task.title}"`);
+            console.log(`Email sent to ${user.email} for task "${task.title}"`);
           } catch (emailErr) {
-            console.error(`Failed to send email to ${email}:`, emailErr.message);
+            console.error(`Failed to send email to ${user.email}:`, emailErr.message);
           }
         }
 
         sent++;
-        console.log(`Notified ${email} for task "${task.title}" due ${timeLabel}`);
+        console.log(`Notified ${user.email} for task "${task.title}" due ${timeLabel}`);
       }
     }
 

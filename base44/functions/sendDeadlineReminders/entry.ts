@@ -53,8 +53,8 @@ Deno.serve(async (req) => {
   let notified = 0;
 
   for (const task of upcoming) {
-    // Match user by email (created_by stores email) or id
-    const user = users.find(u => u.email === task.created_by) || users.find(u => u.id === task.created_by);
+    // Match user by created_by_id (platform-managed user ID)
+    const user = users.find(u => u.id === task.created_by_id);
     if (!user) continue;
 
     const prefs = prefsMap[user.id];
