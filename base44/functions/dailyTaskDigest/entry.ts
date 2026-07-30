@@ -107,7 +107,10 @@ Deno.serve(async (req) => {
         type: 'general',
         title: summaryTitle,
       });
-      const alreadySentToday = alreadyNotified.some(n => n.created_date?.split('T')[0] === today);
+      const alreadySentToday = alreadyNotified.some(n => {
+        const sentDate = new Date(n.created_date + (n.created_date?.includes('Z') ? '' : 'Z')).toLocaleDateString('en-CA');
+        return sentDate === today;
+      });
 
       if (!alreadySentToday) {
         const topPriority = [...overdue, ...dueToday][0];
