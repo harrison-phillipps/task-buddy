@@ -60,7 +60,8 @@ Deno.serve(async (req) => {
         // Specific due time — parse due_date + start_time as a local
         // timestamp (runtime TZ aligns with toLocaleDateString('en-CA')
         // above), then compare absolutely so day boundaries are handled.
-        const owner = task.created_by_id ? userById[task.created_by_id] : null;
+        const ownerId = task.owner_user_id || task.created_by_id;
+        const owner = ownerId ? userById[ownerId] : null;
         const pref = owner ? prefByUserId[owner.id] : null;
         const leadMinutes = pref?.task_reminder_minutes ?? DEFAULT_REMINDER_MINUTES;
 
@@ -86,7 +87,7 @@ Deno.serve(async (req) => {
     // Group by user (created_by_id)
     const byUser = {};
     for (const item of tasksToNotify) {
-      const ownerId = item.task.created_by_id;
+      const ownerId = item.task.owner_user_id || item.task.created_by_id;
       if (!ownerId) continue;
       if (!byUser[ownerId]) byUser[ownerId] = [];
       byUser[ownerId].push(item);

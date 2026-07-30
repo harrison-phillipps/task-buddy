@@ -53,8 +53,9 @@ Deno.serve(async (req) => {
   let notified = 0;
 
   for (const task of upcoming) {
-    // Match user by created_by_id (platform-managed user ID)
-    const user = users.find(u => u.id === task.created_by_id);
+    // Prefer owner_user_id (set on recurring instances), fall back to created_by_id
+    const ownerId = task.owner_user_id || task.created_by_id;
+    const user = users.find(u => u.id === ownerId);
     if (!user) continue;
 
     const prefs = prefsMap[user.id];

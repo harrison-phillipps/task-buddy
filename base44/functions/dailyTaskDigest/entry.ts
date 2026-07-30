@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     // Group tasks by owner
     const tasksByUser = {};
     for (const task of activeTasks) {
-      const ownerId = task.created_by_id;
+      const ownerId = task.owner_user_id || task.created_by_id;
       if (!ownerId) continue;
       if (!tasksByUser[ownerId]) tasksByUser[ownerId] = [];
       tasksByUser[ownerId].push(task);

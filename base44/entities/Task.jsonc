@@ -249,6 +249,10 @@
     "added_by_clinician_name": {
       "type": "string",
       "description": "Display name of the clinician who added this task"
+    },
+    "owner_user_id": {
+      "type": "string",
+      "description": "Real owning user ID for recurring instances where created_by_id is stamped as service-role"
     }
   },
   "required": [

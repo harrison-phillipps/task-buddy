@@ -118,6 +118,7 @@ Deno.serve(async (req) => {
       is_recurring: false,
       team_id: template.team_id || undefined,
       goal_id: template.goal_id || undefined,
+      owner_user_id: template.created_by_id,
     };
 
     const created = await base44.asServiceRole.entities.Task.create(nextInstance);
