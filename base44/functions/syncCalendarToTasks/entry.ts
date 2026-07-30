@@ -131,6 +131,17 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
+    // Allow scheduler (no token) or admin only — pure sync poller with no
+    // legitimate per-user trigger case. Same pattern as sendDeadlineReminders.
+    try {
+      const user = await base44.auth.me();
+      if (user !== null && user?.role !== 'admin') {
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } catch {
+      // No user token — scheduler context, safe to proceed
+    }
+
     let googleUpdated = 0;
     let outlookUpdated = 0;
     const errors = [];
