@@ -55,8 +55,8 @@ Deno.serve(async (req) => {
     const periodStart = new Date(now);
     periodStart.setDate(periodStart.getDate() - daysBack);
 
-    const report_period_start = periodStart.toISOString().split("T")[0];
-    const report_period_end = now.toISOString().split("T")[0];
+    const report_period_start = periodStart.toLocaleDateString('en-CA');
+    const report_period_end = now.toLocaleDateString('en-CA');
 
     // Fetch all tasks for the client in the period
     const allTasks = await base44.asServiceRole.entities.Task.filter({
@@ -92,10 +92,16 @@ Deno.serve(async (req) => {
     const completedTasks = tasksInPeriod.filter((t) => t.status === "completed" && t.updated_date);
     const timeBuckets = { morning: 0, afternoon: 0, evening: 0 };
     for (const t of completedTasks) {
-      const hour = new Date(t.updated_date).getHours();
-      if (hour >= 6 && hour < 12) timeBuckets.morning++;
-      else if (hour >= 12 && hour < 17) timeBuckets.afternoon++;
-      else if (hour >= 17 && hour < 21) timeBuckets.evening++;
+      const localHour = parseInt(
+        new Date(t.updated_date).toLocaleString('en-US', {
+          timeZone: 'Australia/Adelaide',
+          hour: 'numeric',
+          hour12: false
+        })
+      );
+      if (localHour >= 6 && localHour < 12) timeBuckets.morning++;
+      else if (localHour >= 12 && localHour < 17) timeBuckets.afternoon++;
+      else if (localHour >= 17 && localHour < 21) timeBuckets.evening++;
     }
     const best_time_of_day = Object.entries(timeBuckets).sort((a, b) => b[1] - a[1])[0][0];
 
