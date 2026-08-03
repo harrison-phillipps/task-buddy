@@ -200,7 +200,7 @@ export default function Tasks() {
   }, []);
 
   const { data: rawTasks = [], isLoading } = useQuery({
-    queryKey: ['tasks', currentUser?.email, selectedTeamId],
+    queryKey: ['tasks', currentUser?.id, selectedTeamId],
     queryFn: async () => {
       if (!currentUser) return [];
 
@@ -210,7 +210,7 @@ export default function Tasks() {
         if (selectedTeamId === 'personal') {
           const userTeamIds = teams.map(t => t.id);
           return cached.filter(t =>
-            (!t.team_id && t.created_by === currentUser.email) ||
+            (!t.team_id && (t.created_by_id === currentUser.id || t.owner_user_id === currentUser.id)) ||
             (t.assigned_to === currentUser.id && userTeamIds.includes(t.team_id))
           );
         }
@@ -220,15 +220,16 @@ export default function Tasks() {
       let fetched = [];
       if (selectedTeamId === "personal") {
         // Personal tasks created by this user + team tasks assigned + clinician-added tasks
-        const [personalTasks, assignedTasks, clinicianAddedTasks] = await Promise.all([
-          base44.entities.Task.filter({ created_by: currentUser.email, team_id: null }, '-created_date'),
+        const [ownedByCreated, ownedByOwnerField, assignedTasks, clinicianAddedTasks] = await Promise.all([
+          base44.entities.Task.filter({ created_by_id: currentUser.id, team_id: null }, '-created_date'),
+          base44.entities.Task.filter({ owner_user_id: currentUser.id, team_id: null }, '-created_date'),
           base44.entities.Task.filter({ assigned_to: currentUser.id }, '-created_date'),
           base44.entities.Task.filter({ created_by_id: currentUser.id, added_by_clinician: true }, '-created_date'),
         ]);
         // Also grab tasks where user is in assigned_to_users for their teams
         const userTeamIds = teams.map(t => t.id);
         const seen = new Set();
-        fetched = [...personalTasks, ...assignedTasks, ...clinicianAddedTasks].filter(t => {
+        fetched = [...ownedByCreated, ...ownedByOwnerField, ...assignedTasks, ...clinicianAddedTasks].filter(t => {
           // Exclude team tasks that don't belong to the user's own teams
           if (t.team_id && !userTeamIds.includes(t.team_id)) return false;
           if (seen.has(t.id)) return false;
@@ -323,14 +324,14 @@ export default function Tasks() {
     },
     onMutate: async (taskId) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] });
-      const previous = queryClient.getQueryData(['tasks', currentUser?.email, selectedTeamId]);
-      queryClient.setQueryData(['tasks', currentUser?.email, selectedTeamId], (old = []) =>
+      const previous = queryClient.getQueryData(['tasks', currentUser?.id, selectedTeamId]);
+      queryClient.setQueryData(['tasks', currentUser?.id, selectedTeamId], (old = []) =>
         old.filter(t => t.id !== taskId)
       );
       return { previous };
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.previous) queryClient.setQueryData(['tasks', currentUser?.email, selectedTeamId], ctx.previous);
+      if (ctx?.previous) queryClient.setQueryData(['tasks', currentUser?.id, selectedTeamId], ctx.previous);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -351,14 +352,14 @@ export default function Tasks() {
     },
     onMutate: async ({ id, data }) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] });
-      const previous = queryClient.getQueryData(['tasks', currentUser?.email, selectedTeamId]);
-      queryClient.setQueryData(['tasks', currentUser?.email, selectedTeamId], (old = []) =>
+      const previous = queryClient.getQueryData(['tasks', currentUser?.id, selectedTeamId]);
+      queryClient.setQueryData(['tasks', currentUser?.id, selectedTeamId], (old = []) =>
         old.map(t => t.id === id ? { ...t, ...data } : t)
       );
       return { previous };
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.previous) queryClient.setQueryData(['tasks', currentUser?.email, selectedTeamId], ctx.previous);
+      if (ctx?.previous) queryClient.setQueryData(['tasks', currentUser?.id, selectedTeamId], ctx.previous);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -382,15 +383,15 @@ export default function Tasks() {
     },
     onMutate: async (task) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] });
-      const previous = queryClient.getQueryData(['tasks', currentUser?.email, selectedTeamId]);
+      const previous = queryClient.getQueryData(['tasks', currentUser?.id, selectedTeamId]);
       const completedSubtasks = task.subtasks?.map(st => ({ ...st, completed: true })) || [];
-      queryClient.setQueryData(['tasks', currentUser?.email, selectedTeamId], (old = []) =>
+      queryClient.setQueryData(['tasks', currentUser?.id, selectedTeamId], (old = []) =>
         old.map(t => t.id === task.id ? { ...t, status: 'completed', subtasks: completedSubtasks } : t)
       );
       return { previous };
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.previous) queryClient.setQueryData(['tasks', currentUser?.email, selectedTeamId], ctx.previous);
+      if (ctx?.previous) queryClient.setQueryData(['tasks', currentUser?.id, selectedTeamId], ctx.previous);
     },
     onSuccess: (_data, task) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -460,7 +461,11 @@ export default function Tasks() {
     const tier = currentUser?.subscription_tier || 'free';
     const limit = TIER_LIMITS[tier]?.max_tasks;
     if (limit !== undefined && limit !== Infinity) {
-      const activeTasks = await base44.entities.Task.filter({ created_by: currentUser.email });
+      const [activeOwned, activeOwnerField] = await Promise.all([
+        base44.entities.Task.filter({ created_by_id: currentUser.id }),
+        base44.entities.Task.filter({ owner_user_id: currentUser.id }),
+      ]);
+      const activeTasks = [...activeOwned, ...activeOwnerField];
       const activeCount = activeTasks.filter(t => t.status !== 'completed').length;
       if (activeCount + templateTaskCount > limit) {
         setShowTaskLimitModal(true);

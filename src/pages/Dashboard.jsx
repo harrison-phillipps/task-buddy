@@ -28,8 +28,22 @@ export default function Dashboard() {
 
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ['tasks', currentUser?.email],
-    queryFn: () => base44.entities.Task.filter({ created_by: currentUser.email }, '-created_date'),
+    queryKey: ['tasks', currentUser?.id],
+    queryFn: async () => {
+      // Query by created_by_id + owner_user_id (covers recurring instances where
+      // created_by_id is stamped as service-role). Email-based queries would
+      // resurface a previous account's data after delete + re-register.
+      const [byCreatedById, byOwnerUserId] = await Promise.all([
+        base44.entities.Task.filter({ created_by_id: currentUser.id }, '-created_date'),
+        base44.entities.Task.filter({ owner_user_id: currentUser.id }, '-created_date'),
+      ]);
+      const seen = new Set();
+      return [...byCreatedById, ...byOwnerUserId].filter(t => {
+        if (seen.has(t.id)) return false;
+        seen.add(t.id);
+        return true;
+      });
+    },
     enabled: !!currentUser,
     staleTime: 60_000, // 1 min — avoids redundant refetches
   });

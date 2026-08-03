@@ -65,12 +65,7 @@ Deno.serve(async (req) => {
       { name: 'delete_ClientInvite_client', fn: () => admin.entities.ClientInvite.deleteMany({ client_email: userEmail }) },
       { name: 'delete_ClinicianReport_clinician', fn: () => admin.entities.ClinicianReport.deleteMany({ clinician_user_id: userId }) },
       { name: 'delete_ClinicianReport_client', fn: () => admin.entities.ClinicianReport.deleteMany({ client_user_id: userId }) },
-      { name: 'anonymise_user', fn: () => admin.entities.User.update(userId, {
-        display_name: 'Deleted User',
-        subscription_tier: 'free',
-        companion_type: null,
-        companion_personality: null,
-      })},
+      // NOTE: anonymise_user moved AFTER all deletions succeed — see below.
     ];
 
     // Run all tasks in parallel; each marks itself complete
@@ -94,17 +89,29 @@ Deno.serve(async (req) => {
       return stripeCancelled;
     })();
 
-    // 30-second timeout — return success regardless; stragglers handled by scheduled job
+    // 30-second timeout — on timeout, report failure so the frontend can prompt retry.
+    // The user is NOT anonymised on timeout, so a retry can re-auth and resume.
     const timeout = new Promise((resolve) => setTimeout(() => resolve('__TIMEOUT__'), 30000));
     const result = await Promise.race([runAll, timeout]);
 
     if (result === '__TIMEOUT__') {
       const incomplete = tasks.map((t) => t.name).filter((n) => !completed.has(n));
       console.error(`deleteAccount: timed out after 30s for user ${userId}. Incomplete operations: ${incomplete.join(', ')}`);
-      return Response.json({ success: true, timed_out: true, incomplete });
+      // Do NOT anonymise — all deleteMany ops are idempotent, so the user can
+      // re-auth and retry this same endpoint to finish the cleanup.
+      return Response.json({ success: false, timed_out: true, incomplete, message: 'Deletion incomplete — please retry to finish cleanup.' }, { status: 504 });
     }
 
+    // All deletions completed — anonymise user LAST so a retry can still re-auth
+    // if this step fails (user.id is unchanged; only display fields are cleared).
     const stripeCancelled = result;
+    await admin.entities.User.update(userId, {
+      display_name: 'Deleted User',
+      subscription_tier: 'free',
+      companion_type: null,
+      companion_personality: null,
+    }).catch((e) => console.error(`deleteAccount: anonymise_user failed:`, e.message));
+
     console.log(`deleteAccount: completed for user ${userId}, stripeCancelled=${stripeCancelled}`);
     return Response.json({ success: true, stripeCancelled });
   } catch (error) {
