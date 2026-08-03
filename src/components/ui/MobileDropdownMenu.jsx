@@ -10,10 +10,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 export function MobileDropdownMenu({
   trigger,
@@ -61,5 +63,36 @@ export function MobileDropdownMenu({
         {children}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/**
+ * MobileDropdownMenuItem — context-agnostic menu item.
+ * Renders as a Radix DropdownMenuItem on desktop (inside DropdownMenu context),
+ * and as a plain styled button inside the Drawer on mobile (no context needed).
+ * Does NOT call stopPropagation/preventDefault — click bubbles to the parent
+ * div's onClick to close the drawer, preserving existing close-on-select behavior.
+ */
+export function MobileDropdownMenuItem({ onClick, className, children, ...props }) {
+  const isMobile = useIsMobile();
+  if (isMobile) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={cn(
+          "flex items-center gap-2 rounded-lg px-4 py-3 text-sm text-left w-full transition-colors hover:bg-accent focus:bg-accent focus:outline-none [&_svg]:size-4 [&_svg]:shrink-0",
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </button>
+    );
+  }
+  return (
+    <DropdownMenuItem onClick={onClick} className={className} {...props}>
+      {children}
+    </DropdownMenuItem>
   );
 }

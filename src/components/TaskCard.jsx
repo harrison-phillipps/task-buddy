@@ -11,7 +11,7 @@ import { useState } from "react";
 import RecurringTaskBadge from "./tasks/RecurringTaskBadge";
 import { getAIPriorityColor, getAIPriorityLabel, getUrgencyIcon } from "./ai/TaskPrioritizer";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { MobileDropdownMenu } from "@/components/ui/MobileDropdownMenu";
+import { MobileDropdownMenu, MobileDropdownMenuItem } from "@/components/ui/MobileDropdownMenu";
 import {
   Tooltip,
   TooltipContent,
@@ -189,60 +189,60 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
               align="end"
             >
                 {task.status !== 'completed' && onQuickComplete && (
-                  <DropdownMenuItem onClick={() => onQuickComplete?.(task)}>
+                  <MobileDropdownMenuItem onClick={() => onQuickComplete?.(task)}>
                     <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" />
                     Mark as Complete
-                  </DropdownMenuItem>
+                  </MobileDropdownMenuItem>
                 )}
                 {onChangePriority && (
                   <>
-                    <DropdownMenuItem onClick={() => onChangePriority?.(task, 'must_do')}>
+                    <MobileDropdownMenuItem onClick={() => onChangePriority?.(task, 'must_do')}>
                       🔴 Must Do
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onChangePriority?.(task, 'should_do')}>
+                    </MobileDropdownMenuItem>
+                    <MobileDropdownMenuItem onClick={() => onChangePriority?.(task, 'should_do')}>
                       🟡 Should Do
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onChangePriority?.(task, 'could_do')}>
+                    </MobileDropdownMenuItem>
+                    <MobileDropdownMenuItem onClick={() => onChangePriority?.(task, 'could_do')}>
                       🟢 Could Do
-                    </DropdownMenuItem>
+                    </MobileDropdownMenuItem>
                   </>
                 )}
-                <DropdownMenuItem onClick={() => onEdit?.(task)}>
+                <MobileDropdownMenuItem onClick={() => onEdit?.(task)}>
                   Edit Task
-                </DropdownMenuItem>
+                </MobileDropdownMenuItem>
                 {task.status !== 'completed' && (!task.subtasks || task.subtasks.length === 0) && (
-                  <DropdownMenuItem onClick={() => onEdit?.(task, 'ai-breakdown')}>
+                  <MobileDropdownMenuItem onClick={() => onEdit?.(task, 'ai-breakdown')}>
                     <Sparkles className="w-4 h-4 mr-2 text-purple-600" />
                     AI Break Down Task
-                  </DropdownMenuItem>
+                  </MobileDropdownMenuItem>
                 )}
                 {onSpread && task.subtasks?.length > 0 && (
-                  <DropdownMenuItem onClick={() => onSpread?.(task)}>
+                  <MobileDropdownMenuItem onClick={() => onSpread?.(task)}>
                     <CalendarDays className="w-4 h-4 mr-2" />
                     Spread Across Days
-                  </DropdownMenuItem>
+                  </MobileDropdownMenuItem>
                 )}
                 {onSetDependency && (
-                  <DropdownMenuItem onClick={() => onSetDependency?.(task)}>
+                  <MobileDropdownMenuItem onClick={() => onSetDependency?.(task)}>
                     <LinkIcon className="w-4 h-4 mr-2" />
                     Add Dependency
-                  </DropdownMenuItem>
+                  </MobileDropdownMenuItem>
                 )}
                 {onSetRecurring && (
-                   <DropdownMenuItem onClick={() => onSetRecurring?.(task)}>
+                   <MobileDropdownMenuItem onClick={() => onSetRecurring?.(task)}>
                      <RefreshCw className="w-4 h-4 mr-2" />
                      Set Recurring
-                   </DropdownMenuItem>
+                   </MobileDropdownMenuItem>
                  )}
                  {task.status !== 'completed' && (
-                   <DropdownMenuItem onClick={() => setShowDueDateSuggester(true)}>
+                   <MobileDropdownMenuItem onClick={() => setShowDueDateSuggester(true)}>
                      <Calendar className="w-4 h-4 mr-2" />
                      Suggest Due Date
-                   </DropdownMenuItem>
+                   </MobileDropdownMenuItem>
                  )}
-                 <DropdownMenuItem onClick={() => onDelete?.(task)} className="text-red-600">
+                 <MobileDropdownMenuItem onClick={() => onDelete?.(task)} className="text-red-600">
                   Delete Task
-                </DropdownMenuItem>
+                </MobileDropdownMenuItem>
             </MobileDropdownMenu>
           </div>
         </CardHeader>
