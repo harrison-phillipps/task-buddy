@@ -33,13 +33,23 @@ Deno.serve(async (req) => {
         const userId = session.metadata?.user_id;
         const tier = session.metadata?.tier;
         if (userId && tier) {
-          const existing = await base44.asServiceRole.entities.User.get(userId);
+          let existing;
+          try {
+            existing = await base44.asServiceRole.entities.User.get(userId);
+          } catch (err) {
+            console.warn(`User ${userId} not found for checkout.session.completed (possibly deleted account) — skipping update:`, err.message);
+            break;
+          }
           const update = { subscription_tier: tier };
           if (session.customer && !existing?.stripe_customer_id) {
             update.stripe_customer_id = session.customer;
           }
-          await base44.asServiceRole.entities.User.update(userId, update);
-          console.log(`User ${userId} upgraded to ${tier}`);
+          try {
+            await base44.asServiceRole.entities.User.update(userId, update);
+            console.log(`User ${userId} upgraded to ${tier}`);
+          } catch (err) {
+            console.warn(`Failed to update user ${userId} during checkout.session.completed — skipping:`, err.message);
+          }
         }
         break;
       }
@@ -51,11 +61,15 @@ Deno.serve(async (req) => {
         const productId = sub.items.data[0]?.price?.product;
         const tier = TIER_BY_PRODUCT[productId];
         if (sub.status === 'active' && tier) {
-          await base44.asServiceRole.entities.User.update(userId, {
-            subscription_tier: tier,
-            subscription_cancel_at: sub.cancel_at ? new Date(sub.cancel_at * 1000).toISOString() : null,
-          });
-          console.log(`User ${userId} subscription updated to ${tier}`);
+          try {
+            await base44.asServiceRole.entities.User.update(userId, {
+              subscription_tier: tier,
+              subscription_cancel_at: sub.cancel_at ? new Date(sub.cancel_at * 1000).toISOString() : null,
+            });
+            console.log(`User ${userId} subscription updated to ${tier}`);
+          } catch (err) {
+            console.warn(`Failed to update user ${userId} during customer.subscription.updated (possibly deleted account) — skipping:`, err.message);
+          }
         }
         break;
       }
@@ -64,11 +78,15 @@ Deno.serve(async (req) => {
         const sub = event.data.object;
         const userId = sub.metadata?.user_id;
         if (userId) {
-          await base44.asServiceRole.entities.User.update(userId, {
-            subscription_tier: 'free',
-            subscription_cancel_at: null,
-          });
-          console.log(`User ${userId} downgraded to free`);
+          try {
+            await base44.asServiceRole.entities.User.update(userId, {
+              subscription_tier: 'free',
+              subscription_cancel_at: null,
+            });
+            console.log(`User ${userId} downgraded to free`);
+          } catch (err) {
+            console.warn(`Failed to downgrade user ${userId} during customer.subscription.deleted (possibly deleted account) — skipping:`, err.message);
+          }
         }
         break;
       }
