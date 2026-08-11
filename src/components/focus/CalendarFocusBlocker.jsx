@@ -41,7 +41,8 @@ export default function CalendarFocusBlocker({
 
       // Update task with focus block scheduled flag
       await base44.entities.Task.update(task.id, {
-        focus_block_scheduled: true
+        focus_block_scheduled: true,
+        due_date: format(startDateTime, 'yyyy-MM-dd')
       });
 
       toast.success(`Focus time blocked on ${format(startDateTime, 'MMM d')} at ${format(startDateTime, 'h:mm a')}! 🎯`);
