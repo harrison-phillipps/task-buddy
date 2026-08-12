@@ -103,8 +103,25 @@ export default function CalendarView() {
   });
 
   const deleteEventMutation = useMutation({
-    mutationFn: (id) => base44.entities.CalendarEvent.delete(id),
-    onSuccess: () => {
+    mutationFn: async (event) => {
+      await base44.entities.CalendarEvent.delete(event.id);
+      return event;
+    },
+    onSuccess: async (event) => {
+      // If this was a task-linked event, clear the stale scheduling flags on
+      // the Task so it can be rescheduled. due_date is left intact.
+      if (event?.source === 'task' && event?.task_id) {
+        try {
+          await base44.entities.Task.update(event.task_id, {
+            focus_block_scheduled: false,
+            calendar_synced: false,
+            calendar_event_id: null,
+          });
+          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        } catch (err) {
+          console.error('Failed to clear task scheduling flags after event delete:', err);
+        }
+      }
       queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
     },
   });
@@ -407,7 +424,10 @@ export default function CalendarView() {
                   <p className="text-xs font-medium text-gray-500 uppercase mb-2">Calendar Events</p>
                   <CalendarEventsList
                     events={todayEvents}
-                    onDelete={(id) => deleteEventMutation.mutate(id)}
+                    onDelete={(id) => {
+                      const ev = allCalendarEvents.find(e => e.id === id) || { id };
+                      deleteEventMutation.mutate(ev);
+                    }}
                     onConvertToTask={handleConvertToTask}
                     compact
                   />
