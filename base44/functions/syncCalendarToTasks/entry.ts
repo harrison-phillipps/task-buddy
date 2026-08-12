@@ -28,10 +28,18 @@ async function syncFromGoogle(base44, accessToken) {
   url.searchParams.set('singleEvents', 'true');
   url.searchParams.set('q', 'TaskBuddy task ID');
 
-  const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!res.ok) throw new Error(`Google Calendar fetch error: ${await res.text()}`);
+  const events = [];
+  let pageToken = null;
+  do {
+    if (pageToken) url.searchParams.set('pageToken', pageToken);
+    else url.searchParams.delete('pageToken');
+    const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!res.ok) throw new Error(`Google Calendar fetch error: ${await res.text()}`);
+    const page = await res.json();
+    events.push(...(page.items || []));
+    pageToken = page.nextPageToken || null;
+  } while (pageToken);
 
-  const events = (await res.json()).items || [];
   const eventIds = new Set(events.map(e => e.id));
   let updated = 0;
 
