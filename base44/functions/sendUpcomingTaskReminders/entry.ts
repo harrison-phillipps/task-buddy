@@ -141,8 +141,11 @@ Deno.serve(async (req) => {
           sent_at: now.toISOString(),
         });
 
-        // Send push notification if user has a push subscription (must_do tasks always, others only if urgent)
-        if (isMustDo || task.priority === 'urgent') {
+        // Send push for any task with a specific scheduled time (a linked
+        // CalendarEvent with a start_time). Untimed tasks (8am fallback path,
+        // dueTime === 'end of day') get in-app + email only — gentle, not aggressive.
+        const hasSpecificTime = dueTime !== 'end of day';
+        if (hasSpecificTime) {
           try {
             const pushPayload = {
               title: isMustDo ? `🔴 Must Do: ${task.title}` : `⏰ ${task.title}`,
