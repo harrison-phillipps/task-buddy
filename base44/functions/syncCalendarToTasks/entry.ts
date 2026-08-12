@@ -32,6 +32,7 @@ async function syncFromGoogle(base44, accessToken) {
   if (!res.ok) throw new Error(`Google Calendar fetch error: ${await res.text()}`);
 
   const events = (await res.json()).items || [];
+  const eventIds = new Set(events.map(e => e.id));
   let updated = 0;
 
   for (const event of events) {
@@ -68,7 +69,7 @@ async function syncFromGoogle(base44, accessToken) {
       console.error(`Failed to sync task ${taskId} from Google:`, err.message);
     }
   }
-  return updated;
+  return { updated, eventIds };
 }
 
 async function syncFromOutlook(base44, accessToken) {
@@ -89,6 +90,7 @@ async function syncFromOutlook(base44, accessToken) {
   const taskBuddyEvents = events.filter(e =>
     e.categories?.includes('TaskBuddy') || e.body?.content?.includes('TaskBuddy task ID')
   );
+  const eventIds = new Set(taskBuddyEvents.map(e => e.id));
 
   let updated = 0;
   for (const event of taskBuddyEvents) {
@@ -124,7 +126,7 @@ async function syncFromOutlook(base44, accessToken) {
       console.error(`Failed to sync task ${taskId} from Outlook:`, err.message);
     }
   }
-  return updated;
+  return { updated, eventIds };
 }
 
 Deno.serve(async (req) => {
@@ -144,11 +146,14 @@ Deno.serve(async (req) => {
 
     let googleUpdated = 0;
     let outlookUpdated = 0;
+    const fetchedIds = new Set();
     const errors = [];
 
     try {
       const { accessToken } = await base44.asServiceRole.connectors.getConnection('googlecalendar');
-      googleUpdated = await syncFromGoogle(base44, accessToken);
+      const { updated, eventIds } = await syncFromGoogle(base44, accessToken);
+      googleUpdated = updated;
+      for (const id of eventIds) fetchedIds.add(id);
       console.log(`Google Calendar → Tasks: ${googleUpdated} tasks updated`);
     } catch (err) {
       console.log('Google Calendar sync skipped:', err.message);
@@ -157,11 +162,55 @@ Deno.serve(async (req) => {
 
     try {
       const { accessToken } = await base44.asServiceRole.connectors.getConnection('outlook');
-      outlookUpdated = await syncFromOutlook(base44, accessToken);
+      const { updated, eventIds } = await syncFromOutlook(base44, accessToken);
+      outlookUpdated = updated;
+      for (const id of eventIds) fetchedIds.add(id);
       console.log(`Outlook Calendar → Tasks: ${outlookUpdated} tasks updated`);
     } catch (err) {
       console.log('Outlook sync skipped:', err.message);
       errors.push(`Outlook: ${err.message}`);
+    }
+
+    // Deletion-detection pass. The connected Google/Outlook calendar is a
+    // single builder-wide SHARED connection (not per-app-user), so every task's
+    // calendar_event_id points into the one calendar polled above. A synced
+    // task whose calendar_event_id is absent from this fetch = the external
+    // event was deleted → clear the stale scheduling flags so it can be
+    // rescheduled. due_date is left intact.
+    //
+    // Guard: only run when at least one provider fetched OK (avoids mass-clear
+    // on total fetch failure), and only clear tasks whose due_date falls inside
+    // the fetch window (now..now+90d) — events outside that window legitimately
+    // wouldn't appear, so absence ≠ deletion for them.
+    let cleared = 0;
+    if (fetchedIds.size > 0) {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const futureStr = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      try {
+        const candidates = await base44.asServiceRole.entities.Task.filter({
+          calendar_synced: true,
+        });
+        for (const task of candidates) {
+          if (task.status === 'completed') continue;
+          if (!task.calendar_event_id) continue;
+          if (task.due_date && (task.due_date < todayStr || task.due_date > futureStr)) continue;
+          if (fetchedIds.has(task.calendar_event_id)) continue;
+          try {
+            await base44.asServiceRole.entities.Task.update(task.id, {
+              focus_block_scheduled: false,
+              calendar_synced: false,
+              calendar_event_id: null,
+            });
+            cleared++;
+          } catch (err) {
+            console.error(`Failed to clear stale flags for task ${task.id}:`, err.message);
+          }
+        }
+        if (cleared > 0) console.log(`Cleared stale calendar flags on ${cleared} task(s)`);
+      } catch (err) {
+        console.error('Deletion-detection pass failed:', err.message);
+        errors.push(`deletion-pass: ${err.message}`);
+      }
     }
 
     return Response.json({
@@ -169,6 +218,7 @@ Deno.serve(async (req) => {
       google_updated: googleUpdated,
       outlook_updated: outlookUpdated,
       total_updated: googleUpdated + outlookUpdated,
+      stale_flags_cleared: cleared,
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error) {
