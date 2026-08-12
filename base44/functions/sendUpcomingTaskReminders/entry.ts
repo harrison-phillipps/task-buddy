@@ -1,17 +1,58 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+// Parses a date+time as wall-clock Adelaide local and returns the true UTC
+// instant. Intl resolves the actual IANA offset (ACST +09:30 / ACDT +10:30),
+// so this stays correct across daylight-saving transitions.
+function adelaideLocalToUtc(dateStr, timeStr) {
+  const naiveUtc = new Date(`${dateStr}T${timeStr}:00Z`);
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Australia/Adelaide', hour12: false,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  });
+  const parts = Object.fromEntries(formatter.formatToParts(naiveUtc).map(p => [p.type, p.value]));
+  const asIfLocal = new Date(`${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}Z`);
+  const offsetMs = naiveUtc.getTime() - asIfLocal.getTime();
+  return new Date(naiveUtc.getTime() + offsetMs);
+}
+
+// Returns the Adelaide-local hour and minute for a given Date, so time-of-day
+// gates fire at wall-clock Adelaide time, not the server's UTC clock.
+function adelaideHourMinute(date) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Australia/Adelaide', hour12: false,
+    hour: '2-digit', minute: '2-digit',
+  }).formatToParts(date);
+  return {
+    hour: Number(parts.find(p => p.type === 'hour').value),
+    minute: Number(parts.find(p => p.type === 'minute').value),
+  };
+}
+
+// Returns the Adelaide-local YYYY-MM-DD for a given Date, so date-window
+// boundaries align with Adelaide wall-clock days, not the server's UTC day.
+function adelaideDateString(date) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Australia/Adelaide',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(date);
+  const y = parts.find(p => p.type === 'year').value;
+  const m = parts.find(p => p.type === 'month').value;
+  const d = parts.find(p => p.type === 'day').value;
+  return `${y}-${m}-${d}`;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const client = base44.asServiceRole;
 
     const now = new Date();
-    const today = now.toLocaleDateString('en-CA'); // local YYYY-MM-DD, not UTC
+    const today = adelaideDateString(now); // Adelaide-local YYYY-MM-DD
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toLocaleDateString('en-CA');
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
+    const tomorrowStr = adelaideDateString(tomorrow);
+    const { hour: currentHour, minute: currentMinute } = adelaideHourMinute(now);
 
     console.log(`Checking tasks due ${today}..${tomorrowStr}, current time ${currentHour}:${String(currentMinute).padStart(2,'0')}`);
 
@@ -57,15 +98,15 @@ Deno.serve(async (req) => {
     for (const task of tasksInWindow) {
       const eventTime = taskEventTime[task.id];
       if (eventTime) {
-        // Specific due time — parse due_date + start_time as a local
-        // timestamp (runtime TZ aligns with toLocaleDateString('en-CA')
-        // above), then compare absolutely so day boundaries are handled.
+        // Specific due time — parse due_date + start_time as Adelaide
+        // local and convert to a true UTC instant, then compare absolutely
+        // so day boundaries are handled.
         const ownerId = task.owner_user_id || task.created_by_id;
         const owner = ownerId ? userById[ownerId] : null;
         const pref = owner ? prefByUserId[owner.id] : null;
         const leadMinutes = pref?.task_reminder_minutes ?? DEFAULT_REMINDER_MINUTES;
 
-        const dueTimestamp = new Date(`${task.due_date}T${eventTime}:00`);
+        const dueTimestamp = adelaideLocalToUtc(task.due_date, eventTime);
         const diffMinutes = (dueTimestamp.getTime() - now.getTime()) / 60000;
         if (diffMinutes >= leadMinutes - TOLERANCE_MIN && diffMinutes <= leadMinutes + TOLERANCE_MIN) {
           tasksToNotify.push({ task, dueTime: eventTime });
