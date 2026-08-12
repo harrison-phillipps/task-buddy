@@ -91,14 +91,24 @@ async function syncFromOutlook(base44, accessToken) {
   url.searchParams.set('$top', '100');
   url.searchParams.set('$select', 'id,subject,start,body,categories');
 
-  const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!res.ok) throw new Error(`Outlook fetch error: ${await res.text()}`);
+  const events = [];
+  let nextLink = null;
+  do {
+    const fetchUrl = nextLink || url.toString();
+    const res = await fetch(fetchUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!res.ok) throw new Error(`Outlook fetch error: ${await res.text()}`);
+    const page = await res.json();
+    events.push(...(page.value || []));
+    nextLink = page['@odata.nextLink'] || null;
+  } while (nextLink);
 
-  const events = (await res.json()).value || [];
   const taskBuddyEvents = events.filter(e =>
     e.categories?.includes('TaskBuddy') || e.body?.content?.includes('TaskBuddy task ID')
   );
-  const eventIds = new Set(taskBuddyEvents.map(e => e.id));
+  // Built from the full unfiltered list (matches the Google side) so the
+  // deletion-detection pass sees every event that still exists, regardless
+  // of how it was tagged.
+  const eventIds = new Set(events.map(e => e.id));
 
   let updated = 0;
   for (const event of taskBuddyEvents) {
