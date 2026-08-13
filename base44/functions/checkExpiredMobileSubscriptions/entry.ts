@@ -31,6 +31,51 @@ Deno.serve(async (req) => {
         await client.entities.User.update(user.id, { subscription_tier: 'free' });
         downgraded++;
         console.log(`Downgraded user ${user.email || user.id}: ${user.subscription_tier} -> free (platform: ${user.subscription_platform}, expired: ${user.subscription_expires_at})`);
+
+        const previousTier = user.subscription_tier;
+        const notifMessage = `Your ${previousTier} subscription has expired and your account has moved to the free plan. Resubscribe to keep your premium features.`;
+
+        // 1. In-app notification — matches stripeWebhook invoice.payment_failed pattern
+        try {
+          await client.entities.Notification.create({
+            user_id: user.id,
+            type: 'general',
+            title: 'Subscription Expired',
+            message: notifMessage,
+            priority: 'high',
+            is_read: false,
+            action_url: '/Subscription',
+            sent_at: new Date().toISOString(),
+          });
+          console.log(`Expiry notification sent to user ${user.id} (${user.email})`);
+        } catch (notifErr) {
+          console.error(`Failed to send expiry notification to ${user.email || user.id}:`, notifErr.message);
+        }
+
+        // 2. Email notification
+        try {
+          await client.integrations.Core.SendEmail({
+            to: user.email,
+            subject: 'Your TaskBuddy subscription has expired',
+            body: `
+              <div style="font-family: sans-serif; max-width: 480px; margin: auto; padding: 24px;">
+                <h2 style="color: #FB7185;">Subscription Expired</h2>
+                <p>Hi ${user.full_name || 'there'},</p>
+                <p>${notifMessage}</p>
+                <p>You can resubscribe any time to restore access to your premium features.</p>
+                <a href="https://taskbuddyapp.online/Subscription" style="background: #8B5CF6; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block; margin-top: 12px;">
+                  Resubscribe
+                </a>
+                <p style="font-size: 12px; color: #999; margin-top: 24px;">
+                  You can manage your subscription in your TaskBuddy settings.
+                </p>
+              </div>
+            `,
+          });
+          console.log(`Expiry email sent to ${user.email}`);
+        } catch (emailErr) {
+          console.error(`Failed to send expiry email to ${user.email}:`, emailErr.message);
+        }
       } catch (err) {
         console.error(`Failed to downgrade user ${user.email || user.id}:`, err.message);
       }
