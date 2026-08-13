@@ -88,7 +88,7 @@ export default function TaskBreakdown() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      navigate(createPageUrl("TaskList"));
+      navigate(createPageUrl("Tasks"));
     },
   });
 
