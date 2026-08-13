@@ -11,10 +11,22 @@ function addMonths(date, n) {
   d.setMonth(d.getMonth() + n);
   return d;
 }
-function formatDate(date) {
-  return date.toLocaleDateString('en-CA');
+// Returns the Adelaide-local YYYY-MM-DD for a given Date, so date-window
+// boundaries align with Adelaide wall-clock days, not the server's UTC day.
+function adelaideDateString(date) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Australia/Adelaide',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(date);
+  const y = parts.find(p => p.type === 'year').value;
+  const m = parts.find(p => p.type === 'month').value;
+  const d = parts.find(p => p.type === 'day').value;
+  return `${y}-${m}-${d}`;
 }
-function today() { return new Date().toLocaleDateString('en-CA'); }
+function formatDate(date) {
+  return adelaideDateString(date);
+}
+function today() { return adelaideDateString(new Date()); }
 
 function calculateNextOccurrence(fromDate, template) {
   const base = new Date(fromDate + 'T00:00:00');

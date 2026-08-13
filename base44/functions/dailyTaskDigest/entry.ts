@@ -1,5 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+// Returns the Adelaide-local YYYY-MM-DD for a given Date, so date-window
+// boundaries align with Adelaide wall-clock days, not the server's UTC day.
+function adelaideDateString(date) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Australia/Adelaide',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(date);
+  const y = parts.find(p => p.type === 'year').value;
+  const m = parts.find(p => p.type === 'month').value;
+  const d = parts.find(p => p.type === 'day').value;
+  return `${y}-${m}-${d}`;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -18,16 +31,16 @@ Deno.serve(async (req) => {
     const client = base44.asServiceRole;
 
     const now = new Date();
-    const today = now.toLocaleDateString('en-CA');
+    const today = adelaideDateString(now);
 
     // Calculate yesterday and next 7 days for overdue/upcoming
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toLocaleDateString('en-CA');
+    const yesterdayStr = adelaideDateString(yesterday);
 
     const in7Days = new Date(now);
     in7Days.setDate(in7Days.getDate() + 7);
-    const in7DaysStr = in7Days.toLocaleDateString('en-CA');
+    const in7DaysStr = adelaideDateString(in7Days);
 
     console.log(`[dailyTaskDigest] Running for date: ${today}`);
 
@@ -108,7 +121,7 @@ Deno.serve(async (req) => {
         title: summaryTitle,
       });
       const alreadySentToday = alreadyNotified.some(n => {
-        const sentDate = new Date(n.created_date + (n.created_date?.includes('Z') ? '' : 'Z')).toLocaleDateString('en-CA');
+        const sentDate = adelaideDateString(new Date(n.created_date + (n.created_date?.includes('Z') ? '' : 'Z')));
         return sentDate === today;
       });
 
