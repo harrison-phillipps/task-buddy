@@ -3,10 +3,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 // Parses a date+time as wall-clock Adelaide local and returns the true UTC
 // instant. Intl resolves the actual IANA offset (ACST +09:30 / ACDT +10:30),
 // so this stays correct across daylight-saving transitions.
-function adelaideLocalToUtc(dateStr, timeStr) {
+function adelaideLocalToUtc(dateStr, timeStr, timeZone = 'Australia/Adelaide') {
   const naiveUtc = new Date(`${dateStr}T${timeStr}:00Z`);
   const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Australia/Adelaide', hour12: false,
+    timeZone, hour12: false,
     year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', second: '2-digit',
   });
@@ -18,9 +18,9 @@ function adelaideLocalToUtc(dateStr, timeStr) {
 
 // Returns the Adelaide-local YYYY-MM-DD for a given Date, so date-window
 // boundaries align with Adelaide wall-clock days, not the server's UTC day.
-function adelaideDateString(date) {
+function adelaideDateString(date, timeZone = 'Australia/Adelaide') {
   const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Australia/Adelaide',
+    timeZone,
     year: 'numeric', month: '2-digit', day: '2-digit',
   }).formatToParts(date);
   const y = parts.find(p => p.type === 'year').value;

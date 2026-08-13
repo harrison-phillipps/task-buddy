@@ -2,9 +2,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Returns the Adelaide-local YYYY-MM-DD for a given Date, so date-window
 // boundaries align with Adelaide wall-clock days, not the server's UTC day.
-function adelaideDateString(date) {
+function adelaideDateString(date, timeZone = 'Australia/Adelaide') {
   const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Australia/Adelaide',
+    timeZone,
     year: 'numeric', month: '2-digit', day: '2-digit',
   }).formatToParts(date);
   const y = parts.find(p => p.type === 'year').value;
