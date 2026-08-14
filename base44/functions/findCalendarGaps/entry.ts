@@ -156,8 +156,9 @@ Deno.serve(async (req) => {
     // Scope to the current authenticated user's tasks. Match the app-wide
     // ownership pattern (owner_user_id || created_by_id) as a query-level $or
     // so recurring instances (owner_user_id set) and legacy tasks (created_by_id
-    // only) are both included. created_by is not a real field — user.email was
-    // silently matching nothing.
+    // only) are both included. The previous { created_by: user.email } filter
+    // happened to work (created_by is populated with the creator's email) but was
+    // email-keyed and missed owner_user_id-only recurring instances.
     const allTasks = await base44.entities.Task.filter(
       { $or: [{ created_by_id: user.id }, { owner_user_id: user.id }] },
       '-updated_date', 50
