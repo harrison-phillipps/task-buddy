@@ -30,6 +30,20 @@ function getAdjacentDay(dateStr, offset) {
   return d.toISOString().split('T')[0];
 }
 
+// Returns the local YYYY-MM-DD for a given Date, so date-window boundaries
+// align with wall-clock days, not the server's UTC day. timeZone defaults
+// to Adelaide; threading user.timezone through later needs no logic change.
+function adelaideDateString(date, timeZone = 'Australia/Adelaide') {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(date);
+  const y = parts.find(p => p.type === 'year').value;
+  const m = parts.find(p => p.type === 'month').value;
+  const d = parts.find(p => p.type === 'day').value;
+  return `${y}-${m}-${d}`;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -38,7 +52,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { date, work_start = 9, work_end = 18, min_gap_minutes = 30 } = body;
-    const targetDate = date || new Date().toISOString().split('T')[0];
+    const targetDate = date || adelaideDateString(new Date());
 
     // Wide query window to handle any timezone (covers full local day)
     const queryStart = `${getAdjacentDay(targetDate, -1)}T12:00:00Z`;
@@ -91,6 +105,11 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'No calendar connected' });
     }
 
+    // Defensive: warn if any event arrives in Z (UTC) format rather than an
+    // offset-bearing local time — the provider-format assumption from the
+    // earlier trace. No behavior change; extractTime/extractDate still work.
+    rawEvents.forEach(e => { if (e.start_dt?.endsWith('Z')) console.warn(`[findCalendarGaps] event start_dt in Z format (no offset): ${e.start_dt}`); });
+
     // Filter to target date and extract local times
     const events = rawEvents
       .filter(e => extractDate(e.start_dt) === targetDate)
@@ -134,7 +153,15 @@ Deno.serve(async (req) => {
     }
 
     // Fetch active tasks
-    const allTasks = await base44.entities.Task.filter({ created_by: user.email }, '-updated_date', 50);
+    // Scope to the current authenticated user's tasks. Match the app-wide
+    // ownership pattern (owner_user_id || created_by_id) as a query-level $or
+    // so recurring instances (owner_user_id set) and legacy tasks (created_by_id
+    // only) are both included. created_by is not a real field — user.email was
+    // silently matching nothing.
+    const allTasks = await base44.entities.Task.filter(
+      { $or: [{ created_by_id: user.id }, { owner_user_id: user.id }] },
+      '-updated_date', 50
+    );
     const activeTasks = allTasks
       .filter(t => t.status !== 'completed')
       .map(t => ({
