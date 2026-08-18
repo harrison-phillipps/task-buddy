@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -394,6 +395,7 @@ const companions = [
 
 export default function CharacterSelection() {
   const navigate = useNavigate();
+  const { updateUser } = useAuth();
   const [selectedCompanion, setSelectedCompanion] = useState(null);
 
   useEffect(() => {
@@ -408,7 +410,7 @@ export default function CharacterSelection() {
   }, [navigate]);
 
   const updateUserMutation = useMutation({
-    mutationFn: (data) => base44.auth.updateMe(data),
+    mutationFn: (data) => updateUser(data),
     onSuccess: () => navigate(createPageUrl("Dashboard")),
   });
 

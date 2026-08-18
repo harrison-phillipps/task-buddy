@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-hot-toast";
@@ -8,11 +9,12 @@ import { User } from "lucide-react";
 export default function ProfileSettings({ currentUser, onUpdate }) {
   const [displayName, setDisplayName] = useState(currentUser?.display_name || "");
   const [saving, setSaving] = useState(false);
+  const { updateUser } = useAuth();
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await base44.auth.updateMe({ display_name: displayName.trim() });
+      await updateUser({ display_name: displayName.trim() });
       toast.success("Display name saved");
       onUpdate?.();
     } catch {

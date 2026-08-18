@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,7 @@ import CalendarOnboarding from "../components/onboarding/CalendarOnboarding";
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const { updateUser } = useAuth();
   const [useAdaptiveFlow, setUseAdaptiveFlow] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [step, setStep] = useState(1);
@@ -58,7 +60,7 @@ export default function Onboarding() {
     }
     let destination = "CharacterSelection";
     if (aiSuggestions?.companion_recommendation?.type) {
-      await base44.auth.updateMe({
+      await updateUser({
         companion_type: aiSuggestions.companion_recommendation.type,
       });
       destination = "Dashboard";
@@ -109,7 +111,7 @@ export default function Onboarding() {
     if (!name.trim()) return;
     setIsSubmitting(true);
     try {
-      await base44.auth.updateMe({
+      await updateUser({
         display_name: name.trim(),
         gender: gender || "neutral",
         companion_personality: personality,

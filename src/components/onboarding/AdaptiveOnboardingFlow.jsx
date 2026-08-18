@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +54,7 @@ export default function AdaptiveOnboardingFlow({
   const [responses, setResponses] = useState({});
   const [aiSuggestions, setAiSuggestions] = useState(null);
   const [isCreatingProfile, setIsCreatingProfile] = useState(false);
+  const { updateUser } = useAuth();
 
   // Steps: 1=name, 2=userType, 4=goals, 5=challenge, 6=workStyle, 7=calendar, 8=summary
   // (step 3 "Who is this for?" removed for all users — every self-registered user is an adult)
@@ -131,7 +133,7 @@ export default function AdaptiveOnboardingFlow({
 
       // Update user profile with onboarding data
       const me = await base44.auth.me();
-      await base44.auth.updateMe({
+      await updateUser({
         display_name: responses.displayName,
         onboarding_completed: true,
         profile_type: "adult",

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 
 const PROVIDERS = [
   {
@@ -207,6 +208,7 @@ export default function CalendarOnboarding({ onComplete, onSkip }) {
   const [selectedProvider, setSelectedProvider] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState(null);
+  const { updateUser } = useAuth();
 
   const handleConnect = async () => {
     if (!selectedProvider) return;
@@ -214,7 +216,7 @@ export default function CalendarOnboarding({ onComplete, onSkip }) {
     setError(null);
 
     try {
-      await base44.auth.updateMe({
+      await updateUser({
         calendar_provider: selectedProvider,
         calendar_connected: true,
       });

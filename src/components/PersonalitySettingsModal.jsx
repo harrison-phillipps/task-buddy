@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -8,6 +9,7 @@ import CompanionPersonalitySelector from "./CompanionPersonalitySelector";
 export default function PersonalitySettingsModal({ open, onOpenChange, currentUser, onUpdate }) {
   const [personality, setPersonality] = useState(currentUser?.companion_personality || "motivational");
   const [isSaving, setIsSaving] = useState(false);
+  const { updateUser } = useAuth();
 
   useEffect(() => {
     if (currentUser?.companion_personality) {
@@ -18,7 +20,7 @@ export default function PersonalitySettingsModal({ open, onOpenChange, currentUs
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await base44.auth.updateMe({ companion_personality: personality });
+      await updateUser({ companion_personality: personality });
       if (onUpdate) onUpdate();
       onOpenChange(false);
     } catch (error) {

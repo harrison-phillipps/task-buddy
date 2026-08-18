@@ -34,6 +34,15 @@ export const AuthProvider = ({ children }) => {
     return currentUser;
   };
 
+  // Wraps base44.auth.updateMe and refreshes AuthContext before resolving,
+  // so any caller is guaranteed the shared `user` is fresh before navigating
+  // or reading currentUser again. Returns the updateMe result unchanged.
+  const updateUser = async (data) => {
+    const updated = await base44.auth.updateMe(data);
+    await refreshUser();
+    return updated;
+  };
+
   const checkAppState = async () => {
     try {
       setIsLoadingPublicSettings(true);
@@ -115,6 +124,7 @@ export const AuthProvider = ({ children }) => {
       navigateToLogin,
       checkAppState,
       refreshUser,
+      updateUser,
     }}>
       {children}
     </AuthContext.Provider>
