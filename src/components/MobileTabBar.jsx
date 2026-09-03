@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // All available pages users can pick
 export const ALL_TABS = [
@@ -48,6 +49,7 @@ export default function MobileTabBar() {
   const [editMode, setEditMode] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState(loadSavedKeys);
   const [pendingKeys, setPendingKeys] = useState(loadSavedKeys);
+  const isMobile = useIsMobile();
   const scrollPositions = useRef({});
   const prevPath = useRef(location.pathname);
 
@@ -96,6 +98,10 @@ export default function MobileTabBar() {
     }
   }, [location.pathname]);
 
+  // Desktop (and public-site ≥768) renders no tab bar — gated by the same
+  // isMobile flag the sidebar uses, so all four layout elements switch together.
+  if (!isMobile) return null;
+
   const openEdit = () => {
     setPendingKeys([...selectedKeys]);
     setShowMore(false);
@@ -131,7 +137,7 @@ export default function MobileTabBar() {
       {/* Overlay */}
       {(showMore || editMode) && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          className="fixed inset-0 z-40 bg-black/40"
           onClick={() => { setShowMore(false); if (editMode) cancelEdit(); }}
         />
       )}
@@ -139,7 +145,7 @@ export default function MobileTabBar() {
       {/* More / Edit drawer */}
       <div
         className={cn(
-          "fixed bottom-[56px] left-0 right-0 z-50 md:hidden bg-white dark:bg-gray-900 border-t border-purple-100 dark:border-gray-700 rounded-t-2xl shadow-2xl transition-transform duration-300",
+          "fixed bottom-[56px] left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-purple-100 dark:border-gray-700 rounded-t-2xl shadow-2xl transition-transform duration-300",
           (showMore || editMode) ? "translate-y-0" : "translate-y-full pointer-events-none"
         )}
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
@@ -247,7 +253,7 @@ export default function MobileTabBar() {
       </div>
 
       {/* Tab bar */}
-      <nav className="mobile-tab-bar fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-t border-purple-100 dark:border-gray-700 flex md:hidden">
+      <nav className="mobile-tab-bar fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-t border-purple-100 dark:border-gray-700 flex">
         {/* First 2 tabs */}
         {activeTabs.slice(0, 2).map(tab => {
           const url = tab.key === "Dashboard" && isClinician ? createPageUrl("ClinicianDashboard") : createPageUrl(tab.key);

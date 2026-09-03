@@ -33,7 +33,7 @@ import { hasFeatureAccess } from "@/components/subscription/FeatureGate";
 function LayoutContent({ children, currentPageName }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { setOpenMobile } = useSidebar();
+  const { setOpenMobile, isMobile } = useSidebar();
   const [currentUser, setCurrentUser] = React.useState(null);
   const [userProgress, setUserProgress] = React.useState(null);
   const [showPersonalityModal, setShowPersonalityModal] = React.useState(false);
@@ -307,19 +307,24 @@ function LayoutContent({ children, currentPageName }) {
           >
             <div className="flex items-center justify-between gap-2 sm:gap-4">
               <div className="flex items-center gap-2 sm:gap-4">
-                <SidebarTrigger className="hover:bg-purple-100 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors duration-200 hidden md:flex">
-                  <PanelLeft className="w-5 h-5 dark:text-gray-200" />
-                </SidebarTrigger>
-                {!isRootRoute && (
-                  <button
-                    onClick={() => navigate(-1)}
-                    className="flex items-center gap-1 text-sm text-purple-600 dark:text-purple-400 hover:underline md:hidden min-h-[44px] px-2"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    Back
-                  </button>
+                {isMobile ? (
+                  <>
+                    {!isRootRoute && (
+                      <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center gap-1 text-sm text-purple-600 dark:text-purple-400 hover:underline min-h-[44px] px-2"
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                        Back
+                      </button>
+                    )}
+                    <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 dark:from-purple-400 dark:to-teal-400 bg-clip-text text-transparent">TaskBuddy</h1>
+                  </>
+                ) : (
+                  <SidebarTrigger className="hover:bg-purple-100 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors duration-200">
+                    <PanelLeft className="w-5 h-5 dark:text-gray-200" />
+                  </SidebarTrigger>
                 )}
-                <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 dark:from-purple-400 dark:to-teal-400 bg-clip-text text-transparent md:hidden">TaskBuddy</h1>
               </div>
               <div className="ml-auto flex items-center gap-2">
                 <ThemeToggle />
