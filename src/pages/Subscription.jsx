@@ -426,7 +426,7 @@ export default function Subscription() {
             {nativeStatus === 'native' ? (
               <>🔒 Secure payment via the App Store &nbsp;·&nbsp; Cancel anytime, no questions asked</>
             ) : (
-              <>🔒 Secure payment via Stripe &nbsp;·&nbsp; Cancel anytime, no questions asked &nbsp;·&nbsp; 7-day free trial on all paid plans</>
+              <>🔒 Secure payment via Stripe &nbsp;·&nbsp; Cancel anytime, no questions asked</>
             )}
           </p>
           <p className="text-gray-400 text-xs mt-2">
