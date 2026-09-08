@@ -59,28 +59,30 @@ export default function MobilePaymentGate({ platform, tier, billingPeriod, curre
     }
     setBridge(p);
 
-    // login() — SUCCESS/FAILED only (no CANCELLED). Log failures but do NOT
-    // block the UI; RevenueCat will still attribute via restore later.
-    p.login(currentUser?.id, currentUser?.email, (resp) => {
-      if (resp?.status !== "SUCCESS") {
-        console.warn("NativelyPurchases.login failed:", resp?.error || resp);
-      }
-    });
-
-    // getOfferings() — resolve localized price for our package.
-    p.getOfferings((resp) => {
-      if (resp?.status !== "SUCCESS") {
-        console.warn("NativelyPurchases.getOfferings failed:", resp?.error || resp);
+    // login() — SUCCESS/FAILED only (no CANCELLED). Only fetch offerings
+    // once a customer identity is genuinely resolved, so RevenueCat never
+    // sees getOfferings before login completes ("Missing login/customerId").
+    p.login(currentUser?.id, currentUser?.email, (loginResp) => {
+      if (loginResp?.status !== "SUCCESS") {
+        console.warn("NativelyPurchases.login failed:", loginResp?.error || loginResp);
+        setError("Couldn't sign in to the store. Please reopen the screen and try again.");
         return;
       }
-      const packages =
-        resp?.offerings?.current?.availablePackages ||
-        resp?.current?.availablePackages ||
-        [];
-      const pkg = packages.find(
-        (pk) => pk.packageId === packageId || pk.identifier === packageId
-      );
-      if (pkg) setPriceLabel(pkg.localizedPriceString || pkg.priceString || null);
+      // getOfferings() — resolve localized price for our package.
+      p.getOfferings((resp) => {
+        if (resp?.status !== "SUCCESS") {
+          console.warn("NativelyPurchases.getOfferings failed:", resp?.error || resp);
+          return;
+        }
+        const packages =
+          resp?.offerings?.current?.availablePackages ||
+          resp?.current?.availablePackages ||
+          [];
+        const pkg = packages.find(
+          (pk) => pk.packageId === packageId || pk.identifier === packageId
+        );
+        if (pkg) setPriceLabel(pkg.localizedPriceString || pkg.priceString || null);
+      });
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
