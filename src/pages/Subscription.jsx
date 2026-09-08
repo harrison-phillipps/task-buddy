@@ -4,12 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Check, Zap, Sparkles, Crown, ArrowRight, XCircle, AlertTriangle, RefreshCw, CreditCard, Calendar } from "lucide-react";
+import { Check, Zap, Sparkles, Crown, ArrowRight, XCircle, AlertTriangle, RefreshCw, CreditCard, Calendar, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { TIER_INFO } from "../components/subscription/FeatureGate";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNativePlatform } from "@/hooks/useNativePlatform";
-import { useIsBuildNatively } from "@/hooks/useIsBuildNatively";
+import { useNativelyNative } from "@/hooks/useNativelyNative";
 import MobilePaymentGate from "@/components/subscription/MobilePaymentGate";
 
 const plansData = [
@@ -126,13 +126,25 @@ export default function Subscription() {
   }, []);
 
   const { isNative, isIOS, isAndroid, platform } = useNativePlatform();
-  const isBuildNatively = useIsBuildNatively();
+  const nativeStatus = useNativelyNative(); // 'checking' | 'native' | 'web'
   const currentTier = currentUser?.subscription_tier || "free";
 
   const handleSelectPlan = async (tier) => {
     if (tier === currentTier) return;
     if (tier === 'free') return; // Can't "purchase" free tier
     
+    // Fail-closed: never create a Stripe session on a native build.
+    // Re-check the authoritative signal in case the gate's state was stale.
+    if (typeof window !== 'undefined' && typeof window.NativelyInfo === 'function') {
+      try {
+        const bi = new window.NativelyInfo().browserInfo();
+        if (bi?.isNativeApp) {
+          alert('This plan is available via in-app purchase. Use the Subscribe button on the plan card.');
+          return;
+        }
+      } catch (e) { /* fall through to web path */ }
+    }
+
     // Check if running in iframe (preview mode)
     if (window.self !== window.top) {
       alert('💳 Checkout is only available in the published app. Please open your app in a new tab to subscribe.');
@@ -143,7 +155,8 @@ export default function Subscription() {
     try {
       const response = await base44.functions.invoke('createCheckout', {
         tier,
-        billingPeriod
+        billingPeriod,
+        context: 'web'
       });
       
       if (response.data.url) {
@@ -302,37 +315,61 @@ export default function Subscription() {
                       </div>
                     )}
 
-                    {(isBuildNatively || isNative) && !isCurrentPlan && plan.tier !== 'free' ? (
-                      <MobilePaymentGate
-                        platform={platform}
-                        tier={plan.tier}
-                        billingPeriod={billingPeriod}
-                        currentUser={currentUser}
-                        onPurchased={handleMobilePurchased}
-                      />
-                    ) : (
-                      <Button
-                        onClick={() => handleSelectPlan(plan.tier)}
-                        disabled={isCurrentPlan || isLoading}
-                        className={`w-full mt-4 ${
-                          plan.popular
-                            ? 'bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white'
-                            : isUpgrade
-                              ? 'bg-gray-900 hover:bg-gray-800 text-white'
-                              : ''
-                        }`}
-                        variant={plan.popular ? "default" : isUpgrade ? "default" : "outline"}
-                      >
-                        {isCurrentPlan ? (
-                          "Current Plan"
-                        ) : (
-                          <>
-                            {plan.cta}
-                            <ArrowRight className="w-4 h-4 ml-2" />
-                          </>
-                        )}
-                      </Button>
-                    )}
+                    {(() => {
+                      const btnClass = `w-full mt-4 ${
+                        plan.popular
+                          ? 'bg-gradient-to-r from-purple-500 to-teal-500 hover:from-purple-600 hover:to-teal-600 text-white'
+                          : isUpgrade
+                            ? 'bg-gray-900 hover:bg-gray-800 text-white'
+                            : ''
+                      }`;
+                      const btnVariant = plan.popular ? "default" : isUpgrade ? "default" : "outline";
+
+                      // Current plan / free tier → inert Stripe button (as before)
+                      if (isCurrentPlan || plan.tier === 'free') {
+                        return (
+                          <Button
+                            onClick={() => handleSelectPlan(plan.tier)}
+                            disabled={isCurrentPlan || isLoading}
+                            className={btnClass}
+                            variant={btnVariant}
+                          >
+                            {isCurrentPlan ? "Current Plan" : (<>{plan.cta}<ArrowRight className="w-4 h-4 ml-2" /></>)}
+                          </Button>
+                        );
+                      }
+                      // SDK still loading → block both paths (fail-closed)
+                      if (nativeStatus === 'checking') {
+                        return (
+                          <div className="w-full mt-4 flex items-center justify-center h-12 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm text-gray-500">
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" /> Checking availability…
+                          </div>
+                        );
+                      }
+                      // Confirmed native → in-app purchase
+                      if (nativeStatus === 'native') {
+                        return (
+                          <MobilePaymentGate
+                            platform={platform}
+                            tier={plan.tier}
+                            billingPeriod={billingPeriod}
+                            currentUser={currentUser}
+                            onPurchased={handleMobilePurchased}
+                          />
+                        );
+                      }
+                      // Confirmed web → Stripe
+                      return (
+                        <Button
+                          onClick={() => handleSelectPlan(plan.tier)}
+                          disabled={isLoading}
+                          className={btnClass}
+                          variant={btnVariant}
+                        >
+                          {plan.cta}<ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
               </motion.div>

@@ -21,10 +21,18 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { tier, billingPeriod } = await req.json();
+    const { tier, billingPeriod, context } = await req.json();
 
     const priceId = PRICES[tier]?.[billingPeriod];
     if (!priceId) return Response.json({ error: 'Invalid plan selected' }, { status: 400 });
+
+    // Fail-closed: refuse to create a Stripe session unless the client
+    // explicitly asserts a web context. Native builds must use in-app
+    // purchases via MobilePaymentGate, never Stripe.
+    if (context !== 'web') {
+      console.warn(`createCheckout blocked: non-web context (context=${context})`);
+      return Response.json({ error: 'Checkout is not available in this context.' }, { status: 403 });
+    }
 
     const origin = req.headers.get('origin') || 'https://app.base44.com';
 
