@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -92,6 +92,18 @@ export default function Subscription() {
       setStatusLoading(false);
     }
   };
+
+  // Called after a successful native IAP / restore — the RevenueCatWebhook
+  // updates subscription_tier server-side; this just refreshes local state.
+  const handleMobilePurchased = useCallback(async () => {
+    try {
+      const user = await base44.auth.me();
+      setCurrentUser(user);
+      await fetchSubStatus();
+    } catch (e) {
+      console.error("Failed to refresh after mobile purchase", e);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -290,14 +302,14 @@ export default function Subscription() {
                       </div>
                     )}
 
-                    {isBuildNatively && !isCurrentPlan && plan.tier !== 'free' ? (
-                      <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/30 rounded-xl border border-gray-200 dark:border-gray-700 text-center">
-                        <p className="text-sm text-gray-700 dark:text-gray-300">
-                          To upgrade, visit <strong>taskbuddyapp.com.au</strong> on Safari. Once subscribed, your Pro access will sync automatically when you log back in.
-                        </p>
-                      </div>
-                    ) : isNative && !isCurrentPlan && plan.tier !== 'free' ? (
-                      <MobilePaymentGate platform={platform} tier={plan.tier} billingPeriod={billingPeriod} />
+                    {(isBuildNatively || isNative) && !isCurrentPlan && plan.tier !== 'free' ? (
+                      <MobilePaymentGate
+                        platform={platform}
+                        tier={plan.tier}
+                        billingPeriod={billingPeriod}
+                        currentUser={currentUser}
+                        onPurchased={handleMobilePurchased}
+                      />
                     ) : (
                       <Button
                         onClick={() => handleSelectPlan(plan.tier)}
