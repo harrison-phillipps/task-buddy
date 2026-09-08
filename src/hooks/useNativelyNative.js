@@ -18,15 +18,20 @@
  * Resolution: sync check → 'natively-loaded' event (dispatched by index.html)
  * → 3s safety timeout → 'web'. The createCheckout backend guard is the
  * fail-closed backstop for the timeout case.
+ *
+ * Returns { status, platform }:
+ *   status:   'checking' | 'native' | 'web'
+ *   platform: 'ios' | 'android' | null  (null until browserInfo resolves;
+ *             meaningful when status === 'native')
  */
 import { useState, useEffect } from "react";
 
 export function useNativelyNative(timeoutMs = 3000) {
-  const [status, setStatus] = useState("checking");
+  const [state, setState] = useState({ status: "checking", platform: null });
 
   useEffect(() => {
     let resolved = false;
-    const resolve = (s) => { if (resolved) return; resolved = true; setStatus(s); };
+    const resolve = (s, p) => { if (resolved) return; resolved = true; setState({ status: s, platform: p }); };
 
     const evaluate = () => {
       if (typeof window === "undefined") return false;
@@ -34,7 +39,8 @@ export function useNativelyNative(timeoutMs = 3000) {
       try {
         const bi = new window.NativelyInfo().browserInfo();
         if (!bi || typeof bi.isNativeApp === "undefined") return false; // not ready
-        resolve(bi.isNativeApp ? "native" : "web");
+        const platform = bi.isIOSApp ? "ios" : bi.isAndroidApp ? "android" : null;
+        resolve(bi.isNativeApp ? "native" : "web", platform);
         return true;
       } catch (e) {
         return false;
@@ -46,7 +52,7 @@ export function useNativelyNative(timeoutMs = 3000) {
     const onLoaded = () => evaluate();
     window.addEventListener("natively-loaded", onLoaded, { once: true });
 
-    const t = setTimeout(() => { if (!evaluate()) resolve("web"); }, timeoutMs);
+    const t = setTimeout(() => { if (!evaluate()) resolve("web", null); }, timeoutMs);
 
     return () => {
       window.removeEventListener("natively-loaded", onLoaded);
@@ -54,5 +60,5 @@ export function useNativelyNative(timeoutMs = 3000) {
     };
   }, [timeoutMs]);
 
-  return status;
+  return state;
 }

@@ -8,7 +8,6 @@ import { Check, Zap, Sparkles, Crown, ArrowRight, XCircle, AlertTriangle, Refres
 import { motion } from "framer-motion";
 import { TIER_INFO } from "../components/subscription/FeatureGate";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useNativePlatform } from "@/hooks/useNativePlatform";
 import { useNativelyNative } from "@/hooks/useNativelyNative";
 import MobilePaymentGate from "@/components/subscription/MobilePaymentGate";
 
@@ -125,8 +124,7 @@ export default function Subscription() {
     fetchUser();
   }, []);
 
-  const { isNative, isIOS, isAndroid, platform } = useNativePlatform();
-  const nativeStatus = useNativelyNative(); // 'checking' | 'native' | 'web'
+  const { status: nativeStatus, platform: nativePlatform } = useNativelyNative();
   const currentTier = currentUser?.subscription_tier || "free";
 
   const handleSelectPlan = async (tier) => {
@@ -350,7 +348,7 @@ export default function Subscription() {
                       if (nativeStatus === 'native') {
                         return (
                           <MobilePaymentGate
-                            platform={platform}
+                            platform={nativePlatform}
                             tier={plan.tier}
                             billingPeriod={billingPeriod}
                             currentUser={currentUser}
@@ -425,7 +423,11 @@ export default function Subscription() {
           className="mt-8 text-center"
         >
           <p className="text-gray-500 text-sm">
-            🔒 Secure payment via Stripe &nbsp;·&nbsp; Cancel anytime, no questions asked &nbsp;·&nbsp; 7-day free trial on all paid plans
+            {nativeStatus === 'native' ? (
+              <>🔒 Secure payment via the App Store &nbsp;·&nbsp; Cancel anytime, no questions asked</>
+            ) : (
+              <>🔒 Secure payment via Stripe &nbsp;·&nbsp; Cancel anytime, no questions asked &nbsp;·&nbsp; 7-day free trial on all paid plans</>
+            )}
           </p>
           <p className="text-gray-400 text-xs mt-2">
             Questions? Reach us at support@taskbuddyapp.com.au — we reply within 24 hours.
@@ -435,7 +437,7 @@ export default function Subscription() {
         {/* iOS/Android billing notice — handled inline in each plan card via MobilePaymentGate */}
 
         {/* Cancel Subscription Section — hidden on native (managed via device settings) */}
-        {!isNative && currentUser?.subscription_tier && currentUser.subscription_tier !== "free" && (
+        {nativeStatus === 'web' && currentUser?.subscription_tier && currentUser.subscription_tier !== "free" && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
