@@ -118,8 +118,6 @@ export default function MobilePaymentGate({ platform, tier, billingPeriod, curre
       setIsRestoring(false);
       if (resp?.status === "SUCCESS") {
         onPurchased?.();
-      } else if (resp?.status === "CANCELLED") {
-        // silent
       } else {
         setError(
           resp?.error ||
