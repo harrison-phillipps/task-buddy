@@ -344,7 +344,19 @@ export default function Subscription() {
                           </div>
                         );
                       }
-                      // Confirmed native → in-app purchase
+                      // Confirmed native but user not loaded yet → same
+                      // fail-closed loader. Must NOT render MobilePaymentGate
+                      // (login() with a null id throws a native RevenueCat
+                      // "Missing login/customerId" alert) or fall through to
+                      // the Stripe button (forbidden on native builds).
+                      if (nativeStatus === 'native' && !currentUser?.id) {
+                        return (
+                          <div className="w-full mt-4 flex items-center justify-center h-12 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm text-gray-500">
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" /> Checking availability…
+                          </div>
+                        );
+                      }
+                      // Confirmed native + user loaded → in-app purchase
                       if (nativeStatus === 'native') {
                         return (
                           <MobilePaymentGate
