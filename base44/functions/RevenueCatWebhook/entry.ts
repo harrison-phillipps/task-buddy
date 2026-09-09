@@ -99,13 +99,34 @@ Deno.serve(async (req) => {
 
   const event = payload?.event;
   if (!event || !event.type) {
-    console.warn('RevenueCat webhook: missing event.type');
+    console.warn('RevenueCat webhook: missing event.type — raw payload:', JSON.stringify(payload));
     return new Response('Missing event', { status: 400 });
   }
 
+  // ── RAW PAYLOAD LOG ──────────────────────────────────────────────
+  // Logged before any processing so we can always see what RevenueCat
+  // actually delivered. Lets us distinguish:
+  //   (a) nothing delivered at all        → no log line appears
+  //   (b) anonymous/mismatched app_user_id → app_user_id is null / anonymous /
+  //       doesn't look like a Base44 id, or original_app_user_id differs
+  //   (c) entitlement_ids don't map      → entitlement_ids is null/empty/
+  //       contains an id not in ENTITLEMENT_TIER_MAP
+  console.log('[RevenueCat RAW] ========================================');
+  console.log(`[RevenueCat RAW] event.type=${event.type}`);
+  console.log(`[RevenueCat RAW] event.environment=${event.environment || '(none)'}`);
+  console.log(`[RevenueCat RAW] event.store=${event.store || '(none)'}`);
+  console.log(`[RevenueCat RAW] event.app_user_id=${event.app_user_id ?? '(null)'}`);
+  console.log(`[RevenueCat RAW] event.original_app_user_id=${event.original_app_user_id ?? '(null)'}`);
+  console.log(`[RevenueCat RAW] event.aliases=${JSON.stringify(event.aliases ?? null)}`);
+  console.log(`[RevenueCat RAW] event.entitlement_ids=${JSON.stringify(event.entitlement_ids ?? null)}`);
+  console.log(`[RevenueCat RAW] event.product_id=${event.product_id ?? '(null)'}`);
+  console.log(`[RevenueCat RAW] event.subscribed_at_ms=${event.subscribed_at_ms ?? '(null)'}`);
+  console.log(`[RevenueCat RAW] event.expiration_at_ms=${event.expiration_at_ms ?? '(null)'}`);
+  console.log(`[RevenueCat RAW] full payload=${JSON.stringify(payload)}`);
+  console.log('[RevenueCat RAW] ========================================');
+
   const env = event.environment || 'UNKNOWN';
   const store = event.store || 'UNKNOWN';
-  console.log(`RevenueCat event: type=${event.type} env=${env} store=${store} app_user_id=${event.app_user_id || '(none)'}`);
 
   // ── Only act on known event types; log and no-op on everything else ──
   if (
