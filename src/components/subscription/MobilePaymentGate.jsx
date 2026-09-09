@@ -44,6 +44,8 @@ export default function MobilePaymentGate({ platform, tier, billingPeriod, curre
 
   // ── Mount: instantiate, login, fetch offerings ──────────────────────────
   useEffect(() => {
+    // Build marker — confirms the deployed bundle matches source.
+    console.log("[MPG-v2] mounted", { userId: currentUser?.id, tier, billingPeriod });
     const Ctor = getPurchasesCtor();
     if (!Ctor) {
       setError("In-app purchases aren't available in this build.");
