@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -74,7 +75,7 @@ const plansData = [
 ];
 
 export default function Subscription() {
-  const [currentUser, setCurrentUser] = useState(null);
+  const { user: currentUser, refreshUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [billingPeriod, setBillingPeriod] = useState("monthly");
   const [subStatus, setSubStatus] = useState(null);
@@ -93,35 +94,35 @@ export default function Subscription() {
   };
 
   // Called after a successful native IAP / restore — the RevenueCatWebhook
-  // updates subscription_tier server-side; this just refreshes local state.
+  // updates subscription_tier server-side; poll the live user a few times so
+  // the async webhook has time to land before the "Current Plan" badge flips.
   const handleMobilePurchased = useCallback(async () => {
     try {
-      const user = await base44.auth.me();
-      setCurrentUser(user);
-      await fetchSubStatus();
+      for (let i = 0; i < 3; i++) {
+        await Promise.all([refreshUser(), fetchSubStatus()]);
+        if (i < 2) await new Promise(r => setTimeout(r, 1500));
+      }
     } catch (e) {
       console.error("Failed to refresh after mobile purchase", e);
     }
-  }, []);
+  }, [refreshUser]);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const user = await base44.auth.me();
-        setCurrentUser(user);
-        fetchSubStatus();
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('success') === 'true') {
-          setTimeout(fetchSubStatus, 2000); // re-fetch after webhook processes
-          window.history.replaceState({}, '', window.location.pathname);
-        } else if (params.get('cancelled') === 'true') {
-          window.history.replaceState({}, '', window.location.pathname);
+    fetchSubStatus();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('success') === 'true') {
+      // Returning from Stripe checkout — give the webhook time to process.
+      (async () => {
+        for (let i = 0; i < 3; i++) {
+          await Promise.all([refreshUser(), fetchSubStatus()]);
+          if (i < 2) await new Promise(r => setTimeout(r, 1500));
         }
-      } catch (error) {
-        console.error("Error fetching user:", error);
-      }
-    };
-    fetchUser();
+      })();
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (params.get('cancelled') === 'true') {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const { status: nativeStatus, platform: nativePlatform } = useNativelyNative();
@@ -183,7 +184,7 @@ export default function Subscription() {
       const response = await base44.functions.invoke('cancelSubscription', {});
       if (response.data?.success) {
         const cancelDate = new Date(response.data.cancel_at).toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' });
-        setCurrentUser(prev => ({ ...prev, subscription_cancel_at: response.data.cancel_at }));
+        await refreshUser();
         setCancelConfirmOpen(false);
         alert(`Your subscription has been cancelled. You'll keep access to your current plan until ${cancelDate}.`);
       } else if (response.data?.code === 'NO_SUBSCRIPTION') {
