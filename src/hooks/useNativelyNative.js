@@ -52,7 +52,19 @@ export function useNativelyNative(timeoutMs = 3000) {
     const onLoaded = () => evaluate();
     window.addEventListener("natively-loaded", onLoaded, { once: true });
 
-    const t = setTimeout(() => { if (!evaluate()) resolve("web", null); }, timeoutMs);
+    const t = setTimeout(() => {
+      if (evaluate()) return;
+      // Fail closed: if the userAgent looks like a BuildNatively wrapper,
+      // never resolve to "web" — treat the unresponsive bridge as native
+      // (platform unknown) so the IAP path renders, not Stripe. Mirrors
+      // useIsBuildNatively()'s synchronous userAgent test. A genuine web
+      // user has no "BuildNatively" token, so this can only shift resolution
+      // away from "web" on devices that are already native.
+      const looksNative =
+        typeof window !== "undefined" && window.navigator &&
+        (window.navigator.userAgent || "").includes("BuildNatively");
+      resolve(looksNative ? "native" : "web", null);
+    }, timeoutMs);
 
     return () => {
       window.removeEventListener("natively-loaded", onLoaded);

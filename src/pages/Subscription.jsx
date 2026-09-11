@@ -132,16 +132,25 @@ export default function Subscription() {
     if (tier === currentTier) return;
     if (tier === 'free') return; // Can't "purchase" free tier
     
-    // Fail-closed: never create a Stripe session on a native build.
-    // Re-check the authoritative signal in case the gate's state was stale.
+    // Fail closed: block Stripe whenever the device looks native, whether
+    // the bridge confirms it OR the bridge is unavailable/throws on a
+    // BuildNatively-wrapped device. Unknown status means "block, do not
+    // proceed," never "allow." A genuine web user has no "BuildNatively"
+    // token and the bridge (if loaded) reports isNativeApp === false, so
+    // only those users reach the Stripe path.
+    const looksNative =
+      typeof window !== 'undefined' && window.navigator &&
+      (window.navigator.userAgent || '').includes('BuildNatively');
+    let bridgeSaysNative = false;
     if (typeof window !== 'undefined' && typeof window.NativelyInfo === 'function') {
       try {
         const bi = new window.NativelyInfo().browserInfo();
-        if (bi?.isNativeApp) {
-          alert('This plan is available via in-app purchase. Use the Subscribe button on the plan card.');
-          return;
-        }
-      } catch (e) { /* fall through to web path */ }
+        bridgeSaysNative = !!bi?.isNativeApp;
+      } catch (e) { /* bridge broken — leave false; looksNative still gates */ }
+    }
+    if (bridgeSaysNative || looksNative) {
+      alert('This plan is available via in-app purchase. Use the Subscribe button on the plan card.');
+      return;
     }
 
     // Check if running in iframe (preview mode)
