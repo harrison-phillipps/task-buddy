@@ -17,6 +17,10 @@
         "user"
       ],
       "default": "user"
+    },
+    "ai_consent_given": {
+      "type": "boolean",
+      "description": "Consent to AI task breakdown. null = not yet asked, true = agreed, false = declined. Re-prompt on next breakdown tap when false or null."
     }
   }
 }

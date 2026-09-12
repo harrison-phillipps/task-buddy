@@ -16,6 +16,7 @@ import { createPageUrl } from "@/utils";
 import VirtualCompanion from "../components/VirtualCompanion";
 import { getPersonalizedMessage } from "../components/companionUtils";
 import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
+import AITaskBreakdownConsentModal from "@/components/AITaskBreakdownConsentModal";
 import { TIER_LIMITS, isWithinLimit, UpgradeModal } from "@/components/subscription/FeatureGate";
 // AIEnhancedTextarea, AITaskBreakdownSuggestion, ProactiveCoach, AITimeEstimator hidden (simplification)
 
@@ -40,6 +41,8 @@ export default function TaskBreakdown() {
   const [pendingTaskData, setPendingTaskData] = useState(null);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [showTaskLimitModal, setShowTaskLimitModal] = useState(false);
+  const [showConsentModal, setShowConsentModal] = useState(false);
+  const [consentSaving, setConsentSaving] = useState(false);
   const companionMessage = useMemo(() => getPersonalizedMessage(userProgress, "task_breakdown"), [userProgress?.total_points]);
 
   const { data: teams = [] } = useQuery({
@@ -94,7 +97,17 @@ export default function TaskBreakdown() {
 
   const handleBreakdown = async () => {
     if (!taskInput.title.trim()) return;
+    // Gate on AI consent. null = never asked, false = previously declined;
+    // both re-show the modal on a fresh tap of the breakdown action.
+    // Only an explicit prior "I Agree" (true) proceeds without prompting.
+    if (currentUser?.ai_consent_given !== true) {
+      setShowConsentModal(true);
+      return;
+    }
+    await runBreakdown();
+  };
 
+  const runBreakdown = async () => {
     setIsProcessing(true);
     try {
       const response = await base44.functions.invoke('taskBreakdownAI', {
@@ -108,21 +121,41 @@ export default function TaskBreakdown() {
       });
 
       const result = response.data;
-
       const subtasksWithCompletion = result.subtasks.map(st => ({
         ...st,
         completed: false
       }));
-
-      setBreakdownResult({
-        ...result,
-        subtasks: subtasksWithCompletion
-      });
+      setBreakdownResult({ ...result, subtasks: subtasksWithCompletion });
       setEditingSubtasks(subtasksWithCompletion);
     } catch (error) {
       console.error("Error breaking down task:", error);
     }
     setIsProcessing(false);
+  };
+
+  const handleAgreeConsent = async () => {
+    setConsentSaving(true);
+    try {
+      await base44.auth.updateMe({ ai_consent_given: true });
+      setCurrentUser(prev => ({ ...prev, ai_consent_given: true }));
+      setShowConsentModal(false);
+      await runBreakdown();
+    } catch (e) {
+      console.error("Error saving AI consent:", e);
+    }
+    setConsentSaving(false);
+  };
+
+  const handleNotNowConsent = async () => {
+    setConsentSaving(true);
+    try {
+      await base44.auth.updateMe({ ai_consent_given: false });
+      setCurrentUser(prev => ({ ...prev, ai_consent_given: false }));
+      setShowConsentModal(false);
+    } catch (e) {
+      console.error("Error saving AI consent:", e);
+    }
+    setConsentSaving(false);
   };
 
   const handleSave = async () => {
@@ -452,6 +485,13 @@ export default function TaskBreakdown() {
           newTaskTitle={duplicateCheck?.newTaskTitle || ""}
           onProceed={handleProceedWithDuplicates}
           onCancel={handleCancelDuplicates}
+        />
+        <AITaskBreakdownConsentModal
+          open={showConsentModal}
+          onOpenChange={setShowConsentModal}
+          onAgree={handleAgreeConsent}
+          onNotNow={handleNotNowConsent}
+          isSaving={consentSaving}
         />
       </div>
     </div>
