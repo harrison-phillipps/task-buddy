@@ -129,8 +129,13 @@ Deno.serve(async (req) => {
     if (result === '__TIMEOUT__') {
       const incomplete = tasks.map((t) => t.name).filter((n) => !completed.has(n));
       console.error(`deleteAccount: timed out after 30s for user ${userId}. Incomplete operations: ${incomplete.join(', ')}`);
-      // Do NOT anonymise — all deleteMany ops are idempotent, so the user can
-      // re-auth and retry this same endpoint to finish the cleanup.
+      // Clear deleted_at so an incomplete deletion doesn't leave the user
+      // permanently ignored by webhooks — they can re-auth and retry.
+      try {
+        await admin.entities.User.update(userId, { deleted_at: null });
+      } catch (e) {
+        console.error(`deleteAccount: failed to clear deleted_at on timeout for ${userId}:`, e.message);
+      }
       return Response.json({ success: false, timed_out: true, incomplete, message: 'Deletion incomplete — please retry to finish cleanup.' }, { status: 504 });
     }
 
