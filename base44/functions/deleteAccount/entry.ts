@@ -51,19 +51,29 @@ Deno.serve(async (req) => {
     // Build all cleanup tasks as named operations
     const tasks = [
       { name: 'stripe_cancel', fn: async () => {
-        const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
-        if (customers.data.length > 0) {
-          const subs = await stripe.subscriptions.list({
-            customer: customers.data[0].id,
-            status: 'active',
-            limit: 10,
-          });
-          for (const sub of subs.data) {
+        try {
+          // Prefer the stored stripe_customer_id; fall back to email lookup.
+          let customerId = user.stripe_customer_id || null;
+          if (!customerId) {
+            const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
+            customerId = customers.data[0]?.id || null;
+          }
+          if (!customerId) return { cancelled: false, customerId: null };
+          // Cancel active, trialing, and past_due subscriptions.
+          const subs = await stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 100 });
+          const toCancel = subs.data.filter(s => ['active', 'trialing', 'past_due'].includes(s.status));
+          for (const sub of toCancel) {
             await stripe.subscriptions.del(sub.id);
           }
-          return { cancelled: subs.data.length > 0, customerId: customers.data[0].id };
+          return { cancelled: toCancel.length > 0, customerId };
+        } catch (e) {
+          // resource_missing = nothing to cancel (customer/sub already gone).
+          if (e?.code === 'resource_missing') {
+            console.log('deleteAccount: stripe_cancel resource_missing — nothing to cancel');
+            return { cancelled: false, customerId: null };
+          }
+          throw e;
         }
-        return { cancelled: false, customerId: null };
       }},
       ...[
         'Task', 'Goal', 'BrainDump', 'FocusSession', 'FocusJourney',
@@ -139,19 +149,27 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, timed_out: true, incomplete, message: 'Deletion incomplete — please retry to finish cleanup.' }, { status: 504 });
     }
 
-    // ── All deletions completed. Clear stripe_customer_id ONLY if the Stripe
-    // cancellation step succeeded. Logged, never blocks. (If the User record is
-    // hard-deleted below this is moot, but it's a safe fallback if that fails.)
     const stripeResult = result;
-    if (completed.has('stripe_cancel')) {
+
+    // If the Stripe cancellation step did not complete, do NOT delete the User
+    // record. Clear deleted_at (non-blocking) so webhooks resume, then return
+    // a partial failure the user can retry.
+    if (!completed.has('stripe_cancel')) {
+      console.error(`deleteAccount: stripe_cancel did not complete for ${userId} — aborting before User.delete`);
       try {
-        await admin.entities.User.update(userId, { stripe_customer_id: null });
-        console.log(`deleteAccount: cleared stripe_customer_id for ${userId}`);
+        await admin.entities.User.update(userId, { deleted_at: null });
       } catch (e) {
-        console.error(`deleteAccount: failed to clear stripe_customer_id for ${userId}:`, e.message);
+        console.error(`deleteAccount: failed to clear deleted_at on stripe_cancel abort for ${userId}:`, e.message);
       }
-    } else {
-      console.warn(`deleteAccount: stripe_cancel did not complete — leaving stripe_customer_id in place`);
+      return Response.json({ success: false, partial: true, message: "We couldn't cancel your web subscription. Please retry or contact support." }, { status: 500 });
+    }
+
+    // stripe_cancel completed — clear stripe_customer_id (logged, non-blocking).
+    try {
+      await admin.entities.User.update(userId, { stripe_customer_id: null });
+      console.log(`deleteAccount: cleared stripe_customer_id for ${userId}`);
+    } catch (e) {
+      console.error(`deleteAccount: failed to clear stripe_customer_id for ${userId}:`, e.message);
     }
 
     // ── Delete the User record itself. Service role can delete any user

@@ -8,13 +8,11 @@ const TIER_BY_PRODUCT = {
   'prod_U4sEu0kX769K7F': 'premium',
 };
 
-// Distinguish a genuine "record not found" (user deleted) from transient
-// errors (timeout, rate limit, network). Only the former lets a webhook
-// safely ignore the event; the latter must return 500 so Stripe retries.
+// Base44 throws a Base44Error with status 404 and message "<Entity> not found"
+// for a missing record. Match only that shape — transient errors (timeout,
+// rate limit, network) have a different name/status and must return 500.
 function isNotFound(err) {
-  const status = err?.status || err?.statusCode || err?.response?.status;
-  const msg = (err?.message || '').toLowerCase();
-  return status === 404 || msg.includes('not found') || msg.includes('does not exist');
+  return err?.name === 'Base44Error' && err?.status === 404;
 }
 
 Deno.serve(async (req) => {
