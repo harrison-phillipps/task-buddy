@@ -21,6 +21,11 @@
     "ai_consent_given": {
       "type": "boolean",
       "description": "Consent to AI task breakdown. null = not yet asked, true = agreed, false = declined. Re-prompt on next breakdown tap when false or null."
+    },
+    "deleted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO timestamp set when the user initiates account deletion. While set, RevenueCatWebhook and stripeWebhook ignore events for this user. Cleared on a timeout so an incomplete deletion isn't permanently ignored."
     }
   }
 }

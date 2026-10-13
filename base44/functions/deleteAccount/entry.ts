@@ -13,6 +13,38 @@ Deno.serve(async (req) => {
     const userEmail = user.email;
     const admin = base44.asServiceRole;
 
+    // ── Mark deleted_at FIRST so webhook events arriving mid-deletion are
+    // ignored by RevenueCatWebhook / stripeWebhook. Quick update; failures
+    // are logged but do not block (webhooks also tolerate a missing user).
+    try {
+      await admin.entities.User.update(userId, { deleted_at: new Date().toISOString() });
+    } catch (e) {
+      console.error(`deleteAccount: failed to set deleted_at for ${userId}:`, e.message);
+    }
+
+    // ── RevenueCat: delete the subscriber record (app_user_id = User.id) via
+    // the v1 REST API. Uses REVENUECAT_API_KEY (the secret REST key), NOT the
+    // webhook secret. Failures are logged and do not block deletion.
+    const rcKey = Deno.env.get('REVENUECAT_API_KEY');
+    if (rcKey) {
+      try {
+        const rcRes = await fetch(
+          `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(userId)}`,
+          { method: 'DELETE', headers: { Authorization: `Bearer ${rcKey}` } },
+        );
+        if (!rcRes.ok) {
+          const rcText = await rcRes.text().catch(() => '');
+          console.error(`deleteAccount: RevenueCat delete returned ${rcRes.status}: ${rcText.slice(0, 200)}`);
+        } else {
+          console.log(`deleteAccount: RevenueCat subscriber ${userId} deleted`);
+        }
+      } catch (e) {
+        console.error(`deleteAccount: RevenueCat delete failed for ${userId}:`, e.message);
+      }
+    } else {
+      console.warn('deleteAccount: REVENUECAT_API_KEY not set — skipping RevenueCat subscriber deletion');
+    }
+
     // Track completed operations so we can log incomplete ones on timeout
     const completed = new Set();
 
@@ -29,9 +61,9 @@ Deno.serve(async (req) => {
           for (const sub of subs.data) {
             await stripe.subscriptions.del(sub.id);
           }
-          return subs.data.length > 0;
+          return { cancelled: subs.data.length > 0, customerId: customers.data[0].id };
         }
-        return false;
+        return { cancelled: false, customerId: null };
       }},
       ...[
         'Task', 'Goal', 'BrainDump', 'FocusSession', 'FocusJourney',
@@ -74,9 +106,9 @@ Deno.serve(async (req) => {
       const rest = tasks.slice(1);
 
       // Stripe result tracked separately
-      let stripeCancelled = false;
+      let stripeResult = { cancelled: false, customerId: null };
       const stripeP = stripeTask.fn()
-        .then((result) => { stripeCancelled = result; completed.add(stripeTask.name); })
+        .then((result) => { stripeResult = result; completed.add(stripeTask.name); })
         .catch((e) => console.error(`deleteAccount: ${stripeTask.name} failed:`, e.message));
 
       const restPromises = rest.map((task) =>
@@ -86,7 +118,7 @@ Deno.serve(async (req) => {
       );
 
       await Promise.allSettled([stripeP, ...restPromises]);
-      return stripeCancelled;
+      return stripeResult;
     })();
 
     // 30-second timeout — on timeout, report failure so the frontend can prompt retry.
@@ -102,18 +134,35 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, timed_out: true, incomplete, message: 'Deletion incomplete — please retry to finish cleanup.' }, { status: 504 });
     }
 
-    // All deletions completed — anonymise user LAST so a retry can still re-auth
-    // if this step fails (user.id is unchanged; only display fields are cleared).
-    const stripeCancelled = result;
-    await admin.entities.User.update(userId, {
-      display_name: 'Deleted User',
-      subscription_tier: 'free',
-      companion_type: null,
-      companion_personality: null,
-    }).catch((e) => console.error(`deleteAccount: anonymise_user failed:`, e.message));
+    // ── All deletions completed. Clear stripe_customer_id ONLY if the Stripe
+    // cancellation step succeeded. Logged, never blocks. (If the User record is
+    // hard-deleted below this is moot, but it's a safe fallback if that fails.)
+    const stripeResult = result;
+    if (completed.has('stripe_cancel')) {
+      try {
+        await admin.entities.User.update(userId, { stripe_customer_id: null });
+        console.log(`deleteAccount: cleared stripe_customer_id for ${userId}`);
+      } catch (e) {
+        console.error(`deleteAccount: failed to clear stripe_customer_id for ${userId}:`, e.message);
+      }
+    } else {
+      console.warn(`deleteAccount: stripe_cancel did not complete — leaving stripe_customer_id in place`);
+    }
 
-    console.log(`deleteAccount: completed for user ${userId}, stripeCancelled=${stripeCancelled}`);
-    return Response.json({ success: true, stripeCancelled });
+    // ── Delete the User record itself. Service role can delete any user
+    // (per Base44 docs). Email cannot be overwritten (account-owned), so
+    // hard-delete is the stronger action. If this fails, report failure so the
+    // user can retry — do NOT report success.
+    try {
+      await admin.entities.User.delete(userId);
+      console.log(`deleteAccount: User record ${userId} deleted`);
+    } catch (e) {
+      console.error(`deleteAccount: failed to delete User record ${userId}:`, e.message);
+      return Response.json({ success: false, partial: true, message: 'Your data was deleted, but we could not fully remove your account record. Please retry or contact support.' }, { status: 500 });
+    }
+
+    console.log(`deleteAccount: completed for user ${userId}, stripeCancelled=${stripeResult.cancelled}`);
+    return Response.json({ success: true, stripeCancelled: stripeResult.cancelled });
   } catch (error) {
     console.error('deleteAccount error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });

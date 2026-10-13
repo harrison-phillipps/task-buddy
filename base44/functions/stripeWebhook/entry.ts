@@ -8,6 +8,15 @@ const TIER_BY_PRODUCT = {
   'prod_U4sEu0kX769K7F': 'premium',
 };
 
+// Distinguish a genuine "record not found" (user deleted) from transient
+// errors (timeout, rate limit, network). Only the former lets a webhook
+// safely ignore the event; the latter must return 500 so Stripe retries.
+function isNotFound(err) {
+  const status = err?.status || err?.statusCode || err?.response?.status;
+  const msg = (err?.message || '').toLowerCase();
+  return status === 404 || msg.includes('not found') || msg.includes('does not exist');
+}
+
 Deno.serve(async (req) => {
   const body = await req.text();
   const sig = req.headers.get('stripe-signature');
@@ -37,7 +46,15 @@ Deno.serve(async (req) => {
           try {
             existing = await base44.asServiceRole.entities.User.get(userId);
           } catch (err) {
-            console.warn(`User ${userId} not found for checkout.session.completed (possibly deleted account) — skipping update:`, err.message);
+            if (isNotFound(err)) {
+              console.warn(`User ${userId} not found for checkout.session.completed (deleted account) — skipping:`, err.message);
+              break;
+            }
+            console.error(`User.get error for ${userId} in checkout.session.completed (non-not-found):`, err.message);
+            return new Response('Handler error', { status: 500 });
+          }
+          if (existing?.deleted_at) {
+            console.log(`User ${userId} has deleted_at set — ignoring checkout.session.completed`);
             break;
           }
           const update = { subscription_tier: tier };
@@ -58,6 +75,20 @@ Deno.serve(async (req) => {
         const sub = event.data.object;
         const userId = sub.metadata?.user_id;
         if (!userId) break;
+        try {
+          const u = await base44.asServiceRole.entities.User.get(userId);
+          if (u?.deleted_at) {
+            console.log(`User ${userId} has deleted_at set — ignoring customer.subscription.updated`);
+            break;
+          }
+        } catch (err) {
+          if (isNotFound(err)) {
+            console.log(`User ${userId} not found (deleted) — ignoring customer.subscription.updated`);
+            break;
+          }
+          console.error(`User.get error for ${userId} in customer.subscription.updated (non-not-found):`, err.message);
+          return new Response('Handler error', { status: 500 });
+        }
         const productId = sub.items.data[0]?.price?.product;
         const tier = TIER_BY_PRODUCT[productId];
         if (sub.status === 'active' && tier) {
@@ -78,6 +109,20 @@ Deno.serve(async (req) => {
         const sub = event.data.object;
         const userId = sub.metadata?.user_id;
         if (userId) {
+          try {
+            const u = await base44.asServiceRole.entities.User.get(userId);
+            if (u?.deleted_at) {
+              console.log(`User ${userId} has deleted_at set — ignoring customer.subscription.deleted`);
+              break;
+            }
+          } catch (err) {
+            if (isNotFound(err)) {
+              console.log(`User ${userId} not found (deleted) — ignoring customer.subscription.deleted`);
+              break;
+            }
+            console.error(`User.get error for ${userId} in customer.subscription.deleted (non-not-found):`, err.message);
+            return new Response('Handler error', { status: 500 });
+          }
           try {
             await base44.asServiceRole.entities.User.update(userId, {
               subscription_tier: 'free',
@@ -103,6 +148,10 @@ Deno.serve(async (req) => {
         const user = users[0];
         if (!user) {
           console.warn(`No user found for stripe_customer_id ${invoice.customer} — cannot notify`);
+          break;
+        }
+        if (user.deleted_at) {
+          console.log(`User ${user.id} has deleted_at set — ignoring invoice.payment_failed`);
           break;
         }
 

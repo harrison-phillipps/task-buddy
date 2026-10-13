@@ -75,6 +75,15 @@ function resolveUserId(event) {
   return event.app_user_id || event.original_app_user_id || null;
 }
 
+// Distinguish a genuine "record not found" (user deleted) from transient
+// errors (timeout, rate limit, network). Only the former lets a webhook
+// safely ignore the event; the latter must return 500 so the sender retries.
+function isNotFound(err) {
+  const status = err?.status || err?.statusCode || err?.response?.status;
+  const msg = (err?.message || '').toLowerCase();
+  return status === 404 || msg.includes('not found') || msg.includes('does not exist');
+}
+
 Deno.serve(async (req) => {
   // ── Auth: verify bearer token ──
   const authHeader = req.headers.get('authorization') || '';
@@ -151,6 +160,24 @@ Deno.serve(async (req) => {
     if (!userId) {
       console.warn(`RevenueCat webhook: no app_user_id for event ${event.type} — cannot resolve user`);
       return Response.json({ received: true, error: 'no_app_user_id' }, { status: 200 });
+    }
+
+    // ── Ignore events for users who have deleted their account. Only treat a
+    // genuine not-found as "deleted"; any other User.get error (timeout, rate
+    // limit, network) returns 500 so RevenueCat retries the delivery.
+    try {
+      const u = await base44.asServiceRole.entities.User.get(userId);
+      if (u?.deleted_at) {
+        console.log(`RevenueCat ${event.type}: user ${userId} has deleted_at set — ignoring`);
+        return Response.json({ received: true, ignored: true, deleted: true });
+      }
+    } catch (err) {
+      if (isNotFound(err)) {
+        console.log(`RevenueCat ${event.type}: user ${userId} not found (deleted) — ignoring`);
+        return Response.json({ received: true, ignored: true, deleted: true });
+      }
+      console.error(`RevenueCat ${event.type}: User.get error for ${userId} (non-not-found):`, err.message);
+      return new Response('Handler error', { status: 500 });
     }
 
     // ── EXPIRATION: downgrade to free ──

@@ -35,14 +35,37 @@ export default function DeleteAccountFlow() {
 
   const [error, setError] = useState("");
 
+  // Workspace OAuth connectors to disconnect (by id) before deletion. Done
+  // client-side because disconnectAppUser only works for the signed-in user;
+  // failures are non-blocking — the backend delete still proceeds.
+  const CONNECTOR_IDS = [
+    "6a151e40ac02426e22891765", // Outlook
+    "6a151e1a747800c818af2da4", // Google Tasks
+    "6a151dfbeaf22801484e7f38", // Google Calendar
+  ];
+
+  const disconnectConnectors = async () => {
+    await Promise.allSettled(
+      CONNECTOR_IDS.map((id) =>
+        base44.connectors.disconnectAppUser(id).catch((e) =>
+          console.warn(`Connector disconnect failed for ${id}:`, e?.message || e)
+        )
+      )
+    );
+  };
+
   const handleDelete = async () => {
     if (confirmText !== "DELETE" || deleting) return;
     setDeleting(true);
     setError("");
     try {
+      // Disconnect any connected OAuth connectors first (non-blocking).
+      await disconnectConnectors();
       const res = await base44.functions.invoke("deleteAccount", {});
-      if (res?.data?.error) throw new Error(res.data.error);
-      // Account anonymised + data deleted server-side; sign out
+      if (!res?.data?.success) {
+        throw new Error(res?.data?.message || res?.data?.error || "Account deletion incomplete. Please try again.");
+      }
+      // Account + data deleted server-side; sign out
       base44.auth.logout("/");
     } catch (err) {
       console.error("Account deletion error:", err);
@@ -88,6 +111,10 @@ export default function DeleteAccountFlow() {
 
               <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400 font-medium">
                 ⚠️ There is no grace period. Once deleted, your data cannot be recovered.
+              </div>
+
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-800 dark:text-amber-300">
+                💳 Deleting your account does not cancel subscriptions bought through the App Store or Google Play. Cancel there first or you'll keep being charged.
               </div>
 
               <div className="flex gap-3 pt-2">
