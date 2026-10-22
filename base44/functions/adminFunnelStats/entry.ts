@@ -4,6 +4,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 const EXCLUDED_EMAILS = new Set([
   'test.taskbuddyapp@outlook.com',
   'harrison.phillipps219@schools.sa.edu.au',
+  'harrison.phillipps@hotmail.com',
+  'harrison.phillipps@outlook.com',
 ]);
 
 const PAGE_SIZE = 200;
@@ -32,13 +34,34 @@ export default async function (req) {
     if (!caller) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     if (caller.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
 
+    // Optional `since` (ISO date). When supplied, only users created on or
+    // after it are counted — every user-based number below narrows with it.
+    let body = {};
+    try {
+      body = await req.json();
+    } catch (e) {
+      body = {};
+    }
+    const sinceInput = typeof body?.since === 'string' && body.since ? body.since : null;
+    const sinceMs = sinceInput ? Date.parse(sinceInput) : null;
+    if (sinceInput && Number.isNaN(sinceMs)) {
+      return Response.json(
+        { error: 'Invalid "since" — expected an ISO date, e.g. 2026-01-01' },
+        { status: 400 }
+      );
+    }
+
     // User.list({ limit }) is rejected by the SDK ("Not available for the User
     // entity"), and base44.users exposes only inviteUser, so users cannot be
     // paged — list() returns the full set in one array.
     const allUsers = asArray(await base44.asServiceRole.entities.User.list());
-    const users = allUsers.filter(
-      (u) => !u.deleted_at && !EXCLUDED_EMAILS.has(String(u.email || '').toLowerCase())
+    const liveUsers = allUsers.filter((u) => !u.deleted_at);
+    const emailFiltered = liveUsers.filter(
+      (u) => !EXCLUDED_EMAILS.has(String(u.email || '').toLowerCase())
     );
+    const users = sinceMs === null
+      ? emailFiltered
+      : emailFiltered.filter((u) => Date.parse(u.created_date) >= sinceMs);
 
     // Task ownership, paged, requesting only the ownership fields.
     // owner_user_id covers recurring instances whose created_by_id is stamped
@@ -92,7 +115,10 @@ export default async function (req) {
       users: {
         counted: users.length,
         excluded: allUsers.length - users.length,
+        excluded_by_email: liveUsers.length - emailFiltered.length,
+        excluded_before_since: emailFiltered.length - users.length,
         excluded_emails: [...EXCLUDED_EMAILS],
+        since: sinceInput,
         signups_per_week: toBuckets(users.map((u) => weekKey(u.created_date))),
       },
       task_adoption: {
