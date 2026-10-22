@@ -18,6 +18,11 @@ import { getPersonalizedMessage } from "../components/companionUtils";
 import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
 import AITaskBreakdownConsentModal from "@/components/AITaskBreakdownConsentModal";
 import { TIER_LIMITS, isWithinLimit, UpgradeModal } from "@/components/subscription/FeatureGate";
+import { trackEvent } from "@/lib/analytics";
+
+// Local marker so "first AI breakdown" fires once per browser. A cross-device
+// first would need a stored counter, which we're deliberately not adding.
+const FIRST_BREAKDOWN_KEY = "tb_first_ai_breakdown_tracked";
 // AIEnhancedTextarea, AITaskBreakdownSuggestion, ProactiveCoach, AITimeEstimator hidden (simplification)
 
 export default function TaskBreakdown() {
@@ -127,6 +132,7 @@ export default function TaskBreakdown() {
       }));
       setBreakdownResult({ ...result, subtasks: subtasksWithCompletion });
       setEditingSubtasks(subtasksWithCompletion);
+      trackFirstBreakdown(result.subtasks.length);
     } catch (error) {
       console.error("Error breaking down task:", error);
     }
@@ -156,6 +162,16 @@ export default function TaskBreakdown() {
       console.error("Error saving AI consent:", e);
     }
     setConsentSaving(false);
+  };
+
+  const trackFirstBreakdown = (subtaskCount) => {
+    try {
+      if (localStorage.getItem(FIRST_BREAKDOWN_KEY)) return;
+      localStorage.setItem(FIRST_BREAKDOWN_KEY, "1");
+    } catch (e) {
+      return; // storage unavailable — skip rather than risk repeating it
+    }
+    trackEvent("first_ai_breakdown_used", { source: "task_breakdown", subtask_count: subtaskCount });
   };
 
   const handleSave = async () => {
@@ -475,6 +491,7 @@ export default function TaskBreakdown() {
         <UpgradeModal
           open={showTaskLimitModal}
           onOpenChange={setShowTaskLimitModal}
+          featureKey="max_tasks"
           feature="You've reached your active task limit on the free plan. Upgrade to add more tasks."
           requiredTier="pro"
         />

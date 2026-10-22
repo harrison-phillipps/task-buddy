@@ -181,7 +181,7 @@ export default function Analytics() {
         {hasAdvanced ? (
           <ProductivityScore tasks={tasks} focusSessions={focusSessions} userProgress={userProgress} />
         ) : (
-          <UpgradePrompt feature="Productivity Score" requiredTier="pro" />
+          <UpgradePrompt feature="Productivity Score" featureKey="advanced_analytics" requiredTier="pro" />
         )}
 
         {/* AITipsSection hidden (simplification) */}
@@ -197,7 +197,7 @@ export default function Analytics() {
             <DifficultyChart tasks={tasks} />
           </div>
         ) : (
-          <UpgradePrompt feature="Advanced Charts & Trends" requiredTier="pro" />
+          <UpgradePrompt feature="Advanced Charts & Trends" featureKey="advanced_analytics" requiredTier="pro" />
         )}
 
         {/* Detailed Insights — Pro+ */}

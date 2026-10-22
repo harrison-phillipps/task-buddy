@@ -18,6 +18,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
 
 // RevenueCat package identifiers — must match the Package identifiers
 // configured in the RevenueCat dashboard (Product Catalog → Offerings).
@@ -91,6 +92,11 @@ export default function MobilePaymentGate({ platform, tier, billingPeriod, curre
   // ── Purchase ─────────────────────────────────────────────────────────────
   const handlePurchase = useCallback(() => {
     if (!bridge || !packageId) return;
+    trackEvent("purchase_started", {
+      tier,
+      billing_period: billingPeriod,
+      platform: platform === "ios" ? "ios" : platform === "android" ? "android" : "unknown",
+    });
     setIsPurchasing(true);
     setError(null);
     bridge.purchasePackage(packageId, (resp) => {
@@ -111,7 +117,7 @@ export default function MobilePaymentGate({ platform, tier, billingPeriod, curre
         );
       }
     });
-  }, [bridge, packageId, onPurchased]);
+  }, [bridge, packageId, onPurchased, tier, billingPeriod, platform]);
 
   // ── Restore (required by Apple App Review) ────────────────────────────────
   const handleRestore = useCallback(() => {

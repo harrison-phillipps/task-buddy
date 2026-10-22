@@ -11,6 +11,7 @@ import { TIER_INFO } from "../components/subscription/FeatureGate";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNativelyNative } from "@/hooks/useNativelyNative";
 import MobilePaymentGate from "@/components/subscription/MobilePaymentGate";
+import { trackEvent, currentPlatform } from "@/lib/analytics";
 
 const plansData = [
   {
@@ -108,6 +109,11 @@ export default function Subscription() {
   }, [refreshUser]);
 
   useEffect(() => {
+    // Viewing the plans screen is the main paywall surface.
+    trackEvent("paywall_viewed", {
+      surface: "subscription_screen",
+      platform: currentPlatform(),
+    });
     fetchSubStatus();
     const params = new URLSearchParams(window.location.search);
     if (params.get('success') === 'true') {
@@ -159,6 +165,9 @@ export default function Subscription() {
       return;
     }
     
+    // Reaching here means the native guard above didn't fire: this is the web path.
+    trackEvent("purchase_started", { tier, billing_period: billingPeriod, platform: "web" });
+
     setIsLoading(true);
     try {
       const response = await base44.functions.invoke('createCheckout', {

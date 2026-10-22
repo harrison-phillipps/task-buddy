@@ -74,7 +74,7 @@ export default function Habits() {
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Build consistent daily routines</p>
         </div>
-        <UpgradePrompt feature="Habit and Routine Tracking" requiredTier="pro" />
+        <UpgradePrompt feature="Habit and Routine Tracking" featureKey="habit_tracking" requiredTier="pro" />
       </div>
     );
   }

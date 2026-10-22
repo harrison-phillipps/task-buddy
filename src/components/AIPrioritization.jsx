@@ -260,7 +260,7 @@ For each task, provide:
 
   // Render upgrade prompt if no access
   if (!hasAccess) {
-    return <UpgradePrompt feature="AI Task Prioritization" requiredTier="pro" />;
+    return <UpgradePrompt feature="AI Task Prioritization" featureKey="ai_prioritization" requiredTier="pro" />;
   }
 
   return (

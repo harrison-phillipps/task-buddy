@@ -896,6 +896,7 @@ Rules:
         <UpgradeModal
           open={showBrainDumpLimitModal}
           onOpenChange={setShowBrainDumpLimitModal}
+          featureKey="brain_dump_limit"
           feature={`You've used all ${TIER_LIMITS[currentUser?.subscription_tier || 'free']?.max_brain_dumps_per_day} brain dumps for today on the free plan. Upgrade for more.`}
           requiredTier="pro"
         />

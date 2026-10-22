@@ -19,7 +19,7 @@ export default function RoutineSection({ label, emoji, habits, completions, user
           <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">{label}</h3>
         </div>
         <div className="p-5">
-          <UpgradePrompt feature="Routine Templates" requiredTier="pro" />
+          <UpgradePrompt feature="Routine Templates" featureKey="routine_templates" requiredTier="pro" />
         </div>
       </div>
     );

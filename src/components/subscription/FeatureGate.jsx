@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useIsBuildNatively } from "@/hooks/useIsBuildNatively";
+import { trackEvent, currentPlatform } from "@/lib/analytics";
 
 // Feature access configuration
 export const FEATURE_ACCESS = {
@@ -120,11 +121,23 @@ export function getRequiredTier(featureName) {
 }
 
 // Upgrade prompt modal
-export function UpgradeModal({ open, onOpenChange, feature, requiredTier = "pro" }) {
+export function UpgradeModal({ open, onOpenChange, feature, featureKey, requiredTier = "pro" }) {
   const navigate = useNavigate();
   const isBuildNatively = useIsBuildNatively();
   const tierInfo = TIER_INFO[requiredTier];
   const TierIcon = tierInfo?.icon || Sparkles;
+
+  // Every upgrade dialog is a paywall view, on both web and native.
+  React.useEffect(() => {
+    if (open) {
+      trackEvent("paywall_viewed", {
+        surface: "modal",
+        feature_key: featureKey,
+        required_tier: requiredTier,
+        platform: currentPlatform(),
+      });
+    }
+  }, [open, featureKey, requiredTier]);
 
   if (isBuildNatively) {
     return (
@@ -223,11 +236,24 @@ export function UpgradeModal({ open, onOpenChange, feature, requiredTier = "pro"
 }
 
 // Inline upgrade prompt (for embedding in components)
-export function UpgradePrompt({ feature, requiredTier = "pro", compact = false }) {
+export function UpgradePrompt({ feature, featureKey, requiredTier = "pro", compact = false }) {
   const [showModal, setShowModal] = React.useState(false);
   const isBuildNatively = useIsBuildNatively();
   const tierInfo = TIER_INFO[requiredTier];
   const TierIcon = tierInfo?.icon || Sparkles;
+
+  // The full inline card is itself a paywall surface. Compact pills are not
+  // counted — they render in many places and open the modal when tapped.
+  React.useEffect(() => {
+    if (!compact) {
+      trackEvent("paywall_viewed", {
+        surface: "inline",
+        feature_key: featureKey,
+        required_tier: requiredTier,
+        platform: currentPlatform(),
+      });
+    }
+  }, [compact, featureKey, requiredTier]);
 
   if (isBuildNatively) {
     if (compact) {
@@ -269,6 +295,7 @@ export function UpgradePrompt({ feature, requiredTier = "pro", compact = false }
           open={showModal} 
           onOpenChange={setShowModal} 
           feature={feature}
+          featureKey={featureKey}
           requiredTier={requiredTier}
         />
       </>
@@ -314,6 +341,6 @@ export function withFeatureGate(Component, featureName, fallback = null) {
     }
     
     const requiredTier = getRequiredTier(featureName);
-    return fallback || <UpgradePrompt feature={featureName} requiredTier={requiredTier} />;
+    return fallback || <UpgradePrompt feature={featureName} featureKey={featureName} requiredTier={requiredTier} />;
   };
 }

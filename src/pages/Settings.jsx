@@ -137,7 +137,7 @@ export default function Settings() {
                     }}
                   />
                 ) : (
-                  <UpgradePrompt feature="AI Prioritization Settings" requiredTier="pro" />
+                  <UpgradePrompt feature="AI Prioritization Settings" featureKey="ai_prioritization" requiredTier="pro" />
                 )}
               </div>
             </TabsContent>

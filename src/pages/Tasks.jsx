@@ -1161,6 +1161,7 @@ export default function Tasks() {
         <UpgradeModal
           open={showTaskLimitModal}
           onOpenChange={setShowTaskLimitModal}
+          featureKey="max_tasks"
           feature="You've reached your active task limit on the free plan. Upgrade to add more tasks."
           requiredTier="pro"
         />
