@@ -77,8 +77,9 @@ Tone: warm, insightful, like a coach who already knows them. Don't be generic. R
   };
 
   const handleContinue = () => {
-    // Clear guest data — it's been shown
+    // Clear guest data — it's been shown, and nothing is carried into the account.
     sessionStorage.removeItem("guest_session");
+    sessionStorage.removeItem("guest_task");
     navigate(createPageUrl("Onboarding"));
   };
 
@@ -113,7 +114,7 @@ Tone: warm, insightful, like a coach who already knows them. Don't be generic. R
             {userName ? `Welcome, ${userName}.` : "Welcome aboard."}
           </h1>
           <p className="text-gray-500 text-lg mb-8">
-            Your first session is saved. Here's what we already know about you.
+            Your first session is done. Here's what it told us about you.
           </p>
         </motion.div>
 

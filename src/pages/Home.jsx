@@ -19,7 +19,12 @@ export default function Home() {
     e.preventDefault();
     const trimmed = task.trim();
     if (!trimmed) return;
-    navigate(`/GuestSession?task=${encodeURIComponent(trimmed)}`);
+    // Carried in sessionStorage rather than the URL, so the task text stays out
+    // of browser history, referrer headers and WebView logs.
+    try {
+      sessionStorage.setItem("guest_task", trimmed);
+    } catch {}
+    navigate("/GuestSession");
   };
 
   const examples = ["clean the kitchen", "finish that report", "go for a walk", "reply to emails"];

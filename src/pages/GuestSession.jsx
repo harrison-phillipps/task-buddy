@@ -7,13 +7,30 @@ import { Button } from "@/components/ui/button";
 import EditableStepList from "@/components/tasks/EditableStepList";
 import SessionCelebration from "@/components/focus/SessionCelebration";
 import StreakDisplay from "@/components/focus/StreakDisplay";
+import GuestAIConsent from "@/components/guest/GuestAIConsent";
+
+// Where the consent step's "Read our privacy policy" link points. Left empty
+// until the URL is available, so the link never resolves to a broken page.
+const PRIVACY_POLICY_URL = "";
 
 // ─── Step constants ───────────────────────────────────────────────────────────
+const STEP_CONSENT = "consent";
 const STEP_ENERGY = "energy";
 const STEP_TIME = "time";
 const STEP_BREAKDOWN = "breakdown";
 const STEP_FOCUS = "focus";
 const STEP_DONE = "done";
+
+const GUEST_AI_CONSENT_KEY = "guest_ai_consent";
+
+// Declining is never recorded, so a guest who says "Not now" is asked again.
+function hasGuestConsent() {
+  try {
+    return localStorage.getItem(GUEST_AI_CONSENT_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
 
 const ENERGY_OPTIONS = [
   { value: "low", label: "Running on fumes", emoji: "😴", color: "border-blue-200 bg-blue-50 text-blue-700" },
@@ -96,10 +113,14 @@ function MiniTimer({ minutes, onComplete }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function GuestSession() {
   const navigate = useNavigate();
-  const urlParams = new URLSearchParams(window.location.search);
-  const taskText = urlParams.get("task") || "my task";
 
-  const [step, setStep] = useState(STEP_ENERGY);
+  // Arrives from Home via sessionStorage — never the URL.
+  let taskText = "my task";
+  try {
+    taskText = sessionStorage.getItem("guest_task") || "my task";
+  } catch {}
+
+  const [step, setStep] = useState(() => (hasGuestConsent() ? STEP_ENERGY : STEP_CONSENT));
   const [energy, setEnergy] = useState(null);
   const [timeMinutes, setTimeMinutes] = useState(null);
   const [steps, setSteps] = useState([]);
@@ -115,7 +136,7 @@ export default function GuestSession() {
     setLoading(true);
     try {
       const energyLabel = ENERGY_OPTIONS.find(e => e.value === energyValue)?.label || energyValue;
-      console.log("[GuestSession] fetchBreakdown called — energy:", energyValue, "| energyLabel:", energyLabel, "| timeValue:", timeValue, "| task:", taskText);
+      console.log("[GuestSession] fetchBreakdown called — energy:", energyValue, "| timeValue:", timeValue);
       const response = await base44.functions.invoke('guestBreakdown', { taskText, energyValue, timeValue });
       const result = response.data;
       // normalise: support both micro_label and tip field names
@@ -212,6 +233,22 @@ Rules:
         </div>
 
         <AnimatePresence mode="wait">
+
+          {/* ── STEP: AI consent ─────────────────────────────── */}
+          {step === STEP_CONSENT && (
+            <motion.div key="consent" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
+              <GuestAIConsent
+                privacyUrl={PRIVACY_POLICY_URL}
+                onDecline={() => navigate("/")}
+                onContinue={() => {
+                  try {
+                    localStorage.setItem(GUEST_AI_CONSENT_KEY, "true");
+                  } catch {}
+                  setStep(STEP_ENERGY);
+                }}
+              />
+            </motion.div>
+          )}
 
           {/* ── STEP: Energy ─────────────────────────────────── */}
           {step === STEP_ENERGY && (
@@ -428,12 +465,12 @@ Rules:
                 className="bg-gradient-to-br from-purple-600 to-teal-500 rounded-3xl p-6 text-white shadow-xl"
               >
                 <p className="font-bold text-lg mb-2 leading-snug">
-                  That's your first mood shift tracked. Don't lose it.
+                  One session down. This one only lives in this tab.
                 </p>
                 <p className="text-purple-100 text-sm mb-5 leading-relaxed">
                   Imagine what this looks like after 30 sessions — your peak hours, your patterns,
-                  what kind of day you actually perform best on. That data starts now.
-                  Close this tab and it's gone.
+                  what kind of day you actually perform best on. Right now nothing is stored on an
+                  account, and closing this tab clears it.
                 </p>
                 <button
                   onClick={() => {
@@ -447,7 +484,7 @@ Rules:
                   className="w-full bg-white text-purple-700 font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-purple-50 transition-colors"
                 >
                   <Sparkles className="w-4 h-4" />
-                  Save this session — it's free
+                  Create my free account
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </motion.div>

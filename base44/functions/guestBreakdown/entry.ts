@@ -1,7 +1,14 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
+
 // Simple in-memory rate limiter: { ip -> [timestamp, ...] }
 const rateLimitStore = new Map();
 const MAX_REQUESTS = 5;
 const WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+// Hard daily ceiling on Anthropic calls, enforced across instances via the
+// GuestDailyStats counter. Past it, guests still get a usable plan — locally
+// generated fallback steps — with no Anthropic call and no cost.
+const DAILY_CAP = 500;
 
 function isRateLimited(ip) {
   const now = Date.now();
@@ -62,8 +69,11 @@ Deno.serve(async (req) => {
     return Response.json({ error: "Method not allowed" }, { status: 405 });
   }
 
-  // Rate limiting by IP
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  // Rate limiting by IP. x-forwarded-for is a list, oldest hop first, each proxy
+  // appending to the right — so the leftmost value is whatever the caller sent.
+  // Read the rightmost: the value the last hop actually saw.
+  const forwarded = req.headers.get("x-forwarded-for") || "";
+  const ip = forwarded.split(",").pop()?.trim() || "unknown";
   if (isRateLimited(ip)) {
     return Response.json({ error: "Rate limit exceeded. Please try again in an hour." }, { status: 429 });
   }
@@ -89,6 +99,26 @@ Deno.serve(async (req) => {
   }
   if (!VALID_ENERGIES.includes(energyValue)) {
     return Response.json({ error: "energyValue must be one of: low, medium, high" }, { status: 400 });
+  }
+
+  // Daily ceiling, counted per UTC day so the reset point is unambiguous.
+  const base44 = createClientFromRequest(req);
+  const today = new Date().toISOString().slice(0, 10);
+  const statsPage = await base44.asServiceRole.entities.GuestDailyStats.filter({ date: today }, { limit: 1 });
+  const existing = statsPage?.items?.[0] || null;
+  const dailyCount = existing?.breakdowns || 0;
+
+  if (dailyCount >= DAILY_CAP) {
+    console.log(`[guestBreakdown] daily cap reached — date: ${today}, count: ${dailyCount}`);
+    return Response.json({ steps: getFallbackSteps(taskText, energyValue, timeValue) });
+  }
+
+  // Counted as an attempt: incremented before the Anthropic call. One
+  // server-side $inc, so concurrent requests can't clobber each other's writes.
+  if (existing) {
+    await base44.asServiceRole.entities.GuestDailyStats.updateMany({ date: today }, { $inc: { breakdowns: 1 } });
+  } else {
+    await base44.asServiceRole.entities.GuestDailyStats.create({ date: today, breakdowns: 1 });
   }
 
   const energyLabel = ENERGY_LABELS[energyValue];
@@ -203,7 +233,7 @@ The inputs above are complete. Generate the breakdown now. Return only valid JSO
     const responseText = await anthropicRes.text();
 
     if (!anthropicRes.ok) {
-      console.error(`[guestBreakdown] Anthropic API error — status: ${anthropicRes.status}, body: ${responseText}`);
+      console.error(`[guestBreakdown] Anthropic API error — status: ${anthropicRes.status}`);
       return Response.json({ steps: getFallbackSteps(taskText, energyValue, timeValue) });
     }
 
@@ -219,10 +249,11 @@ The inputs above are complete. Generate the breakdown now. Return only valid JSO
       parsed = JSON.parse(match[0]);
     }
 
-    console.log(`[guestBreakdown] Success — ip: ${ip}, task: "${taskText}", energy: ${energyValue}, time: ${timeValue}`);
+    // Count line only — no IP, no task text.
+    console.log(`[guestBreakdown] served — date: ${today}, count_today: ${dailyCount + 1}`);
     return Response.json({ steps: parsed.steps || [] });
   } catch (error) {
-    console.error(`[guestBreakdown] LLM error — ip: ${ip}, error: ${error.message}`);
+    console.error(`[guestBreakdown] LLM error: ${error.message}`);
     return Response.json({ steps: getFallbackSteps(taskText, energyValue, timeValue) });
   }
 });
