@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
             console.log(`User ${userId} has deleted_at set — ignoring checkout.session.completed`);
             break;
           }
-          const update = { subscription_tier: tier };
+          const update = { subscription_tier: tier, subscription_platform: 'web', subscription_expires_at: null };
           if (session.customer && !existing?.stripe_customer_id) {
             update.stripe_customer_id = session.customer;
           }
@@ -93,6 +93,8 @@ Deno.serve(async (req) => {
           try {
             await base44.asServiceRole.entities.User.update(userId, {
               subscription_tier: tier,
+              subscription_platform: 'web',
+              subscription_expires_at: null,
               subscription_cancel_at: sub.cancel_at ? new Date(sub.cancel_at * 1000).toISOString() : null,
             });
             console.log(`User ${userId} subscription updated to ${tier}`);

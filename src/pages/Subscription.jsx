@@ -454,7 +454,9 @@ export default function Subscription() {
           className="mt-8 text-center"
         >
           <p className="text-gray-500 text-sm">
-            {nativeStatus === 'native' ? (
+            {currentUser?.subscription_platform === 'promo' && currentUser?.subscription_tier && currentUser.subscription_tier !== 'free' ? (
+              <>🎁 Promotional access{currentUser.subscription_expires_at ? ` — ends ${new Date(currentUser.subscription_expires_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''} &nbsp;·&nbsp; No payment required</>
+            ) : nativeStatus === 'native' ? (
               <>🔒 Secure payment via the App Store &nbsp;·&nbsp; Cancel anytime, no questions asked</>
             ) : (
               <>🔒 Secure payment via Stripe &nbsp;·&nbsp; Cancel anytime, no questions asked</>
@@ -468,7 +470,7 @@ export default function Subscription() {
         {/* iOS/Android billing notice — handled inline in each plan card via MobilePaymentGate */}
 
         {/* Cancel Subscription Section — hidden on native (managed via device settings) */}
-        {nativeStatus === 'web' && currentUser?.subscription_tier && currentUser.subscription_tier !== "free" && (
+        {nativeStatus === 'web' && currentUser?.subscription_tier && currentUser.subscription_tier !== "free" && currentUser?.subscription_platform !== 'promo' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

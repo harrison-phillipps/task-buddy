@@ -33,7 +33,16 @@ const PRODUCT_TIER_MAP = {
   'taskbuddy_pro_yearly':          'pro',
   'taskbuddy_premium_monthly':     'premium',
   'taskbuddy_premium_yearly':      'premium',
+  // Play Store products in this project use a colon. They carry no
+  // entitlement in RevenueCat, so this map is the only tier resolver.
+  'taskbuddy_pro:monthly':         'pro',
+  'taskbuddy_pro:yearly':          'pro',
+  'taskbuddy_premium:monthly':     'premium',
+  'taskbuddy_premium:yearly':      'premium',
 };
+
+// Tier ordering for promo comparisons: free < pro < premium.
+const TIER_RANK = { free: 0, pro: 1, premium: 2 };
 
 // RevenueCat store → internal platform label
 const STORE_PLATFORM_MAP = {
@@ -135,8 +144,15 @@ Deno.serve(async (req) => {
   const env = event.environment || 'UNKNOWN';
   const store = event.store || 'UNKNOWN';
 
+  // A comped promotional grant. RevenueCat reports these as
+  // NON_RENEWING_PURCHASE from the PROMOTIONAL store; only that exact
+  // combination is a grant. Any other NON_RENEWING_PURCHASE stays ignored.
+  const isPromoStore = String(event.store || '').toUpperCase() === 'PROMOTIONAL';
+  const isPromoGrant = event.type === 'NON_RENEWING_PURCHASE' && isPromoStore;
+
   // ── Only act on known event types; log and no-op on everything else ──
   if (
+    !isPromoGrant &&
     !GRANT_EVENTS.has(event.type) &&
     !REVOKE_EVENTS.has(event.type) &&
     event.type !== 'CANCELLATION'
@@ -163,8 +179,10 @@ Deno.serve(async (req) => {
     // ── Ignore events for users who have deleted their account. Only treat a
     // genuine not-found as "deleted"; any other User.get error (timeout, rate
     // limit, network) returns 500 so RevenueCat retries the delivery.
+    let existingUser = null;
     try {
       const u = await base44.asServiceRole.entities.User.get(userId);
+      existingUser = u;
       if (u?.deleted_at) {
         console.log(`RevenueCat ${event.type}: user ${userId} has deleted_at set — ignoring`);
         return Response.json({ received: true, ignored: true, deleted: true });
@@ -178,8 +196,56 @@ Deno.serve(async (req) => {
       return new Response('Handler error', { status: 500 });
     }
 
+    // Promo grants must carry an end date: without one nothing would ever
+    // expire them, so refuse rather than grant access with no expiry.
+    if (isPromoGrant && !event.expiration_at_ms) {
+      console.warn(`RevenueCat PROMOTIONAL: user ${userId} has no expiration_at_ms — not granting (entitlements=${JSON.stringify(event.entitlement_ids ?? null)})`);
+      return Response.json({ received: true, error: 'promo_missing_expiration' }, { status: 200 });
+    }
+
+    // A promo must never replace or shorten paid access, and a lower tier must
+    // never replace a higher one. It applies only to a free/unset account, or
+    // extends an existing promo when it runs later AND is the same or higher tier.
+    if (isPromoGrant) {
+      const newTier = resolveTier(event);
+      const currentTier = existingUser?.subscription_tier || null;
+      const currentPlatform = existingUser?.subscription_platform || null;
+      const currentExpiryMs = existingUser?.subscription_expires_at
+        ? new Date(existingUser.subscription_expires_at).getTime()
+        : null;
+      const rank = (t) => TIER_RANK[t] ?? -1;
+
+      let skipReason = null;
+      if (currentTier && currentTier !== 'free') {
+        if (currentPlatform !== 'promo') skipReason = 'paid_subscription_present';
+        else if (currentExpiryMs === null) skipReason = 'promo_current_expiry_missing';
+        else if (!(event.expiration_at_ms > currentExpiryMs)) skipReason = 'promo_not_extending_current_expiry';
+        else if (rank(newTier) < rank(currentTier)) skipReason = 'promo_lower_tier_than_current';
+      }
+
+      if (skipReason) {
+        console.log(`RevenueCat PROMOTIONAL: promo skipped for user ${userId} — reason=${skipReason} (current_tier=${currentTier} current_platform=${currentPlatform ?? '(none)'} current_expires=${existingUser?.subscription_expires_at ?? '(none)'} new_tier=${newTier ?? '(unresolved)'} new_expires=${new Date(event.expiration_at_ms).toISOString()})`);
+        return Response.json({ received: true, ignored: true, reason: skipReason });
+      }
+    }
+
     // ── EXPIRATION: downgrade to free ──
     if (event.type === 'EXPIRATION') {
+      // A PROMOTIONAL expiration must only affect an account that actually holds
+      // promo access, and only once its stored promo has genuinely lapsed.
+      if (isPromoStore) {
+        if (existingUser?.subscription_platform !== 'promo') {
+          console.log(`RevenueCat EXPIRATION (PROMOTIONAL): promo ignored for user ${userId} — platform=${existingUser?.subscription_platform ?? '(none)'}, not a promo account`);
+          return Response.json({ received: true, ignored: true, reason: 'expiration_not_promo_platform' });
+        }
+        const storedExpiryMs = existingUser?.subscription_expires_at
+          ? new Date(existingUser.subscription_expires_at).getTime()
+          : null;
+        if (storedExpiryMs !== null && storedExpiryMs > Date.now()) {
+          console.log(`RevenueCat EXPIRATION (PROMOTIONAL): promo ignored for user ${userId} — stored subscription_expires_at=${existingUser.subscription_expires_at} is still in the future`);
+          return Response.json({ received: true, ignored: true, reason: 'promo_not_yet_expired' });
+        }
+      }
       try {
         await base44.asServiceRole.entities.User.update(userId, {
           subscription_tier: 'free',
@@ -196,11 +262,11 @@ Deno.serve(async (req) => {
     // ── Grant events (INITIAL_PURCHASE, RENEWAL, PRODUCT_CHANGE, UNCANCELLATION) ──
     const tier = resolveTier(event);
     if (!tier) {
-      console.warn(`RevenueCat webhook: could not resolve tier for ${event.type} — entitlements=${JSON.stringify(event.entitlement_ids)} product_id=${event.product_id}`);
+      console.error(`RevenueCat ${event.type}: could not resolve tier — store=${store} product_id=${event.product_id ?? '(none)'} entitlement_ids=${JSON.stringify(event.entitlement_ids ?? null)}`);
       return Response.json({ received: true, error: 'tier_not_resolved' }, { status: 200 });
     }
 
-    const platform = STORE_PLATFORM_MAP[store] || null;
+    const platform = isPromoGrant ? 'promo' : (STORE_PLATFORM_MAP[store] || null);
     const expiresAt = event.expiration_at_ms
       ? new Date(event.expiration_at_ms).toISOString()
       : null;
@@ -211,7 +277,11 @@ Deno.serve(async (req) => {
         subscription_platform: platform,
         subscription_expires_at: expiresAt,
       });
-      console.log(`RevenueCat ${event.type}: user ${userId} → tier=${tier} platform=${platform} expires=${expiresAt} (env=${env})`);
+      console.log(
+        isPromoGrant
+          ? `RevenueCat PROMOTIONAL GRANT: user ${userId} → tier=${tier} platform=promo expires=${expiresAt} (entitlements=${JSON.stringify(event.entitlement_ids ?? null)})`
+          : `RevenueCat ${event.type}: user ${userId} → tier=${tier} platform=${platform} expires=${expiresAt} (env=${env})`
+      );
     } catch (err) {
       console.warn(`RevenueCat ${event.type}: failed to update user ${userId} (possibly deleted account):`, err.message);
     }

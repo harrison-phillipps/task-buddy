@@ -88,7 +88,7 @@ export default async function (req) {
 
     const aiConsent = { true: 0, false: 0, null: 0 };
     const byTier = { free: 0, pro: 0, premium: 0, unset: 0 };
-    const byPlatform = { ios: 0, android: 0, web: 0, unset: 0 };
+    const byPlatform = { ios: 0, android: 0, web: 0, promo: 0, unset: 0 };
     const byTierAndPlatform = {};
     let paidPlatformUnset = 0;
     let usersWithTask = 0;
@@ -98,7 +98,7 @@ export default async function (req) {
       aiConsent[consent] += 1;
 
       const tier = ['free', 'pro', 'premium'].includes(u.subscription_tier) ? u.subscription_tier : 'unset';
-      const platform = ['ios', 'android', 'web'].includes(u.subscription_platform) ? u.subscription_platform : 'unset';
+      const platform = ['ios', 'android', 'web', 'promo'].includes(u.subscription_platform) ? u.subscription_platform : 'unset';
       byTier[tier] += 1;
       byPlatform[platform] += 1;
       byTierAndPlatform[tier] = byTierAndPlatform[tier] || {};
@@ -138,7 +138,7 @@ export default async function (req) {
         by_platform: byPlatform,
         paid_platform_unset: paidPlatformUnset,
         by_tier_and_platform: byTierAndPlatform,
-        note: 'Accounts with no subscription_tier value are counted as "unset", which is not the same as free. paid_platform_unset counts pro+premium subscribers with no subscription_platform recorded.',
+        note: 'Accounts with no subscription_tier value are counted as "unset", which is not the same as free. paid_platform_unset counts pro+premium subscribers with no subscription_platform recorded. Platform "promo" is a comped promotional grant, not a store purchase.',
       },
     });
   } catch (error) {

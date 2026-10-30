@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
     const users = await client.entities.User.list();
 
     const expired = users.filter(u =>
-      (u.subscription_platform === 'ios' || u.subscription_platform === 'android') &&
+      (u.subscription_platform === 'ios' || u.subscription_platform === 'android' || u.subscription_platform === 'promo') &&
       u.subscription_tier &&
       u.subscription_tier !== 'free' &&
       u.subscription_expires_at &&
@@ -27,20 +27,28 @@ Deno.serve(async (req) => {
 
     let downgraded = 0;
     for (const user of expired) {
+      // Declared once per user, above the try, so the downgrade write,
+      // notification and email all share the same value.
+      const isPromo = user.subscription_platform === 'promo';
       try {
-        await client.entities.User.update(user.id, { subscription_tier: 'free' });
+        const downgrade = { subscription_tier: 'free', subscription_expires_at: null };
+        // Clear the promo marker so a later real purchase isn't re-expired by this sweep.
+        if (isPromo) downgrade.subscription_platform = null;
+        await client.entities.User.update(user.id, downgrade);
         downgraded++;
         console.log(`Downgraded user ${user.email || user.id}: ${user.subscription_tier} -> free (platform: ${user.subscription_platform}, expired: ${user.subscription_expires_at})`);
 
         const previousTier = user.subscription_tier;
-        const notifMessage = `Your ${previousTier} subscription has expired and your account has moved to the free plan. Resubscribe to keep your premium features.`;
+        const notifMessage = isPromo
+          ? `Your promotional access to ${previousTier} features has ended and your account is now on the free plan. You can upgrade any time to get them back.`
+          : `Your ${previousTier} subscription has expired and your account has moved to the free plan. Resubscribe to keep your premium features.`;
 
         // 1. In-app notification — matches stripeWebhook invoice.payment_failed pattern
         try {
           await client.entities.Notification.create({
             user_id: user.id,
             type: 'general',
-            title: 'Subscription Expired',
+            title: isPromo ? 'Promotional access ended' : 'Subscription Expired',
             message: notifMessage,
             priority: 'high',
             is_read: false,
@@ -56,15 +64,15 @@ Deno.serve(async (req) => {
         try {
           await client.integrations.Core.SendEmail({
             to: user.email,
-            subject: 'Your TaskBuddy subscription has expired',
+            subject: isPromo ? 'Your TaskBuddy promotional access has ended' : 'Your TaskBuddy subscription has expired',
             body: `
               <div style="font-family: sans-serif; max-width: 480px; margin: auto; padding: 24px;">
-                <h2 style="color: #FB7185;">Subscription Expired</h2>
+                <h2 style="color: #FB7185;">${isPromo ? 'Promotional Access Ended' : 'Subscription Expired'}</h2>
                 <p>Hi ${user.full_name || 'there'},</p>
                 <p>${notifMessage}</p>
-                <p>You can resubscribe any time to restore access to your premium features.</p>
+                <p>${isPromo ? 'You can upgrade any time to restore access to your premium features.' : 'You can resubscribe any time to restore access to your premium features.'}</p>
                 <a href="https://taskbuddyapp.online/Subscription" style="background: #8B5CF6; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block; margin-top: 12px;">
-                  Resubscribe
+                  ${isPromo ? 'View plans' : 'Resubscribe'}
                 </a>
                 <p style="font-size: 12px; color: #999; margin-top: 24px;">
                   You can manage your subscription in your TaskBuddy settings.
