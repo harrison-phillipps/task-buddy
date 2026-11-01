@@ -70,7 +70,12 @@ export default function GoalsPage() {
   });
 
   const deleteGoalMutation = useMutation({
-    mutationFn: (goalId) => base44.entities.Goal.delete(goalId),
+    mutationFn: async (goalId) => {
+      if (!currentUser?.email) throw new Error("Not signed in");
+      const owned = await base44.entities.Goal.filter({ id: goalId, created_by: currentUser.email });
+      if (!owned.length) throw new Error("Goal not found");
+      return base44.entities.Goal.delete(goalId);
+    },
     onMutate: async (goalId) => {
       await queryClient.cancelQueries({ queryKey: ['goals'] });
       const previous = queryClient.getQueryData(['goals', currentUser?.email]);
@@ -88,7 +93,12 @@ export default function GoalsPage() {
   });
 
   const updateGoalMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Goal.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      if (!currentUser?.email) throw new Error("Not signed in");
+      const owned = await base44.entities.Goal.filter({ id, created_by: currentUser.email });
+      if (!owned.length) throw new Error("Goal not found");
+      return base44.entities.Goal.update(id, data);
+    },
     onMutate: async ({ id, data }) => {
       await queryClient.cancelQueries({ queryKey: ['goals'] });
       const previous = queryClient.getQueryData(['goals', currentUser?.email]);

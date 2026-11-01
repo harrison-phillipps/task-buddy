@@ -22,7 +22,10 @@ export default function WeeklyGoalsPanel() {
 
   const { data: weeklyGoals = [] } = useQuery({
     queryKey: ["goals", "weekly"],
-    queryFn: () => base44.entities.Goal.filter({ type: "milestone" }, "-created_date"),
+    queryFn: async () => {
+      const me = await base44.auth.me();
+      return base44.entities.Goal.filter({ created_by: me.email, type: "milestone" }, "-created_date");
+    },
     select: (data) => data.filter(g =>
       g.recurrence_pattern === "weekly" || g.description?.includes("[weekly-goal]")
     ),

@@ -2,6 +2,10 @@
   "name": "BrainDump",
   "type": "object",
   "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Owning user. Carries ownership for records created before created_by_id was correct (system field cannot be rewritten)."
+    },
     "content": {
       "type": "string",
       "description": "The raw brain dump text"
@@ -29,5 +33,45 @@
   },
   "required": [
     "content"
-  ]
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.user_id": "{{user.id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.user_id": "{{user.id}}"
+        }
+      ]
+    }
+  }
 }

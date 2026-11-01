@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // Returns an aggregate progress summary for one client, but only if the caller's
 // own ClinicianProfile lists that client. Task and UserProgress are read with the
@@ -36,6 +36,13 @@ Deno.serve(async (req) => {
 
     // Every task the client created in the last 60 days, paginated — not a
     // "latest N" slice, which would skew the month-on-month comparison.
+    const readPage = (page) => {
+      if (Array.isArray(page)) return { items: page, next: null };
+      const items = page?.items || page?.data || [];
+      const next = page?.has_more && page?.next_cursor ? page.next_cursor : null;
+      return { items, next };
+    };
+
     const tasks = [];
     let cursor = null;
     let pages = 0;
@@ -44,11 +51,23 @@ Deno.serve(async (req) => {
         { created_by_id: clientUserId, created_date: { $gte: since } },
         { sort: '-created_date', limit: PAGE, ...(cursor ? { cursor } : {}) }
       );
-      const items = Array.isArray(page) ? page : page?.items || [];
+      const { items, next } = readPage(page);
       tasks.push(...items);
-      cursor = !Array.isArray(page) && page?.has_more && page?.next_cursor ? page.next_cursor : null;
+      cursor = next;
       pages++;
     } while (cursor && pages < MAX_PAGES);
+
+    // Fall back to the positional form if the paged shape came back empty but a
+    // plain read finds rows — keeps the window complete across SDK differences.
+    if (tasks.length === 0) {
+      const flat = await base44.asServiceRole.entities.Task.filter(
+        { created_by_id: clientUserId, created_date: { $gte: since } },
+        '-created_date',
+        1000
+      );
+      tasks.push(...readPage(flat).items);
+    }
+    console.log(`[getClientProgress] client ${clientUserId}: ${tasks.length} tasks in 60-day window, ${pages} page(s)`);
 
     const progressRaw = await base44.asServiceRole.entities.UserProgress.filter({ user_id: clientUserId });
     const progressList = Array.isArray(progressRaw) ? progressRaw : progressRaw?.items || [];

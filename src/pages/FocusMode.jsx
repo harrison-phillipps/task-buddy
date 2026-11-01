@@ -47,6 +47,23 @@ function formatTime(s) {
   return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
 }
 
+// Same owner predicate as Tasks.jsx: own tasks, recurring instances owned via
+// owner_user_id, plus anything assigned to me by a teammate or a clinician.
+async function fetchMyTasksByStatus(status) {
+  const me = await base44.auth.me();
+  const [own, owned, assigned] = await Promise.all([
+    base44.entities.Task.filter({ status, created_by_id: me.id }),
+    base44.entities.Task.filter({ status, owner_user_id: me.id }),
+    base44.entities.Task.filter({ status, assigned_to: me.id }),
+  ]);
+  const seen = new Set();
+  return [...own, ...owned, ...assigned].filter(t => {
+    if (seen.has(t.id)) return false;
+    seen.add(t.id);
+    return true;
+  });
+}
+
 export default function FocusMode() {
   const urlParams = new URLSearchParams(window.location.search);
   const preselectedId = urlParams.get("taskId");
@@ -72,13 +89,13 @@ export default function FocusMode() {
 
   const { data: tasks = [] } = useQuery({
     queryKey: ["focusModeTasks", currentUser?.id],
-    queryFn: () => base44.entities.Task.filter({ status: "not_started" }),
+    queryFn: () => fetchMyTasksByStatus("not_started"),
     enabled: !!currentUser,
   });
 
   const { data: inProgressTasks = [] } = useQuery({
     queryKey: ["focusModeInProgress", currentUser?.id],
-    queryFn: () => base44.entities.Task.filter({ status: "in_progress" }),
+    queryFn: () => fetchMyTasksByStatus("in_progress"),
     enabled: !!currentUser,
   });
 
