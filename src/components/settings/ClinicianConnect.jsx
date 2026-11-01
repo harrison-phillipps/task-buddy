@@ -17,7 +17,7 @@ export default function ClinicianConnect({ currentUser }) {
     const checkConnection = async () => {
       try {
         const invites = await base44.entities.ClientInvite.filter({
-          client_email: currentUser.email,
+          client_email: currentUser.email.toLowerCase(),
           status: "accepted",
         });
         setConnectedInvite(invites.length > 0 ? invites[0] : null);
@@ -38,62 +38,22 @@ export default function ClinicianConnect({ currentUser }) {
     }
     setConnecting(true);
     try {
-      // Find a pending, non-expired invite with this code
-      const invites = await base44.entities.ClientInvite.filter({
-        invite_code: code,
-      });
-
-      const now = new Date();
-      const valid = invites.find(
-        (inv) => (inv.status === "pending" || inv.status === "declined") &&
-        (!inv.expires_at || new Date(inv.expires_at) > now)
-      );
-
-      if (!valid) {
-        toast.error("Invalid or expired invite code. Please ask your clinician for a new one.");
-        setConnecting(false);
+      // The server validates the code, its expiry and that it was issued to this
+      // account, then links the clinician's clients[] with the service role.
+      const res = await base44.functions.invoke("acceptClinicianInvite", { code });
+      if (res.data?.error) {
+        toast.error(res.data.error);
         return;
       }
 
-      // Mark invite as accepted
-      await base44.entities.ClientInvite.update(valid.id, {
+      const invites = await base44.entities.ClientInvite.filter({
+        client_email: currentUser.email.toLowerCase(),
         status: "accepted",
-        client_email: currentUser.email,
       });
-
-      // Add this user to the clinician's ClinicianProfile.clients array
-      const profiles = await base44.entities.ClinicianProfile.filter({
-        user_id: valid.clinician_user_id,
-      });
-
-      if (profiles.length > 0) {
-        const profile = profiles[0];
-        const existingClients = profile.clients || [];
-        const alreadyLinked = existingClients.some(
-          (c) => c.client_user_id === currentUser.id
-        );
-        if (!alreadyLinked) {
-          await base44.entities.ClinicianProfile.update(profile.id, {
-            clients: [
-              ...existingClients,
-              {
-                client_user_id: currentUser.id,
-                client_display_name: currentUser.display_name || currentUser.full_name || currentUser.email,
-                client_email: currentUser.email,
-                linked_date: new Date().toISOString().split("T")[0],
-                goal_description: valid.goal_description || "",
-                status: "active",
-              },
-            ],
-          });
-        }
-      }
-
-      const updatedInvite = { ...valid, status: "accepted" };
-      setConnectedInvite(updatedInvite);
+      setConnectedInvite(invites.length > 0 ? invites[0] : null);
       setInviteCode("");
       toast.success(
-        `You're now connected to ${valid.clinician_name || "your clinician"}${valid.clinician_organisation ? ` at ${valid.clinician_organisation}` : ""}. They can view your progress and generate reports to support your goals.`,
+        `You're now connected to ${res.data?.clinician_name || "your clinician"}${res.data?.clinician_organisation ? ` at ${res.data.clinician_organisation}` : ""}. They can view your progress and generate reports to support your goals.`,
         { duration: 6000 }
       );
     } catch {
@@ -107,21 +67,14 @@ export default function ClinicianConnect({ currentUser }) {
     if (!connectedInvite) return;
     setDisconnecting(true);
     try {
-      await base44.entities.ClientInvite.update(connectedInvite.id, {
-        status: "pending",
+      // Server-side: confirms this user really is on the clinician's client list,
+      // removes them with the service role, and returns the invite to pending.
+      const res = await base44.functions.invoke("disconnectClinician", {
+        clinician_user_id: connectedInvite.clinician_user_id,
       });
-
-      // Remove from clinician's clients array
-      const profiles = await base44.entities.ClinicianProfile.filter({
-        user_id: connectedInvite.clinician_user_id,
-      });
-      if (profiles.length > 0) {
-        const profile = profiles[0];
-        await base44.entities.ClinicianProfile.update(profile.id, {
-          clients: (profile.clients || []).filter(
-            (c) => c.client_user_id !== currentUser.id
-          ),
-        });
+      if (res.data?.error) {
+        toast.error(res.data.error);
+        return;
       }
 
       setConnectedInvite(null);
@@ -189,12 +142,12 @@ export default function ClinicianConnect({ currentUser }) {
               </label>
               <div className="flex gap-2">
                 <Input
-                  placeholder="e.g. A1B2C3D4"
+                  placeholder="e.g. K7QM2XPD9RTV"
                   value={inviteCode}
                   onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                   onKeyDown={(e) => e.key === "Enter" && handleConnect()}
                   className="font-mono tracking-widest uppercase bg-white dark:bg-gray-800 max-w-xs"
-                  maxLength={8}
+                  maxLength={12}
                 />
                 <Button
                   onClick={handleConnect}

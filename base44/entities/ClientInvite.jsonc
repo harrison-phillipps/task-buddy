@@ -38,5 +38,31 @@
   "required": [
     "clinician_user_id",
     "invite_code"
-  ]
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.clinician_user_id": "{{user.id}}"
+        },
+        {
+          "data.client_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "data.clinician_user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.clinician_user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.clinician_user_id": "{{user.id}}"
+    }
+  }
 }

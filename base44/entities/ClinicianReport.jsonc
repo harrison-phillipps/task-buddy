@@ -57,5 +57,31 @@
   "required": [
     "clinician_user_id",
     "client_user_id"
-  ]
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.clinician_user_id": "{{user.id}}"
+        },
+        {
+          "data.client_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "data.clinician_user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.clinician_user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.clinician_user_id": "{{user.id}}"
+    }
+  }
 }

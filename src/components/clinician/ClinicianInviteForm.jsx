@@ -6,8 +6,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "react-hot-toast";
 import { Send, Copy } from "lucide-react";
 
+// 32 symbols (no 0/O/1/I). A power of two, so a random byte mod 32 is unbiased.
+const INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
 function generateInviteCode() {
-  return Math.random().toString(36).substring(2, 10).toUpperCase();
+  const bytes = new Uint8Array(12);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => INVITE_ALPHABET[b % 32]).join("");
 }
 
 export default function ClinicianInviteForm({ profile, currentUser }) {
@@ -41,7 +46,7 @@ export default function ClinicianInviteForm({ profile, currentUser }) {
         clinician_name: currentUser.display_name || currentUser.full_name || "",
         clinician_organisation: profile?.organisation_name || "",
         invite_code: code,
-        client_email: clientEmail.trim(),
+        client_email: clientEmail.trim().toLowerCase(),
         client_display_name: clientName.trim() || undefined,
         status: "pending",
         expires_at: expiresAt.toISOString(),
@@ -85,6 +90,7 @@ export default function ClinicianInviteForm({ profile, currentUser }) {
             <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Client Email <span className="text-red-500">*</span></label>
             <Input
               type="email"
+              required
               placeholder="client@email.com"
               value={clientEmail}
               onChange={(e) => setClientEmail(e.target.value)}

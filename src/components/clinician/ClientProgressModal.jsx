@@ -31,13 +31,24 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
   useEffect(() => {
     if (!open || !client || !hasData) return;
     setLoading(true);
-    Promise.all([
-      base44.entities.Task.filter({ created_by_id: client.client_user_id }, "-created_date", 20),
-      base44.entities.UserProgress.filter({ user_id: client.client_user_id }),
-    ]).then(([fetchedTasks, progressList]) => {
-      setTasks(fetchedTasks || []);
-      setProgress(progressList?.[0] || null);
-    }).finally(() => setLoading(false));
+    // The server confirms this client is on the clinician's list, then reads the
+    // client's tasks and progress with the service role — the browser never
+    // reads another user's records directly.
+    base44.functions.invoke("getClientProgress", { client_user_id: client.client_user_id })
+      .then((res) => {
+        if (res.data?.error) {
+          setTasks([]);
+          setProgress(null);
+          return;
+        }
+        setTasks(res.data?.tasks || []);
+        setProgress(res.data?.progress || null);
+      })
+      .catch(() => {
+        setTasks([]);
+        setProgress(null);
+      })
+      .finally(() => setLoading(false));
   }, [open, client]);
 
   if (!client) return null;
