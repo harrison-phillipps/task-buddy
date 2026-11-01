@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
+import { withCompletionStamp } from "@/lib/taskCompletion";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -219,10 +220,10 @@ export default function FocusMode() {
         completed: completedSubtasks.has(i) || st.completed,
       }));
       const allDone = updatedSubtasks.every(st => st.completed);
-      await base44.entities.Task.update(selectedTask.id, {
+      await base44.entities.Task.update(selectedTask.id, withCompletionStamp({
         subtasks: updatedSubtasks,
         status: allDone ? "completed" : "in_progress",
-      });
+      }));
     }
 
     window.location.href = createPageUrl("Tasks");

@@ -61,16 +61,22 @@ Deno.serve(async (req) => {
     const lastMonth = tasks.filter((t) => createdMs(t) < cutoff30);
     const completedThisMonth = thisMonth.filter((t) => t.status === 'completed').length;
 
-    // Approximate: "completed" has no completion timestamp on Task, so this uses
-    // when the task last changed, which is normally when it was ticked off.
+    // Prefer the explicit completed_at stamp. Tasks finished before that field
+    // existed fall back to updated_date, which only approximates completion time
+    // because any later edit moves it — so the split is reported, not hidden.
     const bestTimeOfDay = { morning: 0, afternoon: 0, evening: 0 };
+    const completionTimeBasis = { completed_at: 0, approximate_updated_date: 0 };
     tasks.forEach((t) => {
-      if (t.status !== 'completed' || !t.updated_date) return;
-      const h = localHour(t.updated_date);
+      if (t.status !== 'completed') return;
+      const stamp = t.completed_at || t.updated_date;
+      if (!stamp) return;
+      const h = localHour(stamp);
       if (h === null) return;
       if (h >= 6 && h < 12) bestTimeOfDay.morning++;
       else if (h >= 12 && h < 17) bestTimeOfDay.afternoon++;
       else if (h >= 17 && h < 21) bestTimeOfDay.evening++;
+      if (t.completed_at) completionTimeBasis.completed_at++;
+      else completionTimeBasis.approximate_updated_date++;
     });
 
     return Response.json({
@@ -82,6 +88,7 @@ Deno.serve(async (req) => {
       completion_rate: thisMonth.length > 0 ? Math.round((completedThisMonth / thisMonth.length) * 100) : 0,
       current_streak: progress?.current_streak ?? 0,
       best_time_of_day: bestTimeOfDay,
+      completion_time_basis: completionTimeBasis,
     });
   } catch (error) {
     console.error('[getClientProgress] error:', error.message);

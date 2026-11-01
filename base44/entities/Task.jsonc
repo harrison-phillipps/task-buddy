@@ -57,6 +57,11 @@
       ],
       "default": "not_started"
     },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the task was marked completed. Written on the transition into 'completed' and cleared when it leaves that status. Preferred over updated_date for completion timing."
+    },
     "difficulty": {
       "type": "string",
       "enum": [

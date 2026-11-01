@@ -89,12 +89,18 @@ Deno.serve(async (req) => {
       // Non-fatal — streak stays 0
     }
 
-    // Determine best_time_of_day from completed tasks
-    const completedTasks = tasksInPeriod.filter((t) => t.status === "completed" && t.updated_date);
+    // Determine best_time_of_day from completed tasks, preferring the explicit
+    // completed_at stamp and falling back to updated_date for older rows, which
+    // only approximates completion time because any edit moves it.
+    const completedTasks = tasksInPeriod.filter((t) => t.status === "completed" && (t.completed_at || t.updated_date));
+    const completionTimeBasis = { completed_at: 0, approximate_updated_date: 0 };
     const timeBuckets = { morning: 0, afternoon: 0, evening: 0 };
     for (const t of completedTasks) {
+      const stamp = t.completed_at || t.updated_date;
+      if (t.completed_at) completionTimeBasis.completed_at++;
+      else completionTimeBasis.approximate_updated_date++;
       const localHour = parseInt(
-        new Date(t.updated_date).toLocaleString('en-US', {
+        new Date(stamp).toLocaleString('en-US', {
           timeZone: 'Australia/Adelaide',
           hour: 'numeric',
           hour12: false
@@ -176,7 +182,7 @@ Use the client's name throughout the paragraph instead of "[participant name]" o
     });
 
     console.log(`[generateClinicianReport] Report created — clinician: ${user.id}, client: ${client_user_id}, period: ${period}`);
-    return Response.json(report);
+    return Response.json({ ...report, completion_time_basis: completionTimeBasis });
 
   } catch (error) {
     console.error(`[generateClinicianReport] Error: ${error.message}`);

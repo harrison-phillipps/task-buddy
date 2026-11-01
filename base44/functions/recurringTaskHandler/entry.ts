@@ -104,6 +104,21 @@ Deno.serve(async (req) => {
 
     console.log(`Task completed: ${task.id} — "${task.title}"`);
 
+    // Safety net for the completion timestamp: this handler fires on exactly the
+    // transition into 'completed', so any write path that did not stamp the task
+    // (offline sync, an older client, a job) gets an accurate completed_at here.
+    // Writing completed_at without touching status does not re-enter this branch.
+    if (!task.completed_at) {
+      try {
+        await base44.asServiceRole.entities.Task.update(task.id, {
+          completed_at: new Date().toISOString(),
+        });
+        console.log(`Backfilled completed_at for task ${task.id}`);
+      } catch (e) {
+        console.error(`Could not backfill completed_at for task ${task.id}:`, e.message);
+      }
+    }
+
     // Resolve the template: either the task is a template itself, or find its parent template
     let template = null;
 

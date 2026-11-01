@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 // base44 client
 import { base44 } from "@/api/base44Client";
+import { withCompletionStamp } from "@/lib/taskCompletion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBackgroundTimer, requestNotificationPermission, showNotification, scheduleEncouragementNotification } from "../components/focus/BackgroundTimer";
 import { Button } from "@/components/ui/button";
@@ -364,13 +365,14 @@ export default function FocusSession() {
 
   const updateTaskMutation = useMutation({
     mutationFn: async ({ id, data }) => {
+      const payload = withCompletionStamp(data);
       if (!navigator.onLine) {
-        await enqueueOp({ entity: 'Task', type: 'update', id, data });
-        await upsertCachedEntity('Task', id, { ...tasks.find(t => t.id === id), ...data, id });
+        await enqueueOp({ entity: 'Task', type: 'update', id, data: payload });
+        await upsertCachedEntity('Task', id, { ...tasks.find(t => t.id === id), ...payload, id });
         await refreshPendingCount();
-        return { id, ...data };
+        return { id, ...payload };
       }
-      const updated = await base44.entities.Task.update(id, data);
+      const updated = await base44.entities.Task.update(id, payload);
       await upsertCachedEntity('Task', id, updated);
       return updated;
     },
@@ -879,7 +881,7 @@ export default function FocusSession() {
     if (allStepsComplete) {
       await updateTaskMutation.mutateAsync({
         id: selectedTask.id,
-        data: { status: 'completed' }
+        data: withCompletionStamp({ status: 'completed' })
       });
     }
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { withCompletionStamp } from "@/lib/taskCompletion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -109,7 +110,7 @@ export default function TeamFocusSession() {
   }, [isActive, timeLeft]);
 
   const updateTaskMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
+    mutationFn: ({ id, data }) => base44.entities.Task.update(id, withCompletionStamp(data)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teamTasks'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
