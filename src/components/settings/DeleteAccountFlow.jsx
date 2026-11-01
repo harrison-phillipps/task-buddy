@@ -1,9 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Trash2, AlertTriangle, CheckCircle2, ArrowRight } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+
+// Flattens the dry-run counts into rows worth showing: one line per entity,
+// only where something would actually be deleted.
+function deleteSummaryRows(summary) {
+  return Object.entries(summary?.counts || {})
+    .map(([label, entry]) => ({
+      label,
+      count: Object.values(entry || {}).reduce((sum, v) => sum + (typeof v === "number" ? v : 0), 0),
+    }))
+    .filter((row) => row.count > 0)
+    .sort((a, b) => b.count - a.count);
+}
 
 const CONSEQUENCES = [
   { icon: "✅", label: "All tasks and subtasks" },
@@ -34,6 +46,18 @@ export default function DeleteAccountFlow() {
   };
 
   const [error, setError] = useState("");
+  const [summary, setSummary] = useState(null);
+
+  // Dry run: the backend deletes nothing without confirm_email, so the final
+  // screen can show exactly how many rows of each kind will be erased.
+  useEffect(() => {
+    if (step !== 2) return;
+    let cancelled = false;
+    base44.functions.invoke("deleteAccount", {})
+      .then((res) => { if (!cancelled && res?.data?.dry_run) setSummary(res.data); })
+      .catch((e) => console.warn("Delete dry run failed:", e?.message || e));
+    return () => { cancelled = true; };
+  }, [step]);
 
   // Workspace OAuth connectors to disconnect (by id) before deletion. Done
   // client-side because disconnectAppUser only works for the signed-in user;
@@ -61,7 +85,9 @@ export default function DeleteAccountFlow() {
     try {
       // Disconnect any connected OAuth connectors first (non-blocking).
       await disconnectConnectors();
-      const res = await base44.functions.invoke("deleteAccount", {});
+      const res = await base44.functions.invoke("deleteAccount", {
+        confirm_email: summary?.target?.email,
+      });
       if (!res?.data?.success) {
         throw new Error(res?.data?.message || res?.data?.error || "Account deletion incomplete. Please try again.");
       }
@@ -148,6 +174,17 @@ export default function DeleteAccountFlow() {
                 autoFocus
               />
 
+              {summary && (
+                <div className="max-h-32 overflow-auto rounded-lg border border-red-200 dark:border-red-800 bg-red-50/60 dark:bg-red-950/30 p-2 text-xs text-red-800 dark:text-red-300 space-y-0.5">
+                  {deleteSummaryRows(summary).map(({ label, count }) => (
+                    <div key={label} className="flex justify-between gap-2">
+                      <span>{label.replace(/_/g, " ")}</span>
+                      <span className="font-mono">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {confirmText.length > 0 && confirmText !== "DELETE" && (
                 <p className="text-xs text-red-500 text-center">Must match exactly: DELETE</p>
               )}
@@ -166,7 +203,7 @@ export default function DeleteAccountFlow() {
                   variant="destructive"
                   className="flex-1"
                   onClick={handleDelete}
-                  disabled={confirmText !== "DELETE" || deleting}
+                  disabled={confirmText !== "DELETE" || deleting || !summary}
                 >
                   {deleting ? (
                     <span className="flex items-center gap-2">

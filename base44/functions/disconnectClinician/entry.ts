@@ -1,4 +1,5 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { asRows } from '../../shared/entityResults.ts';
 
 // Removes the signed-in user from a clinician's clients[] with the service role,
 // and returns the pairing's invite to "pending". Verifies server-side that the
@@ -17,8 +18,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Which clinician to disconnect from is required' }, { status: 400 });
     }
 
-    const profiles = await base44.asServiceRole.entities.ClinicianProfile.filter({ user_id: clinicianUserId });
-    const profile = profiles?.[0];
+    const profiles = asRows(await base44.asServiceRole.entities.ClinicianProfile.filter({ user_id: clinicianUserId }));
+    const profile = profiles[0];
     if (!profile) {
       return Response.json({ error: 'This clinician no longer has a profile' }, { status: 404 });
     }

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { asRows, readAll } from '../../shared/entityResults.ts';
 
 // Returns an aggregate progress summary for one client, but only if the caller's
 // own ClinicianProfile lists that client. Task and UserProgress are read with the
@@ -23,7 +24,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'client_user_id is required' }, { status: 400 });
     }
 
-    const profiles = await base44.asServiceRole.entities.ClinicianProfile.filter({ user_id: user.id });
+    const profiles = asRows(await base44.asServiceRole.entities.ClinicianProfile.filter({ user_id: user.id }));
     const profile = profiles?.[0];
     const clients = Array.isArray(profile?.clients) ? profile.clients : [];
     if (!profile || !clients.some((c) => c.client_user_id === clientUserId)) {
@@ -36,41 +37,14 @@ Deno.serve(async (req) => {
 
     // Every task the client created in the last 60 days, paginated — not a
     // "latest N" slice, which would skew the month-on-month comparison.
-    const readPage = (page) => {
-      if (Array.isArray(page)) return { items: page, next: null };
-      const items = page?.items || page?.data || [];
-      const next = page?.has_more && page?.next_cursor ? page.next_cursor : null;
-      return { items, next };
-    };
+    const tasks = await readAll(
+      base44.asServiceRole.entities.Task,
+      { created_by_id: clientUserId, created_date: { $gte: since } },
+      { limit: PAGE, maxPages: MAX_PAGES, sort: '-created_date' }
+    );
+    console.log(`[getClientProgress] client ${clientUserId}: ${tasks.length} tasks in 60-day window`);
 
-    const tasks = [];
-    let cursor = null;
-    let pages = 0;
-    do {
-      const page = await base44.asServiceRole.entities.Task.filter(
-        { created_by_id: clientUserId, created_date: { $gte: since } },
-        { sort: '-created_date', limit: PAGE, ...(cursor ? { cursor } : {}) }
-      );
-      const { items, next } = readPage(page);
-      tasks.push(...items);
-      cursor = next;
-      pages++;
-    } while (cursor && pages < MAX_PAGES);
-
-    // Fall back to the positional form if the paged shape came back empty but a
-    // plain read finds rows — keeps the window complete across SDK differences.
-    if (tasks.length === 0) {
-      const flat = await base44.asServiceRole.entities.Task.filter(
-        { created_by_id: clientUserId, created_date: { $gte: since } },
-        '-created_date',
-        1000
-      );
-      tasks.push(...readPage(flat).items);
-    }
-    console.log(`[getClientProgress] client ${clientUserId}: ${tasks.length} tasks in 60-day window, ${pages} page(s)`);
-
-    const progressRaw = await base44.asServiceRole.entities.UserProgress.filter({ user_id: clientUserId });
-    const progressList = Array.isArray(progressRaw) ? progressRaw : progressRaw?.items || [];
+    const progressList = asRows(await base44.asServiceRole.entities.UserProgress.filter({ user_id: clientUserId }));
     const progress = progressList[0] || null;
 
     // Bucket by the client's own clock; the browser passes minutes east of UTC.

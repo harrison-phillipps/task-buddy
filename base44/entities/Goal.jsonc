@@ -94,6 +94,10 @@
     "client_user_id": {
       "type": "string",
       "description": "The client's user ID when a clinician adds this goal on their behalf"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "Writable owner field. created_by_id is a read-only system field, so ownership for RLS is carried here."
     }
   },
   "required": [

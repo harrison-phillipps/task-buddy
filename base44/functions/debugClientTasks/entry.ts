@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { asRows } from '../../shared/entityResults.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -14,7 +15,7 @@ Deno.serve(async (req) => {
     }
 
     // Fetch first 5 tasks (unfiltered) to inspect created_by values
-    const sampleTasks = await base44.asServiceRole.entities.Task.list('-created_date', 5);
+    const sampleTasks = asRows(await base44.asServiceRole.entities.Task.list('-created_date', 5));
     const sampleSummary = sampleTasks.map(t => ({
       id: t.id,
       title: t.title,
@@ -22,7 +23,7 @@ Deno.serve(async (req) => {
     }));
 
     // Fetch tasks filtered by created_by_id matching the email (to test the filter)
-    const filteredByEmail = await base44.asServiceRole.entities.Task.filter({ created_by_id: client_email }, '-created_date', 10);
+    const filteredByEmail = asRows(await base44.asServiceRole.entities.Task.filter({ created_by_id: client_email }, '-created_date', 10));
 
     return Response.json({
       lookup_email: client_email,

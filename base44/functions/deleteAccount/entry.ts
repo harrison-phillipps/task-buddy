@@ -1,7 +1,25 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Stripe from 'npm:stripe@14';
+import { asRows, countRows } from '../../shared/entityResults.ts';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
+
+// Entities whose rows carry the creator in the system created_by_id field.
+const BY_CREATOR = [
+  'Task', 'Goal', 'BrainDump', 'FocusSession', 'FocusJourney',
+  'Habit', 'HabitCompletion', 'WinsJournal', 'CalendarEvent',
+  'RoutineTemplate', 'FocusSessionTemplate', 'CollaborativeFocusSession',
+  'TeamMessage', 'TeamNotification', 'TaskComment', 'TaskActivity',
+  'Notification', 'NotificationPreferences', 'LearningPath', 'Skill',
+];
+
+// Entities that carry the owner in a writable user_id field.
+const BY_USER_ID = [
+  'UserProgress', 'ActiveSession', 'CompanionLearning',
+  'CompanionFeedback', 'Leaderboard',
+];
+
+const normaliseEmail = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
 
 Deno.serve(async (req) => {
   try {
@@ -9,22 +27,101 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const userId = user.id;
-    const userEmail = user.email;
     const admin = base44.asServiceRole;
+    const body = await req.json().catch(() => ({}));
+    const requestedEmail = normaliseEmail(body?.email);
+    const confirmEmail = normaliseEmail(body?.confirm_email);
+
+    // ── Resolve the target. No email means "delete me", which is the in-app flow;
+    // an email means an admin is purging someone else's account.
+    let target = user;
+    let requestedByAdmin = false;
+
+    if (requestedEmail) {
+      if (user.role !== 'admin') {
+        console.warn(`deleteAccount: non-admin ${user.id} attempted to purge ${requestedEmail}`);
+        return Response.json({ error: 'Only an admin can delete another account' }, { status: 403 });
+      }
+      const matches = asRows(await admin.entities.User.filter({ email: requestedEmail }));
+      if (matches.length !== 1) {
+        return Response.json({ error: `No unique user found for ${requestedEmail}` }, { status: 404 });
+      }
+      target = matches[0];
+      requestedByAdmin = true;
+
+      // An admin purging an address must not be purging their own account by proxy.
+      if (target.id === user.id) {
+        return Response.json(
+          { error: 'Refusing to delete the calling account. Use the in-app delete flow instead.' },
+          { status: 400 },
+        );
+      }
+    }
+
+    // Admin accounts are never deleted by this function.
+    if (target.role === 'admin') {
+      console.warn(`deleteAccount: refused — target ${target.id} is an admin`);
+      return Response.json({ error: 'Refusing to delete an admin account' }, { status: 400 });
+    }
+
+    const userId = target.id;
+    const userEmail = normaliseEmail(target.email);
+
+    // ── Dry run unless this call confirms the exact target address.
+    if (!confirmEmail || confirmEmail !== userEmail) {
+      const [byId, byEmail, byUserId] = await Promise.all([
+        Promise.all(BY_CREATOR.map((n) => countRows(admin.entities[n], { created_by_id: userId }).catch(() => null))),
+        Promise.all(BY_CREATOR.map((n) => (userEmail ? countRows(admin.entities[n], { created_by: target.email }).catch(() => null) : null))),
+        Promise.all(BY_USER_ID.map((n) => countRows(admin.entities[n], { user_id: userId }).catch(() => null))),
+      ]);
+
+      const counts = {};
+      BY_CREATOR.forEach((name, i) => {
+        counts[name] = { by_id: byId[i], by_email: byEmail[i] };
+      });
+      BY_USER_ID.forEach((name, i) => {
+        counts[name] = { by_user_id: byUserId[i] };
+      });
+
+      const [profile, invitesAsClinician, invitesAsClient, reportsAsClinician, reportsAsClient] = await Promise.all([
+        countRows(admin.entities.ClinicianProfile, { user_id: userId }).catch(() => null),
+        countRows(admin.entities.ClientInvite, { clinician_user_id: userId }).catch(() => null),
+        userEmail ? countRows(admin.entities.ClientInvite, { client_email: target.email }).catch(() => null) : null,
+        countRows(admin.entities.ClinicianReport, { clinician_user_id: userId }).catch(() => null),
+        countRows(admin.entities.ClinicianReport, { client_user_id: userId }).catch(() => null),
+      ]);
+      counts.ClinicianProfile = { by_user_id: profile };
+      counts.ClientInvite = { as_clinician: invitesAsClinician, as_client: invitesAsClient };
+      counts.ClinicianReport = { as_clinician: reportsAsClinician, as_client: reportsAsClient };
+
+      const rowsMatched = Object.values(counts).reduce(
+        (sum, entry) => sum + Object.values(entry).reduce((s, v) => s + (typeof v === 'number' ? v : 0), 0),
+        0,
+      );
+
+      console.log(`deleteAccount: dry run for ${userId} — ${rowsMatched} rows matched`);
+      return Response.json({
+        dry_run: true,
+        target: { id: userId, email: userEmail, role: target.role, deleted_at: target.deleted_at || null },
+        requested_by: user.id,
+        requested_by_admin: requestedByAdmin,
+        counts,
+        totals: { rows_matched: rowsMatched },
+        instructions: confirmEmail
+          ? 'confirm_email did not match the target address — nothing was deleted.'
+          : `Re-send with confirm_email set to ${userEmail} to execute.`,
+      });
+    }
 
     // ── Mark deleted_at FIRST so webhook events arriving mid-deletion are
-    // ignored by RevenueCatWebhook / stripeWebhook. Quick update; failures
-    // are logged but do not block (webhooks also tolerate a missing user).
+    // ignored by RevenueCatWebhook / stripeWebhook.
     try {
       await admin.entities.User.update(userId, { deleted_at: new Date().toISOString() });
     } catch (e) {
       console.error(`deleteAccount: failed to set deleted_at for ${userId}:`, e.message);
     }
 
-    // ── RevenueCat: delete the subscriber record (app_user_id = User.id) via
-    // the v1 REST API. Uses REVENUECAT_API_KEY (the secret REST key), NOT the
-    // webhook secret. Failures are logged and do not block deletion.
+    // ── RevenueCat: delete the subscriber record (app_user_id = User.id).
     const rcKey = Deno.env.get('REVENUECAT_API_KEY');
     if (rcKey) {
       try {
@@ -45,21 +142,33 @@ Deno.serve(async (req) => {
       console.warn('deleteAccount: REVENUECAT_API_KEY not set — skipping RevenueCat subscriber deletion');
     }
 
-    // Track completed operations so we can log incomplete ones on timeout
     const completed = new Set();
 
-    // Build all cleanup tasks as named operations
+    // Two passes per creator-scoped entity: by id, then by the created_by email,
+    // because created_by_id cannot be rewritten on legacy rows and some of them
+    // still carry their creator only in the email field.
+    const creatorTasks = BY_CREATOR.flatMap((name) => [
+      {
+        name: `delete_${name}_by_id`,
+        fn: () => admin.entities[name].deleteMany({ created_by_id: userId }),
+      },
+      ...(userEmail
+        ? [{
+            name: `delete_${name}_by_email`,
+            fn: () => admin.entities[name].deleteMany({ created_by: target.email }),
+          }]
+        : []),
+    ]);
+
     const tasks = [
       { name: 'stripe_cancel', fn: async () => {
         try {
-          // Prefer the stored stripe_customer_id; fall back to email lookup.
-          let customerId = user.stripe_customer_id || null;
+          let customerId = target.stripe_customer_id || null;
           if (!customerId) {
             const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
             customerId = customers.data[0]?.id || null;
           }
           if (!customerId) return { cancelled: false, customerId: null };
-          // Cancel active, trialing, and past_due subscriptions.
           const subs = await stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 100 });
           const toCancel = subs.data.filter(s => ['active', 'trialing', 'past_due'].includes(s.status));
           for (const sub of toCancel) {
@@ -67,7 +176,6 @@ Deno.serve(async (req) => {
           }
           return { cancelled: toCancel.length > 0, customerId };
         } catch (e) {
-          // resource_missing = nothing to cancel (customer/sub already gone).
           if (e?.code === 'resource_missing') {
             console.log('deleteAccount: stripe_cancel resource_missing — nothing to cancel');
             return { cancelled: false, customerId: null };
@@ -75,26 +183,14 @@ Deno.serve(async (req) => {
           throw e;
         }
       }},
-      ...[
-        'Task', 'Goal', 'BrainDump', 'FocusSession', 'FocusJourney',
-        'Habit', 'HabitCompletion', 'WinsJournal', 'CalendarEvent',
-        'RoutineTemplate', 'FocusSessionTemplate', 'CollaborativeFocusSession',
-        'TeamMessage', 'TeamNotification', 'TaskComment', 'TaskActivity',
-        'Notification', 'NotificationPreferences', 'LearningPath', 'Skill',
-      ].map((name) => ({
-        name: `delete_${name}`,
-        fn: () => admin.entities[name].deleteMany({ created_by_id: userId }),
-      })),
-      ...[
-        'UserProgress', 'ActiveSession', 'CompanionLearning',
-        'CompanionFeedback', 'Leaderboard',
-      ].map((name) => ({
+      ...creatorTasks,
+      ...BY_USER_ID.map((name) => ({
         name: `delete_${name}_by_user_id`,
         fn: () => admin.entities[name].deleteMany({ user_id: userId }),
       })),
       { name: 'delete_ClinicianProfile', fn: () => admin.entities.ClinicianProfile.deleteMany({ user_id: userId }) },
       { name: 'remove_client_links', fn: async () => {
-        const allProfiles = await admin.entities.ClinicianProfile.list(null, 500);
+        const allProfiles = await asRows(await admin.entities.ClinicianProfile.list(null, 500));
         for (const profile of allProfiles) {
           const clients = profile.clients || [];
           const filtered = clients.filter((c) => c.client_user_id !== userId);
@@ -104,18 +200,17 @@ Deno.serve(async (req) => {
         }
       }},
       { name: 'delete_ClientInvite_clinician', fn: () => admin.entities.ClientInvite.deleteMany({ clinician_user_id: userId }) },
-      { name: 'delete_ClientInvite_client', fn: () => admin.entities.ClientInvite.deleteMany({ client_email: userEmail }) },
+      ...(userEmail
+        ? [{ name: 'delete_ClientInvite_client', fn: () => admin.entities.ClientInvite.deleteMany({ client_email: target.email }) }]
+        : []),
       { name: 'delete_ClinicianReport_clinician', fn: () => admin.entities.ClinicianReport.deleteMany({ clinician_user_id: userId }) },
       { name: 'delete_ClinicianReport_client', fn: () => admin.entities.ClinicianReport.deleteMany({ client_user_id: userId }) },
-      // NOTE: anonymise_user moved AFTER all deletions succeed — see below.
     ];
 
-    // Run all tasks in parallel; each marks itself complete
     const runAll = (async () => {
       const stripeTask = tasks[0];
       const rest = tasks.slice(1);
 
-      // Stripe result tracked separately
       let stripeResult = { cancelled: false, customerId: null };
       const stripeP = stripeTask.fn()
         .then((result) => { stripeResult = result; completed.add(stripeTask.name); })
@@ -131,16 +226,13 @@ Deno.serve(async (req) => {
       return stripeResult;
     })();
 
-    // 30-second timeout — on timeout, report failure so the frontend can prompt retry.
-    // The user is NOT anonymised on timeout, so a retry can re-auth and resume.
+    // 30-second timeout — on timeout, report failure so the caller can retry.
     const timeout = new Promise((resolve) => setTimeout(() => resolve('__TIMEOUT__'), 30000));
     const result = await Promise.race([runAll, timeout]);
 
     if (result === '__TIMEOUT__') {
       const incomplete = tasks.map((t) => t.name).filter((n) => !completed.has(n));
       console.error(`deleteAccount: timed out after 30s for user ${userId}. Incomplete operations: ${incomplete.join(', ')}`);
-      // Clear deleted_at so an incomplete deletion doesn't leave the user
-      // permanently ignored by webhooks — they can re-auth and retry.
       try {
         await admin.entities.User.update(userId, { deleted_at: null });
       } catch (e) {
@@ -152,8 +244,7 @@ Deno.serve(async (req) => {
     const stripeResult = result;
 
     // If the Stripe cancellation step did not complete, do NOT delete the User
-    // record. Clear deleted_at (non-blocking) so webhooks resume, then return
-    // a partial failure the user can retry.
+    // record — the caller can retry.
     if (!completed.has('stripe_cancel')) {
       console.error(`deleteAccount: stripe_cancel did not complete for ${userId} — aborting before User.delete`);
       try {
@@ -161,10 +252,9 @@ Deno.serve(async (req) => {
       } catch (e) {
         console.error(`deleteAccount: failed to clear deleted_at on stripe_cancel abort for ${userId}:`, e.message);
       }
-      return Response.json({ success: false, partial: true, message: "We couldn't cancel your web subscription. Please retry or contact support." }, { status: 500 });
+      return Response.json({ success: false, partial: true, message: "We couldn't cancel the web subscription. Please retry or contact support." }, { status: 500 });
     }
 
-    // stripe_cancel completed — clear stripe_customer_id (logged, non-blocking).
     try {
       await admin.entities.User.update(userId, { stripe_customer_id: null });
       console.log(`deleteAccount: cleared stripe_customer_id for ${userId}`);
@@ -172,10 +262,6 @@ Deno.serve(async (req) => {
       console.error(`deleteAccount: failed to clear stripe_customer_id for ${userId}:`, e.message);
     }
 
-    // ── Delete the User record itself. Service role can delete any user
-    // (per Base44 docs). Email cannot be overwritten (account-owned), so
-    // hard-delete is the stronger action. If this fails, report failure so the
-    // user can retry — do NOT report success.
     try {
       await admin.entities.User.delete(userId);
       console.log(`deleteAccount: User record ${userId} deleted`);
@@ -184,8 +270,14 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, partial: true, message: 'Your data was deleted, but we could not fully remove your account record. Please retry or contact support.' }, { status: 500 });
     }
 
-    console.log(`deleteAccount: completed for user ${userId}, stripeCancelled=${stripeResult.cancelled}`);
-    return Response.json({ success: true, stripeCancelled: stripeResult.cancelled });
+    console.log(`deleteAccount: completed for user ${userId}, stripeCancelled=${stripeResult.cancelled}, operations=${completed.size}/${tasks.length}`);
+    return Response.json({
+      success: true,
+      stripeCancelled: stripeResult.cancelled,
+      deleted_user_id: userId,
+      operations_completed: completed.size,
+      operations_total: tasks.length,
+    });
   } catch (error) {
     console.error('deleteAccount error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });

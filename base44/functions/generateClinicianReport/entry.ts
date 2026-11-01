@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { asRows } from '../../shared/entityResults.ts';
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
@@ -36,7 +37,7 @@ Deno.serve(async (req) => {
     }
 
     // Validate that client_user_id belongs to this clinician's client list
-    const clinicianProfiles = await base44.entities.ClinicianProfile.filter({ user_id: user.id });
+    const clinicianProfiles = asRows(await base44.entities.ClinicianProfile.filter({ user_id: user.id }));
     if (clinicianProfiles.length === 0) {
       return Response.json({ error: "Clinician profile not found" }, { status: 403 });
     }
@@ -59,9 +60,9 @@ Deno.serve(async (req) => {
     const report_period_end = now.toLocaleDateString('en-CA');
 
     // Fetch all tasks for the client in the period
-    const allTasks = await base44.asServiceRole.entities.Task.filter({
+    const allTasks = asRows(await base44.asServiceRole.entities.Task.filter({
       created_by_id: client_user_id,
-    });
+    }));
 
     const tasksInPeriod = allTasks.filter((t) => {
       const created = new Date(t.created_date);
@@ -78,9 +79,9 @@ Deno.serve(async (req) => {
     // Fetch UserProgress for current_streak
     let current_streak = 0;
     try {
-      const progressList = await base44.asServiceRole.entities.UserProgress.filter({
+      const progressList = asRows(await base44.asServiceRole.entities.UserProgress.filter({
         user_id: client_user_id,
-      });
+      }));
       if (progressList.length > 0) {
         current_streak = progressList[0].current_streak || 0;
       }
@@ -150,7 +151,7 @@ Use the client's name throughout the paragraph instead of "[participant name]" o
     // Fetch client display name
     let client_display_name = "";
     try {
-      const clientUsers = await base44.asServiceRole.entities.User.filter({ id: client_user_id });
+      const clientUsers = asRows(await base44.asServiceRole.entities.User.filter({ id: client_user_id }));
       if (clientUsers.length > 0) client_display_name = clientUsers[0].full_name || "";
     } catch {
       // Non-fatal

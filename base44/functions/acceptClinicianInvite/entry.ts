@@ -1,4 +1,5 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { asRows } from '../../shared/entityResults.ts';
 
 // Accepts an invite code on behalf of the signed-in user. The service role is
 // used only AFTER the caller, the code, its expiry and the invitee email have
@@ -18,9 +19,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'An invite code is required' }, { status: 400 });
     }
 
-    const invites = await base44.asServiceRole.entities.ClientInvite.filter({ invite_code: code });
+    const invites = asRows(await base44.asServiceRole.entities.ClientInvite.filter({ invite_code: code }));
     const now = Date.now();
-    const invite = (invites || []).find(
+    const invite = invites.find(
       (inv) =>
         (inv.status === 'pending' || inv.status === 'declined') &&
         (!inv.expires_at || new Date(inv.expires_at).getTime() > now)
@@ -44,10 +45,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'This invite was issued to a different email address' }, { status: 403 });
     }
 
-    const profiles = await base44.asServiceRole.entities.ClinicianProfile.filter({
+    const profiles = asRows(await base44.asServiceRole.entities.ClinicianProfile.filter({
       user_id: invite.clinician_user_id,
-    });
-    const profile = profiles?.[0];
+    }));
+    const profile = profiles[0];
     if (!profile) {
       return Response.json({ error: 'This clinician no longer has a profile' }, { status: 404 });
     }

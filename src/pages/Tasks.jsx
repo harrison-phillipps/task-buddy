@@ -465,7 +465,14 @@ export default function Tasks() {
         base44.entities.Task.filter({ created_by_id: currentUser.id }),
         base44.entities.Task.filter({ owner_user_id: currentUser.id }),
       ]);
-      const activeTasks = [...activeOwned, ...activeOwnerField];
+      // owner_user_id is backfilled on own tasks, so the same row can arrive from
+      // both queries — dedupe or the limit counts every task twice.
+      const seenIds = new Set();
+      const activeTasks = [...activeOwned, ...activeOwnerField].filter(t => {
+        if (seenIds.has(t.id)) return false;
+        seenIds.add(t.id);
+        return true;
+      });
       const activeCount = activeTasks.filter(t => t.status !== 'completed').length;
       if (activeCount + templateTaskCount > limit) {
         setShowTaskLimitModal(true);

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { asRows } from '../../shared/entityResults.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -18,7 +19,7 @@ Deno.serve(async (req) => {
     }
 
     // Validate caller has a ClinicianProfile that includes this client
-    const profiles = await base44.asServiceRole.entities.ClinicianProfile.filter({ user_id: user.id });
+    const profiles = asRows(await base44.asServiceRole.entities.ClinicianProfile.filter({ user_id: user.id }));
 
     console.log('[addClinicianItem] profiles found:', profiles.length);
     console.log('[addClinicianItem] profile user_id:', profiles[0]?.user_id);

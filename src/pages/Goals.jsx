@@ -69,11 +69,20 @@ export default function GoalsPage() {
     enabled: !!currentUser,
   });
 
+  // Goals this user may change: their own, plus clinician-added goals addressed
+  // to them (those are written by the service role, so they carry no created_by).
+  const assertCanModifyGoal = async (goalId) => {
+    if (!currentUser?.id) throw new Error("Not signed in");
+    const [mine, fromClinician] = await Promise.all([
+      base44.entities.Goal.filter({ id: goalId, created_by: currentUser.email }),
+      base44.entities.Goal.filter({ id: goalId, client_user_id: currentUser.id, added_by_clinician: true }),
+    ]);
+    if (!mine.length && !fromClinician.length) throw new Error("Goal not found");
+  };
+
   const deleteGoalMutation = useMutation({
     mutationFn: async (goalId) => {
-      if (!currentUser?.email) throw new Error("Not signed in");
-      const owned = await base44.entities.Goal.filter({ id: goalId, created_by: currentUser.email });
-      if (!owned.length) throw new Error("Goal not found");
+      await assertCanModifyGoal(goalId);
       return base44.entities.Goal.delete(goalId);
     },
     onMutate: async (goalId) => {
@@ -94,9 +103,7 @@ export default function GoalsPage() {
 
   const updateGoalMutation = useMutation({
     mutationFn: async ({ id, data }) => {
-      if (!currentUser?.email) throw new Error("Not signed in");
-      const owned = await base44.entities.Goal.filter({ id, created_by: currentUser.email });
-      if (!owned.length) throw new Error("Goal not found");
+      await assertCanModifyGoal(id);
       return base44.entities.Goal.update(id, data);
     },
     onMutate: async ({ id, data }) => {
