@@ -43,7 +43,8 @@ export default function WinsJournal() {
   }, []);
 
   const loadTodayEntry = async () => {
-    const results = await base44.entities.WinsJournal.filter({ entry_date: TODAY });
+    const me = await base44.auth.me();
+    const results = await base44.entities.WinsJournal.filter({ created_by: me.email, entry_date: TODAY });
     if (results.length > 0) {
       const e = results[0];
       setEntry(e);
@@ -100,7 +101,8 @@ export default function WinsJournal() {
   const loadPastEntries = async () => {
     if (loadingPast) return;
     setLoadingPast(true);
-    const all = await base44.entities.WinsJournal.list("-entry_date", 14);
+    const me = await base44.auth.me();
+    const all = await base44.entities.WinsJournal.filter({ created_by: me.email }, "-entry_date", 14);
     setPastEntries(all.filter(e => e.entry_date !== TODAY));
     setLoadingPast(false);
   };

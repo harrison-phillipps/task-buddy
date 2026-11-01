@@ -38,12 +38,18 @@ export default function Habits() {
 
   const { data: habits = [] } = useQuery({
     queryKey: ["habits"],
-    queryFn: () => base44.entities.Habit.list("-order"),
+    queryFn: async () => {
+      const me = await base44.auth.me();
+      return base44.entities.Habit.filter({ created_by: me.email }, "-order");
+    },
   });
 
   const { data: completions = [] } = useQuery({
     queryKey: ["habit-completions"],
-    queryFn: () => base44.entities.HabitCompletion.filter({ completion_date: TODAY }),
+    queryFn: async () => {
+      const me = await base44.auth.me();
+      return base44.entities.HabitCompletion.filter({ created_by: me.email, completion_date: TODAY });
+    },
   });
 
   const refresh = useCallback(() => {

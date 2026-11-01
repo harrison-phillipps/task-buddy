@@ -181,7 +181,10 @@ export default function RoutineTemplatesModal({ open, onOpenChange, tasks = [], 
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ["routineTemplates"],
-    queryFn: () => base44.entities.RoutineTemplate.list("-created_date"),
+    queryFn: async () => {
+      const me = await base44.auth.me();
+      return base44.entities.RoutineTemplate.filter({ created_by: me.email }, "-created_date");
+    },
     enabled: open,
   });
 

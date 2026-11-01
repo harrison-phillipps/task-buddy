@@ -25,6 +25,7 @@ Deno.serve(async (req) => {
 
     // Fetch focus sessions for completion time patterns
     const focusSessions = await base44.entities.FocusSession.filter({
+      created_by: user.email,
       completed: true
     }, '-created_date', 30);
 

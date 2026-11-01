@@ -33,17 +33,26 @@ export default function Analytics() {
   
   const { data: tasks = [], isLoading: tasksLoading } = useQuery({
     queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list('-created_date'),
+    queryFn: async () => {
+      const me = await base44.auth.me();
+      return base44.entities.Task.filter({ created_by: me.email }, '-created_date');
+    },
   });
 
   const { data: focusSessions = [], isLoading: sessionsLoading } = useQuery({
     queryKey: ['focusSessions'],
-    queryFn: () => base44.entities.FocusSession.list('-created_date'),
+    queryFn: async () => {
+      const me = await base44.auth.me();
+      return base44.entities.FocusSession.filter({ created_by: me.email }, '-created_date');
+    },
   });
 
   const { data: userProgressList = [] } = useQuery({
     queryKey: ['progress'],
-    queryFn: () => base44.entities.UserProgress.list(),
+    queryFn: async () => {
+      const me = await base44.auth.me();
+      return base44.entities.UserProgress.filter({ user_id: me.id });
+    },
   });
 
   const userProgress = userProgressList[0];

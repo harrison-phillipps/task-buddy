@@ -24,7 +24,8 @@ export default function AchievementsPage() {
     queryKey: ['winStreak'],
     queryFn: async () => {
       // Fetch last 90 days of wins journal entries sorted descending
-      const entries = await base44.entities.WinsJournal.list("-entry_date", 90);
+      const me = await base44.auth.me();
+      const entries = await base44.entities.WinsJournal.filter({ created_by: me.email }, "-entry_date", 90);
       // Only count entries that have at least one win
       const winDates = new Set(
         entries

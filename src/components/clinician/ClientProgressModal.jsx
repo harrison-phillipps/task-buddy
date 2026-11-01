@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, TrendingUp, Minus } from "lucide-react";
-import { format, subDays, isAfter, isBefore } from "date-fns";
 
 function StatCard({ label, value }) {
   return (
@@ -15,15 +13,8 @@ function StatCard({ label, value }) {
   );
 }
 
-function StatusBadge({ status }) {
-  if (status === "completed") return <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs shrink-0">Completed</Badge>;
-  if (status === "in_progress") return <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-xs shrink-0">In progress</Badge>;
-  return <Badge className="bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 text-xs shrink-0">Not started</Badge>;
-}
-
 export default function ClientProgressModal({ client, open, onClose, onGenerateReport }) {
-  const [tasks, setTasks] = useState([]);
-  const [progress, setProgress] = useState(null);
+  const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const hasData = !!client?.client_user_id;
@@ -31,57 +22,31 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
   useEffect(() => {
     if (!open || !client || !hasData) return;
     setLoading(true);
-    // The server confirms this client is on the clinician's list, then reads the
-    // client's tasks and progress with the service role — the browser never
-    // reads another user's records directly.
-    base44.functions.invoke("getClientProgress", { client_user_id: client.client_user_id })
-      .then((res) => {
-        if (res.data?.error) {
-          setTasks([]);
-          setProgress(null);
-          return;
-        }
-        setTasks(res.data?.tasks || []);
-        setProgress(res.data?.progress || null);
-      })
-      .catch(() => {
-        setTasks([]);
-        setProgress(null);
-      })
+    // The server confirms this client is on the clinician's list, then returns
+    // aggregates only — no task titles, notes or ids leave the client's account.
+    base44.functions.invoke("getClientProgress", {
+      client_user_id: client.client_user_id,
+      tz_offset_minutes: -new Date().getTimezoneOffset(),
+    })
+      .then((res) => setSummary(res.data?.error ? null : res.data || null))
+      .catch(() => setSummary(null))
       .finally(() => setLoading(false));
   }, [open, client]);
 
   if (!client) return null;
 
-  const now = new Date();
-  const thirtyDaysAgo = subDays(now, 30);
-  const sixtyDaysAgo = subDays(now, 60);
-
-  const thisMonthTasks = tasks.filter(t => isAfter(new Date(t.created_date), thirtyDaysAgo));
-  const lastMonthTasks = tasks.filter(t => {
-    const d = new Date(t.created_date);
-    return isAfter(d, sixtyDaysAgo) && isBefore(d, thirtyDaysAgo);
-  });
-
-  const thisMonthInitiated = thisMonthTasks.length;
-  const thisMonthCompleted = thisMonthTasks.filter(t => t.status === "completed").length;
-  const completionRate = thisMonthInitiated > 0 ? Math.round((thisMonthCompleted / thisMonthInitiated) * 100) : 0;
-  const currentStreak = progress?.current_streak ?? 0;
-  const lastMonthInitiated = lastMonthTasks.length;
-
-  const buckets = { morning: 0, afternoon: 0, evening: 0 };
-  tasks.filter(t => t.status === "completed" && t.updated_date).forEach(t => {
-    const h = new Date(t.updated_date).getHours();
-    if (h >= 6 && h < 12) buckets.morning++;
-    else if (h >= 12 && h < 17) buckets.afternoon++;
-    else if (h >= 17 && h < 21) buckets.evening++;
-  });
+  const thisMonthInitiated = summary?.tasks_initiated_this_month ?? 0;
+  const thisMonthCompleted = summary?.tasks_completed_this_month ?? 0;
+  const completionRate = summary?.completion_rate ?? 0;
+  const currentStreak = summary?.current_streak ?? 0;
+  const lastMonthInitiated = summary?.tasks_initiated_last_month ?? 0;
+  const buckets = summary?.best_time_of_day || { morning: 0, afternoon: 0, evening: 0 };
   const maxBucket = Math.max(...Object.values(buckets), 1);
+  const hasTasks = (summary?.tasks_in_window ?? 0) > 0;
 
   const name = client.client_display_name || "Client";
   const trendUp = thisMonthInitiated > lastMonthInitiated;
   const trendEqual = thisMonthInitiated === lastMonthInitiated;
-  const recentTasks = tasks.slice(0, 10);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -100,7 +65,7 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
           </div>
-        ) : tasks.length === 0 ? (
+        ) : !hasTasks ? (
           <p className="text-center text-gray-400 dark:text-gray-500 py-12 text-sm">No task data yet for this client.</p>
         ) : (
           <div className="space-y-5 pt-1 w-full overflow-x-hidden">
@@ -127,6 +92,7 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
 
             <div className="w-full">
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Best time of day</p>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-2">Approximate — based on when completed tasks were last updated.</p>
               <div className="space-y-2">
                 {[["Morning", buckets.morning], ["Afternoon", buckets.afternoon], ["Evening", buckets.evening]].map(([label, count]) => (
                   <div key={label} className="flex items-center gap-2">
@@ -138,19 +104,6 @@ export default function ClientProgressModal({ client, open, onClose, onGenerateR
                       />
                     </div>
                     <span className="w-4 text-right text-xs text-gray-400 shrink-0">{count}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="w-full">
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Recent Tasks</p>
-              <div className="space-y-1.5">
-                {recentTasks.map(task => (
-                  <div key={task.id} className="flex items-center gap-2 py-1.5 border-b border-gray-100 dark:border-gray-800 last:border-0 w-full min-w-0">
-                    <span className="text-sm text-gray-700 dark:text-gray-300 truncate flex-1 min-w-0">{task.title}</span>
-                    <span className="text-xs text-gray-400 shrink-0 ml-1">{format(new Date(task.created_date), "d MMM")}</span>
-                    <StatusBadge status={task.status} />
                   </div>
                 ))}
               </div>

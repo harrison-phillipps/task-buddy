@@ -90,9 +90,10 @@ export default function IOSCalendarExport() {
   const handleExport = async () => {
     setLoading(true);
     try {
+      const me = await base44.auth.me();
       const [tasks, sessions] = await Promise.all([
-        base44.entities.Task.filter({ status: ["not_started", "in_progress"] }),
-        base44.entities.FocusSession.list("-created_date", 50),
+        base44.entities.Task.filter({ created_by: me.email, status: ["not_started", "in_progress"] }),
+        base44.entities.FocusSession.filter({ created_by: me.email }, "-created_date", 50),
       ]);
 
       const ics = buildICS(tasks, sessions);

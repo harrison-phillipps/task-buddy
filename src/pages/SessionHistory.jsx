@@ -23,7 +23,10 @@ export default function SessionHistory() {
   const queryClient = useQueryClient();
   const { data: sessions = [], isLoading } = useQuery({
     queryKey: ['sessions'],
-    queryFn: () => base44.entities.FocusSession.list('-created_date'),
+    queryFn: async () => {
+      const me = await base44.auth.me();
+      return base44.entities.FocusSession.filter({ created_by: me.email }, '-created_date');
+    },
   });
 
   // Calculate insights

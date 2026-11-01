@@ -13,7 +13,10 @@ export default function BrainDumpHistory() {
 
   const { data: brainDumps = [], isLoading } = useQuery({
     queryKey: ['brainDumps'],
-    queryFn: () => base44.entities.BrainDump.list('-created_date'),
+    queryFn: async () => {
+      const me = await base44.auth.me();
+      return base44.entities.BrainDump.filter({ created_by: me.email }, '-created_date');
+    },
   });
 
   const deleteBrainDumpMutation = useMutation({

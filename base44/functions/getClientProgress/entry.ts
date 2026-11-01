@@ -1,9 +1,14 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-// Returns a progress summary for one client, but only if the caller's own
-// ClinicianProfile lists that client. Task and UserProgress are read with the
+// Returns an aggregate progress summary for one client, but only if the caller's
+// own ClinicianProfile lists that client. Task and UserProgress are read with the
 // service role so the clinician sees the client's rows without either entity
-// being opened up.
+// being opened up. Nothing identifying the client's work leaves this function:
+// no titles, no notes, no ids — only counts, rates and time-of-day buckets.
+const DAY_MS = 24 * 60 * 60 * 1000;
+const PAGE = 200;
+const MAX_PAGES = 25;
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -26,26 +31,64 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'This client is not linked to you' }, { status: 403 });
     }
 
-    const tasksRaw = await base44.asServiceRole.entities.Task.filter(
-      { created_by_id: clientUserId },
-      '-created_date',
-      20
-    );
-    const tasks = Array.isArray(tasksRaw) ? tasksRaw : tasksRaw?.items || [];
+    const now = new Date();
+    const since = new Date(now.getTime() - 60 * DAY_MS).toISOString();
+
+    // Every task the client created in the last 60 days, paginated — not a
+    // "latest N" slice, which would skew the month-on-month comparison.
+    const tasks = [];
+    let cursor = null;
+    let pages = 0;
+    do {
+      const page = await base44.asServiceRole.entities.Task.filter(
+        { created_by_id: clientUserId, created_date: { $gte: since } },
+        { sort: '-created_date', limit: PAGE, ...(cursor ? { cursor } : {}) }
+      );
+      const items = Array.isArray(page) ? page : page?.items || [];
+      tasks.push(...items);
+      cursor = !Array.isArray(page) && page?.has_more && page?.next_cursor ? page.next_cursor : null;
+      pages++;
+    } while (cursor && pages < MAX_PAGES);
 
     const progressRaw = await base44.asServiceRole.entities.UserProgress.filter({ user_id: clientUserId });
     const progressList = Array.isArray(progressRaw) ? progressRaw : progressRaw?.items || [];
     const progress = progressList[0] || null;
 
+    // Bucket by the client's own clock; the browser passes minutes east of UTC.
+    const offsetMinutes = Number.isFinite(Number(body?.tz_offset_minutes)) ? Number(body.tz_offset_minutes) : 0;
+    const localHour = (iso) => {
+      const ms = new Date(iso).getTime();
+      if (!Number.isFinite(ms)) return null;
+      return new Date(ms + offsetMinutes * 60000).getUTCHours();
+    };
+
+    const createdMs = (t) => new Date(t.created_date).getTime();
+    const cutoff30 = now.getTime() - 30 * DAY_MS;
+    const thisMonth = tasks.filter((t) => createdMs(t) >= cutoff30);
+    const lastMonth = tasks.filter((t) => createdMs(t) < cutoff30);
+    const completedThisMonth = thisMonth.filter((t) => t.status === 'completed').length;
+
+    // Approximate: "completed" has no completion timestamp on Task, so this uses
+    // when the task last changed, which is normally when it was ticked off.
+    const bestTimeOfDay = { morning: 0, afternoon: 0, evening: 0 };
+    tasks.forEach((t) => {
+      if (t.status !== 'completed' || !t.updated_date) return;
+      const h = localHour(t.updated_date);
+      if (h === null) return;
+      if (h >= 6 && h < 12) bestTimeOfDay.morning++;
+      else if (h >= 12 && h < 17) bestTimeOfDay.afternoon++;
+      else if (h >= 17 && h < 21) bestTimeOfDay.evening++;
+    });
+
     return Response.json({
-      tasks: tasks.map((t) => ({
-        id: t.id,
-        title: t.title,
-        status: t.status,
-        created_date: t.created_date,
-        updated_date: t.updated_date,
-      })),
-      progress: progress ? { current_streak: progress.current_streak ?? 0 } : null,
+      period_days: 60,
+      tasks_in_window: tasks.length,
+      tasks_initiated_this_month: thisMonth.length,
+      tasks_initiated_last_month: lastMonth.length,
+      tasks_completed_this_month: completedThisMonth,
+      completion_rate: thisMonth.length > 0 ? Math.round((completedThisMonth / thisMonth.length) * 100) : 0,
+      current_streak: progress?.current_streak ?? 0,
+      best_time_of_day: bestTimeOfDay,
     });
   } catch (error) {
     console.error('[getClientProgress] error:', error.message);
