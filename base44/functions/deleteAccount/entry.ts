@@ -17,6 +17,14 @@ const BY_CREATOR = [
 const BY_USER_ID = [
   'UserProgress', 'ActiveSession', 'CompanionLearning',
   'CompanionFeedback', 'Leaderboard',
+  // Rows whose created_by_id is the service role or a legacy auth id, so the
+  // writable owner field is the only pointer back to the user.
+  'BrainDump', 'FocusSession', 'Goal',
+];
+
+// Entities that carry the owner in a writable field with a different name.
+const BY_OWNER_FIELD = [
+  { name: 'Task', field: 'owner_user_id' },
 ];
 
 const normaliseEmail = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
@@ -94,6 +102,29 @@ Deno.serve(async (req) => {
       counts.ClientInvite = { as_clinician: invitesAsClinician, as_client: invitesAsClient };
       counts.ClinicianReport = { as_clinician: reportsAsClinician, as_client: reportsAsClient };
 
+      // Rows a deletion reaches ONLY through the writable owner field: their
+      // created_by_id / created_by point somewhere else (service role, legacy
+      // auth), so the creator passes above would miss them entirely.
+      const ownerScoped = [
+        ...BY_USER_ID.map((name) => ({ name, field: 'user_id' })),
+        ...BY_OWNER_FIELD,
+      ];
+      const ownerOnly = await Promise.all(ownerScoped.map(async ({ name, field }) => {
+        const [all, alsoCreator] = await Promise.all([
+          countRows(admin.entities[name], { [field]: userId }).catch(() => null),
+          countRows(admin.entities[name], { [field]: userId, created_by_id: userId }).catch(() => null),
+        ]);
+        if (all === null) return null;
+        return Math.max(0, all - (alsoCreator ?? 0));
+      }));
+
+      const ownerFieldOnly = {};
+      ownerScoped.forEach((entry, i) => {
+        if (ownerOnly[i] !== null) ownerFieldOnly[entry.name] = ownerOnly[i];
+      });
+      const ownerFieldTotal = Object.values(ownerFieldOnly).reduce((a, b) => a + b, 0);
+      console.log(`deleteAccount: dry run owner-field-only rows for ${userId}: ${ownerFieldTotal}`);
+
       const rowsMatched = Object.values(counts).reduce(
         (sum, entry) => sum + Object.values(entry).reduce((s, v) => s + (typeof v === 'number' ? v : 0), 0),
         0,
@@ -106,6 +137,7 @@ Deno.serve(async (req) => {
         requested_by: user.id,
         requested_by_admin: requestedByAdmin,
         counts,
+        owner_field_only: { by_entity: ownerFieldOnly, total: ownerFieldTotal },
         totals: { rows_matched: rowsMatched },
         instructions: confirmEmail
           ? 'confirm_email did not match the target address — nothing was deleted.'
@@ -187,6 +219,10 @@ Deno.serve(async (req) => {
       ...BY_USER_ID.map((name) => ({
         name: `delete_${name}_by_user_id`,
         fn: () => admin.entities[name].deleteMany({ user_id: userId }),
+      })),
+      ...BY_OWNER_FIELD.map(({ name, field }) => ({
+        name: `delete_${name}_by_${field}`,
+        fn: () => admin.entities[name].deleteMany({ [field]: userId }),
       })),
       { name: 'delete_ClinicianProfile', fn: () => admin.entities.ClinicianProfile.deleteMany({ user_id: userId }) },
       { name: 'remove_client_links', fn: async () => {
