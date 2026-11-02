@@ -13,9 +13,10 @@
  * Every mutation rewrites all six together, reads the row back, and restores
  * the pre-write shape if the read-back does not match.
  *
- * Task.team_member_ids is not declared in base44/entities/Task.jsonc, so the
- * task-side sync probes for the field on a real row and reports itself as
- * skipped with a reason instead of writing an undeclared column.
+ * Task.team_member_ids is a declared field now, stamped by every task writer and
+ * by createTeamTask. The task-side sync still probes a real row first: rows that
+ * predate the field carry no key at all, and those are left to the backfill
+ * rather than being mass-written by a membership change.
  */
 
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'; // Crockford base32 (no I, L, O, U)
@@ -277,7 +278,7 @@ export async function probeTaskMemberField(admin, teamId) {
   return Boolean(row) && Object.prototype.hasOwnProperty.call(row, 'team_member_ids');
 }
 
-const TASK_MEMBER_SKIP = 'Task.team_member_ids is not declared in base44/entities/Task.jsonc — nothing to sync';
+const TASK_MEMBER_SKIP = 'no Task row for this team carries team_member_ids yet — nothing to sync';
 
 /**
  * Keep the denormalised team_member_ids snapshot on a team's tasks in step with
@@ -417,7 +418,20 @@ export async function runJoinTeamByCode(ctx, actor, body) {
     });
   }
 
-  return { status: 200, json: { ok: true, joined: true, team: sanitizeTeam(saved.team, 'member') } };
+  // The joiner must appear on the team's existing tasks, or the task read rule
+  // will not show them the work they just got access to.
+  const taskSync = await syncTaskTeamMembers(ctx.admin, team.id, saved.payload.member_user_ids);
+
+  return {
+    status: 200,
+    json: {
+      ok: true,
+      joined: true,
+      member_count: saved.payload.member_user_ids.length,
+      task_sync: taskSync,
+      team: sanitizeTeam(saved.team, 'member'),
+    },
+  };
 }
 
 export async function runLeaveTeam(ctx, actor, body) {
@@ -495,6 +509,8 @@ export async function runInviteMember(ctx, actor, body) {
     ]);
     if (!saved.ok) return fail(500, 'Could not add that member', { stage: saved.stage, rolled_back: saved.rolled_back });
 
+    const taskSync = await syncTaskTeamMembers(ctx.admin, team.id, saved.payload.member_user_ids);
+
     return {
       status: 201,
       json: {
@@ -503,6 +519,7 @@ export async function runInviteMember(ctx, actor, body) {
         user_id: registered.id,
         email,
         member_count: saved.payload.member_user_ids.length,
+        task_sync: taskSync,
         team: sanitizeTeam(saved.team, 'admin'),
       },
     };

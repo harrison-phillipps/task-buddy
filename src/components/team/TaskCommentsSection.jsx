@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Loader2, AtSign } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import moment from "moment";
+import { teamMemberIds } from "@/lib/teamStamp";
 
 export default function TaskCommentsSection({ task, currentUser, team, teamMembers = [], onCommentAdded }) {
   const queryClient = useQueryClient();
@@ -86,8 +87,10 @@ export default function TaskCommentsSection({ task, currentUser, team, teamMembe
       
       // Notify team of new comment
       if (task?.team_id && team) {
+        const teamIds = teamMemberIds(team);
         await base44.entities.TeamNotification.create({
           team_id: task.team_id,
+          member_user_ids: teamIds.length ? teamIds : [currentUser.id],
           type: "task_commented",
           title: `New comment on "${task.title}"`,
           message: `${currentUser.full_name || currentUser.email} commented: "${commentData.content.slice(0, 60)}${commentData.content.length > 60 ? '...' : ''}"`  ,

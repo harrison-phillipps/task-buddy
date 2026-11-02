@@ -159,6 +159,18 @@ Deno.serve(async (req) => {
       return Response.json({ skipped: 'instance already exists for next date' });
     }
 
+    // A team task must carry the team's member snapshot, or the task read rule
+    // hides the new instance from everyone but its author.
+    let teamMemberIds: string[] | null = null;
+    if (template.team_id) {
+      const teamRows = await base44.asServiceRole.entities.Team.filter({ id: template.team_id });
+      const teamRow = Array.isArray(teamRows) ? teamRows[0] : teamRows?.items?.[0];
+      const source = Array.isArray(teamRow?.member_user_ids) && teamRow.member_user_ids.length
+        ? teamRow.member_user_ids
+        : (Array.isArray(teamRow?.member_ids) ? teamRow.member_ids : []);
+      teamMemberIds = source.filter((id: unknown) => typeof id === 'string' && id.trim() && !id.includes('@'));
+    }
+
     // Spawn the next instance
     const nextInstance = {
       title: template.title,
@@ -174,6 +186,7 @@ Deno.serve(async (req) => {
       parent_recurring_task_id: template.id,
       is_recurring: false,
       team_id: template.team_id || undefined,
+      team_member_ids: template.team_id ? (teamMemberIds || []) : undefined,
       goal_id: template.goal_id || undefined,
       owner_user_id: template.created_by_id,
     };

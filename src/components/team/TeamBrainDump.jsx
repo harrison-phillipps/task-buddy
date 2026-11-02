@@ -10,6 +10,7 @@ import { Brain, Sparkles, Loader2, Trash2, CheckCircle, User, History, Calendar 
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { teamMemberIds } from "@/lib/teamStamp";
 
 export default function TeamBrainDump({ team, currentUser, members }) {
   const queryClient = useQueryClient();
@@ -120,6 +121,7 @@ Return ONLY valid JSON array, no markdown.`,
       subtasks: idea.subtasks || [],
       status: 'not_started',
       team_id: team.id,
+      team_member_ids: teamMemberIds(team),
       assigned_to: idea.assigned_to,
       assigned_to_name: idea.assigned_to_name
     }));

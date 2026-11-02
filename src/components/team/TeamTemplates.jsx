@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Plus, Trash2, Play, RefreshCw, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { teamMemberIds } from "@/lib/teamStamp";
 
 export default function TeamTemplates({ team, currentUser, onUseTemplate }) {
   const queryClient = useQueryClient();
@@ -36,7 +37,8 @@ export default function TeamTemplates({ team, currentUser, onUseTemplate }) {
   const createTemplateMutation = useMutation({
     mutationFn: (templateData) => base44.entities.TeamTemplate.create({
       ...templateData,
-      team_id: team.id
+      team_id: team.id,
+      member_user_ids: teamMemberIds(team)
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teamTemplates'] });
@@ -70,6 +72,7 @@ export default function TeamTemplates({ team, currentUser, onUseTemplate }) {
       const taskData = {
         ...template.template_data,
         team_id: team.id,
+        team_member_ids: teamMemberIds(team),
         category: template.category,
         status: "not_started"
       };
@@ -84,6 +87,7 @@ export default function TeamTemplates({ team, currentUser, onUseTemplate }) {
       // Send notification
       await base44.entities.TeamNotification.create({
         team_id: team.id,
+        member_user_ids: teamMemberIds(team),
         type: "general",
         title: "Task Created from Template",
         message: `${currentUser.full_name || currentUser.email} created "${newTask.title}" from template "${template.name}"`,

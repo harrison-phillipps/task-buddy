@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Users, Play } from "lucide-react";
 import { toast } from "sonner";
 import { addMinutes } from "date-fns";
+import { teamMemberIds } from "@/lib/teamStamp";
 
 export default function CollaborativeFocusModal({ task, team, open, onOpenChange, currentUser }) {
   const queryClient = useQueryClient();
@@ -18,7 +19,7 @@ export default function CollaborativeFocusModal({ task, team, open, onOpenChange
       const session = await base44.entities.CollaborativeFocusSession.create(sessionData);
       
       // Notify team members
-      const memberIds = team.member_ids || [];
+      const memberIds = teamMemberIds(team);
       const notificationPromises = memberIds
         .filter(id => id !== currentUser.id)
         .map(userId => 
@@ -49,6 +50,7 @@ export default function CollaborativeFocusModal({ task, team, open, onOpenChange
     const now = new Date();
     createSessionMutation.mutate({
       team_id: team.id,
+      member_user_ids: teamMemberIds(team),
       task_id: task.id,
       task_title: task.title,
       host_id: currentUser.id,

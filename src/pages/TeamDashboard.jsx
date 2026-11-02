@@ -31,6 +31,7 @@ import RealTimeNotificationCenter from "../components/team/RealTimeNotificationC
 import TeamWorkloadView from "../components/team/TeamWorkloadView";
 import SharedGoals from "../components/team/SharedGoals";
 import { toast } from "sonner";
+import { teamMemberIds } from "@/lib/teamStamp";
 
 export default function TeamDashboard() {
   const queryClient = useQueryClient();
@@ -141,6 +142,16 @@ export default function TeamDashboard() {
     !t.assigned_to && (!t.assigned_to_users || t.assigned_to_users.length === 0)
   );
   const completedTasks = teamTasks.filter(t => t.status === 'completed');
+
+  // Every team notification carries the member snapshot, so the update rule can
+  // match a member's acknowledgement without joining Team.
+  const notifyTeam = (payload) => {
+    const ids = teamMemberIds(team);
+    return base44.entities.TeamNotification.create({
+      ...payload,
+      member_user_ids: ids.length ? ids : [currentUser?.id].filter(Boolean),
+    });
+  };
 
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
@@ -431,7 +442,7 @@ export default function TeamDashboard() {
                               onSuccess: async () => {
                                 if (task.team_id && (data.assigned_to || data.assigned_to_users?.length > 0)) {
                                   try {
-                                    await base44.entities.TeamNotification.create({
+                                    await notifyTeam({
                                       team_id: task.team_id,
                                       type: "task_assigned",
                                       title: `Task assigned: "${task.title}"`,
@@ -486,7 +497,7 @@ export default function TeamDashboard() {
                             onSuccess: async () => {
                               if (task.team_id && (data.assigned_to || data.assigned_to_users?.length > 0)) {
                                 try {
-                                  await base44.entities.TeamNotification.create({
+                                  await notifyTeam({
                                     team_id: task.team_id,
                                     type: "task_assigned",
                                     title: `Task assigned: "${task.title}"`,
@@ -544,7 +555,7 @@ export default function TeamDashboard() {
                               onSuccess: async () => {
                                 if (task.team_id && (data.assigned_to || data.assigned_to_users?.length > 0)) {
                                   try {
-                                    await base44.entities.TeamNotification.create({
+                                    await notifyTeam({
                                       team_id: task.team_id,
                                       type: "task_assigned",
                                       title: `Task assigned: "${task.title}"`,

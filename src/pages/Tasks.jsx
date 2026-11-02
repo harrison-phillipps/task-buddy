@@ -57,6 +57,7 @@ import AssignWithNotification from "../components/collaboration/AssignWithNotifi
 import RoutineTemplatesModal from "../components/tasks/RoutineTemplatesModal";
 import { UpgradeModal } from "@/components/subscription/FeatureGate";
 import { fetchMyTasks, countActiveTasks, slotsForNewTasks } from "@/lib/myTasks";
+import { teamMemberIds } from "@/lib/teamStamp";
 
 export default function Tasks() {
   const queryClient = useQueryClient();
@@ -482,6 +483,7 @@ export default function Tasks() {
         is_recurring: !!(taskDef.recurrence_pattern && taskDef.recurrence_pattern !== 'none'),
         subtasks: (taskDef.subtasks || []).map(s => ({ ...s, completed: false })),
         team_id: selectedTeamId !== 'personal' ? selectedTeamId : undefined,
+        team_member_ids: selectedTeamId !== 'personal' && currentTeam ? teamMemberIds(currentTeam) : undefined,
       };
       await base44.entities.Task.create(newTask);
     }
