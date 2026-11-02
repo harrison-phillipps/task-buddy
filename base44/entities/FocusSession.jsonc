@@ -4,7 +4,7 @@
   "properties": {
     "user_id": {
       "type": "string",
-      "description": "Owning user. Carries ownership for records created before created_by_id was correct (system field cannot be rewritten)."
+      "description": "Owning user. Carries ownership for records created before created_by_id was correct (system field cannot be rewritten). REQUIRED: the data.user_id branch in every rule (read, update, delete) exists for legacy rows whose created_by_id points at a deleted account - removing that branch hides the row from its owner instead of merely blocking edits. 5 rows depend on it."
     },
     "task_id": {
       "type": "string",

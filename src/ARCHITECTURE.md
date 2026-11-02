@@ -64,6 +64,14 @@ Main page: `Dashboard` (route `/`)
 
 ---
 
+## Entity ownership invariants
+
+- **`user_id` is the ownership anchor, not `created_by_id`.** `created_by_id` is a system field that cannot be rewritten, so legacy rows (14 BrainDump, 5 FocusSession) still point at deleted accounts while their real owner sits in `user_id`.
+- **Never remove the `data.user_id` branch from a rule on BrainDump or FocusSession.** Those rows have no other ownership path: dropping it hides them from their owner rather than merely blocking an edit, and it must stay on read as well as update/delete.
+- **Entity schemas are strict JSON.** No comments are permitted anywhere in `entities/*.jsonc`, including inside `rls` — record an invariant here or in a field `description` instead.
+
+---
+
 ## Backend Functions
 
 | Function | Trigger | Purpose |
