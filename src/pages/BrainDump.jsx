@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, CheckCircle, Brain, Trash2, Clock, Layers, Repeat, Users } from "lucide-react";
+import { Sparkles, Loader2, CheckCircle, Brain, Clock, Layers, Users } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +19,16 @@ import VoiceToText from "../components/VoiceToText";
 import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
 import VoiceSchedulePrompt from "../components/braindump/VoiceSchedulePrompt";
 import { TIER_LIMITS, UpgradeModal } from "@/components/subscription/FeatureGate";
+import BrainDumpTaskCard, { sumStepMinutes } from "@/components/braindump/BrainDumpTaskCard";
+
+// Stable per-card identity for a freshly extracted task. It is the React key and
+// how edits are routed, so removing a card can never act on its neighbour.
+let clientIdSeq = 0;
+const newClientId = () => `t_${Date.now().toString(36)}_${(clientIdSeq += 1)}`;
+const withClientIds = (result) => ({
+  ...result,
+  tasks: (result.tasks || []).map((task) => ({ ...task, clientId: newClientId() })),
+});
 
 export default function BrainDump() {
   const navigate = useNavigate();
@@ -219,7 +229,7 @@ Rules:
         })()
       ]).catch(console.error);
 
-      setExtractedTasks({ ...result, brainDumpId: savedBrainDump.id });
+      setExtractedTasks({ ...withClientIds(result), brainDumpId: savedBrainDump.id });
 
       if (result.recurring_detected > 0) {
         toast.success(`Detected ${result.recurring_detected} recurring pattern(s)! 🔄`);
@@ -321,7 +331,7 @@ Rules:
         })()
       ]);
 
-      setExtractedTasks({ ...result, brainDumpId: savedBrainDump.id });
+      setExtractedTasks({ ...withClientIds(result), brainDumpId: savedBrainDump.id });
       setShowSchedulePrompt(true); // Show the schedule prompt after voice dictation
     } catch (error) {
       console.error("Error processing brain dump:", error);
@@ -333,9 +343,10 @@ Rules:
   const handleScheduleTask = async (task) => {
     setShowSchedulePrompt(false);
     // Save all tasks first, then navigate to focus session
-    const tasksToCreate = extractedTasks.tasks.map(t => ({
+    const tasksToCreate = extractedTasks.tasks.map(({ clientId, ...t }) => ({
       ...t,
       status: "not_started",
+      estimated_minutes: sumStepMinutes(t.subtasks),
       is_recurring: t.is_recurring || false,
       recurrence_pattern: t.recurrence_pattern || "none",
       task_priority: t.task_priority || null,
@@ -361,9 +372,10 @@ Rules:
   };
 
   const handleSaveAll = async () => {
-    const tasksToCreate = extractedTasks.tasks.map(task => ({
+    const tasksToCreate = extractedTasks.tasks.map(({ clientId, ...task }) => ({
       ...task,
       status: "not_started",
+      estimated_minutes: sumStepMinutes(task.subtasks),
       is_recurring: task.is_recurring || false,
       recurrence_pattern: task.recurrence_pattern || "none",
       task_priority: task.task_priority || null,
@@ -441,14 +453,23 @@ Rules:
     setShowHistory(false);
   };
 
-  const removeTask = (index) => {
-    const updated = { ...extractedTasks };
-    updated.tasks = updated.tasks.filter((_, i) => i !== index);
-    setExtractedTasks(updated);
+  const removeTask = (clientId) => {
+    setExtractedTasks((prev) => ({
+      ...prev,
+      tasks: prev.tasks.filter((task) => task.clientId !== clientId),
+    }));
+  };
+
+  const updateTask = (clientId, patch) => {
+    setExtractedTasks((prev) => ({
+      ...prev,
+      tasks: prev.tasks.map((task) => (task.clientId === clientId ? { ...task, ...patch } : task)),
+    }));
   };
 
   const getTotalTime = () => {
-    return extractedTasks?.tasks.reduce((sum, task) => sum + (task.estimated_minutes || 0), 0) || 0;
+    // A task's time is always the sum of its steps, so the header can't drift.
+    return extractedTasks?.tasks.reduce((sum, task) => sum + sumStepMinutes(task.subtasks), 0) || 0;
   };
 
   const getTotalTasks = () => {
@@ -772,88 +793,16 @@ Rules:
                         </div>
                       )}
 
-                      {tasks.map((task, index) => {
-                        const originalIndex = extractedTasks.tasks.indexOf(task);
-                        
-                        return (
-                          <motion.div
-                            key={originalIndex}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            className="p-4 bg-gradient-to-r from-purple-50 to-teal-50 rounded-xl border border-purple-100"
-                          >
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex-1">
-                                <h3 className="text-lg font-bold text-gray-900 mb-2">{task.title}</h3>
-                                <div className="flex flex-wrap gap-2 mb-2">
-                                  {groupBy !== "category" && (
-                                    <Badge className="bg-purple-100 text-purple-700">
-                                      {task.category}
-                                    </Badge>
-                                  )}
-                                  {groupBy !== "difficulty" && (
-                                    <Badge variant="outline">{task.difficulty}</Badge>
-                                  )}
-                                  {groupBy !== "energy" && (
-                                    <Badge variant="outline">{task.energy_level_needed} energy</Badge>
-                                  )}
-                                  {groupBy !== "priority" && task.task_priority && (
-                                    <Badge className={
-                                      task.task_priority === 'must_do' ? 'bg-red-100 text-red-700' :
-                                      task.task_priority === 'should_do' ? 'bg-yellow-100 text-yellow-700' :
-                                      'bg-green-100 text-green-700'
-                                    }>
-                                      {task.task_priority === 'must_do' ? '🔴 Must Do' :
-                                       task.task_priority === 'should_do' ? '🟡 Should Do' :
-                                       '🟢 Could Do'}
-                                    </Badge>
-                                  )}
-                                  <Badge variant="outline" className="flex items-center gap-1">
-                                    <Clock className="w-3 h-3" />
-                                    {task.estimated_minutes}m
-                                  </Badge>
-                                  {task.is_recurring && (
-                                    <Badge className="bg-orange-100 text-orange-700 flex items-center gap-1">
-                                      <Repeat className="w-3 h-3" />
-                                      {task.recurrence_pattern}
-                                    </Badge>
-                                  )}
-                                </div>
-                                {task.description && (
-                                  <p className="text-sm text-gray-600 mb-3">{task.description}</p>
-                                )}
-                                {task.is_recurring && task.recurrence_reason && (
-                                  <p className="text-xs text-orange-700 bg-orange-50 p-2 rounded mb-3 italic">
-                                    🔄 {task.recurrence_reason}
-                                  </p>
-                                )}
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => removeTask(originalIndex)}
-                                className="text-gray-400 hover:text-red-600"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-
-                            <div className="space-y-2">
-                              <p className="text-xs font-medium text-gray-700 uppercase">Steps:</p>
-                              {task.subtasks?.map((subtask, subIndex) => (
-                                <div key={subIndex} className="flex items-center gap-3 text-sm">
-                                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-white flex items-center justify-center text-xs font-bold text-purple-600">
-                                    {subIndex + 1}
-                                  </span>
-                                  <span className="flex-1 text-gray-700">{subtask.title}</span>
-                                  <span className="text-xs text-gray-500">{subtask.estimated_minutes}m</span>
-                                </div>
-                              ))}
-                            </div>
-                          </motion.div>
-                        );
-                      })}
+                      {tasks.map((task, index) => (
+                        <BrainDumpTaskCard
+                          key={task.clientId}
+                          task={task}
+                          index={index}
+                          groupBy={groupBy}
+                          onChange={(patch) => updateTask(task.clientId, patch)}
+                          onRemove={() => removeTask(task.clientId)}
+                        />
+                      ))}
                     </div>
                   ))}
 

@@ -367,7 +367,7 @@ Rules:
                       </p>
                     </div>
                     <span className="flex-shrink-0 text-xs text-gray-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />{s.duration_minutes}m
+                      <Clock className="w-3 h-3" />{s.estimated_minutes ?? s.duration_minutes}m
                     </span>
                   </motion.button>
                 ))}

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sparkles, Loader2, CheckCircle, Clock, Users } from "lucide-react";
-import EditableStepList from "@/components/tasks/EditableStepList";
+import EditableStepList, { clampStepMinutes } from "@/components/tasks/EditableStepList";
 import ExportEasyStepsButton from "@/components/tasks/ExportEasySteps";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -128,6 +128,8 @@ export default function TaskBreakdown() {
       const result = response.data;
       const subtasksWithCompletion = result.subtasks.map(st => ({
         ...st,
+        // Step time lives in estimated_minutes only, floored at 2 minutes.
+        estimated_minutes: clampStepMinutes(st.estimated_minutes),
         completed: false
       }));
       setBreakdownResult({ ...result, subtasks: subtasksWithCompletion });
