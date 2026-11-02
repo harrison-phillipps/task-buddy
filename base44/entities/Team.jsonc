@@ -58,6 +58,22 @@
       "default": [],
       "description": "Array of user IDs who are team members (for backward compatibility)"
     },
+    "member_user_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "User IDs of team members. This is the field read rules will anchor on; keep it in step with member_ids while both exist."
+    },
+    "admin_user_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "User IDs of team admins. The owner is not implied - add an owner id here explicitly if owners should also count as admins."
+    },
     "member_roles": {
       "type": "object",
       "description": "Map of user IDs to roles (admin, member, viewer)",
