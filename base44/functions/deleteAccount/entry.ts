@@ -77,18 +77,57 @@ Deno.serve(async (req) => {
 
     // ── Dry run unless this call confirms the exact target address.
     if (!confirmEmail || confirmEmail !== userEmail) {
+      // Every predicate the deletion actually uses, per entity. A single row can
+      // satisfy several of them (the platform stamps created_by_id AND created_by
+      // together, and a Task can also be owned via owner_user_id), so a row count
+      // is the size of their UNION — never the sum of the separate counts.
+      const predicatesFor = (name: string): Record<string, any>[] => {
+        const list: Record<string, any>[] = [{ created_by_id: userId }];
+        if (userEmail) list.push({ created_by: target.email });
+        if (BY_USER_ID.includes(name)) list.push({ user_id: userId });
+        const ownerField = BY_OWNER_FIELD.find((entry) => entry.name === name);
+        if (ownerField) list.push({ [ownerField.field]: userId });
+        return list;
+      };
+
+      // Inclusion–exclusion over the entity's predicates.
+      const countUnion = async (entity: any, predicates: Record<string, any>[]): Promise<number | null> => {
+        let total = 0;
+        for (let mask = 1; mask < 1 << predicates.length; mask++) {
+          const merged: Record<string, any> = {};
+          let bits = 0;
+          predicates.forEach((predicate, i) => {
+            if (mask & (1 << i)) {
+              Object.assign(merged, predicate);
+              bits++;
+            }
+          });
+          const n = await countRows(entity, merged).catch(() => null);
+          if (n === null) return null;
+          total += bits % 2 === 1 ? n : -n;
+        }
+        return Math.max(0, total);
+      };
+
       const [byId, byEmail, byUserId] = await Promise.all([
         Promise.all(BY_CREATOR.map((n) => countRows(admin.entities[n], { created_by_id: userId }).catch(() => null))),
         Promise.all(BY_CREATOR.map((n) => (userEmail ? countRows(admin.entities[n], { created_by: target.email }).catch(() => null) : null))),
         Promise.all(BY_USER_ID.map((n) => countRows(admin.entities[n], { user_id: userId }).catch(() => null))),
       ]);
 
-      const counts = {};
+      const counts: Record<string, any> = {};
       BY_CREATOR.forEach((name, i) => {
         counts[name] = { by_id: byId[i], by_email: byEmail[i] };
       });
       BY_USER_ID.forEach((name, i) => {
-        counts[name] = { by_user_id: byUserId[i] };
+        counts[name] = { ...(counts[name] ?? {}), by_user_id: byUserId[i] };
+      });
+
+      // `matched` is the de-duplicated row count for the entity.
+      const entityNames = [...new Set([...BY_CREATOR, ...BY_USER_ID, ...BY_OWNER_FIELD.map((e) => e.name)])];
+      const matchedRows = await Promise.all(entityNames.map((name) => countUnion(admin.entities[name], predicatesFor(name))));
+      entityNames.forEach((name, i) => {
+        counts[name] = { ...(counts[name] ?? {}), matched: matchedRows[i] };
       });
 
       const [profile, invitesAsClinician, invitesAsClient, reportsAsClinician, reportsAsClient] = await Promise.all([
@@ -110,12 +149,17 @@ Deno.serve(async (req) => {
         ...BY_OWNER_FIELD,
       ];
       const ownerOnly = await Promise.all(ownerScoped.map(async ({ name, field }) => {
-        const [all, alsoCreator] = await Promise.all([
+        // Rows reachable ONLY through the owner field: the total minus every row
+        // the creator passes already matched. Subtracting one creator predicate
+        // (as before) left rows carrying both created_by and created_by_id in
+        // both figures — the Task double count.
+        const creatorPredicates = predicatesFor(name).filter((predicate) => !(field in predicate));
+        const [all, overlap] = await Promise.all([
           countRows(admin.entities[name], { [field]: userId }).catch(() => null),
-          countRows(admin.entities[name], { [field]: userId, created_by_id: userId }).catch(() => null),
+          countUnion(admin.entities[name], creatorPredicates.map((predicate) => ({ ...predicate, [field]: userId }))),
         ]);
         if (all === null) return null;
-        return Math.max(0, all - (alsoCreator ?? 0));
+        return Math.max(0, all - (overlap ?? 0));
       }));
 
       const ownerFieldOnly = {};
@@ -125,10 +169,9 @@ Deno.serve(async (req) => {
       const ownerFieldTotal = Object.values(ownerFieldOnly).reduce((a, b) => a + b, 0);
       console.log(`deleteAccount: dry run owner-field-only rows for ${userId}: ${ownerFieldTotal}`);
 
-      const rowsMatched = Object.values(counts).reduce(
-        (sum, entry) => sum + Object.values(entry).reduce((s, v) => s + (typeof v === 'number' ? v : 0), 0),
-        0,
-      );
+      // Per-entity union sizes are disjoint — a row belongs to exactly one
+      // entity — so their sum is the true number of rows this deletion reaches.
+      const rowsMatched = entityNames.reduce((sum, name) => sum + (counts[name]?.matched ?? 0), 0);
 
       console.log(`deleteAccount: dry run for ${userId} — ${rowsMatched} rows matched`);
       return Response.json({
