@@ -6,6 +6,10 @@
       "type": "string",
       "description": "ID of the task this comment belongs to"
     },
+    "team_id": {
+      "type": "string",
+      "description": "Team the commented task belongs to, copied from the task at write time so a read rule can scope comments without joining to Task. Null for personal-task comments."
+    },
     "user_id": {
       "type": "string",
       "description": "ID of the user who wrote the comment"

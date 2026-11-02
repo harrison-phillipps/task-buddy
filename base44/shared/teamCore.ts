@@ -22,6 +22,7 @@ const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'; // Crockford base32 (no I, 
 export const CODE_LENGTH = 10;
 const CODE_RE = /^[0-9A-HJKMNP-TV-Z]{6,16}$/;
 const ID_RE = /^[A-Za-z0-9_-]{6,64}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const CODE_ATTEMPT_LIMIT = 6;
 export const CODE_ATTEMPT_WINDOW_MS = 10 * 60 * 1000;
@@ -31,6 +32,9 @@ const isId = (value) => typeof value === 'string' && ID_RE.test(value.trim());
 
 export const cleanText = (value, max = 200) =>
   typeof value === 'string' ? value.trim().slice(0, max) : '';
+
+export const normalizeEmail = (value) =>
+  typeof value === 'string' ? value.trim().toLowerCase().slice(0, 200) : '';
 
 export const normalizeCode = (value) => {
   const raw = typeof value === 'string' ? value.toUpperCase().replace(/[\s-]/g, '') : '';
@@ -134,7 +138,7 @@ export const membershipPayload = (members) => {
   };
 };
 
-const MEMBERSHIP_FIELDS = ['members', 'member_ids', 'member_user_ids', 'admin_user_ids', 'member_roles'];
+const MEMBERSHIP_FIELDS = ['members', 'member_ids', 'member_user_ids', 'admin_user_ids', 'member_roles', 'pending_invites'];
 const OWNER_FIELDS = ['owner_id', 'owner_name', 'owner_email'];
 
 export const snapshotTeam = (team) => {
@@ -207,11 +211,35 @@ export const sanitizeTeam = (team, audience) => {
 /* ------------------------------------------------------------- membership IO */
 
 export async function saveMembership(admin, team, nextMembers) {
-  const payload = membershipPayload(nextMembers);
+  const kept = [];
+  const orphanEmails = [];
+  for (const member of nextMembers || []) {
+    if (isId(member?.user_id)) {
+      kept.push(member);
+      continue;
+    }
+    // A legacy row that stored an email where a user id belongs. It must never
+    // reach an id array, so it is kept as a pending invite instead.
+    const email = normalizeEmail(member?.user_id) || normalizeEmail(member?.user_email);
+    if (email && EMAIL_RE.test(email)) orphanEmails.push(email);
+  }
+
+  const payload = membershipPayload(kept);
   const before = snapshotTeam(team);
 
+  const patch = { ...payload };
+  if (orphanEmails.length) {
+    const pending = Array.isArray(team?.pending_invites) ? [...team.pending_invites] : [];
+    for (const email of orphanEmails) {
+      if (!pending.some((p) => p?.email === email)) {
+        pending.push({ email, invited_at: new Date().toISOString(), invited_by: null });
+      }
+    }
+    patch.pending_invites = pending;
+  }
+
   try {
-    await admin.entities.Team.update(team.id, payload);
+    await admin.entities.Team.update(team.id, patch);
   } catch (error) {
     return { ok: false, stage: 'write', error: error?.message || 'write_failed', rolled_back: true };
   }
@@ -261,18 +289,24 @@ export async function syncTaskTeamMembers(admin, teamId, memberUserIds) {
 
   let cursor = null;
   let synced = 0;
+  let awaiting_backfill = 0;
   for (let page = 0; page < 10; page += 1) {
     const result = await admin.entities.Task.filter(
       { team_id: teamId },
       { limit: 200, ...(cursor ? { cursor } : {}) },
     );
     const rows = Array.isArray(result) ? result : (result?.items || []);
-    await Promise.all(rows.map((row) => admin.entities.Task.update(row.id, { team_member_ids: memberUserIds })));
-    synced += rows.length;
+    // Only refresh rows that already carry the snapshot. Seeding the field is the
+    // separately approved backfill's job, so leaving or removing a member never
+    // mass-writes it.
+    const seeded = rows.filter((row) => Object.prototype.hasOwnProperty.call(row, 'team_member_ids'));
+    await Promise.all(seeded.map((row) => admin.entities.Task.update(row.id, { team_member_ids: memberUserIds })));
+    synced += seeded.length;
+    awaiting_backfill += rows.length - seeded.length;
     cursor = !Array.isArray(result) && result?.has_more ? result.next_cursor : null;
     if (!cursor) break;
   }
-  return { synced, field_present: true };
+  return { synced, field_present: true, awaiting_backfill };
 }
 
 /* ------------------------------------------------------------------ runners */
@@ -373,6 +407,16 @@ export async function runJoinTeamByCode(ctx, actor, body) {
   if (!saved.ok) return fail(500, 'Could not join team', { stage: saved.stage, rolled_back: saved.rolled_back });
 
   rateLimitClear(key);
+
+  // A pending invite for the email that just joined is spent.
+  const pending = Array.isArray(team.pending_invites) ? team.pending_invites : [];
+  const joinedEmail = normalizeEmail(actor.email);
+  if (joinedEmail && pending.some((p) => p?.email === joinedEmail)) {
+    await ctx.admin.entities.Team.update(team.id, {
+      pending_invites: pending.filter((p) => p?.email !== joinedEmail),
+    });
+  }
+
   return { status: 200, json: { ok: true, joined: true, team: sanitizeTeam(saved.team, 'member') } };
 }
 
@@ -402,6 +446,67 @@ export async function runInviteMember(ctx, actor, body) {
   const team = await readTeam(ctx.admin, body?.team_id);
   if (!team) return fail(404, 'Team not found');
   if (!isTeamAdmin(team, actor.id)) return fail(403, 'Admin access required');
+
+  /* ----------------------------------------------------- invite by email */
+
+  const email = normalizeEmail(body?.email);
+
+  /**
+   * An email invite never touches the membership arrays. A registered user is
+   * added as a member under their user id; anyone else is recorded as a pending
+   * invite on the team row. No email address reaches member_ids,
+   * member_user_ids or admin_user_ids, and a pending invite grants no access.
+   */
+  if (email) {
+    if (!EMAIL_RE.test(email)) return fail(400, 'A valid email address is required');
+
+    const members = normMembers(team);
+    const alreadyMember = String(team.owner_email || '').toLowerCase() === email
+      || members.some((m) => String(m.user_email || '').toLowerCase() === email);
+    if (alreadyMember) return fail(409, 'That person is already a member');
+
+    const registered = asRows(await ctx.admin.entities.User.filter({ email }))[0] || null;
+
+    if (!registered?.id) {
+      const pending = Array.isArray(team.pending_invites) ? [...team.pending_invites] : [];
+      if (!pending.some((p) => p?.email === email)) {
+        pending.push({ email, invited_at: new Date().toISOString(), invited_by: actor.id });
+        try {
+          await ctx.admin.entities.Team.update(team.id, { pending_invites: pending });
+        } catch (error) {
+          return fail(500, 'Could not record the pending invite', { detail: error?.message });
+        }
+        const after = await readTeam(ctx.admin, team.id);
+        const recorded = (Array.isArray(after?.pending_invites) ? after.pending_invites : [])
+          .some((p) => p?.email === email);
+        if (!recorded) return fail(500, 'Could not record the pending invite', { rolled_back: false });
+      }
+      return { status: 202, json: { ok: true, pending: true, email, member_count: members.length } };
+    }
+
+    const saved = await saveMembership(ctx.admin, team, [
+      ...members,
+      {
+        user_id: registered.id,
+        user_name: cleanText(registered.full_name || registered.email, 120),
+        user_email: email,
+        role: 'member',
+      },
+    ]);
+    if (!saved.ok) return fail(500, 'Could not add that member', { stage: saved.stage, rolled_back: saved.rolled_back });
+
+    return {
+      status: 201,
+      json: {
+        ok: true,
+        joined: true,
+        user_id: registered.id,
+        email,
+        member_count: saved.payload.member_user_ids.length,
+        team: sanitizeTeam(saved.team, 'admin'),
+      },
+    };
+  }
 
   const rotate = body?.rotate === true;
   let code = normalizeCode(team.invite_code);
@@ -445,6 +550,7 @@ export async function runRemoveMember(ctx, actor, body) {
 
   const targetId = cleanText(body?.user_id || body?.member_user_id, 64);
   if (!targetId) return fail(400, 'user_id is required');
+  if (!isId(targetId)) return fail(400, 'user_id must be a user id');
   if (targetId === team.owner_id) return fail(409, 'The team owner cannot be removed');
 
   const members = normMembers(team);
@@ -466,6 +572,48 @@ export async function runRemoveMember(ctx, actor, body) {
       member_count: saved.payload.member_user_ids.length,
       admin_user_ids: saved.payload.admin_user_ids,
       task_sync: taskSync,
+    },
+  };
+}
+
+export async function runSetMemberRole(ctx, actor, body) {
+  const team = await readTeam(ctx.admin, body?.team_id);
+  if (!team) return fail(404, 'Team not found');
+  if (!isTeamAdmin(team, actor.id)) return fail(403, 'Admin access required');
+
+  const targetId = cleanText(body?.user_id, 64);
+  if (!targetId) return fail(400, 'user_id is required');
+  if (!isId(targetId)) return fail(400, 'user_id must be a user id');
+  if (targetId === team.owner_id) return fail(409, 'The owner role cannot be changed');
+
+  const role = normRole(body?.role);
+  const members = normMembers(team);
+  const target = members.find((m) => m.user_id === targetId);
+  if (!target) return fail(404, 'That user is not a member of this team');
+
+  if (target.role === role) {
+    return {
+      status: 200,
+      json: { ok: true, unchanged: true, user_id: targetId, role, member_roles: team.member_roles || {} },
+    };
+  }
+
+  const next = members.map((m) => (m.user_id === targetId ? { ...m, role } : m));
+  // The owner is always an admin, so this only fires for a team with no owner row.
+  if (!next.some((m) => m.role === 'admin')) return fail(409, 'The team would be left without an admin');
+
+  const saved = await saveMembership(ctx.admin, team, next);
+  if (!saved.ok) return fail(500, 'Could not update the role', { stage: saved.stage, rolled_back: saved.rolled_back });
+
+  return {
+    status: 200,
+    json: {
+      ok: true,
+      user_id: targetId,
+      role,
+      member_count: saved.payload.member_user_ids.length,
+      admin_user_ids: saved.payload.admin_user_ids,
+      member_roles: saved.payload.member_roles,
     },
   };
 }
@@ -499,6 +647,7 @@ export async function runCreateTeamTask(ctx, actor, body) {
     assigned_to: assigneeId,
     assigned_to_name: assigneeName,
     assigned_to_users: [{ user_id: assigneeId, user_name: assigneeName }],
+    subtasks: Array.isArray(body?.subtasks) ? body.subtasks : [],
   });
 
   let task = null;

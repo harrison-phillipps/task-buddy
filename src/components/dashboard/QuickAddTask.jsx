@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import DuplicateTaskChecker from "../tasks/DuplicateTaskChecker";
 import { UpgradeModal } from "@/components/subscription/FeatureGate";
 import { fetchMyTasks, countActiveTasks, slotsForNewTasks } from "@/lib/myTasks";
+import { callTeamFn } from "@/lib/teamApi";
 
 export default function QuickAddTask({ currentUser }) {
   const queryClient = useQueryClient();
@@ -48,6 +49,12 @@ export default function QuickAddTask({ currentUser }) {
       if (slotsForNewTasks(tier, countActiveTasks(myTasks), 1) < 1) {
         setShowTaskLimitModal(true);
         throw new Error('TASK_LIMIT_REACHED');
+      }
+      // A task for a team goes through the server, which checks membership and
+      // stamps team_id, the assignee, the owner and the member snapshot.
+      if (selectedTeam) {
+        const result = await callTeamFn('createTeamTask', { ...taskData, team_id: selectedTeam });
+        return result.task;
       }
       return base44.entities.Task.create(taskData);
     },

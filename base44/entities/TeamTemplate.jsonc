@@ -6,6 +6,13 @@
       "type": "string",
       "description": "Team this template belongs to"
     },
+    "member_user_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Snapshot of the team's member user ids at write time. Nullable: absent until backfilled. Lets a read rule scope templates to team members without a join to Team."
+    },
     "name": {
       "type": "string",
       "description": "Template name"

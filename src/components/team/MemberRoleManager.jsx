@@ -9,39 +9,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Shield, UserMinus, Crown } from "lucide-react";
 import { ROLES, getUserRole, getRoleBadgeColor, getRoleLabel, hasPermission, PERMISSIONS } from "./TeamPermissions";
 import { toast } from "sonner";
+import { callTeamFn } from "@/lib/teamApi";
 
 export default function MemberRoleManager({ team, members, currentUser }) {
   const queryClient = useQueryClient();
 
   const updateMemberRoleMutation = useMutation({
-    mutationFn: async ({ userId, newRole }) => {
-      const updatedRoles = { ...team.member_roles };
-      if (newRole === ROLES.MEMBER) {
-        delete updatedRoles[userId]; // Default role
-      } else {
-        updatedRoles[userId] = newRole;
-      }
-      return base44.entities.Team.update(team.id, { member_roles: updatedRoles });
-    },
+    // The server rewrites member_roles and admin_user_ids together, refuses to
+    // change the owner, and verifies the write before reporting success.
+    mutationFn: async ({ userId, newRole }) =>
+      callTeamFn("setMemberRole", { team_id: team.id, user_id: userId, role: newRole }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams'] });
       toast.success("Member role updated");
     },
+    onError: (error) => {
+      toast.error(error.message);
+    },
   });
 
   const removeMemberMutation = useMutation({
-    mutationFn: async (userId) => {
-      const updatedMembers = team.member_ids.filter(id => id !== userId);
-      const updatedRoles = { ...team.member_roles };
-      delete updatedRoles[userId];
-      return base44.entities.Team.update(team.id, { 
-        member_ids: updatedMembers,
-        member_roles: updatedRoles
-      });
-    },
+    mutationFn: async (userId) =>
+      callTeamFn("removeMember", { team_id: team.id, user_id: userId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams'] });
       toast.success("Member removed from team");
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 

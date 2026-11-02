@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { UserPlus, Mail, X, Users, Check, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
+import { callTeamFn } from "@/lib/teamApi";
 import { createNotification } from "@/components/notifications/NotificationUtils";
 
 export default function SharedTaskListInviteModal({ open, onOpenChange, currentUser, teams, onTeamCreated }) {
@@ -52,23 +53,26 @@ export default function SharedTaskListInviteModal({ open, onOpenChange, currentU
 
     setIsLoading(true);
     try {
-      // Invite each email to the app
-      const inviteResults = await Promise.allSettled(
-        emails.map(email => base44.users.inviteUser(email, "user"))
-      );
-
-      // Create the team/shared list
-      const team = await base44.entities.Team.create({
+      // The server creates the row: crypto-random invite code, owner written to
+      // all six membership fields.
+      const created = await callTeamFn("createTeam", {
         name: listName.trim(),
-        description: `Shared task list`,
-        owner_id: currentUser.id,
-        owner_name: currentUser.full_name,
-        owner_email: currentUser.email,
-        members: [],
-        member_ids: [],
-        member_roles: {},
-        color: "#8B5CF6",
+        description: "Shared task list",
       });
+      const team = created.team;
+
+      // Each invite becomes a member (registered user) or a pending invite (no
+      // account yet) - never an email inside an id array.
+      const inviteResults = await Promise.allSettled(
+        emails.map(async (email) => ({
+          email,
+          result: await callTeamFn("inviteMember", { team_id: team.id, email }),
+        }))
+      );
+      const pendingEmails = inviteResults
+        .filter(r => r.status === "fulfilled" && r.value.result?.pending)
+        .map(r => r.value.email);
+      await Promise.allSettled(pendingEmails.map(email => base44.users.inviteUser(email, "user")));
 
       // Send notification email to each invitee
       await Promise.allSettled(
@@ -118,9 +122,16 @@ export default function SharedTaskListInviteModal({ open, onOpenChange, currentU
     setIsLoading(true);
     const team = teams.find(t => t.id === selectedTeamId);
     try {
-      await Promise.allSettled(
-        emails.map(email => base44.users.inviteUser(email, "user"))
+      const inviteResults = await Promise.allSettled(
+        emails.map(async (email) => ({
+          email,
+          result: await callTeamFn("inviteMember", { team_id: selectedTeamId, email }),
+        }))
       );
+      const pendingEmails = inviteResults
+        .filter(r => r.status === "fulfilled" && r.value.result?.pending)
+        .map(r => r.value.email);
+      await Promise.allSettled(pendingEmails.map(email => base44.users.inviteUser(email, "user")));
 
       await Promise.allSettled(
         emails.map(email =>

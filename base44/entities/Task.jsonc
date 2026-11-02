@@ -209,6 +209,13 @@
       "type": "string",
       "description": "Team/workspace this task belongs to"
     },
+    "team_member_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Snapshot of the owning team's member user ids at write time. Nullable: absent until backfilled. A read rule can only see fields on the row, so this is what lets a team task be scoped to its members without a join to Team. Empty on personal tasks."
+    },
     "assigned_to": {
       "type": "string",
       "description": "User ID of the person assigned to this task"

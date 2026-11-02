@@ -6,6 +6,13 @@
       "type": "string",
       "description": "ID of the team this message belongs to"
     },
+    "member_user_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Snapshot of the team's member user ids at write time. Nullable: absent until backfilled. Lets a read rule scope messages to team members without a join to Team."
+    },
     "user_id": {
       "type": "string",
       "description": "ID of the user who sent the message"

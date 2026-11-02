@@ -13,6 +13,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
+import { callTeamFn } from "@/lib/teamApi";
 
 export default function TeamsPage() {
   const navigate = useNavigate();
@@ -52,18 +53,9 @@ export default function TeamsPage() {
   });
 
   const createTeamMutation = useMutation({
-    mutationFn: async (teamData) => {
-      const inviteCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-      return await base44.entities.Team.create({
-        ...teamData,
-        owner_id: currentUser.id,
-        owner_name: currentUser.full_name || currentUser.email,
-        owner_email: currentUser.email,
-        members: [],
-        member_ids: [],
-        invite_code: inviteCode
-      });
-    },
+    // The server allocates the invite code (crypto-random, collision-checked)
+    // and writes all six membership fields together.
+    mutationFn: async (teamData) => callTeamFn("createTeam", teamData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams'] });
       setShowCreateDialog(false);
@@ -74,33 +66,15 @@ export default function TeamsPage() {
   });
 
   const joinTeamMutation = useMutation({
-    mutationFn: async (code) => {
-      const allTeams = await base44.entities.Team.list();
-      const team = allTeams.find(t => t.invite_code === code.toUpperCase());
-      
-      if (!team) throw new Error("Invalid invite code");
-      if (team.member_ids?.includes(currentUser.id) || team.members?.some(m => m.user_id === currentUser.id)) {
-        throw new Error("Already a member");
-      }
-
-      const newMember = {
-        user_id: currentUser.id,
-        user_name: currentUser.full_name || currentUser.email,
-        user_email: currentUser.email,
-        role: "member"
-      };
-
-      await base44.entities.Team.update(team.id, {
-        member_ids: [...(team.member_ids || []), currentUser.id],
-        members: [...(team.members || []), newMember]
-      });
-
-      return team;
-    },
-    onSuccess: (team) => {
+    mutationFn: async (code) => callTeamFn("joinTeamByCode", { code }),
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['teams'] });
       setJoinCode("");
-      toast.success(`Joined ${team.name}!`);
+      toast.success(
+        result.already_member
+          ? `You're already a member of ${result.team?.name || "this space"}`
+          : `Joined ${result.team?.name || "space"}!`
+      );
     },
     onError: (error) => {
       toast.error(error.message);
@@ -108,15 +82,13 @@ export default function TeamsPage() {
   });
 
   const leaveTeamMutation = useMutation({
-    mutationFn: async (team) => {
-      await base44.entities.Team.update(team.id, {
-        member_ids: team.member_ids.filter(id => id !== currentUser.id),
-        members: team.members?.filter(m => m.user_id !== currentUser.id) || []
-      });
-    },
+    mutationFn: async (team) => callTeamFn("leaveTeam", { team_id: team.id }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams'] });
       toast.success("Left team");
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
@@ -132,26 +104,25 @@ export default function TeamsPage() {
     if (!inviteEmail.trim()) return;
     setIsInviting(true);
     try {
-      // Add as pending member by email
-      const existing = team.members?.some(m => m.user_email === inviteEmail.trim());
-      if (existing || team.owner_email === inviteEmail.trim()) {
-        toast.error("This person is already a member");
-        setIsInviting(false);
-        return;
+      // The server adds a registered user by user id, or records a pending
+      // invite when there's no account yet. Either way no email is stored as a
+      // member id.
+      const result = await callTeamFn("inviteMember", { team_id: team.id, email: inviteEmail.trim() });
+
+      if (result.pending) {
+        // No account yet: the pending invite is recorded, and the app invite is
+        // what gets them in.
+        try { await base44.users.inviteUser(result.email, "user"); } catch (_) {}
+        toast.success(`Invited ${result.email}`);
+      } else {
+        toast.success(`${result.email} added to the space`);
       }
-      const newMember = { user_id: inviteEmail.trim(), user_name: inviteEmail.trim(), user_email: inviteEmail.trim(), role: "member" };
-      await base44.entities.Team.update(team.id, {
-        members: [...(team.members || []), newMember],
-        member_ids: [...(team.member_ids || []), inviteEmail.trim()],
-      });
-      // Also invite them to the app if they're not registered
-      try { await base44.users.inviteUser(inviteEmail.trim(), "user"); } catch (_) {}
+
       queryClient.invalidateQueries({ queryKey: ['teams'] });
       setInviteEmail("");
       setInviteTeamId(null);
-      toast.success(`Invited ${inviteEmail}!`);
     } catch (err) {
-      toast.error("Failed to invite: " + err.message);
+      toast.error(err.message);
     }
     setIsInviting(false);
   };
