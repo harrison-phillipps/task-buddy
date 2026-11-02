@@ -429,7 +429,7 @@ export default function TeamDashboard() {
                           onAssign={(data) => {
                             updateTaskMutation.mutate({ id: task.id, data }, {
                               onSuccess: async () => {
-                                if (data.assigned_to || data.assigned_to_users?.length > 0) {
+                                if (task.team_id && (data.assigned_to || data.assigned_to_users?.length > 0)) {
                                   try {
                                     await base44.entities.TeamNotification.create({
                                       team_id: task.team_id,
@@ -484,7 +484,7 @@ export default function TeamDashboard() {
                         onAssign={(data) => {
                           updateTaskMutation.mutate({ id: task.id, data }, {
                             onSuccess: async () => {
-                              if (data.assigned_to || data.assigned_to_users?.length > 0) {
+                              if (task.team_id && (data.assigned_to || data.assigned_to_users?.length > 0)) {
                                 try {
                                   await base44.entities.TeamNotification.create({
                                     team_id: task.team_id,
@@ -542,7 +542,7 @@ export default function TeamDashboard() {
                           onAssign={(data) => {
                             updateTaskMutation.mutate({ id: task.id, data }, {
                               onSuccess: async () => {
-                                if (data.assigned_to || data.assigned_to_users?.length > 0) {
+                                if (task.team_id && (data.assigned_to || data.assigned_to_users?.length > 0)) {
                                   try {
                                     await base44.entities.TeamNotification.create({
                                       team_id: task.team_id,

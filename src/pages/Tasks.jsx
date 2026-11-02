@@ -55,7 +55,8 @@ import SharedTaskListInviteModal from "../components/collaboration/SharedTaskLis
 import TeamMemberAvatars from "../components/collaboration/TeamMemberAvatars";
 import AssignWithNotification from "../components/collaboration/AssignWithNotification";
 import RoutineTemplatesModal from "../components/tasks/RoutineTemplatesModal";
-import { TIER_LIMITS, isWithinLimit, UpgradeModal } from "@/components/subscription/FeatureGate";
+import { UpgradeModal } from "@/components/subscription/FeatureGate";
+import { fetchMyTasks, countActiveTasks, slotsForNewTasks } from "@/lib/myTasks";
 
 export default function Tasks() {
   const queryClient = useQueryClient();
@@ -459,30 +460,21 @@ export default function Tasks() {
     const today = new Date().toISOString().split('T')[0];
     const templateTaskCount = (template.tasks || []).length;
 
-    // Pre-flight: check if loading this template would exceed the tier's task limit
+    // Pre-flight: how many of this template's tasks the tier has room for.
+    // The shared helper counts created + owned + assigned, deduped, so the same
+    // task is never counted twice and every screen agrees on the total.
     const tier = currentUser?.subscription_tier || 'free';
-    const limit = TIER_LIMITS[tier]?.max_tasks;
-    if (limit !== undefined && limit !== Infinity) {
-      const [activeOwned, activeOwnerField] = await Promise.all([
-        base44.entities.Task.filter({ created_by_id: currentUser.id }),
-        base44.entities.Task.filter({ owner_user_id: currentUser.id }),
-      ]);
-      // owner_user_id is backfilled on own tasks, so the same row can arrive from
-      // both queries — dedupe or the limit counts every task twice.
-      const seenIds = new Set();
-      const activeTasks = [...activeOwned, ...activeOwnerField].filter(t => {
-        if (seenIds.has(t.id)) return false;
-        seenIds.add(t.id);
-        return true;
-      });
-      const activeCount = activeTasks.filter(t => t.status !== 'completed').length;
-      if (activeCount + templateTaskCount > limit) {
-        setShowTaskLimitModal(true);
-        return;
-      }
-    }
+    const myTasks = await fetchMyTasks(currentUser);
+    const saveCount = slotsForNewTasks(tier, countActiveTasks(myTasks), templateTaskCount);
 
-    for (const taskDef of (template.tasks || [])) {
+    if (saveCount === 0) {
+      setShowTaskLimitModal(true);
+      return;
+    }
+    // Save as many as fit, then prompt for the remainder.
+    const allowedTemplateTasks = (template.tasks || []).slice(0, saveCount);
+
+    for (const taskDef of allowedTemplateTasks) {
       const newTask = {
         ...taskDef,
         status: 'not_started',
@@ -494,6 +486,9 @@ export default function Tasks() {
       await base44.entities.Task.create(newTask);
     }
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    if (allowedTemplateTasks.length < templateTaskCount) {
+      setShowTaskLimitModal(true);
+    }
   };
 
   const handleChangePriority = (task, priority) => {

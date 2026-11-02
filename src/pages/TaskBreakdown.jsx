@@ -17,7 +17,8 @@ import VirtualCompanion from "../components/VirtualCompanion";
 import { getPersonalizedMessage } from "../components/companionUtils";
 import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
 import AITaskBreakdownConsentModal from "@/components/AITaskBreakdownConsentModal";
-import { TIER_LIMITS, isWithinLimit, UpgradeModal } from "@/components/subscription/FeatureGate";
+import { UpgradeModal } from "@/components/subscription/FeatureGate";
+import { fetchMyTasks, countActiveTasks, slotsForNewTasks } from "@/lib/myTasks";
 import { trackEvent } from "@/lib/analytics";
 
 // Local marker so "first AI breakdown" fires once per browser. A cross-device
@@ -84,11 +85,10 @@ export default function TaskBreakdown() {
 
   const createTaskMutation = useMutation({
     mutationFn: async (taskData) => {
-      // Check active task limit before creating
+      // Check active task limit before creating — same count as every other screen
       const tier = currentUser?.subscription_tier || 'free';
-      const activeTasks = await base44.entities.Task.filter({ created_by: currentUser.email });
-      const activeCount = activeTasks.filter(t => t.status !== 'completed').length;
-      if (!isWithinLimit(tier, 'max_tasks', activeCount)) {
+      const myTasks = await fetchMyTasks(currentUser);
+      if (slotsForNewTasks(tier, countActiveTasks(myTasks), 1) < 1) {
         setShowTaskLimitModal(true);
         throw new Error('TASK_LIMIT_REACHED');
       }

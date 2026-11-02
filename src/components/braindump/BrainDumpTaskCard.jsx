@@ -4,15 +4,14 @@ import { Pencil, Repeat, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import EditableStepList, { clampStepMinutes } from "@/components/tasks/EditableStepList";
+import EditableStepList, {
+  sumStepMinutes,
+  countUnknownSteps,
+  stepMinutesOrNull,
+} from "@/components/tasks/EditableStepList";
 
-// A task's time is always the sum of its steps — there is no independent number
-// to edit, so the two can never drift apart.
-export const sumStepMinutes = (steps = []) =>
-  steps.reduce(
-    (total, step) => total + clampStepMinutes(step?.estimated_minutes ?? step?.duration_minutes),
-    0
-  );
+// Kept as a re-export: Brain Dump imports the step total from this module.
+export { sumStepMinutes };
 
 export default function BrainDumpTaskCard({ task, index, groupBy, onChange, onRemove }) {
   const [showSteps, setShowSteps] = useState(false);
@@ -27,7 +26,9 @@ export default function BrainDumpTaskCard({ task, index, groupBy, onChange, onRe
   }, [task.clientId, task.title]);
 
   const steps = task.subtasks || [];
-  const totalMinutes = sumStepMinutes(steps);
+  // With no steps the task keeps its own estimate; unknown steps add nothing.
+  const totalMinutes = steps.length > 0 ? sumStepMinutes(steps) : (task.estimated_minutes || 0);
+  const unknownSteps = countUnknownSteps(steps);
 
   const commitTitle = () => {
     const title = (titleDraft || "").trim().slice(0, 120);
@@ -41,6 +42,11 @@ export default function BrainDumpTaskCard({ task, index, groupBy, onChange, onRe
   };
 
   const handleStepsChange = (nextSteps) => {
+    // Removing the last step must not wipe the task's own estimate.
+    if (nextSteps.length === 0) {
+      onChange({ subtasks: [] });
+      return;
+    }
     onChange({ subtasks: nextSteps, estimated_minutes: sumStepMinutes(nextSteps) });
   };
 
@@ -134,7 +140,7 @@ export default function BrainDumpTaskCard({ task, index, groupBy, onChange, onRe
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <p className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">
-            Steps ({steps.length}) · {totalMinutes}m
+            Steps ({steps.length}) · {totalMinutes}m{unknownSteps > 0 ? ` + ${unknownSteps} unknown` : ""}
           </p>
           <Button
             type="button"
@@ -159,7 +165,7 @@ export default function BrainDumpTaskCard({ task, index, groupBy, onChange, onRe
                 </span>
                 <span className="flex-1 text-gray-700 dark:text-gray-300">{subtask.title}</span>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {clampStepMinutes(subtask.estimated_minutes ?? subtask.duration_minutes)}m
+                  {stepMinutesOrNull(subtask) === null ? "Time unknown" : `${stepMinutesOrNull(subtask)}m`}
                 </span>
               </div>
             ))}

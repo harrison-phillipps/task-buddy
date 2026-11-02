@@ -15,6 +15,11 @@ import { format, parseISO } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import PushNotificationSetup from "./PushNotificationSetup";
 
+// Notifications can carry a URL from a writer outside this app. Only an in-app
+// path is followed: anything absolute, protocol-relative or empty is ignored.
+const isInternalPath = (url) =>
+  typeof url === "string" && url.startsWith("/") && !url.startsWith("//");
+
 export default function NotificationBell({ currentUser }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -58,7 +63,7 @@ export default function NotificationBell({ currentUser }) {
 
   const handleNotificationClick = (notification) => {
     markAsReadMutation.mutate(notification.id);
-    if (notification.action_url) {
+    if (isInternalPath(notification.action_url)) {
       navigate(notification.action_url);
       setOpen(false);
     }

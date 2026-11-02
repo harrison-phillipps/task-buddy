@@ -10,6 +10,8 @@ import toast from "react-hot-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import DuplicateTaskChecker from "../tasks/DuplicateTaskChecker";
+import { UpgradeModal } from "@/components/subscription/FeatureGate";
+import { fetchMyTasks, countActiveTasks, slotsForNewTasks } from "@/lib/myTasks";
 
 export default function QuickAddTask({ currentUser }) {
   const queryClient = useQueryClient();
@@ -22,6 +24,7 @@ export default function QuickAddTask({ currentUser }) {
   const [breakdownResult, setBreakdownResult] = useState(null);
   const [editingSubtasks, setEditingSubtasks] = useState(null);
   const [selectedTeam, setSelectedTeam] = useState(null);
+  const [showTaskLimitModal, setShowTaskLimitModal] = useState(false);
 
   const { data: teams = [] } = useQuery({
     queryKey: ['teams', currentUser?.id],
@@ -38,7 +41,16 @@ export default function QuickAddTask({ currentUser }) {
   });
 
   const createTaskMutation = useMutation({
-    mutationFn: (taskData) => base44.entities.Task.create(taskData),
+    mutationFn: async (taskData) => {
+      // Free-tier task ceiling, counted the same way as everywhere else.
+      const tier = currentUser?.subscription_tier || 'free';
+      const myTasks = await fetchMyTasks(currentUser);
+      if (slotsForNewTasks(tier, countActiveTasks(myTasks), 1) < 1) {
+        setShowTaskLimitModal(true);
+        throw new Error('TASK_LIMIT_REACHED');
+      }
+      return base44.entities.Task.create(taskData);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success("Task created!");
@@ -379,6 +391,13 @@ export default function QuickAddTask({ currentUser }) {
         </AnimatePresence>
       </CardContent>
       
+      <UpgradeModal
+        open={showTaskLimitModal}
+        onOpenChange={setShowTaskLimitModal}
+        featureKey="max_tasks"
+        feature="You've reached your active task limit on the free plan. Upgrade to add more tasks."
+        requiredTier="pro"
+      />
       <DuplicateTaskChecker
         open={showDuplicateDialog}
         onOpenChange={setShowDuplicateDialog}

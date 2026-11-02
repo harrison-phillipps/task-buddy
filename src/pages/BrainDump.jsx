@@ -20,6 +20,7 @@ import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
 import VoiceSchedulePrompt from "../components/braindump/VoiceSchedulePrompt";
 import { TIER_LIMITS, UpgradeModal } from "@/components/subscription/FeatureGate";
 import BrainDumpTaskCard, { sumStepMinutes } from "@/components/braindump/BrainDumpTaskCard";
+import { fetchMyTasks, countActiveTasks, slotsForNewTasks } from "@/lib/myTasks";
 
 // Stable per-card identity for a freshly extracted task. It is the React key and
 // how edits are routed, so removing a card can never act on its neighbour.
@@ -48,6 +49,7 @@ export default function BrainDump() {
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const [showSchedulePrompt, setShowSchedulePrompt] = useState(false);
   const [showBrainDumpLimitModal, setShowBrainDumpLimitModal] = useState(false);
+  const [showTaskLimitModal, setShowTaskLimitModal] = useState(false);
 
   const { data: brainDumps = [] } = useQuery({
     queryKey: ['brainDumps', currentUser?.email],
@@ -114,10 +116,12 @@ export default function BrainDump() {
       
       return createdTasks;
     },
-    onSuccess: () => {
+    onSuccess: (_created, variables) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['brainDumps'] });
-      navigate(createPageUrl("Tasks"));
+      // A partial save leaves the unsaved tasks on the review screen, so it
+      // must not navigate away from them.
+      if (variables?.navigateAfter !== false) navigate(createPageUrl("Tasks"));
     },
   });
 
@@ -346,15 +350,27 @@ Rules:
     const tasksToCreate = extractedTasks.tasks.map(({ clientId, ...t }) => ({
       ...t,
       status: "not_started",
-      estimated_minutes: sumStepMinutes(t.subtasks),
+      // No steps means nothing to sum: keep the estimate the task arrived with.
+      estimated_minutes: t.subtasks?.length ? sumStepMinutes(t.subtasks) : t.estimated_minutes,
       is_recurring: t.is_recurring || false,
       recurrence_pattern: t.recurrence_pattern || "none",
       task_priority: t.task_priority || null,
       team_id: selectedTeam && selectedTeam !== "__personal__" ? selectedTeam : undefined
     }));
 
+    // Same free-tier rule as Save All: save what fits, prompt for the rest.
+    const tier = currentUser?.subscription_tier || 'free';
+    const myTasks = await fetchMyTasks(currentUser);
+    const saveCount = slotsForNewTasks(tier, countActiveTasks(myTasks), tasksToCreate.length);
+    if (saveCount === 0) {
+      setShowTaskLimitModal(true);
+      return;
+    }
+    const allowedTasks = tasksToCreate.slice(0, saveCount);
+    const unsavedTasks = extractedTasks.tasks.slice(allowedTasks.length);
+
     try {
-      const createdTasks = await Promise.all(tasksToCreate.map(t => base44.entities.Task.create(t)));
+      const createdTasks = await Promise.all(allowedTasks.map(t => base44.entities.Task.create(t)));
       await base44.entities.BrainDump.update(extractedTasks.brainDumpId, {
         task_ids: createdTasks.map(t => t.id),
         tasks_created: createdTasks.length
@@ -362,8 +378,14 @@ Rules:
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['brainDumps'] });
 
-      // Find the saved version of the selected task
-      const savedTask = createdTasks.find(t => t.title === task.title) || createdTasks[0];
+      if (unsavedTasks.length > 0) {
+        setExtractedTasks(prev => ({ ...prev, tasks: unsavedTasks }));
+        setShowTaskLimitModal(true);
+      }
+
+      // Find the saved version of the selected task — it may not have fit.
+      const savedTask = createdTasks.find(t => t.title === task.title);
+      if (!savedTask) return;
       navigate(createPageUrl(`FocusSession?taskId=${savedTask.id}`));
     } catch (error) {
       console.error("Error saving tasks before focus session:", error);
@@ -371,16 +393,43 @@ Rules:
     }
   };
 
+  // Saves what the tier has room for, then puts anything left back on the review
+  // screen with the upgrade prompt — nothing the user reviewed is lost.
+  const saveTasks = async ({ tasks, unsaved = [], brainDumpId }) => {
+    await createTasksMutation.mutateAsync({
+      tasks,
+      brainDumpId,
+      navigateAfter: unsaved.length === 0
+    });
+    if (unsaved.length > 0) {
+      setExtractedTasks(prev => ({ ...prev, tasks: unsaved }));
+      setShowTaskLimitModal(true);
+    }
+  };
+
   const handleSaveAll = async () => {
-    const tasksToCreate = extractedTasks.tasks.map(({ clientId, ...task }) => ({
+    const reviewTasks = extractedTasks.tasks;
+    const tasksToCreate = reviewTasks.map(({ clientId, ...task }) => ({
       ...task,
       status: "not_started",
-      estimated_minutes: sumStepMinutes(task.subtasks),
+      // No steps means nothing to sum: keep the estimate the task arrived with.
+      estimated_minutes: task.subtasks?.length ? sumStepMinutes(task.subtasks) : task.estimated_minutes,
       is_recurring: task.is_recurring || false,
       recurrence_pattern: task.recurrence_pattern || "none",
       task_priority: task.task_priority || null,
       team_id: selectedTeam && selectedTeam !== "__personal__" ? selectedTeam : undefined
     }));
+
+    // Free-tier room, measured across all my tasks (created, owned, assigned).
+    const tier = currentUser?.subscription_tier || 'free';
+    const myTasks = await fetchMyTasks(currentUser);
+    const saveCount = slotsForNewTasks(tier, countActiveTasks(myTasks), tasksToCreate.length);
+    if (saveCount === 0) {
+      setShowTaskLimitModal(true);
+      return;
+    }
+    const allowedTasks = tasksToCreate.slice(0, saveCount);
+    const unsavedTasks = reviewTasks.slice(allowedTasks.length);
 
     // Check for duplicates in non-completed tasks
     const existingTasks = await base44.entities.Task.filter({ 
@@ -405,11 +454,12 @@ Rules:
         duplicates: Array.from(new Set(duplicates.map(d => d.id))).map(id => duplicates.find(d => d.id === id)),
         newTaskTitle: `${tasksToCreate.length} new task${tasksToCreate.length > 1 ? 's' : ''} from brain dump`
       });
-      setPendingTasks({ tasks: tasksToCreate, brainDumpId: extractedTasks.brainDumpId });
+      setPendingTasks({ tasks: allowedTasks, unsaved: unsavedTasks, brainDumpId: extractedTasks.brainDumpId });
       setShowDuplicateDialog(true);
     } else {
-      createTasksMutation.mutate({
-        tasks: tasksToCreate,
+      saveTasks({
+        tasks: allowedTasks,
+        unsaved: unsavedTasks,
         brainDumpId: extractedTasks.brainDumpId
       });
     }
@@ -417,7 +467,7 @@ Rules:
 
   const handleProceedWithDuplicates = () => {
     if (pendingTasks) {
-      createTasksMutation.mutate(pendingTasks);
+      saveTasks(pendingTasks);
     }
     setShowDuplicateDialog(false);
     setPendingTasks(null);
@@ -434,7 +484,11 @@ Rules:
           newTask.title.toLowerCase().includes(existing.title.toLowerCase().substring(0, 10))
         );
       });
-      createTasksMutation.mutate({ tasks: dedupedTasks, brainDumpId: pendingTasks.brainDumpId });
+      saveTasks({
+        tasks: dedupedTasks,
+        unsaved: pendingTasks.unsaved || [],
+        brainDumpId: pendingTasks.brainDumpId
+      });
     }
     setShowDuplicateDialog(false);
     setPendingTasks(null);
@@ -847,6 +901,13 @@ Rules:
           onOpenChange={setShowBrainDumpLimitModal}
           featureKey="brain_dump_limit"
           feature={`You've used all ${TIER_LIMITS[currentUser?.subscription_tier || 'free']?.max_brain_dumps_per_day} brain dumps for today on the free plan. Upgrade for more.`}
+          requiredTier="pro"
+        />
+        <UpgradeModal
+          open={showTaskLimitModal}
+          onOpenChange={setShowTaskLimitModal}
+          featureKey="max_tasks"
+          feature="You've reached your active task limit on the free plan. Upgrade to save the rest of these tasks."
           requiredTier="pro"
         />
         <DuplicateTaskChecker

@@ -2,7 +2,9 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Pencil, X, Plus, Clock, Check } from "lucide-react";
 
-// Step timing rules. 2 minutes is the floor: anything shorter isn't a step.
+// Step timing rules. 2 minutes is the floor for a CHOSEN duration: anything
+// shorter isn't a step. A step with no estimate at all is "unknown" — a
+// different thing, which is neither rounded up to 2 nor added to a total.
 export const STEP_DURATION_OPTIONS = [2, 5, 10, 15, 20, 30];
 export const MIN_STEP_MINUTES = 2;
 export const STEP_TITLE_MIN = 2;
@@ -14,11 +16,20 @@ export const clampStepMinutes = (minutes) =>
 
 // A step carries its time in estimated_minutes only. duration_minutes is read
 // here purely for steps produced before that change (guest flow fallbacks).
-const stepMinutes = (step) => {
+// null means the step has no usable estimate.
+export const stepMinutesOrNull = (step) => {
   const raw = step?.estimated_minutes ?? step?.duration_minutes;
   const n = Number(raw);
-  return Number.isFinite(n) && n > 0 ? Math.round(n) : 5;
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
 };
+
+// Total time for a set of steps. Unknown steps contribute nothing rather than
+// inventing the 2-minute floor.
+export const sumStepMinutes = (steps = []) =>
+  steps.reduce((total, step) => total + (stepMinutesOrNull(step) ?? 0), 0);
+
+export const countUnknownSteps = (steps = []) =>
+  steps.filter((step) => stepMinutesOrNull(step) === null).length;
 
 const cleanTitle = (title) => (title || "").trim();
 
@@ -75,7 +86,7 @@ function StepRow({ step, index, onUpdate, onDelete, isFirst }) {
     onUpdate({ ...step, estimated_minutes: clampStepMinutes(mins) });
   };
 
-  const currentDuration = stepMinutes(step);
+  const currentDuration = stepMinutesOrNull(step);
 
   return (
     <motion.div
@@ -137,8 +148,12 @@ function StepRow({ step, index, onUpdate, onDelete, isFirst }) {
               {d}m
             </button>
           ))}
-          {!STEP_DURATION_OPTIONS.includes(currentDuration) && (
-            <span className="text-xs text-gray-400 dark:text-gray-500">{currentDuration}m</span>
+          {currentDuration === null ? (
+            <span className="text-xs italic text-gray-400 dark:text-gray-500">Time unknown</span>
+          ) : (
+            !STEP_DURATION_OPTIONS.includes(currentDuration) && (
+              <span className="text-xs text-gray-400 dark:text-gray-500">{currentDuration}m</span>
+            )
           )}
         </div>
 
