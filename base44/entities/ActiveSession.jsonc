@@ -6,6 +6,13 @@
       "type": "string",
       "description": "User who owns this session"
     },
+    "member_user_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Snapshot of the ids allowed to see this row. Empty on personal sessions; a read rule can only see fields on the row, so this is what lets a session be shared without a join. Currently written by RLS probe sentinels only - no rule reads it yet."
+    },
     "task_id": {
       "type": "string",
       "description": "Task being worked on"

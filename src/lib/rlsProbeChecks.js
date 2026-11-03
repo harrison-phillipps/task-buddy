@@ -1,4 +1,5 @@
 import { base44 } from '@/api/base44Client';
+import { asRows, describeError, stamped } from '@/lib/rlsProbeCommon';
 
 /**
  * Temporary RLS verification probes for the Team entity.
@@ -15,35 +16,10 @@ import { base44 } from '@/api/base44Client';
  */
 
 const SENTINEL_PREFIX = 'zzProbe-';
-const asRows = (p) => (Array.isArray(p) ? p : (p?.items || []));
 
 /** Display only — used to count zzProbe-* names in a list result. Never an authorisation check. */
 export const isSentinelName = (name) =>
   typeof name === 'string' && name.startsWith(SENTINEL_PREFIX);
-
-const describeError = (err) => ({
-  failed: true,
-  status: err?.response?.status ?? err?.status ?? null,
-  error: err?.response?.data?.error ?? err?.message ?? 'request failed',
-});
-
-/** Runs one check and stamps it with UTC start/finish plus duration. */
-const stamped = (fn) => async () => {
-  const started_at = new Date().toISOString();
-  const t0 = Date.now();
-  let result;
-  try {
-    result = await fn();
-  } catch (err) {
-    result = { check: 'unexpected failure', ok: false, raw: describeError(err) };
-  }
-  return {
-    ...result,
-    started_at,
-    finished_at: new Date().toISOString(),
-    duration_ms: Date.now() - t0,
-  };
-};
 
 export async function checkList() {
   try {
