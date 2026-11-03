@@ -1,12 +1,14 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 
 /**
- * TEMPORARY — performs one service-role write to a sentinel team, so the probe
- * page can see whether that write reaches a subscribing client.
- * The name check is the guard: anything not named zzProbe-* is refused.
+ * TEMPORARY — performs one service-role write to a sentinel team, so the probe page
+ * can see whether that write reaches a subscribing client.
+ *
+ * The guard is the RlsProbeSentinel row for the exact team id, written only by
+ * rlsProbeSetup. A team name is never trusted: a user-created "zzProbe-…" team has
+ * no row and is refused, so nobody can get a service-role write aimed at their team.
  */
 
-const SENTINEL_PREFIX = 'zzProbe-';
 const asRows = (page) => (Array.isArray(page) ? page : (page?.items || []));
 
 export default async function (req) {
@@ -20,11 +22,14 @@ export default async function (req) {
     if (!teamId) return Response.json({ error: 'team_id is required' }, { status: 400 });
 
     const admin = base44.asServiceRole;
+
+    const row = asRows(await admin.entities.RlsProbeSentinel.filter({ team_id: teamId }))[0] || null;
+    if (!row) {
+      return Response.json({ error: 'Not a registered sentinel id' }, { status: 403 });
+    }
+
     const team = asRows(await admin.entities.Team.filter({ id: teamId }))[0] || null;
     if (!team) return Response.json({ error: 'Not found' }, { status: 404 });
-    if (!String(team.name || '').startsWith(SENTINEL_PREFIX)) {
-      return Response.json({ error: 'Refusing to touch a non-sentinel team' }, { status: 403 });
-    }
 
     const marker = `probe touch ${new Date().toISOString()}`;
     await admin.entities.Team.update(team.id, { description: marker });

@@ -2,8 +2,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 
 /**
  * TEMPORARY — creates the two throwaway sentinel teams used to verify Team RLS.
- * Creates only rows named zzProbe-A / zzProbe-B, and only if they do not exist.
- * Delete this function together with the /rls-probe page once the rules are signed off.
+ *
+ * Admin only. Each created team also gets an RlsProbeSentinel row holding its exact
+ * id; that row — not the team name — is what rlsProbeTouch accepts, so a team a
+ * normal user happens to name "zzProbe-…" can never be treated as a sentinel.
  */
 
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
@@ -60,50 +62,50 @@ export default async function (req) {
 
     const sentinels = [];
     for (const entry of plan) {
-      const existing = asRows(await admin.entities.Team.filter({ name: entry.name }))[0] || null;
-      if (existing) {
-        sentinels.push({
-          name: existing.name,
-          id: existing.id,
-          code: existing.invite_code,
-          created: false,
-          member_user_ids: existing.member_user_ids ?? [],
-          admin_user_ids: existing.admin_user_ids ?? [],
+      let team = asRows(await admin.entities.Team.filter({ name: entry.name }))[0] || null;
+      let created = false;
+
+      if (!team) {
+        const ids = entry.members.map((m) => m.user_id);
+        team = await admin.entities.Team.create({
+          name: entry.name,
+          description: 'RLS probe sentinel. Safe to delete.',
+          color: '#64748B',
+          owner_id: user.id,
+          owner_name: ownerMember.user_name,
+          owner_email: ownerMember.user_email,
+          invite_code: newInviteCode(),
+          members: entry.members,
+          member_ids: ids,
+          member_user_ids: ids,
+          admin_user_ids: [user.id],
+          member_roles: entry.members.reduce((acc, m) => {
+            acc[m.user_id] = m.role;
+            return acc;
+          }, {}),
+          pending_invites: [],
         });
-        continue;
+        created = true;
       }
 
-      const ids = entry.members.map((m) => m.user_id);
-      const created = await admin.entities.Team.create({
-        name: entry.name,
-        description: 'RLS probe sentinel. Safe to delete.',
-        color: '#64748B',
-        owner_id: user.id,
-        owner_name: ownerMember.user_name,
-        owner_email: ownerMember.user_email,
-        invite_code: newInviteCode(),
-        members: entry.members,
-        member_ids: ids,
-        member_user_ids: ids,
-        admin_user_ids: [user.id],
-        member_roles: entry.members.reduce((acc, m) => {
-          acc[m.user_id] = m.role;
-          return acc;
-        }, {}),
-        pending_invites: [],
-      });
+      // Register the exact id. Idempotent: create the row only when it is missing.
+      const existingRow = asRows(await admin.entities.RlsProbeSentinel.filter({ team_id: team.id }))[0] || null;
+      if (!existingRow) {
+        await admin.entities.RlsProbeSentinel.create({ team_id: team.id, label: entry.name });
+      }
+      const row = asRows(await admin.entities.RlsProbeSentinel.filter({ team_id: team.id }))[0] || null;
 
-      const readBack = asRows(await admin.entities.Team.filter({ id: created.id }))[0] || null;
+      const readBack = asRows(await admin.entities.Team.filter({ id: team.id }))[0] || null;
       sentinels.push({
+        label: entry.name,
         name: readBack?.name ?? entry.name,
-        id: created.id,
+        id: team.id,
         code: readBack?.invite_code ?? null,
-        created: true,
+        created,
+        registered: Boolean(row),
         member_user_ids: readBack?.member_user_ids ?? [],
         admin_user_ids: readBack?.admin_user_ids ?? [],
-        verified: Boolean(readBack)
-          && String(readBack.owner_id) === String(user.id)
-          && (readBack.member_user_ids || []).length === ids.length,
+        verified: Boolean(readBack) && String(readBack.owner_id) === String(user.id) && Boolean(row),
       });
     }
 

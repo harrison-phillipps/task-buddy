@@ -3,14 +3,21 @@ import { base44 } from '@/api/base44Client';
 /**
  * Temporary RLS verification probes for the Team entity.
  *
- * Every check runs with the SIGNED-IN USER'S OWN client (no service role), so
- * the results are the real RLS outcome for that account. Checks 3 and 4 only
- * ever address a throwaway zzProbe-* row supplied in the page link.
+ * Every check runs with the SIGNED-IN USER'S OWN client (no service role), so the
+ * results are the real RLS outcome for that account. Checks 2-5 only ever address
+ * the throwaway team whose exact id came in the page link, and the service role
+ * (rlsProbeTouch) refuses any id that rlsProbeSetup did not register — a team merely
+ * named zzProbe-* is not acceptable to it.
+ *
+ * ORDER MATTERS: the join check runs LAST, after read, filter, update and subscribe,
+ * because joining is the only check that changes data (it adds the caller to the
+ * sentinel's membership). Every result is stamped with start, finish and duration.
  */
 
 const SENTINEL_PREFIX = 'zzProbe-';
 const asRows = (p) => (Array.isArray(p) ? p : (p?.items || []));
 
+/** Display only — used to count zzProbe-* names in a list result. Never an authorisation check. */
 export const isSentinelName = (name) =>
   typeof name === 'string' && name.startsWith(SENTINEL_PREFIX);
 
@@ -20,35 +27,52 @@ const describeError = (err) => ({
   error: err?.response?.data?.error ?? err?.message ?? 'request failed',
 });
 
+/** Runs one check and stamps it with UTC start/finish plus duration. */
+const stamped = (fn) => async () => {
+  const started_at = new Date().toISOString();
+  const t0 = Date.now();
+  let result;
+  try {
+    result = await fn();
+  } catch (err) {
+    result = { check: 'unexpected failure', ok: false, raw: describeError(err) };
+  }
+  return {
+    ...result,
+    started_at,
+    finished_at: new Date().toISOString(),
+    duration_ms: Date.now() - t0,
+  };
+};
+
 export async function checkList() {
   try {
     const rows = asRows(await base44.entities.Team.list());
-    const sentinels = rows
-      .filter((t) => isSentinelName(t.name))
-      .map((t) => ({ id: t.id, name: t.name }));
+    const named = rows.filter((t) => isSentinelName(t.name)).map((t) => ({ id: t.id, name: t.name }));
     return {
-      check: '1. Team.list()',
+      check: '1. Team.list() — read',
       ok: true,
       raw: {
         count: rows.length,
         names: rows.map((t) => t.name),
-        sentinel_count: sentinels.length,
-        sentinels,
+        zzProbe_named_visible: named.length,
+        zzProbe_named_rows: named,
+        note: 'zzProbe_named_visible is a visibility count only, not proof of a sentinel.',
       },
     };
   } catch (err) {
-    return { check: '1. Team.list()', ok: false, raw: describeError(err) };
+    return { check: '1. Team.list() — read', ok: false, raw: describeError(err) };
   }
 }
 
 export async function checkFilter(teamId) {
   if (!teamId) {
-    return { check: '2. Team.filter({ id })', ok: false, raw: { skipped: 'no sentinel id in the link' } };
+    return { check: '2. Team.filter({ id }) — read', ok: false, raw: { skipped: 'no sentinel id in the link' } };
   }
   try {
     const rows = asRows(await base44.entities.Team.filter({ id: teamId }));
     return {
-      check: '2. Team.filter({ id: <sentinel A> })',
+      check: '2. Team.filter({ id: <sentinel A> }) — read',
       ok: true,
       raw: {
         rows_returned: rows.length,
@@ -60,13 +84,13 @@ export async function checkFilter(teamId) {
       },
     };
   } catch (err) {
-    return { check: '2. Team.filter({ id: <sentinel A> })', ok: false, raw: describeError(err) };
+    return { check: '2. Team.filter({ id: <sentinel A> }) — read', ok: false, raw: describeError(err) };
   }
 }
 
 export async function checkUpdate(teamId) {
   if (!teamId) {
-    return { check: '3. direct Team.update()', ok: false, raw: { skipped: 'no sentinel id in the link' } };
+    return { check: '3. Team.update() — write', ok: false, raw: { skipped: 'no sentinel id in the link' } };
   }
   const marker = `probe touch ${new Date().toISOString()}`;
   try {
@@ -106,18 +130,20 @@ export async function checkSubscribe(teamId) {
         type: event?.type ?? null,
         id: event?.id ?? event?.data?.id ?? null,
         name: event?.data?.name ?? null,
+        at: new Date().toISOString(),
       });
     });
   } catch (err) {
     subscribeError = describeError(err);
   }
 
+  const touchStartedAt = new Date().toISOString();
   let touch = null;
   try {
     const res = await base44.functions.invoke('rlsProbeTouch', { team_id: teamId });
-    touch = res?.data ?? res;
+    touch = { ...(res?.data ?? res), requested_at: touchStartedAt };
   } catch (err) {
-    touch = describeError(err);
+    touch = { ...describeError(err), requested_at: touchStartedAt };
   }
 
   await new Promise((resolve) => setTimeout(resolve, 10000));
@@ -142,16 +168,22 @@ export async function checkSubscribe(teamId) {
 
 export async function checkJoin(code) {
   if (!code) {
-    return { check: '5. joinTeamByCode()', ok: false, raw: { skipped: 'no sentinel code in the link' } };
+    return {
+      check: '5. joinTeamByCode() — LAST, changes data',
+      ok: false,
+      raw: { skipped: 'no sentinel code in the link' },
+    };
   }
+  const requestedAt = new Date().toISOString();
   try {
     const res = await base44.functions.invoke('joinTeamByCode', { code });
     const data = res?.data ?? res;
     return {
-      check: '5. joinTeamByCode() with the sentinel A code',
+      check: '5. joinTeamByCode() with the sentinel A code — LAST, changes data',
       ok: true,
       raw: {
         http: 200,
+        requested_at: requestedAt,
         body: {
           ok: data?.ok ?? null,
           joined: data?.joined ?? null,
@@ -163,19 +195,28 @@ export async function checkJoin(code) {
     };
   } catch (err) {
     return {
-      check: '5. joinTeamByCode() with the sentinel A code',
+      check: '5. joinTeamByCode() with the sentinel A code — LAST, changes data',
       ok: false,
-      raw: describeError(err),
+      raw: { ...describeError(err), requested_at: requestedAt },
     };
   }
 }
 
 export async function runAllChecks({ sentinelAId, sentinelCode }) {
+  // Fixed order: reads, then the member-visible write, then the subscription window,
+  // and only then the join — the one check that mutates membership.
+  const steps = [
+    stamped(checkList),
+    stamped(() => checkFilter(sentinelAId)),
+    stamped(() => checkUpdate(sentinelAId)),
+    stamped(() => checkSubscribe(sentinelAId)),
+    stamped(() => checkJoin(sentinelCode)),
+  ];
+
   const results = [];
-  results.push(await checkList());
-  results.push(await checkFilter(sentinelAId));
-  results.push(await checkUpdate(sentinelAId));
-  results.push(await checkSubscribe(sentinelAId));
-  results.push(await checkJoin(sentinelCode));
+  for (const step of steps) {
+    const result = await step();
+    results.push({ ...result, sequence: results.length + 1 });
+  }
   return results;
 }

@@ -81,8 +81,10 @@ export default function RlsProbe() {
       <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
         <h1 className="text-lg font-bold text-amber-900">RLS probe (temporary)</h1>
         <p className="mt-1 text-sm text-amber-800">
-          Read-only against real data. Every check runs as the signed-in user and only ever
-          addresses throwaway <code>zzProbe-*</code> rows. Not linked from anywhere.
+          Every check runs as the signed-in user. Checks 2–5 only address the throwaway team
+          whose exact id came in this link, and the service role refuses any id that setup did
+          not register — a team merely named <code>zzProbe-*</code> is not accepted. The join
+          check runs last because it is the only one that changes data. Not linked from anywhere.
         </p>
         {me && (
           <p className="mt-2 text-xs text-amber-900">
@@ -121,7 +123,8 @@ export default function RlsProbe() {
       <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-gray-900">2. Run the checks</h2>
         <p className="text-xs text-gray-600">
-          Takes about 10 seconds (the subscription check waits out its window).
+          Takes about 10 seconds (the subscription check waits out its window). Order is fixed:
+          read, filter, update, subscribe, then join last. Each result is stamped when it finished.
         </p>
         <Button onClick={handleRun} disabled={busy === "run"}>
           {busy === "run" ? "Running…" : "Run all checks"}
