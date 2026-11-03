@@ -18,6 +18,7 @@ export default function RlsProbe() {
   const [me, setMe] = React.useState(null);
   const [memberEmail, setMemberEmail] = React.useState("");
   const [sentinelAId, setSentinelAId] = React.useState(params.get("a") || "");
+  const [sentinelBId, setSentinelBId] = React.useState(params.get("b") || "");
   const [sentinelCode, setSentinelCode] = React.useState(params.get("code") || "");
   const [setupResult, setSetupResult] = React.useState(null);
   const [results, setResults] = React.useState([]);
@@ -54,6 +55,8 @@ export default function RlsProbe() {
       setSentinelAId(a.id);
       setSentinelCode(a.code || "");
     }
+    const b = (data.sentinels || []).find((s) => s.name === "zzProbe-B");
+    if (b) setSentinelBId(b.id);
   };
 
   const handleTeardown = async () => {
@@ -66,14 +69,16 @@ export default function RlsProbe() {
     setBusy("run");
     setResults([]);
     try {
-      setResults(await runAllChecks({ sentinelAId, sentinelCode }));
+      setResults(await runAllChecks({ sentinelAId, sentinelBId, sentinelCode }));
     } finally {
       setBusy("");
     }
   };
 
   const shareLink = sentinelAId
-    ? `${window.location.origin}/rls-probe?a=${sentinelAId}&code=${sentinelCode}`
+    ? `${window.location.origin}/rls-probe?a=${sentinelAId}&code=${sentinelCode}${
+        sentinelBId ? `&b=${sentinelBId}` : ""
+      }`
     : null;
 
   return (
@@ -81,8 +86,8 @@ export default function RlsProbe() {
       <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
         <h1 className="text-lg font-bold text-amber-900">RLS probe (temporary)</h1>
         <p className="mt-1 text-sm text-amber-800">
-          Every check runs as the signed-in user. Checks 2–5 only address the throwaway team
-          whose exact id came in this link, and the service role refuses any id that setup did
+          Every check runs as the signed-in user. Checks 2–6 only address the throwaway teams
+          whose exact ids came in this link, and the service role refuses any id that setup did
           not register — a team merely named <code>zzProbe-*</code> is not accepted. The join
           check runs last because it is the only one that changes data. Not linked from anywhere.
         </p>
@@ -123,8 +128,9 @@ export default function RlsProbe() {
       <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-gray-900">2. Run the checks</h2>
         <p className="text-xs text-gray-600">
-          Takes about 10 seconds (the subscription check waits out its window). Order is fixed:
-          read, filter, update, subscribe, then join last. Each result is stamped when it finished.
+          Takes about 20 seconds (two subscription windows). Order is fixed: read, filter, update,
+          subscribe on A (caller is not a member), subscribe on B (caller IS a member, must receive
+          at least one event), then join last. Check 5 states its verdict as an event count.
         </p>
         <Button onClick={handleRun} disabled={busy === "run"}>
           {busy === "run" ? "Running…" : "Run all checks"}

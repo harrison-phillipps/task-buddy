@@ -166,10 +166,87 @@ export async function checkSubscribe(teamId) {
   };
 }
 
+/**
+ * Member-side realtime check: the caller IS a member of sentinel B, so a service-role
+ * write to B must reach this socket. Pass is defined by the event count (>=1), never by
+ * the badge colour — the result carries its own text label.
+ */
+export async function checkMemberSubscribe(teamId) {
+  const title = '5. subscribe() on sentinel B as a member — must receive ≥1 event';
+  if (!teamId) {
+    return {
+      check: title,
+      ok: false,
+      label: 'SKIPPED — no b= sentinel in this link',
+      raw: { skipped: 'no member sentinel id in the link (b=…)' },
+    };
+  }
+
+  let memberRead;
+  try {
+    memberRead = asRows(await base44.entities.Team.filter({ id: teamId })).length;
+  } catch (err) {
+    memberRead = describeError(err);
+  }
+
+  const events = [];
+  let unsubscribe = null;
+  let subscribeError = null;
+  try {
+    unsubscribe = base44.entities.Team.subscribe((event) => {
+      events.push({
+        type: event?.type ?? null,
+        id: event?.id ?? event?.data?.id ?? null,
+        name: event?.data?.name ?? null,
+        at: new Date().toISOString(),
+      });
+    });
+  } catch (err) {
+    subscribeError = describeError(err);
+  }
+
+  const touchRequestedAt = new Date().toISOString();
+  let touch = null;
+  try {
+    const res = await base44.functions.invoke('rlsProbeTouch', { team_id: teamId });
+    touch = { ...(res?.data ?? res), requested_at: touchRequestedAt };
+  } catch (err) {
+    touch = { ...describeError(err), requested_at: touchRequestedAt };
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, 10000));
+  try {
+    if (typeof unsubscribe === 'function') unsubscribe();
+  } catch {
+    /* unsubscribe is best-effort; the socket closes on unmount anyway */
+  }
+
+  const forSentinel = events.filter((e) => e.id === teamId).length;
+
+  return {
+    check: title,
+    ok: forSentinel >= 1,
+    label:
+      forSentinel >= 1
+        ? `PASS — ${forSentinel} event${forSentinel === 1 ? '' : 's'} received`
+        : 'FAIL — 0 events received',
+    raw: {
+      window_seconds: 10,
+      events_for_sentinel_b: forSentinel,
+      events_received_total: events.length,
+      events,
+      member_read_rows: memberRead,
+      touch_request: touch,
+      subscribe_error: subscribeError,
+      pass_rule: 'passes only when at least one event for sentinel B arrives inside the window',
+    },
+  };
+}
+
 export async function checkJoin(code) {
   if (!code) {
     return {
-      check: '5. joinTeamByCode() — LAST, changes data',
+      check: '6. joinTeamByCode() — LAST, changes data',
       ok: false,
       raw: { skipped: 'no sentinel code in the link' },
     };
@@ -179,7 +256,7 @@ export async function checkJoin(code) {
     const res = await base44.functions.invoke('joinTeamByCode', { code });
     const data = res?.data ?? res;
     return {
-      check: '5. joinTeamByCode() with the sentinel A code — LAST, changes data',
+      check: '6. joinTeamByCode() with the sentinel A code — LAST, changes data',
       ok: true,
       raw: {
         http: 200,
@@ -195,21 +272,23 @@ export async function checkJoin(code) {
     };
   } catch (err) {
     return {
-      check: '5. joinTeamByCode() with the sentinel A code — LAST, changes data',
+      check: '6. joinTeamByCode() with the sentinel A code — LAST, changes data',
       ok: false,
       raw: { ...describeError(err), requested_at: requestedAt },
     };
   }
 }
 
-export async function runAllChecks({ sentinelAId, sentinelCode }) {
-  // Fixed order: reads, then the member-visible write, then the subscription window,
-  // and only then the join — the one check that mutates membership.
+export async function runAllChecks({ sentinelAId, sentinelBId, sentinelCode }) {
+  // Fixed order: reads, then the non-member write, then the two subscription windows
+  // (A hidden, then B as a member), and only then the join — the one check that
+  // mutates membership.
   const steps = [
     stamped(checkList),
     stamped(() => checkFilter(sentinelAId)),
     stamped(() => checkUpdate(sentinelAId)),
     stamped(() => checkSubscribe(sentinelAId)),
+    stamped(() => checkMemberSubscribe(sentinelBId)),
     stamped(() => checkJoin(sentinelCode)),
   ];
 
