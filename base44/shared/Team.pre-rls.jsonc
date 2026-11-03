@@ -1,0 +1,115 @@
+{
+  "name": "Team",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Team or workspace name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Team description or purpose"
+    },
+    "owner_id": {
+      "type": "string",
+      "description": "User ID of the team owner"
+    },
+    "owner_name": {
+      "type": "string",
+      "description": "Display name of the team owner"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "Email of the team owner"
+    },
+    "members": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string"
+          },
+          "user_name": {
+            "type": "string"
+          },
+          "user_email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "member",
+              "viewer"
+            ],
+            "default": "member"
+          }
+        }
+      },
+      "default": [],
+      "description": "Array of team members with their details"
+    },
+    "member_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Array of user IDs who are team members (for backward compatibility)"
+    },
+    "member_user_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "User IDs of team members. This is the field read rules will anchor on; keep it in step with member_ids while both exist."
+    },
+    "admin_user_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "User IDs of team admins. The owner is not implied - add an owner id here explicitly if owners should also count as admins."
+    },
+    "member_roles": {
+      "type": "object",
+      "description": "Map of user IDs to roles (admin, member, viewer)",
+      "default": {}
+    },
+    "pending_invites": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "invited_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "invited_by": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "People invited by email who had no account yet. Held here as email only: a pending invite is never written into member_ids, member_user_ids or admin_user_ids, and grants no access."
+    },
+    "invite_code": {
+      "type": "string",
+      "description": "Unique code for inviting members"
+    },
+    "color": {
+      "type": "string",
+      "default": "#8B5CF6",
+      "description": "Team color for visual identification"
+    }
+  },
+  "required": [
+    "name",
+    "owner_id"
+  ]
+}
