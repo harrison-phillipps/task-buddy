@@ -315,6 +315,10 @@ export async function syncTaskTeamMembers(admin, teamId, memberUserIds) {
 const fail = (status, error, extra = {}) => ({ status, json: { ok: false, error, ...extra } });
 
 export async function runCreateTeam(ctx, actor, body) {
+  // The caller is authenticated by the entry handler; never proceed without an id,
+  // because owner_id is taken from it.
+  if (!actor?.id) return fail(401, 'Unauthorized');
+
   const name = cleanText(body?.name, 80);
   if (!name) return fail(400, 'name is required');
   const description = cleanText(body?.description, 500);
@@ -335,7 +339,10 @@ export async function runCreateTeam(ctx, actor, body) {
     role: 'admin',
   };
 
-  const created = await ctx.base44.entities.Team.create({
+  // Insert with the service-role client: the Team create rule is admin-only, so a
+  // normal user's own client would be refused. The row is still owned by the
+  // authenticated caller — owner_id and all membership fields come from `actor`.
+  const created = await ctx.admin.entities.Team.create({
     name,
     description,
     color,

@@ -15,6 +15,7 @@ import Home from './pages/Home';
 import GuestSession from './pages/GuestSession';
 import GuestWelcome from './pages/GuestWelcome';
 import ClinicianDashboard from './pages/ClinicianDashboard';
+import RlsProbe from './pages/RlsProbe';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -93,6 +94,8 @@ const AuthenticatedApp = () => {
       <Route path="/GuestSession" element={<GuestSession />} />
       <Route path="/GuestWelcome" element={<GuestWelcome />} />
       <Route path="/ClinicianDashboard" element={<LayoutWrapper currentPageName="ClinicianDashboard"><ClinicianDashboard /></LayoutWrapper>} />
+      {/* TEMPORARY: RLS probe. Link-only, not in pages.config. Remove after sign-off. */}
+      <Route path="/rls-probe" element={<LayoutWrapper currentPageName="RlsProbe"><RlsProbe /></LayoutWrapper>} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}
