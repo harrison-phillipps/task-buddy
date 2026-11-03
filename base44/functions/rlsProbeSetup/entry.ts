@@ -64,6 +64,7 @@ export default async function (req) {
     for (const entry of plan) {
       let team = asRows(await admin.entities.Team.filter({ name: entry.name }))[0] || null;
       let created = false;
+      let addedMember = null;
 
       if (!team) {
         const ids = entry.members.map((m) => m.user_id);
@@ -86,6 +87,26 @@ export default async function (req) {
           pending_invites: [],
         });
         created = true;
+      } else if (
+        entry.name === `${SENTINEL_PREFIX}B` &&
+        secondMember &&
+        !(team.member_user_ids || []).includes(secondMember.user_id)
+      ) {
+        // Only sentinel B takes extra accounts. A must stay owner-only: it is the
+        // "should not be visible" side of the probe.
+        // Additive: an existing sentinel can take on further member accounts, so the same
+        // probe can be run from each of them without recreating anything.
+        const mergedMembers = [...(team.members || []), secondMember];
+        const mergedIds = Array.from(
+          new Set([...(team.member_user_ids || []), ...(team.member_ids || []), secondMember.user_id]),
+        );
+        await admin.entities.Team.update(team.id, {
+          members: mergedMembers,
+          member_ids: mergedIds,
+          member_user_ids: mergedIds,
+          member_roles: { ...(team.member_roles || {}), [secondMember.user_id]: 'member' },
+        });
+        addedMember = secondMember.user_id;
       }
 
       // Register the exact id. Idempotent: create the row only when it is missing.
@@ -102,6 +123,7 @@ export default async function (req) {
         id: team.id,
         code: readBack?.invite_code ?? null,
         created,
+        added_member: addedMember,
         registered: Boolean(row),
         member_user_ids: readBack?.member_user_ids ?? [],
         admin_user_ids: readBack?.admin_user_ids ?? [],
