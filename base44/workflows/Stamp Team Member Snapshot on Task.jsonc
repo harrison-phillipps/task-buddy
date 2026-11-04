@@ -1,0 +1,41 @@
+{
+  "name": "Stamp Team Member Snapshot on Task",
+  "description": "When a team task is created or updated, re-stamps its member snapshot if it differs from the team's current members. Writes nothing when they already match, so it cannot loop.",
+  "trigger": {
+    "condition": "${ .trigger.data.team_id != null }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create",
+        "update"
+      ],
+      "entity_name": "Task"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "stamp_team_member_snapshot_on_task",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "stamp_task": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "stampTaskTeamMembers",
+            "args": {
+              "task_id": "${ .trigger.entity_id }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Stamp member snapshot",
+            "description": "Only writes when the snapshot differs"
+          }
+        }
+      }
+    ]
+  }
+}

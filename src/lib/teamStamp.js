@@ -8,6 +8,14 @@
 
 /** Plain user-id list from a team row, ignoring legacy email entries. */
 export const teamMemberIds = (team) => {
+  if (!Array.isArray(team?.member_user_ids)) {
+    // Fail loudly: a snapshot built from anything other than a full Team row is
+    // empty or partial, and the read rule will hide the row from its members.
+    console.error(
+      '[teamStamp] teamMemberIds received an input with no member_user_ids array — the member snapshot will be incomplete and RLS will hide the row. Pass a full Team row.',
+      team
+    );
+  }
   const primary = Array.isArray(team?.member_user_ids) ? team.member_user_ids : [];
   const source = primary.length ? primary : (Array.isArray(team?.member_ids) ? team.member_ids : []);
   return source.filter((id) => typeof id === 'string' && id.trim() && !id.includes('@'));

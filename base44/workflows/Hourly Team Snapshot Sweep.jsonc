@@ -1,0 +1,47 @@
+{
+  "name": "Hourly Team Snapshot Sweep",
+  "description": "Every hour, re-stamps any team task whose member snapshot is empty or out of step with its team's current members. Writes only where the list differs.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 * * * *",
+      "one_time_date": null,
+      "timezone": "Australia/Adelaide",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "hourly_team_snapshot_sweep",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "sweep_tasks": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "stampTaskTeamMembers",
+            "args": {
+              "sweep": true
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Sweep all team tasks",
+            "description": "Repairs empty or stale snapshots"
+          }
+        }
+      }
+    ]
+  }
+}
