@@ -4,6 +4,7 @@ import { runAllChecks } from "@/lib/rlsProbeChecks";
 import { runAllEntityChecks, ROW_ENTITIES } from "@/lib/rlsProbeEntityChecks";
 import { runTaskChecks, resolveTaskEmails } from "@/lib/rlsProbeTaskChecks";
 import { runSessionChecks } from "@/lib/rlsProbeCollaborativeSessionChecks";
+import { runCalendarEventCheck } from "@/lib/rlsProbeCalendarCheck";
 import ProbeResult from "@/components/rlsprobe/ProbeResult";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -115,6 +116,17 @@ export default function RlsProbe() {
         setResults([...collected]);
       }
       collected.push(...(await runAllEntityChecks(sentinels)));
+      setResults([...collected]);
+      try {
+        collected.push(await runCalendarEventCheck(me || {}));
+      } catch (err) {
+        collected.push({
+          check: "CalendarEvent check",
+          ok: false,
+          label: `FAIL — the CalendarEvent check did not finish: ${err?.message || "unknown error"}`,
+          raw: { error: String(err?.message || err) },
+        });
+      }
       setResults([...collected]);
       if (sentinels?.Task) {
         try {
