@@ -96,6 +96,7 @@ const AuthenticatedApp = () => {
       <Route path="/ClinicianDashboard" element={<LayoutWrapper currentPageName="ClinicianDashboard"><ClinicianDashboard /></LayoutWrapper>} />
       {/* TEMPORARY: RLS probe. Link-only, not in pages.config. Remove after sign-off. */}
       <Route path="/rls-probe" element={<LayoutWrapper currentPageName="RlsProbe"><RlsProbe /></LayoutWrapper>} />
+      <Route path="/RlsProbe" element={<LayoutWrapper currentPageName="RlsProbe"><RlsProbe /></LayoutWrapper>} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}
