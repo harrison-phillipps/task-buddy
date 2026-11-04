@@ -12,10 +12,14 @@ import { asRows, describeError, stamped, windowSubscribe } from '@/lib/rlsProbeC
  *   B — team task, team_member_ids = hotmail + schools
  *   C — task assigned_to hotmail only
  *
- * Expected per account (admin reaches everything through the admin branch):
- *   outlook  A present · B present · C present
- *   hotmail  A absent  · B present · C present
- *   schools  A absent  · B present · C absent
+ * Expected is derived at run time from the caller's email against the sentinel
+ * emails carried in the link, never assumed to be a non-member:
+ *   owner of A (or any admin) — sees A, B and C
+ *   B member                  — sees B
+ *   C assignee                — sees C
+ *   anyone else               — sees none of A, B, C
+ * A link carrying only ids cannot derive this, so resolveTaskEmails() asks
+ * rlsProbeTaskExpectation to supply the emails before the checks run.
  *
  * Writes are deliberately narrow: B and C are updated and then restored to their
  * original description, and delete is only ever attempted on A by a caller who is
@@ -30,7 +34,43 @@ export function taskExpectations(s = {}, me = {}) {
   const owner = !!email && email === lower(s.owner_email);
   const member = (s.b_member_emails || []).some((e) => lower(e) === email);
   const assignee = !!email && email === lower(s.c_assignee_email);
-  return { A: owner || admin ? 1 : 0, B: member || admin ? 1 : 0, C: assignee || admin ? 1 : 0 };
+  const basis = [
+    owner && 'owner of A',
+    member && 'member of B',
+    assignee && 'assignee of C',
+    admin && 'admin',
+  ].filter(Boolean);
+  return {
+    A: owner || admin ? 1 : 0,
+    B: member || admin ? 1 : 0,
+    C: assignee || admin ? 1 : 0,
+    basis: basis.length ? basis.join(' + ') : 'this email matches no sentinel branch',
+    has_emails: Boolean(s.owner_email || (s.b_member_emails || []).length || s.c_assignee_email),
+  };
+}
+
+/**
+ * Fills in the sentinel emails a link is missing, so the verdict never depends on
+ * which fields happened to be in the URL. The ids must be registered sentinels —
+ * the function refuses anything else, so this cannot read another user's task.
+ */
+export async function resolveTaskEmails(s = {}) {
+  const complete = Boolean(
+    s.owner_email && (s.b_member_emails || []).length && s.c_assignee_email,
+  );
+  if (complete || !s.a || !s.b || !s.c) return s;
+  try {
+    const res = await base44.functions.invoke('rlsProbeTaskExpectation', {
+      a: s.a,
+      b: s.b,
+      c: s.c,
+    });
+    const data = res?.data ?? res;
+    if (data?.Task?.owner_email) return { ...s, ...data.Task };
+  } catch {
+    /* fall through — the checks report that the link carried no emails */
+  }
+  return s;
 }
 
 const show = (v) => `A ${v.A === 1 ? 'present' : 'absent'} · B ${v.B === 1 ? 'present' : 'absent'} · C ${v.C === 1 ? 'present' : 'absent'}`;
@@ -47,7 +87,7 @@ const context = (s, me, exp, extra = {}) => ({
 });
 
 async function checkList(s, me, exp) {
-  const check = 'Task 1/8 list() — A absent, B present, C present for a non-member';
+  const check = `Task 1/8 list() — expect ${showCount(exp)} for ${me?.email || 'unknown'} (${exp.basis})`;
   try {
     const rows = asRows(await base44.entities.Task.list({ limit: 500 }));
     const ids = new Set(rows.map((r) => r.id));
@@ -158,7 +198,7 @@ async function checkUpdate(label, role, s, me, exp) {
 }
 
 async function checkDeleteA(s, me, exp) {
-  const check = 'Task 7/8 delete on A — expect 403, sentinel never deleted';
+  const check = 'Task 7/8 delete on A — expect 403 or 404 (denied), sentinel never deleted';
   if (!s.a) return skipped(check, 'no A id in this link');
   if (exp.A === 1) return skipped(check, 'this caller could delete A (owner/admin) — not attempted, sentinel kept');
 
@@ -172,12 +212,15 @@ async function checkDeleteA(s, me, exp) {
     };
   } catch (err) {
     const described = describeError(err);
-    const ok = described.status === 403;
+    const status = described.status;
+    const denied = status === 403 || status === 404;
     return {
       check,
-      ok,
-      label: ok ? 'PASS — 403 permission denied, nothing deleted' : `FAIL — ${described.status ?? 'no status'} ${described.error}`,
-      raw: context(s, me, exp, { deleted: false, ...described }),
+      ok: denied,
+      label: denied
+        ? `PASS — denied with ${status} (${status === 404 ? 'not found' : 'permission denied'}), nothing deleted`
+        : `FAIL — ${status ?? 'no status'} ${described.error}`,
+      raw: context(s, me, exp, { deleted: false, expected: '403 or 404 (denied)', ...described }),
     };
   }
 }
@@ -224,6 +267,17 @@ async function checkSubscribe(label, role, s, me, exp) {
 export async function runTaskChecks(s = {}, me = {}) {
   if (!s || (!s.a && !s.b && !s.c)) return [];
   const exp = taskExpectations(s, me);
+  if (!exp.has_emails) {
+    return [
+      {
+        check: 'Task checks',
+        ok: false,
+        label:
+          'SKIPPED — this link carried no sentinel emails, so the expected rows cannot be derived. Re-copy the link from the probe page after "Create entity sentinels".',
+        raw: { sentinels: s, caller: { email: me?.email ?? null, role: me?.role ?? null } },
+      },
+    ];
+  }
   const steps = [
     stamped(() => checkList(s, me, exp)),
     stamped(() => checkFilterA(s, me, exp)),

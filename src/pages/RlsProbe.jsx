@@ -2,7 +2,7 @@ import React from "react";
 import { base44 } from "@/api/base44Client";
 import { runAllChecks } from "@/lib/rlsProbeChecks";
 import { runAllEntityChecks, ROW_ENTITIES } from "@/lib/rlsProbeEntityChecks";
-import { runTaskChecks } from "@/lib/rlsProbeTaskChecks";
+import { runTaskChecks, resolveTaskEmails } from "@/lib/rlsProbeTaskChecks";
 import ProbeResult from "@/components/rlsprobe/ProbeResult";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,16 +100,24 @@ export default function RlsProbe() {
         setError("The signed-in account is still loading — reload the page and run again.");
         return;
       }
+      let sentinels = rowSentinels;
+      if (sentinels?.Task) {
+        const resolved = await resolveTaskEmails(sentinels.Task);
+        if (resolved !== sentinels.Task) {
+          sentinels = { ...sentinels, Task: resolved };
+          setRowSentinels(sentinels);
+        }
+      }
       const collected = [];
       if (sentinelAId) {
         collected.push(...(await runAllChecks({ sentinelAId, sentinelBId, sentinelCode })));
         setResults([...collected]);
       }
-      collected.push(...(await runAllEntityChecks(rowSentinels)));
+      collected.push(...(await runAllEntityChecks(sentinels)));
       setResults([...collected]);
-      if (rowSentinels?.Task) {
+      if (sentinels?.Task) {
         try {
-          collected.push(...(await runTaskChecks(rowSentinels.Task, me || {})));
+          collected.push(...(await runTaskChecks(sentinels.Task, me || {})));
         } catch (err) {
           collected.push({
             check: "Task checks",
