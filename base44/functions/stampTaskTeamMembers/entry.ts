@@ -6,7 +6,7 @@ import { buildTeamMap, snapshotDiffers } from '../../shared/teamMemberSnapshot.t
  *
  * Two modes:
  *   { task_id } — one task, called from the entity trigger on Task create/update.
- *   { sweep: true } — every team task, called from the hourly sweep.
+ *   { sweep: true } — every team task, called from the six-hourly sweep.
  *
  * Writes ONLY when the stored list differs from the team's current members, so
  * the update it makes cannot trigger itself again: the next run compares equal
@@ -19,6 +19,27 @@ const UPDATE_CHUNK = 400;
 
 const pageItems = (page) => (Array.isArray(page) ? page : (page?.items ?? []));
 const pageHasMore = (page) => !Array.isArray(page) && (page?.has_more === true || Boolean(page?.next_cursor));
+
+const MAX_LISTED_IDS = 25;
+
+/**
+ * Tells the admin account which rows a run repaired and which path caught them.
+ * Resolves the admin at run time (oldest admin = app owner) rather than storing an id.
+ */
+async function notifyAdmin(admin, path, ids) {
+  const [owner] = await admin.entities.User.filter({ role: 'admin' }, 'created_date', 1, 0);
+  if (!owner) return null;
+  const shown = ids.slice(0, MAX_LISTED_IDS).join(', ');
+  const more = ids.length > MAX_LISTED_IDS ? ` (+${ids.length - MAX_LISTED_IDS} more)` : '';
+  const row = await admin.entities.Notification.create({
+    user_id: owner.id,
+    type: 'general',
+    title: `Team snapshot repaired by ${path}`,
+    message: `${ids.length} task${ids.length === 1 ? '' : 's'} re-stamped by the ${path} run. Task ids: ${shown}${more}`,
+    priority: 'low',
+  });
+  return row?.id ?? null;
+}
 
 export default async function (req) {
   try {
@@ -85,6 +106,11 @@ export default async function (req) {
       const chunk = updates.slice(i, i + UPDATE_CHUNK);
       await admin.entities.Task.bulkUpdate(chunk);
       stamped += chunk.length;
+    }
+
+    // Never notify when nothing was written: a no-op run stays silent.
+    if (stamped > 0) {
+      await notifyAdmin(admin, sweep ? 'sweep' : 'trigger', updates.map((u) => u.id));
     }
 
     return Response.json({

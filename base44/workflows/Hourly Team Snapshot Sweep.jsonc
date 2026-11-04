@@ -1,13 +1,13 @@
 {
   "name": "Hourly Team Snapshot Sweep",
-  "description": "Every hour, re-stamps any team task whose member snapshot is empty or out of step with its team's current members. Writes only where the list differs.",
+  "description": "Every six hours, re-stamps any team task whose member snapshot is empty or out of step with its team's current members. Writes only where the list differs.",
   "trigger": {
     "condition": null,
     "config": {
       "trigger_type": "scheduled",
       "events": [],
       "schedule_mode": "recurring",
-      "cron_expression": "0 * * * *",
+      "cron_expression": "0 */6 * * *",
       "one_time_date": null,
       "timezone": "Australia/Adelaide",
       "interval_value": null,
