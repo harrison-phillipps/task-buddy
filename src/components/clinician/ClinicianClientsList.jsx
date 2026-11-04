@@ -84,6 +84,16 @@ export default function ClinicianClientsList({ profile: initialProfile, currentU
   const [addItemModal, setAddItemModal] = useState(null); // { client, type: 'task'|'goal' }
   const [clinicianTasks, setClinicianTasks] = useState({}); // keyed by client_user_id
 
+  // Clinician-added tasks come from a backend function: it verifies the active
+  // clinician link server-side and returns only the items this clinician added,
+  // with minimal fields. The panel never reads a client's tasks directly.
+  const fetchClinicianTasks = async (clientIds) => {
+    const ids = (clientIds || []).filter(Boolean);
+    if (ids.length === 0) return {};
+    const res = await base44.functions.invoke("getClinicianClientTasks", { client_user_ids: ids });
+    return res?.data?.tasks_by_client || {};
+  };
+
   const clients = profile?.clients || [];
 
   const handleGoalSaved = (updatedClients) => {
@@ -125,24 +135,11 @@ export default function ClinicianClientsList({ profile: initialProfile, currentU
 
   // Load clinician-added tasks for all clients to show status
   useEffect(() => {
-    const loadClinicianTasks = async () => {
-      const clients = initialProfile?.clients || [];
-      if (clients.length === 0) return;
-      const results = {};
-      await Promise.all(clients.map(async (client) => {
-        try {
-          const tasks = await base44.entities.Task.filter({
-            created_by_id: client.client_user_id,
-            added_by_clinician: true,
-          });
-          results[client.client_user_id] = tasks;
-        } catch {
-          results[client.client_user_id] = [];
-        }
-      }));
-      setClinicianTasks(results);
-    };
-    loadClinicianTasks();
+    const clientIds = (initialProfile?.clients || []).map((c) => c.client_user_id).filter(Boolean);
+    if (clientIds.length === 0) return;
+    fetchClinicianTasks(clientIds)
+      .then(setClinicianTasks)
+      .catch(() => setClinicianTasks({}));
   }, [initialProfile]);
 
   return (
@@ -290,8 +287,8 @@ export default function ClinicianClientsList({ profile: initialProfile, currentU
           // Refresh clinician tasks for that client
           const client = addItemModal?.client;
           if (!client) return;
-          base44.entities.Task.filter({ created_by_id: client.client_user_id, added_by_clinician: true })
-            .then(tasks => setClinicianTasks(prev => ({ ...prev, [client.client_user_id]: tasks })))
+          fetchClinicianTasks([client.client_user_id])
+            .then((updates) => setClinicianTasks((prev) => ({ ...prev, ...updates })))
             .catch(() => {});
         }}
       />
