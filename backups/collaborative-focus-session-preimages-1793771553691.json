@@ -1,0 +1,126 @@
+{
+  "taken_at": "2026-11-04T05:52:33.691Z",
+  "entity": "CollaborativeFocusSession",
+  "rows": [
+    {
+      "team_id": "693f5602e5a97802369f6ba0",
+      "task_id": "693f6494ca12bbbb6d95e7c7",
+      "task_title": "Clean Kitchen",
+      "host_id": "692cd428acb61bd5d429cddb",
+      "host_name": "harrison.phillipps",
+      "participants": [
+        {
+          "user_id": "692cd428acb61bd5d429cddb",
+          "user_name": "harrison.phillipps",
+          "joined_at": "2026-01-07T23:50:35.326Z"
+        }
+      ],
+      "duration_minutes": 25,
+      "started_at": "2026-01-07T23:50:35.326Z",
+      "ends_at": "2026-01-08T00:15:35.326Z",
+      "status": "active",
+      "is_break": false,
+      "id": "695ef14d9abc8dbb849dc4a8",
+      "created_date": "2026-01-07T23:50:37.750000",
+      "updated_date": "2026-01-07T23:50:37.750000",
+      "created_by_id": "692cd428acb61bd5d429cddb",
+      "is_sample": false
+    },
+    {
+      "team_id": "693f5602e5a97802369f6ba0",
+      "task_id": "693f6494ca12bbbb6d95e7ca",
+      "task_title": "Do Washing",
+      "host_id": "692cd428acb61bd5d429cddb",
+      "host_name": "harrison.phillipps",
+      "participants": [
+        {
+          "user_id": "692cd428acb61bd5d429cddb",
+          "user_name": "harrison.phillipps",
+          "joined_at": "2025-12-15T08:39:34.406Z"
+        }
+      ],
+      "duration_minutes": 25,
+      "started_at": "2025-12-15T08:39:34.406Z",
+      "ends_at": "2025-12-15T09:04:34.406Z",
+      "status": "active",
+      "is_break": false,
+      "id": "69409089148210248aeaae2a",
+      "created_date": "2025-12-15T22:49:45.921000",
+      "updated_date": "2025-12-15T22:49:45.921000",
+      "created_by_id": "692cd428acb61bd5d429cddb",
+      "is_sample": false
+    },
+    {
+      "team_id": "693f5602e5a97802369f6ba0",
+      "task_id": "693f6494ca12bbbb6d95e7d5",
+      "task_title": "Tidy Bedroom",
+      "host_id": "692cd428acb61bd5d429cddb",
+      "host_name": "harrison.phillipps",
+      "participants": [
+        {
+          "user_id": "692cd428acb61bd5d429cddb",
+          "user_name": "harrison.phillipps",
+          "joined_at": "2025-12-15T08:29:55.552Z"
+        }
+      ],
+      "duration_minutes": 25,
+      "started_at": "2025-12-15T08:29:55.552Z",
+      "ends_at": "2025-12-15T08:54:55.552Z",
+      "status": "active",
+      "is_break": false,
+      "id": "69408e47109747a86d3bb96e",
+      "created_date": "2025-12-15T22:40:07.312000",
+      "updated_date": "2025-12-15T22:40:07.312000",
+      "created_by_id": "692cd428acb61bd5d429cddb",
+      "is_sample": false
+    },
+    {
+      "team_id": "693f5602e5a97802369f6ba0",
+      "task_id": "693f6494ca12bbbb6d95e7c7",
+      "task_title": "Clean Kitchen",
+      "host_id": "692cd428acb61bd5d429cddb",
+      "host_name": "harrison.phillipps",
+      "participants": [
+        {
+          "user_id": "692cd428acb61bd5d429cddb",
+          "user_name": "harrison.phillipps",
+          "joined_at": "2025-12-14T14:15:09.890Z"
+        }
+      ],
+      "duration_minutes": 60,
+      "started_at": "2025-12-14T14:15:09.890Z",
+      "ends_at": "2025-12-14T15:15:09.890Z",
+      "status": "active",
+      "is_break": false,
+      "id": "693f6b8db3ad507653733226",
+      "created_date": "2025-12-15T01:59:41.394000",
+      "updated_date": "2025-12-15T01:59:41.394000",
+      "created_by_id": "692cd428acb61bd5d429cddb",
+      "is_sample": false
+    },
+    {
+      "team_id": "693f5602e5a97802369f6ba0",
+      "task_id": "693f6494ca12bbbb6d95e7c7",
+      "task_title": "Clean Kitchen",
+      "host_id": "692cd428acb61bd5d429cddb",
+      "host_name": "harrison.phillipps",
+      "participants": [
+        {
+          "user_id": "692cd428acb61bd5d429cddb",
+          "user_name": "harrison.phillipps",
+          "joined_at": "2025-12-14T14:06:36.988Z"
+        }
+      ],
+      "duration_minutes": 60,
+      "started_at": "2025-12-14T14:06:36.988Z",
+      "ends_at": "2025-12-14T15:06:36.988Z",
+      "status": "active",
+      "is_break": false,
+      "id": "693f698c38b0f7ab366008f1",
+      "created_date": "2025-12-15T01:51:08.678000",
+      "updated_date": "2025-12-15T01:51:08.678000",
+      "created_by_id": "692cd428acb61bd5d429cddb",
+      "is_sample": false
+    }
+  ]
+}
