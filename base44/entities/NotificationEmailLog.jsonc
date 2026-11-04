@@ -1,0 +1,45 @@
+{
+  "name": "NotificationEmailLog",
+  "type": "object",
+  "properties": {
+    "sender_user_id": {
+      "type": "string",
+      "description": "User on whose behalf the email was sent (the caller of notifyTeammate)"
+    },
+    "recipient_user_id": {
+      "type": "string",
+      "description": "User the email went to"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the send was recorded. notifyTeammate counts the last hour of rows for one sender-recipient pair to enforce its 10-per-hour limit."
+    }
+  },
+  "required": [
+    "sender_user_id",
+    "recipient_user_id"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

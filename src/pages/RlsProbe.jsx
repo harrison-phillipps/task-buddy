@@ -5,6 +5,7 @@ import { runAllEntityChecks, ROW_ENTITIES } from "@/lib/rlsProbeEntityChecks";
 import { runTaskChecks, resolveTaskEmails } from "@/lib/rlsProbeTaskChecks";
 import { runSessionChecks } from "@/lib/rlsProbeCollaborativeSessionChecks";
 import { runCalendarEventCheck } from "@/lib/rlsProbeCalendarCheck";
+import { runPreferencesCheck } from "@/lib/rlsProbePreferencesCheck";
 import ProbeResult from "@/components/rlsprobe/ProbeResult";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -116,6 +117,17 @@ export default function RlsProbe() {
         setResults([...collected]);
       }
       collected.push(...(await runAllEntityChecks(sentinels)));
+      setResults([...collected]);
+      try {
+        collected.push(await runPreferencesCheck(me || {}));
+      } catch (err) {
+        collected.push({
+          check: "NotificationPreferences check",
+          ok: false,
+          label: `FAIL — the NotificationPreferences check did not finish: ${err?.message || "unknown error"}`,
+          raw: { error: String(err?.message || err) },
+        });
+      }
       setResults([...collected]);
       try {
         collected.push(await runCalendarEventCheck(me || {}));

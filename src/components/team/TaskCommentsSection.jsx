@@ -132,7 +132,7 @@ export default function TaskCommentsSection({ task, currentUser, team, teamMembe
     addCommentMutation.mutate({
       task_id: taskId,
       team_id: task?.team_id || null,
-      team_member_ids: task?.team_id ? teamMemberIds(team) : [],
+      member_user_ids: task?.team_id ? teamMemberIds(team) : [],
       user_id: currentUser.id,
       user_name: currentUser.full_name || currentUser.email,
       content: newComment,

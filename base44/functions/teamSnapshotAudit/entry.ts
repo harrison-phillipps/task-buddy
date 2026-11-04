@@ -16,6 +16,8 @@ const ENTITIES = [
   { entity: 'TeamMessage', field: 'member_user_ids' },
   { entity: 'CollaborativeFocusSession', field: 'member_user_ids' },
   { entity: 'TeamTemplate', field: 'member_user_ids' },
+  { entity: 'TaskComment', field: 'member_user_ids' },
+  { entity: 'TaskActivity', field: 'member_user_ids' },
 ];
 
 const MAX_PAGES = 40;
