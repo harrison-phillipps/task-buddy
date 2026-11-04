@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { teamMemberIds } from "@/lib/teamStamp";
 import VirtualCompanion from "../components/VirtualCompanion";
 import { Badge } from "@/components/ui/badge";
 import { POINTS_SYSTEM } from "@/components/achievementsData";
@@ -70,6 +71,10 @@ export default function BrainDump() {
     },
     enabled: !!currentUser
   });
+
+  // A task written for a team must carry the team's member snapshot, or the read
+  // rule hides it from everyone but its author.
+  const selectedTeamRow = teams.find((t) => t.id === selectedTeam) || null;
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -355,7 +360,8 @@ Rules:
       is_recurring: t.is_recurring || false,
       recurrence_pattern: t.recurrence_pattern || "none",
       task_priority: t.task_priority || null,
-      team_id: selectedTeam && selectedTeam !== "__personal__" ? selectedTeam : undefined
+      team_id: selectedTeamRow ? selectedTeamRow.id : undefined,
+      team_member_ids: selectedTeamRow ? teamMemberIds(selectedTeamRow) : undefined
     }));
 
     // Same free-tier rule as Save All: save what fits, prompt for the rest.
@@ -417,7 +423,8 @@ Rules:
       is_recurring: task.is_recurring || false,
       recurrence_pattern: task.recurrence_pattern || "none",
       task_priority: task.task_priority || null,
-      team_id: selectedTeam && selectedTeam !== "__personal__" ? selectedTeam : undefined
+      team_id: selectedTeamRow ? selectedTeamRow.id : undefined,
+      team_member_ids: selectedTeamRow ? teamMemberIds(selectedTeamRow) : undefined
     }));
 
     // Free-tier room, measured across all my tasks (created, owned, assigned).

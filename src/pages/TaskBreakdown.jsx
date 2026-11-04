@@ -13,6 +13,7 @@ import ExportEasyStepsButton from "@/components/tasks/ExportEasySteps";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { teamMemberIds } from "@/lib/teamStamp";
 import VirtualCompanion from "../components/VirtualCompanion";
 import { getPersonalizedMessage } from "../components/companionUtils";
 import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
@@ -64,6 +65,9 @@ export default function TaskBreakdown() {
     },
     enabled: !!currentUser
   });
+
+  // A task saved to a team needs the team's member snapshot alongside team_id.
+  const currentTeam = teams.find((t) => t.id === selectedTeam) || null;
 
   // Fetch current user and progress
   useEffect(() => {
@@ -183,7 +187,8 @@ export default function TaskBreakdown() {
       subtasks: editingSubtasks,
       estimated_minutes: totalTime,
       status: "not_started",
-      team_id: selectedTeam || undefined
+      team_id: currentTeam ? currentTeam.id : undefined,
+      team_member_ids: currentTeam ? teamMemberIds(currentTeam) : undefined
     };
 
     // Check for duplicates

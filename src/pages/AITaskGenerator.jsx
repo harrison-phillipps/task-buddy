@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import VirtualCompanion from "../components/VirtualCompanion";
 import { getPersonalizedMessage } from "@/components/companionUtils";
+import { teamMemberIds } from "@/lib/teamStamp";
 
 export default function AITaskGenerator() {
   const navigate = useNavigate();
@@ -52,6 +53,9 @@ export default function AITaskGenerator() {
     mutationFn: async (tasks) => {
       // Create tasks in order, tracking IDs for dependencies
       const taskIdMap = {};
+      // Team tasks carry the member snapshot, or the read rule hides them from
+      // everyone but their author.
+      const teamRow = teamId ? ((await base44.entities.Team.filter({ id: teamId }))[0] || null) : null;
       
       for (const task of tasks) {
         const taskData = {
@@ -66,7 +70,8 @@ export default function AITaskGenerator() {
           subtasks: task.subtasks,
           blocked_by: [],
           status: "not_started",
-          team_id: teamId
+          team_id: teamId,
+          team_member_ids: teamRow ? teamMemberIds(teamRow) : undefined
         };
 
         // Map dependency references to actual IDs
