@@ -173,8 +173,9 @@ export default function RlsProbe() {
       <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-gray-900">2. Entity sentinels (admin only)</h2>
         <p className="text-xs text-gray-600">
-          Two rows each in {ROW_ENTITIES.join(", ")}. A is owner-only; B adds the extra accounts
-          below. Each row carries member_user_ids and user_id, and is registered by exact id.
+          Two rows each in {ROW_ENTITIES.join(", ")}. ActiveSession is owner-only (user_id): a
+          non-owner must see neither row and get no events. TeamNotification and TeamMessage are
+          member-scoped (member_user_ids): A hidden, B visible to the accounts below.
         </p>
         <Input
           placeholder="extra member emails, comma separated (hotmail, schools…)"

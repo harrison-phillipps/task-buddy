@@ -17,6 +17,21 @@ import { asRows, describeError, stamped, windowSubscribe } from '@/lib/rlsProbeC
 
 export const ROW_ENTITIES = ['ActiveSession', 'TeamNotification', 'TeamMessage'];
 
+/**
+ * What each entity's rules scope on:
+ *  - owner:   data.user_id (+ admin) — ActiveSession. A non-owner sees NEITHER sentinel
+ *             and receives no events for either one; the owner and an admin see both.
+ *  - members: member_user_ids snapshot — TeamNotification, TeamMessage. A must stay
+ *             hidden from a non-member, B must be visible to the accounts it lists.
+ */
+const SCOPE_MODEL = {
+  ActiveSession: 'owner',
+  TeamNotification: 'members',
+  TeamMessage: 'members',
+};
+
+const isOwnerScoped = (name) => SCOPE_MODEL[name] === 'owner';
+
 /** The harmless field a probe write touches on each entity. */
 const TOUCH_FIELD = {
   ActiveSession: 'task_title',
@@ -36,7 +51,8 @@ async function checkList(name, aId, bId) {
     const ids = new Set(rows.map((r) => r.id));
     const aSeen = ids.has(aId) ? 1 : 0;
     const bSeen = ids.has(bId) ? 1 : 0;
-    const ok = aSeen === 0 && bSeen === 1;
+    const ownerScoped = isOwnerScoped(name);
+    const ok = ownerScoped ? aSeen === 0 && bSeen === 0 : aSeen === 0 && bSeen === 1;
     return {
       check,
       ok,
@@ -45,7 +61,10 @@ async function checkList(name, aId, bId) {
         rows_returned: rows.length,
         sentinel_a_present: aSeen,
         sentinel_b_present: bSeen,
-        note: 'pass needs A absent and B present',
+        scope_model: SCOPE_MODEL[name],
+        note: ownerScoped
+          ? 'owner-only: pass needs A and B BOTH absent for a non-owner; the owner and an admin see both'
+          : 'pass needs A absent and B present',
       },
     };
   } catch (err) {
@@ -105,10 +124,14 @@ async function checkUpdateA(name, aId) {
 }
 
 async function checkSubscribe(name, role, recordId) {
-  const expectMember = role === 'B';
+  const ownerScoped = isOwnerScoped(name);
+  const expectMember = !ownerScoped && role === 'B';
+  const step = role === 'B' ? '5/5' : '4/5';
   const check = expectMember
-    ? `${name} 5/5 subscribe 10s — caller IS a member, expect ≥1 event`
-    : `${name} 4/5 subscribe 10s — caller is NOT a member, expect 0 events`;
+    ? `${name} ${step} subscribe 10s on B — caller IS a member, expect ≥1 event`
+    : `${name} ${step} subscribe 10s on ${role} — expect 0 events${
+        ownerScoped ? ' (owner-only model)' : ''
+      }`;
   if (!recordId) return skipped(check, `no ${role} id for this entity`);
 
   const socket = await windowSubscribe(entityOf(name), 10000);
@@ -139,6 +162,8 @@ async function checkSubscribe(name, role, recordId) {
       events: socket.events,
       sentinel_role: role,
       sentinel_id: recordId,
+      scope_model: SCOPE_MODEL[name],
+      expectation: expectMember ? 'at least 1 event' : '0 events',
       touch_request: touch,
       subscribe_error: socket.subscribeError,
     },

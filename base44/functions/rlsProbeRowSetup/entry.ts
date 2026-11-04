@@ -19,12 +19,15 @@ const asRows = (page) => (Array.isArray(page) ? page : (page?.items || []));
 
 const displayName = (u) => String(u?.display_name || u?.full_name || u?.email || '').slice(0, 120);
 
+/**
+ * Writes only the fields each entity's own schema carries today: ActiveSession is
+ * owner-scoped (user_id), TeamNotification and TeamMessage are member-scoped
+ * (member_user_ids). TeamMessage also requires a user_id for its sender.
+ */
 const createRow = (admin, entityName, owner, memberIds, tag) => {
-  const common = { user_id: owner.id, member_user_ids: memberIds };
-
   if (entityName === 'ActiveSession') {
     return admin.entities.ActiveSession.create({
-      ...common,
+      user_id: owner.id,
       task_id: `zzProbe-task-${tag}`,
       task_title: `RLS probe ${tag} — safe to delete`,
       is_active: false,
@@ -37,7 +40,7 @@ const createRow = (admin, entityName, owner, memberIds, tag) => {
 
   if (entityName === 'TeamNotification') {
     return admin.entities.TeamNotification.create({
-      ...common,
+      member_user_ids: memberIds,
       team_id: PROBE_TEAM_ID,
       type: 'general',
       title: `RLS probe ${tag} — safe to delete`,
@@ -47,7 +50,8 @@ const createRow = (admin, entityName, owner, memberIds, tag) => {
   }
 
   return admin.entities.TeamMessage.create({
-    ...common,
+    user_id: owner.id,
+    member_user_ids: memberIds,
     team_id: PROBE_TEAM_ID,
     user_name: displayName(owner),
     content: `RLS probe ${tag} — safe to delete`,
