@@ -1,5 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
-import { buildTeamMap, snapshotDiffers } from '../../shared/teamMemberSnapshot.ts';
+import {
+  buildTeamMap,
+  snapshotDiffers,
+  taskCreatorId,
+  resolveTaskTeamStamp,
+} from '../../shared/teamMemberSnapshot.ts';
 
 /**
  * Keeps every team-scoped row's member snapshot in step with its team:
@@ -47,6 +52,50 @@ async function pruneEmailLog(admin) {
 }
 
 /**
+ * creator id -> "is that account an app admin?". Cached per run: a sweep touches
+ * many rows written by the same few people.
+ */
+function makeAdminLookup(admin) {
+  const cache = new Map();
+  return async (userId) => {
+    if (cache.has(userId)) return cache.get(userId);
+    const [found] = await admin.entities.User.filter({ id: userId });
+    const isAdmin = found?.role === 'admin';
+    cache.set(userId, isAdmin);
+    return isAdmin;
+  };
+}
+
+const REJECTED_TITLE = "Task addressed to a team its creator isn't in";
+const MAX_REJECTED_NOTICES = 25;
+
+/**
+ * One notice per task that points at a team its creator has nothing to do with,
+ * naming the task id and the team id. Silent when there is nothing to report.
+ */
+async function notifyRejectedTasks(admin, rejected, path) {
+  if (!Array.isArray(rejected) || rejected.length === 0) return 0;
+  const [owner] = await admin.entities.User.filter({ role: 'admin' }, 'created_date', 1, 0);
+  if (!owner) return 0;
+  const rows = rejected.slice(0, MAX_REJECTED_NOTICES).map((r) => {
+    const why = r.reason === 'missing_creator'
+      ? 'its creator is a service identity with no owner_user_id'
+      : 'its creator is not a member of that team';
+    return {
+      user_id: owner.id,
+      type: 'general',
+      title: REJECTED_TITLE,
+      message: `Task ${r.task_id} is addressed to team ${r.team_id}, but ${why}. team_member_ids was cleared by the ${path} run, so that team's members are not given access to it.`,
+      priority: 'high',
+      related_id: r.task_id,
+      related_type: 'task',
+    };
+  });
+  await admin.entities.Notification.bulkCreate(rows);
+  return rows.length;
+}
+
+/**
  * Tells the admin account which rows a run repaired and which path caught them.
  * Resolves the admin at run time (oldest admin = app owner) rather than storing an id.
  */
@@ -69,7 +118,7 @@ async function notifyAdmin(admin, path, repaired, breakdown) {
  * Re-stamps one entity. Returns counts plus the ids it repaired.
  * Pass `presetRows` for the single-record path; omit it to scan the whole entity.
  */
-async function sweepEntity(admin, target, teamMap, presetRows) {
+async function sweepEntity(admin, target, teamMap, presetRows, ctx) {
   const rows = Array.isArray(presetRows) ? [...presetRows] : [];
   if (!Array.isArray(presetRows)) {
     let cursor;
@@ -87,9 +136,11 @@ async function sweepEntity(admin, target, teamMap, presetRows) {
   }
 
   const updates = [];
+  const rejected = [];
   let skippedNoTeam = 0;
   let skippedUnknownTeam = 0;
   let alreadyOk = 0;
+  let clearedNotMember = 0;
 
   for (const row of rows) {
     if (!row?.team_id) {
@@ -102,6 +153,30 @@ async function sweepEntity(admin, target, teamMap, presetRows) {
       skippedUnknownTeam += 1;
       continue;
     }
+
+    // A team task may only carry the team's members when the person it is
+    // addressed to (creator, or owner_user_id for a service identity) belongs to
+    // the team or is an admin. Otherwise the snapshot is cleared instead of
+    // stamped, so a stray team_id cannot share the task with strangers.
+    if (target.entity === 'Task') {
+      const creatorId = taskCreatorId(row);
+      const creatorIsAdmin = creatorId && !current.includes(creatorId)
+        ? await ctx.isCreatorAdmin(creatorId)
+        : false;
+      const decision = resolveTaskTeamStamp({ task: row, members: current, creatorIsAdmin });
+
+      if (!decision.stamp) {
+        // Only write — and only notify — when there is something to clear: once
+        // the snapshot is [], later runs compare equal and stay silent.
+        if (snapshotDiffers(row[target.field], [])) {
+          updates.push({ id: row.id, [target.field]: [] });
+          rejected.push({ task_id: row.id, team_id: row.team_id, reason: decision.reason });
+          clearedNotMember += 1;
+        }
+        continue;
+      }
+    }
+
     if (!snapshotDiffers(row[target.field], current)) {
       alreadyOk += 1;
       continue;
@@ -122,7 +197,9 @@ async function sweepEntity(admin, target, teamMap, presetRows) {
     already_ok: alreadyOk,
     skipped_no_team: skippedNoTeam,
     skipped_unknown_team: skippedUnknownTeam,
+    cleared_not_member: clearedNotMember,
     repaired_ids: updates.map((u) => u.id),
+    rejected,
   };
 }
 
@@ -142,15 +219,18 @@ export default async function (req) {
 
     const admin = base44.asServiceRole;
     const teamMap = buildTeamMap(pageItems(await admin.entities.Team.list({ limit: 500 })));
+    const ctx = { isCreatorAdmin: makeAdminLookup(admin) };
 
     if (sweep) {
       const perEntity = {};
       const repaired = [];
+      const rejected = [];
       let scanned = 0;
       let stamped = 0;
+      let cleared = 0;
 
       for (const target of TARGETS) {
-        const outcome = await sweepEntity(admin, target, teamMap);
+        const outcome = await sweepEntity(admin, target, teamMap, undefined, ctx);
         perEntity[target.entity] = {
           snapshot_field: target.field,
           scanned: outcome.scanned,
@@ -158,9 +238,12 @@ export default async function (req) {
           already_ok: outcome.already_ok,
           skipped_no_team: outcome.skipped_no_team,
           skipped_unknown_team: outcome.skipped_unknown_team,
+          cleared_not_member: outcome.cleared_not_member,
         };
         scanned += outcome.scanned;
         stamped += outcome.stamped;
+        cleared += outcome.cleared_not_member;
+        rejected.push(...outcome.rejected);
         repaired.push(...outcome.repaired_ids.map((id) => `${target.entity}:${id}`));
       }
 
@@ -168,15 +251,19 @@ export default async function (req) {
       const emailLogPruned = await pruneEmailLog(admin);
 
       // Never notify when nothing was written: a no-op run stays silent.
-      if (stamped > 0) {
-        const breakdown = TARGETS.map((t) => `${t.entity} ${perEntity[t.entity].stamped}`).join(' · ');
+      if (stamped > 0 || cleared > 0) {
+        const breakdown = TARGETS.map((t) => `${t.entity} ${perEntity[t.entity].stamped}`).join(' · ')
+          + (cleared > 0 ? ` · cleared ${cleared}` : '');
         await notifyAdmin(admin, 'sweep', repaired, breakdown);
       }
+      const rejectedNotified = await notifyRejectedTasks(admin, rejected, 'sweep');
 
       return Response.json({
         mode: 'sweep',
         scanned,
         stamped,
+        cleared_not_member: cleared,
+        rejected_notified: rejectedNotified,
         entities: perEntity,
         email_log_pruned: emailLogPruned,
       });
@@ -186,15 +273,21 @@ export default async function (req) {
     const task = await admin.entities.Task.get(taskId).catch((e) => (e.status === 404 ? null : Promise.reject(e)));
     if (!task) return Response.json({ error: 'Task not found' }, { status: 404 });
 
-    const outcome = await sweepEntity(admin, TARGETS[0], teamMap, [task]);
-    if (outcome.stamped > 0) {
-      await notifyAdmin(admin, 'trigger', outcome.repaired_ids.map((id) => `Task:${id}`), 'Task 1');
+    const outcome = await sweepEntity(admin, TARGETS[0], teamMap, [task], ctx);
+    if (outcome.stamped > 0 || outcome.cleared_not_member > 0) {
+      const breakdown = outcome.cleared_not_member > 0
+        ? `Task ${outcome.stamped} · cleared ${outcome.cleared_not_member}`
+        : 'Task 1';
+      await notifyAdmin(admin, 'trigger', outcome.repaired_ids.map((id) => `Task:${id}`), breakdown);
     }
+    const rejectedNotified = await notifyRejectedTasks(admin, outcome.rejected, 'trigger');
 
     return Response.json({
       mode: 'single',
       scanned: 1,
       stamped: outcome.stamped,
+      cleared_not_member: outcome.cleared_not_member,
+      rejected_notified: rejectedNotified,
       already_ok: outcome.already_ok,
       skipped_no_team: outcome.skipped_no_team,
       skipped_unknown_team: outcome.skipped_unknown_team,

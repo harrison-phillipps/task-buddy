@@ -70,7 +70,8 @@ export default function AITaskGenerator() {
           subtasks: task.subtasks,
           blocked_by: [],
           status: "not_started",
-          team_id: teamId,
+          // Only when the team lookup above actually found the team.
+          team_id: teamRow ? teamId : undefined,
           team_member_ids: teamRow ? teamMemberIds(teamRow) : undefined
         };
 

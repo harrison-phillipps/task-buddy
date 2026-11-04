@@ -42,3 +42,42 @@ export function snapshotDiffers(stored, current) {
   if (have.length !== current.length) return true;
   return have.some((id, index) => id !== current[index]);
 }
+
+/** Service identities (webhooks, workflows, recurring spawns) are not users. */
+const SERVICE_PREFIX = 'service_';
+
+/**
+ * The user a team task is really addressed to.
+ *
+ * Normally the creator. A task written by a service identity has no usable
+ * created_by_id, so its owner_user_id stands in. Returns null when there is no
+ * one to check at all — a service-created task with no owner.
+ */
+export function taskCreatorId(task) {
+  const created = typeof task?.created_by_id === 'string' ? task.created_by_id.trim() : '';
+  if (created.startsWith(SERVICE_PREFIX)) {
+    const owner = typeof task?.owner_user_id === 'string' ? task.owner_user_id.trim() : '';
+    return owner.length > 0 ? owner : null;
+  }
+  return created.length > 0 ? created : null;
+}
+
+/**
+ * May this team task carry its team's member snapshot?
+ *
+ * Yes when the user it is addressed to (see taskCreatorId) is on the team, or is
+ * an app admin. No otherwise: a task pointing at a team its creator has nothing
+ * to do with must not hand that team's members access to it.
+ *
+ * `members` is the team's current member ids (teamMembers(team)); `creatorIsAdmin`
+ * is the answer to "is that account an app admin?", looked up by the caller so
+ * this stays a pure decision.
+ */
+export function resolveTaskTeamStamp({ task, members, creatorIsAdmin = false }) {
+  const creator_id = taskCreatorId(task);
+  if (!creator_id) return { stamp: false, reason: 'missing_creator', creator_id: null };
+  const team = normalizeMemberIds(members);
+  if (team.includes(creator_id)) return { stamp: true, reason: 'member', creator_id };
+  if (creatorIsAdmin) return { stamp: true, reason: 'admin', creator_id };
+  return { stamp: false, reason: 'not_member', creator_id };
+}
