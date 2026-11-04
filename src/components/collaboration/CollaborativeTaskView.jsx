@@ -42,6 +42,7 @@ export default function CollaborativeTaskView({ task, open, onOpenChange, curren
       await base44.entities.TaskActivity.create({
         task_id: task.id,
         team_id: task.team_id,
+        member_user_ids: task.team_id ? teamMemberIds(team) : [],
         user_id: currentUser.id,
         user_name: currentUser.display_name || currentUser.full_name,
         action_type: "updated",
@@ -62,6 +63,7 @@ export default function CollaborativeTaskView({ task, open, onOpenChange, curren
     await base44.entities.TaskActivity.create({
       task_id: task.id,
       team_id: task.team_id,
+      member_user_ids: task.team_id ? teamMemberIds(team) : [],
       user_id: currentUser.id,
       user_name: currentUser.display_name || currentUser.full_name,
       action_type: "status_changed",
@@ -246,6 +248,7 @@ export default function CollaborativeTaskView({ task, open, onOpenChange, curren
                 await base44.entities.TaskActivity.create({
                   task_id: task.id,
                   team_id: task.team_id,
+                  member_user_ids: task.team_id ? teamMemberIds(team) : [],
                   user_id: currentUser.id,
                   user_name: currentUser.display_name || currentUser.full_name,
                   action_type: "assigned",
@@ -264,6 +267,7 @@ export default function CollaborativeTaskView({ task, open, onOpenChange, curren
                 await base44.entities.TaskActivity.create({
                   task_id: task.id,
                   team_id: task.team_id,
+                  member_user_ids: task.team_id ? teamMemberIds(team) : [],
                   user_id: currentUser.id,
                   user_name: currentUser.display_name || currentUser.full_name,
                   action_type: "commented",

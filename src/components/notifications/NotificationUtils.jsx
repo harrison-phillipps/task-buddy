@@ -12,6 +12,26 @@ export async function createNotification({
   actionUrl = null,
   sendEmail = false
 }) {
+  // A notification addressed to someone else is delivered by the server, which
+  // checks the caller may notify that person and applies their preferences
+  // without exposing them to this page.
+  const me = await base44.auth.me().catch(() => null);
+  if (me && me.id !== userId) {
+    const res = await base44.functions.invoke('notifyTeammate', {
+      recipient_user_id: userId,
+      type,
+      title,
+      message,
+      related_id: relatedId,
+      related_type: relatedType,
+      priority,
+      action_url: actionUrl,
+      send_email: sendEmail,
+      task_id: relatedType === 'task' ? relatedId : null,
+    });
+    return res.data;
+  }
+
   try {
     // Create in-app notification
     const notification = await base44.entities.Notification.create({

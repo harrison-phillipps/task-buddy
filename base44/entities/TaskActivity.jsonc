@@ -10,6 +10,13 @@
       "type": "string",
       "description": "Team ID for filtering"
     },
+    "member_user_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Snapshot of the owning team's member user ids at write time, stamped by the four TaskActivity creates in CollaborativeTaskView. Lets a team activity feed be scoped to its members without a join to Team. Empty on personal-task activity."
+    },
     "user_id": {
       "type": "string",
       "description": "User who performed the action"
@@ -44,5 +51,38 @@
     "task_id",
     "user_id",
     "action_type"
-  ]
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "data.member_user_ids": "{{user.id}}"
+        },
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }

@@ -10,6 +10,13 @@
       "type": "string",
       "description": "Team the commented task belongs to, copied from the task at write time so a read rule can scope comments without joining to Task. Null for personal-task comments."
     },
+    "team_member_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Snapshot of the commented task's team member user ids at write time, stamped by TaskCommentsSection. A read rule can only see fields on the row, so this is what lets a team comment be scoped to its team's members without a join to Team. Empty on personal-task comments."
+    },
     "user_id": {
       "type": "string",
       "description": "ID of the user who wrote the comment"
@@ -35,5 +42,52 @@
     "task_id",
     "user_id",
     "content"
-  ]
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "data.team_member_ids": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
 }
