@@ -187,8 +187,10 @@ Deno.serve(async (req) => {
       is_recurring: false,
       team_id: template.team_id || undefined,
       team_member_ids: template.team_id ? (teamMemberIds || []) : undefined,
+      assigned_to: template.assigned_to || undefined,
+      assigned_to_name: template.assigned_to_name || undefined,
       goal_id: template.goal_id || undefined,
-      owner_user_id: template.created_by_id,
+      owner_user_id: template.owner_user_id || template.created_by_id,
     };
 
     const created = await base44.asServiceRole.entities.Task.create(nextInstance);
