@@ -14,12 +14,11 @@ import { asRows } from '../../shared/entityResults.ts';
  * must be on that profile with an active link. Anything else is skipped, not
  * returned.
  *
- * Attribution: Task carries no clinician id, so "added by this clinician" is the
- * addClinicianItem marker — added_by_clinician plus the display name it stamped.
- * The name match is the only attribution that exists today; adding an
- * added_by_clinician_id field to Task and writing it in addClinicianItem would
- * make this exact. Until then a same-named clinician could match another's rows
- * for a client they are both linked to.
+ * Attribution: added_by_clinician_id is the authority when the row carries it
+ * (addClinicianItem sets it on every new task). Rows created before that field
+ * existed have no id, so they fall back to the display name the old code stamped
+ * — for those, a same-named clinician could match another's rows for a client
+ * they are both linked to.
  */
 
 const MAX_CLIENTS = 25;
@@ -86,7 +85,11 @@ Deno.serve(async (req) => {
       );
 
       tasksByClient[clientId] = rows
-        .filter((t) => String(t.added_by_clinician_name || '').trim().toLowerCase() === clinicianName)
+        .filter((t) =>
+          t.added_by_clinician_id
+            ? t.added_by_clinician_id === user.id
+            : String(t.added_by_clinician_name || '').trim().toLowerCase() === clinicianName,
+        )
         .map(MINIMAL_FIELDS);
     }
 

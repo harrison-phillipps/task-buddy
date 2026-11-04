@@ -49,6 +49,7 @@ Deno.serve(async (req) => {
         assigned_to: client_user_id,
         added_by_clinician: true,
         added_by_clinician_name: clinician_name,
+        added_by_clinician_id: user.id,
       });
     } else {
       record = await base44.asServiceRole.entities.Goal.create({

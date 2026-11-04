@@ -262,6 +262,10 @@
       "type": "string",
       "description": "Display name of the clinician who added this task"
     },
+    "added_by_clinician_id": {
+      "type": "string",
+      "description": "User ID of the clinician who added this task. The authoritative attribution: added_by_clinician_name is display text and can collide. Absent on tasks created before this field existed; those fall back to the name."
+    },
     "owner_user_id": {
       "type": "string",
       "description": "Real owning user ID for recurring instances where created_by_id is stamped as service-role"
@@ -269,5 +273,67 @@
   },
   "required": [
     "title"
-  ]
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "data.assigned_to": "{{user.id}}"
+        },
+        {
+          "data.team_member_ids": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "data.assigned_to": "{{user.id}}"
+        },
+        {
+          "data.team_member_ids": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
 }
