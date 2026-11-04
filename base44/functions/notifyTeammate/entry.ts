@@ -135,9 +135,10 @@ export default async function (req) {
     const taskTitle = typeof task?.title === 'string' ? task.title.trim() : '';
     const intendsEmail = wantsEmail && emailEnabled && taskTitle.length > 0;
 
-    if (intendsEmail && (await emailsSentThisHour(admin, caller.id, recipientId)) >= EMAIL_HOURLY_LIMIT) {
-      return Response.json({ delivered: false, emailed: false, limited: true });
-    }
+    // At the hourly cap the in-app notification still goes out — only the email
+    // is dropped, so the recipient is never left uninformed.
+    const limited =
+      intendsEmail && (await emailsSentThisHour(admin, caller.id, recipientId)) >= EMAIL_HOURLY_LIMIT;
 
     await admin.entities.Notification.create({
       user_id: recipientId,
@@ -153,7 +154,7 @@ export default async function (req) {
     });
 
     let emailed = false;
-    if (intendsEmail) {
+    if (intendsEmail && !limited) {
       const recipients = asRows(await admin.entities.User.filter({ id: recipientId }));
       const address = recipients[0]?.email;
       if (address) {
@@ -168,7 +169,7 @@ export default async function (req) {
       }
     }
 
-    return Response.json({ delivered: true, emailed });
+    return Response.json(limited ? { delivered: true, emailed, limited: true } : { delivered: true, emailed });
   } catch (error) {
     console.log('notifyTeammate failed:', error?.message);
     return Response.json({ error: error.message }, { status: 500 });

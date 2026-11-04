@@ -32,6 +32,21 @@ const pageHasMore = (page) => !Array.isArray(page) && (page?.has_more === true |
 const MAX_LISTED_IDS = 25;
 
 /**
+ * notifyTeammate only ever counts the last rolling hour of NotificationEmailLog
+ * rows, so anything older than a day is dead weight. Deleted by the six-hourly
+ * sweep; a 24-hour cut-off leaves three hours of slack if a run is missed.
+ */
+const EMAIL_LOG_RETENTION_MS = 24 * 60 * 60 * 1000;
+
+async function pruneEmailLog(admin) {
+  const stale = { sent_at: { $lt: new Date(Date.now() - EMAIL_LOG_RETENTION_MS).toISOString() } };
+  const found = await admin.entities.NotificationEmailLog.count(stale);
+  if (!found) return 0;
+  await admin.entities.NotificationEmailLog.deleteMany(stale);
+  return found;
+}
+
+/**
  * Tells the admin account which rows a run repaired and which path caught them.
  * Resolves the admin at run time (oldest admin = app owner) rather than storing an id.
  */
@@ -149,13 +164,22 @@ export default async function (req) {
         repaired.push(...outcome.repaired_ids.map((id) => `${target.entity}:${id}`));
       }
 
+      // Housekeeping that rides along with the sweep: drop day-old email log rows.
+      const emailLogPruned = await pruneEmailLog(admin);
+
       // Never notify when nothing was written: a no-op run stays silent.
       if (stamped > 0) {
         const breakdown = TARGETS.map((t) => `${t.entity} ${perEntity[t.entity].stamped}`).join(' · ');
         await notifyAdmin(admin, 'sweep', repaired, breakdown);
       }
 
-      return Response.json({ mode: 'sweep', scanned, stamped, entities: perEntity });
+      return Response.json({
+        mode: 'sweep',
+        scanned,
+        stamped,
+        entities: perEntity,
+        email_log_pruned: emailLogPruned,
+      });
     }
 
     // Single-task mode: the entity trigger's path, unchanged in behaviour.
