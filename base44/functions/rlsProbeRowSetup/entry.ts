@@ -18,7 +18,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
  */
 
 const PAIR_ENTITIES = ['ActiveSession', 'TeamNotification', 'TeamMessage'];
-const ALL_ENTITIES = [...PAIR_ENTITIES, 'Task'];
+const SESSION_ENTITY = 'CollaborativeFocusSession';
+const ALL_ENTITIES = [...PAIR_ENTITIES, 'Task', SESSION_ENTITY];
 const PROBE_TEAM_ID = 'zzProbe-row';
 const asRows = (page) => (Array.isArray(page) ? page : (page?.items || []));
 
@@ -138,6 +139,63 @@ export default async function (req) {
         { status: 400 },
       );
     }
+
+    // ── CollaborativeFocusSession: A host-only, B host + extras, C another host ──
+    const existingSessions = asRows(
+      await admin.entities.RlsProbeRecord.filter({ entity_name: SESSION_ENTITY }),
+    );
+    for (const row of existingSessions) {
+      await admin.entities[SESSION_ENTITY].delete(row.record_id).catch(() => null);
+      await admin.entities.RlsProbeRecord.delete(row.id).catch(() => null);
+    }
+
+    const nowIso = new Date().toISOString();
+    const sessionRow = (host, memberIds, tag) =>
+      admin.entities[SESSION_ENTITY].create({
+        team_id: PROBE_TEAM_ID,
+        task_id: `zzProbe-task-${tag}`,
+        task_title: `RLS probe ${tag} — safe to delete`,
+        host_id: host.id,
+        host_name: host.email,
+        member_user_ids: memberIds,
+        participants: [{ user_id: host.id, user_name: host.email, joined_at: nowIso }],
+        duration_minutes: 25,
+        started_at: nowIso,
+        ends_at: new Date(Date.now() + 25 * 60000).toISOString(),
+        status: 'active',
+      });
+
+    const hostSelf = { id: user.id, email: user.email };
+    const sessionA = await sessionRow(hostSelf, [user.id], 'A');
+    const sessionB = await sessionRow(hostSelf, [user.id, hotmail.id, schools.id], 'B');
+    const sessionC = await sessionRow({ id: hotmail.id, email: hotmail.email }, [hotmail.id], 'C');
+
+    for (const [row, role] of [[sessionA, 'A'], [sessionB, 'B'], [sessionC, 'C']]) {
+      await admin.entities.RlsProbeRecord.create({
+        entity_name: SESSION_ENTITY,
+        record_id: row.id,
+        role,
+        label: `${SESSION_ENTITY}-${role}`,
+      });
+    }
+
+    const readSessionA =
+      asRows(await admin.entities[SESSION_ENTITY].filter({ id: sessionA.id }))[0] || null;
+    const readSessionC =
+      asRows(await admin.entities[SESSION_ENTITY].filter({ id: sessionC.id }))[0] || null;
+
+    sentinels[SESSION_ENTITY] = {
+      a: sessionA.id,
+      b: sessionB.id,
+      c: sessionC.id,
+      a_host_email: user.email,
+      b_host_email: user.email,
+      b_member_emails: [hotmail.email, schools.email],
+      c_host_email: hotmail.email,
+      a_member_user_ids: readSessionA?.member_user_ids ?? [],
+      c_member_user_ids: readSessionC?.member_user_ids ?? [],
+      verified: Boolean(sessionA?.id && sessionB?.id && sessionC?.id),
+    };
 
     const taskA = await admin.entities.Task.create({
       title: 'zzProbe Task A — safe to delete',

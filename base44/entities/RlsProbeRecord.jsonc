@@ -8,7 +8,8 @@
         "ActiveSession",
         "TeamNotification",
         "TeamMessage",
-        "Task"
+        "Task",
+        "CollaborativeFocusSession"
       ],
       "description": "Entity the sentinel row lives in. This row is the ONLY authority for treating a record as a sentinel: a record with no row here is refused by rlsProbeRowTouch."
     },

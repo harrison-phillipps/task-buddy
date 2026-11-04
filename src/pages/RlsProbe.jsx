@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { runAllChecks } from "@/lib/rlsProbeChecks";
 import { runAllEntityChecks, ROW_ENTITIES } from "@/lib/rlsProbeEntityChecks";
 import { runTaskChecks, resolveTaskEmails } from "@/lib/rlsProbeTaskChecks";
+import { runSessionChecks } from "@/lib/rlsProbeCollaborativeSessionChecks";
 import ProbeResult from "@/components/rlsprobe/ProbeResult";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -128,6 +129,21 @@ export default function RlsProbe() {
         }
         setResults([...collected]);
       }
+      if (sentinels?.CollaborativeFocusSession) {
+        try {
+          collected.push(
+            ...(await runSessionChecks(sentinels.CollaborativeFocusSession, me || {})),
+          );
+        } catch (err) {
+          collected.push({
+            check: "CollaborativeFocusSession checks",
+            ok: false,
+            label: `FAIL — the session set did not finish: ${err?.message || "unknown error"}`,
+            raw: { error: String(err?.message || err) },
+          });
+        }
+        setResults([...collected]);
+      }
     } finally {
       setBusy("");
     }
@@ -206,6 +222,10 @@ export default function RlsProbe() {
           (members = hotmail + schools), C assigned to hotmail. Eight checks: list, filter A,
           update A / B / C (B and C restore their original value), delete A (expected refused,
           never executed for a caller who could succeed), then a 10-second window on A and on B.
+          CollaborativeFocusSession adds three rows for its live rule: A host-only, B host plus
+          hotmail and schools, C hosted by hotmail. Seven checks, no subscription window: list,
+          filter A, filter C, update A, update C (both restore their value), delete A and delete C
+          (403 or 404 expected, never executed for a caller who could succeed).
         </p>
         <Input
           placeholder="extra member emails, comma separated (hotmail, schools…)"
@@ -229,6 +249,10 @@ export default function RlsProbe() {
               `   |   Task: A ${rowSentinels.Task.a || "—"} · B ${rowSentinels.Task.b || "—"} · C ${
                 rowSentinels.Task.c || "—"
               }`}
+            {rowSentinels.CollaborativeFocusSession &&
+              `   |   Session: A ${rowSentinels.CollaborativeFocusSession.a || "—"} · B ${
+                rowSentinels.CollaborativeFocusSession.b || "—"
+              } · C ${rowSentinels.CollaborativeFocusSession.c || "—"}`}
           </p>
         )}
       </div>

@@ -5,7 +5,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
  * the registry rows themselves. Only exact registered ids are touched.
  */
 
-const ENTITIES = ['ActiveSession', 'TeamNotification', 'TeamMessage', 'Task'];
+const ENTITIES = ['ActiveSession', 'TeamNotification', 'TeamMessage', 'Task', 'CollaborativeFocusSession'];
 const asRows = (page) => (Array.isArray(page) ? page : (page?.items || []));
 
 export default async function (req) {
