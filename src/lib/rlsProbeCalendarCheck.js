@@ -7,7 +7,8 @@ import { asRows, describeError } from '@/lib/rlsProbeCommon';
  * Lists CalendarEvent and reports the total plus how many rows carry a
  * created_by_id that is not the caller's. The interim rule scopes reads to
  * created_by_id (plus admin), so a non-admin must see zero foreign rows.
- * Expected own rows: the hotmail account about 6 task-block rows, schools 0.
+ * Expected own rows: hotmail about 6, Rachel 1, schools 0 — and 0 foreign rows
+ * for any non-admin.
  * An admin legitimately sees every row, so for an admin the result is
  * reported but never marked as a failure.
  */
@@ -32,7 +33,7 @@ export async function runCalendarEventCheck(me = {}) {
         rule: 'read = created_by_id is caller, or admin',
         expectation: isAdmin
           ? 'informational only — an admin is allowed to see other users rows'
-          : 'foreign rows must be 0; hotmail expects about 6 own rows, schools 0',
+          : 'own rows: hotmail about 6, Rachel 1, schools 0 · foreign rows must be 0 for every non-admin',
       },
     };
   } catch (err) {
