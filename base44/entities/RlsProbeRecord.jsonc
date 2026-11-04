@@ -7,7 +7,8 @@
       "enum": [
         "ActiveSession",
         "TeamNotification",
-        "TeamMessage"
+        "TeamMessage",
+        "Task"
       ],
       "description": "Entity the sentinel row lives in. This row is the ONLY authority for treating a record as a sentinel: a record with no row here is refused by rlsProbeRowTouch."
     },
@@ -19,13 +20,14 @@
       "type": "string",
       "enum": [
         "A",
-        "B"
+        "B",
+        "C"
       ],
-      "description": "A = owner only, must stay invisible to a non-member. B = owner plus extra member accounts, must be visible to them."
+      "description": "A = owner only, must stay invisible to a non-member. B = owner plus extra member accounts, must be visible to them. C = Task only: assigned_to the first extra account, must be visible to that account alone."
     },
     "label": {
       "type": "string",
-      "description": "Human label, e.g. TeamMessage-A"
+      "description": "Human label, e.g. TeamMessage-A or Task-C"
     }
   },
   "required": [

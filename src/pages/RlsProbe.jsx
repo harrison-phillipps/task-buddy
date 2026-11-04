@@ -2,6 +2,7 @@ import React from "react";
 import { base44 } from "@/api/base44Client";
 import { runAllChecks } from "@/lib/rlsProbeChecks";
 import { runAllEntityChecks, ROW_ENTITIES } from "@/lib/rlsProbeEntityChecks";
+import { runTaskChecks } from "@/lib/rlsProbeTaskChecks";
 import ProbeResult from "@/components/rlsprobe/ProbeResult";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,6 +103,10 @@ export default function RlsProbe() {
       }
       collected.push(...(await runAllEntityChecks(rowSentinels)));
       setResults([...collected]);
+      if (rowSentinels?.Task) {
+        collected.push(...(await runTaskChecks(rowSentinels.Task, me || {})));
+        setResults([...collected]);
+      }
     } finally {
       setBusy("");
     }
@@ -176,6 +181,9 @@ export default function RlsProbe() {
           Two rows each in {ROW_ENTITIES.join(", ")}. ActiveSession is owner-only (user_id): a
           non-owner must see neither row and get no events. TeamNotification and TeamMessage are
           member-scoped (member_user_ids): A hidden, B visible to the accounts below.
+          Task adds three rows for the proposed rule: A personal (owner = outlook), B team
+          (members = hotmail + schools), C assigned to hotmail. No Task rule is applied yet, so
+          those six checks are a baseline and are expected to FAIL until the rule lands.
         </p>
         <Input
           placeholder="extra member emails, comma separated (hotmail, schools…)"
@@ -195,6 +203,10 @@ export default function RlsProbe() {
             {ROW_ENTITIES.map(
               (e) => `${e}: A ${rowSentinels[e]?.a || "—"} · B ${rowSentinels[e]?.b || "—"}`,
             ).join("   |   ")}
+            {rowSentinels.Task &&
+              `   |   Task: A ${rowSentinels.Task.a || "—"} · B ${rowSentinels.Task.b || "—"} · C ${
+                rowSentinels.Task.c || "—"
+              }`}
           </p>
         )}
       </div>

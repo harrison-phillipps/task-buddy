@@ -1,19 +1,24 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 
 /**
- * TEMPORARY — creates the sentinel ROWS used to probe ActiveSession, TeamNotification
- * and TeamMessage, and registers each exact id in RlsProbeRecord.
+ * TEMPORARY — creates the sentinel ROWS used to probe ActiveSession, TeamNotification,
+ * TeamMessage and Task, and registers each exact id in RlsProbeRecord.
  *
- * Admin only. Every row carries `member_user_ids` and `user_id`, so both branches are
- * testable from one account set:
- *   A = owner only             (must stay invisible to a non-member account)
- *   B = owner + extra members  (must be visible to those accounts)
+ * Admin only.
+ *   ActiveSession / TeamNotification / TeamMessage:
+ *     A = owner only             (must stay invisible to a non-member account)
+ *     B = owner + extra members  (must be visible to those accounts)
+ *   Task (proposed rule, not applied yet):
+ *     A = personal, owner_user_id = the calling (outlook) account
+ *     B = team task, team_member_ids = the two extra accounts (hotmail, schools)
+ *     C = assigned_to = the first extra account (hotmail)
  *
  * The service-role write/touch probe refuses any id with no registry row, so a row a
  * user created themselves can never be aimed at.
  */
 
-const ENTITIES = ['ActiveSession', 'TeamNotification', 'TeamMessage'];
+const PAIR_ENTITIES = ['ActiveSession', 'TeamNotification', 'TeamMessage'];
+const ALL_ENTITIES = [...PAIR_ENTITIES, 'Task'];
 const PROBE_TEAM_ID = 'zzProbe-row';
 const asRows = (page) => (Array.isArray(page) ? page : (page?.items || []));
 
@@ -78,12 +83,10 @@ export default async function (req) {
       if (!extras.some((e) => e.id === found.id)) extras.push({ id: found.id, email: found.email });
     }
 
-    const aMembers = [user.id];
-    const bMembers = [user.id, ...extras.map((e) => e.id)];
     const sentinels = {};
 
-    for (const entityName of ENTITIES) {
-      // Clean start for this entity: drop whatever was registered before.
+    // ── Pair sentinels: A owner-only, B owner + extras ──────────────────────
+    for (const entityName of PAIR_ENTITIES) {
       const existing = asRows(await admin.entities.RlsProbeRecord.filter({ entity_name: entityName }));
       for (const row of existing) {
         await admin.entities[entityName].delete(row.record_id).catch(() => null);
@@ -91,8 +94,8 @@ export default async function (req) {
       }
 
       const owner = { id: user.id, email: user.email, full_name: user.full_name };
-      const a = await createRow(admin, entityName, owner, aMembers, 'A');
-      const b = await createRow(admin, entityName, owner, bMembers, 'B');
+      const a = await createRow(admin, entityName, owner, [user.id], 'A');
+      const b = await createRow(admin, entityName, owner, [user.id, ...extras.map((e) => e.id)], 'B');
 
       await admin.entities.RlsProbeRecord.create({
         entity_name: entityName,
@@ -120,8 +123,65 @@ export default async function (req) {
       };
     }
 
+    // ── Task sentinels: one per branch of the proposed rule ─────────────────
+    const existingTaskRows = asRows(await admin.entities.RlsProbeRecord.filter({ entity_name: 'Task' }));
+    for (const row of existingTaskRows) {
+      await admin.entities.Task.delete(row.record_id).catch(() => null);
+      await admin.entities.RlsProbeRecord.delete(row.id).catch(() => null);
+    }
+
+    const hotmail = extras[0] || null;
+    const schools = extras[1] || null;
+    if (!hotmail || !schools) {
+      return Response.json(
+        { error: 'Task sentinels need two extra member emails (hotmail and schools).', sentinels },
+        { status: 400 },
+      );
+    }
+
+    const taskA = await admin.entities.Task.create({
+      title: 'zzProbe Task A — safe to delete',
+      description: 'RLS probe Task sentinel A (personal)',
+      status: 'not_started',
+      owner_user_id: user.id,
+    });
+    const taskB = await admin.entities.Task.create({
+      title: 'zzProbe Task B — safe to delete',
+      description: 'RLS probe Task sentinel B (team)',
+      status: 'not_started',
+      team_id: PROBE_TEAM_ID,
+      team_member_ids: [hotmail.id, schools.id],
+    });
+    const taskC = await admin.entities.Task.create({
+      title: 'zzProbe Task C — safe to delete',
+      description: 'RLS probe Task sentinel C (assigned)',
+      status: 'not_started',
+      assigned_to: hotmail.id,
+      assigned_to_name: hotmail.email,
+    });
+
+    for (const [row, role] of [[taskA, 'A'], [taskB, 'B'], [taskC, 'C']]) {
+      await admin.entities.RlsProbeRecord.create({
+        entity_name: 'Task',
+        record_id: row.id,
+        role,
+        label: `Task-${role}`,
+      });
+    }
+
+    sentinels.Task = {
+      a: taskA.id,
+      b: taskB.id,
+      c: taskC.id,
+      owner_email: user.email,
+      b_member_emails: [hotmail.email, schools.email],
+      c_assignee_email: hotmail.email,
+      verified: Boolean(taskA?.id && taskB?.id && taskC?.id),
+    };
+
     return Response.json({
       ok: true,
+      entities: ALL_ENTITIES,
       owner: { id: user.id, email: user.email },
       extra_members: extras,
       sentinels,

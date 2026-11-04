@@ -12,6 +12,7 @@ const TOUCH_FIELD = {
   ActiveSession: 'task_title',
   TeamNotification: 'title',
   TeamMessage: 'content',
+  Task: 'description',
 };
 
 const asRows = (page) => (Array.isArray(page) ? page : (page?.items || []));
