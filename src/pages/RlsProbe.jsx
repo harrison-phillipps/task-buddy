@@ -96,6 +96,10 @@ export default function RlsProbe() {
     setBusy("run");
     setResults([]);
     try {
+      if (!me?.id) {
+        setError("The signed-in account is still loading — reload the page and run again.");
+        return;
+      }
       const collected = [];
       if (sentinelAId) {
         collected.push(...(await runAllChecks({ sentinelAId, sentinelBId, sentinelCode })));
@@ -104,7 +108,16 @@ export default function RlsProbe() {
       collected.push(...(await runAllEntityChecks(rowSentinels)));
       setResults([...collected]);
       if (rowSentinels?.Task) {
-        collected.push(...(await runTaskChecks(rowSentinels.Task, me || {})));
+        try {
+          collected.push(...(await runTaskChecks(rowSentinels.Task, me || {})));
+        } catch (err) {
+          collected.push({
+            check: "Task checks",
+            ok: false,
+            label: `FAIL — the Task set did not finish: ${err?.message || "unknown error"}`,
+            raw: { error: String(err?.message || err) },
+          });
+        }
         setResults([...collected]);
       }
     } finally {
@@ -181,9 +194,10 @@ export default function RlsProbe() {
           Two rows each in {ROW_ENTITIES.join(", ")}. ActiveSession is owner-only (user_id): a
           non-owner must see neither row and get no events. TeamNotification and TeamMessage are
           member-scoped (member_user_ids): A hidden, B visible to the accounts below.
-          Task adds three rows for the proposed rule: A personal (owner = outlook), B team
-          (members = hotmail + schools), C assigned to hotmail. No Task rule is applied yet, so
-          those six checks are a baseline and are expected to FAIL until the rule lands.
+          Task adds three rows for the live rule: A personal (owner = outlook), B team
+          (members = hotmail + schools), C assigned to hotmail. Eight checks: list, filter A,
+          update A / B / C (B and C restore their original value), delete A (expected refused,
+          never executed for a caller who could succeed), then a 10-second window on A and on B.
         </p>
         <Input
           placeholder="extra member emails, comma separated (hotmail, schools…)"
@@ -214,9 +228,9 @@ export default function RlsProbe() {
       <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-gray-900">3. Run the checks</h2>
         <p className="text-xs text-gray-600">
-          Entity checks take about 60 seconds (two 10-second windows per entity); the team set adds
-          20 more and only runs when the link carries a team sentinel. Every verdict is a sentence
-          with the number in it.
+          Entity checks take about 60 seconds (two 10-second windows per entity); the Task set adds
+          about 20 more and the team set 20 more, each only when the link carries those sentinels.
+          Every verdict is a sentence with the number in it.
         </p>
         <Button onClick={handleRun} disabled={busy === "run"}>
           {busy === "run" ? "Running…" : "Run all checks"}
