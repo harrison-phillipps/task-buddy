@@ -1,0 +1,37 @@
+DESCRIPTION, NOT A BACKUP.
+This file cannot restore anything. The .ts beside it is an archived copy of the
+source of the now-deleted backend function oneOffRepoint, kept so the repair it
+performed stays readable. Nothing here can undo that repair.
+
+What the function did — two ops, each dry-run unless called with { confirm: true }:
+
+1) op "team_owner" — Team 693f5602e5a97802369f6ba0 ("H and Rach Home") was
+   repointed off the deleted account onto 6a61816f1e6ed9f4008cdc78:
+     owner_id, owner_name, owner_email
+     member_ids, member_user_ids, admin_user_ids
+     members[] — rebuilt as Rachel (692eacef6775abca2ed5835c),
+     harrison.phillipps (68ff06738f59128717455ed4) and Harrison (6a61816f…)
+   Display names came from the User records, falling back to the names already
+   stored in members[] when the User record was missing or a tombstone label.
+
+2) op "task_assigned_to" — 21 Task rows whose assigned_to was
+   692cd428acb61bd5d429cddb were rewritten to 6a61816f1e6ed9f4008cdc78, with
+   assigned_to_name set to that account's display name. Rows were updated one at
+   a time via update(); the response listed each row's before.assigned_to and
+   before.assigned_to_name.
+
+Ids hard-coded in the source:
+  6a61816f1e6ed9f4008cdc78  Harrison (hotmail account) — new owner
+  692cd428acb61bd5d429cddb  deleted account — old owner
+  693f5602e5a97802369f6ba0  Team "H and Rach Home"
+  692eacef6775abca2ed5835c  Rachel
+  68ff06738f59128717455ed4  harrison.phillipps
+
+THE TRUE PRE-IMAGES WERE NEVER CAPTURED. No before-state for the 21 tasks, and
+none for the team's fields, was written to backups/ before the repair ran. Those
+per-row before values existed only in the function's HTTP response at the time
+and are gone. Neither this description nor the archived source can roll the
+repair back.
+
+State verified after the repair: 0 Task rows still point at 692cd428, 23 rows
+carry 6a61816f, and the team's owner/admin fields carry 6a61816f.
