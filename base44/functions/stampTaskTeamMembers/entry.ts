@@ -4,6 +4,7 @@ import {
   snapshotDiffers,
   taskCreatorId,
   resolveTaskTeamStamp,
+  clearNoticesFor,
 } from '../../shared/teamMemberSnapshot.ts';
 
 /**
@@ -168,10 +169,12 @@ async function sweepEntity(admin, target, teamMap, presetRows, ctx) {
 
       if (decision.action === 'clear') {
         // Not on the team, not an admin, and not in the row's own snapshot: the
-        // team_id is stray. Noticed every time the decision is clear; written
-        // only when there is something to empty.
-        rejected.push({ task_id: row.id, team_id: row.team_id, reason: decision.reason });
-        if (snapshotDiffers(row[target.field], [])) {
+        // team_id is stray. Recorded every time the decision is clear; written
+        // only when there is something to empty. `wrote` is what lets each path
+        // decide whether to tell the admin (see clearNoticesFor).
+        const wrote = snapshotDiffers(row[target.field], []);
+        rejected.push({ task_id: row.id, team_id: row.team_id, reason: decision.reason, wrote });
+        if (wrote) {
           updates.push({ id: row.id, [target.field]: [] });
           clearedNotMember += 1;
         }
@@ -267,7 +270,9 @@ export default async function (req) {
           + (cleared > 0 ? ` · cleared ${cleared}` : '');
         await notifyAdmin(admin, 'sweep', repaired, breakdown);
       }
-      const rejectedNotified = await notifyRejectedTasks(admin, rejected, 'sweep');
+      // Sweep: only clears that actually emptied a snapshot, so a scheduled pass
+      // with nothing to repair tells nobody.
+      const rejectedNotified = await notifyRejectedTasks(admin, clearNoticesFor(rejected, 'sweep'), 'sweep');
 
       return Response.json({
         mode: 'sweep',
@@ -291,7 +296,8 @@ export default async function (req) {
         : 'Task 1';
       await notifyAdmin(admin, 'trigger', outcome.repaired_ids.map((id) => `Task:${id}`), breakdown);
     }
-    const rejectedNotified = await notifyRejectedTasks(admin, outcome.rejected, 'trigger');
+    // Trigger: every clear decision, including an already-empty snapshot.
+    const rejectedNotified = await notifyRejectedTasks(admin, clearNoticesFor(outcome.rejected, 'trigger'), 'trigger');
 
     return Response.json({
       mode: 'single',

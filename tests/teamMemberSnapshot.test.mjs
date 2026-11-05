@@ -9,6 +9,8 @@ import assert from "node:assert/strict";
 import {
   resolveTaskTeamStamp,
   taskCreatorId,
+  snapshotDiffers,
+  clearNoticesFor,
 } from "../base44/shared/teamMemberSnapshot.ts";
 
 // Owner is on the team, plus two unrelated teammates.
@@ -116,4 +118,29 @@ test("deleted account in snapshot: left untouched", () => {
   assert.equal(decision.action, "leave");
   assert.equal(decision.reason, "former_member");
   assert.deepEqual(snapshotAfter(decision, stored), stored);
+});
+
+test("sweep over an already-empty snapshot: clear decision, nothing written, rejected_notified 0", () => {
+  // Dry run of one sweep iteration: a stray team_id on a row that never carried
+  // a snapshot. Same clear decision, but there is nothing to empty.
+  const task = { id: "task-8", team_id: "team-1", created_by_id: "user-stranger", team_member_ids: [] };
+  const decision = resolveTaskTeamStamp({ task, members: MEMBERS });
+  assert.equal(decision.action, "clear");
+
+  const wrote = snapshotDiffers(task.team_member_ids, []);
+  assert.equal(wrote, false);
+
+  const rejected = [{ task_id: task.id, team_id: task.team_id, reason: decision.reason, wrote }];
+  assert.equal(clearNoticesFor(rejected, "sweep").length, 0); // rejected_notified: 0
+  assert.equal(clearNoticesFor(rejected, "trigger").length, 1); // trigger still notifies
+});
+
+test("sweep over a snapshot it had to empty: one notice, as before", () => {
+  // Same row after the sweep writes: a snapshot existed, so the write happened.
+  const rejected = [{ task_id: "task-9", team_id: "team-1", reason: "not_member", wrote: true }];
+  assert.equal(clearNoticesFor(rejected, "sweep").length, 1);
+  assert.equal(clearNoticesFor(rejected, "trigger").length, 1);
+  // Mixed run: only the cleared one is announced.
+  const mixed = [{ task_id: "task-8", team_id: "team-1", reason: "not_member", wrote: false }, rejected[0]];
+  assert.deepEqual(clearNoticesFor(mixed, "sweep").map((r) => r.task_id), ["task-9"]);
 });

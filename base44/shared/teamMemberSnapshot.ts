@@ -89,3 +89,21 @@ export function resolveTaskTeamStamp({ task, members, creatorIsAdmin = false }) 
   }
   return { action: 'clear', reason: 'not_member', creator_id };
 }
+
+/**
+ * Which clear decisions a run tells the admin about.
+ *
+ *   trigger — every clear decision, even one where the snapshot was already
+ *             empty: the entity trigger fires on the write that made the team_id
+ *             stray, so the admin hears about each one.
+ *   sweep   — only the decisions that actually emptied a snapshot (`wrote`):
+ *             a scheduled pass over an already-empty row is a no-op and stays
+ *             silent, so a sweep with nothing to repair notifies nobody.
+ *
+ * `rejected` entries are { task_id, team_id, reason, wrote }.
+ */
+export function clearNoticesFor(rejected, path) {
+  const list = Array.isArray(rejected) ? rejected : [];
+  if (path === 'trigger') return list;
+  return list.filter((r) => r?.wrote === true);
+}
