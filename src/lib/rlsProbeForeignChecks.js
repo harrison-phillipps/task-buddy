@@ -48,6 +48,9 @@ const ACTIVITY_READ =
   'read: data.user_id == {{user.id}} OR data.member_user_ids == {{user.id}} OR created_by_id == {{user.id}} OR role == admin';
 const ACTIVITY_WRITE = 'update/delete: user_condition { role: "admin" } and nothing else';
 
+const DISPOSAL_NOTE =
+  'D is a disposal row created by the app owner account (68ff06738f59128717455ed4), so the created_by_id branch matches neither probe account';
+
 const SESSION_TITLE = {
   a: 'RLS probe A — safe to delete',
   c: 'RLS probe C — safe to delete',
@@ -62,7 +65,8 @@ const PLAN = [
   { entity: 'CollaborativeFocusSession', who: 'both', sentinel: 'a', kind: 'update', check: 'update foreign row A', expected: 'denied (403)', rule: SESSION_WRITE, field: 'task_title', restore: SESSION_TITLE.a },
   { entity: 'CollaborativeFocusSession', who: 'hotmail', sentinel: 'c', kind: 'update', check: 'update own row C', expected: '1 row written, then restored', rule: SESSION_WRITE, field: 'task_title', restore: SESSION_TITLE.c },
   { entity: 'CollaborativeFocusSession', who: 'schools', sentinel: 'c', kind: 'update', check: 'update foreign row C', expected: 'denied (403)', rule: SESSION_WRITE, field: 'task_title', restore: SESSION_TITLE.c },
-  { entity: 'CollaborativeFocusSession', who: 'both', sentinel: 'a', kind: 'delete', check: 'delete foreign row A', expected: 'denied (403)', rule: SESSION_DELETE },
+  { entity: 'CollaborativeFocusSession', who: 'hotmail', sentinel: 'd', kind: 'delete', execute: true, check: 'delete disposal row D (real attempt)', expected: 'denied (403)', rule: SESSION_DELETE, note: DISPOSAL_NOTE },
+  { entity: 'CollaborativeFocusSession', who: 'schools', sentinel: 'd', kind: 'delete', execute: true, check: 'delete disposal row D (real attempt)', expected: 'denied (403)', rule: SESSION_DELETE, note: DISPOSAL_NOTE },
   { entity: 'CollaborativeFocusSession', who: 'schools', sentinel: 'b', kind: 'delete', check: 'delete shared row B', expected: 'denied (403) — delete rule has no member branch', rule: SESSION_DELETE },
   { entity: 'CollaborativeFocusSession', who: 'hotmail', sentinel: 'c', kind: 'delete', check: 'delete own row C', expected: 'allowed — NOT executed', rule: SESSION_DELETE, dangerous: true },
 
@@ -76,8 +80,8 @@ const PLAN = [
   { entity: 'TeamTemplate', who: 'schools', sentinel: 'b', kind: 'update', check: 'update own row B', expected: '1 row written, then restored', rule: TEMPLATE_UPDATE, field: 'name', restore: 'zzProbe TeamTemplate B — safe to delete', unsure: true, note: ARRAY_NOTE },
   { entity: 'TeamTemplate', who: 'hotmail', sentinel: 'b', kind: 'update', check: 'update foreign row B', expected: 'denied (403)', rule: TEMPLATE_UPDATE, field: 'name', restore: 'zzProbe TeamTemplate B — safe to delete' },
   { entity: 'TeamTemplate', who: 'schools', sentinel: 'a', kind: 'update', check: 'update foreign row A', expected: 'denied (403)', rule: TEMPLATE_UPDATE, field: 'name', restore: 'zzProbe TeamTemplate A — safe to delete' },
-  { entity: 'TeamTemplate', who: 'hotmail', sentinel: 'a', kind: 'delete', check: 'delete own row A', expected: 'denied (403)', rule: TEMPLATE_DELETE, note: STAMP_NOTE },
-  { entity: 'TeamTemplate', who: 'schools', sentinel: 'b', kind: 'delete', check: 'delete own row B', expected: 'denied (403)', rule: TEMPLATE_DELETE, note: STAMP_NOTE },
+  { entity: 'TeamTemplate', who: 'hotmail', sentinel: 'd', kind: 'delete', execute: true, check: 'delete disposal row D (real attempt)', expected: 'denied (403)', rule: TEMPLATE_DELETE, note: DISPOSAL_NOTE },
+  { entity: 'TeamTemplate', who: 'schools', sentinel: 'd', kind: 'delete', execute: true, check: 'delete disposal row D (real attempt)', expected: 'denied (403)', rule: TEMPLATE_DELETE, note: DISPOSAL_NOTE },
   { entity: 'TeamTemplate', who: 'both', sentinel: 'c', kind: 'delete', check: 'delete shared row C', expected: 'denied (403)', rule: TEMPLATE_DELETE, note: STAMP_NOTE },
 
   // ── Leaderboard ─────────────────────────────────────────────────────────
@@ -86,8 +90,8 @@ const PLAN = [
   { entity: 'Leaderboard', who: 'both', sentinel: 'a', kind: 'read', check: 'read foreign row A', expected: '0', rule: LEADERBOARD_ALL },
   { entity: 'Leaderboard', who: 'hotmail', sentinel: 'a', kind: 'update', check: 'update own row A', expected: 'denied (403)', rule: LEADERBOARD_ALL, field: 'user_name', restore: 'zzProbe Leaderboard A — safe to delete' },
   { entity: 'Leaderboard', who: 'schools', sentinel: 'b', kind: 'update', check: 'update own row B', expected: 'denied (403)', rule: LEADERBOARD_ALL, field: 'user_name', restore: 'zzProbe Leaderboard B — safe to delete' },
-  { entity: 'Leaderboard', who: 'both', sentinel: 'a', kind: 'delete', check: 'delete foreign row A', expected: 'denied (403)', rule: LEADERBOARD_ALL },
-  { entity: 'Leaderboard', who: 'hotmail', sentinel: 'a', kind: 'delete', check: 'delete own row A', expected: 'denied (403)', rule: LEADERBOARD_ALL },
+  { entity: 'Leaderboard', who: 'hotmail', sentinel: 'd', kind: 'delete', execute: true, check: 'delete disposal row D (real attempt)', expected: 'denied (403)', rule: LEADERBOARD_ALL, note: DISPOSAL_NOTE },
+  { entity: 'Leaderboard', who: 'schools', sentinel: 'd', kind: 'delete', execute: true, check: 'delete disposal row D (real attempt)', expected: 'denied (403)', rule: LEADERBOARD_ALL, note: DISPOSAL_NOTE },
   { entity: 'Leaderboard', who: 'both', sentinel: null, kind: 'create', check: 'create a row with own user_id', expected: 'denied (403)', rule: LEADERBOARD_ALL },
 
   // ── TaskComment ─────────────────────────────────────────────────────────
@@ -103,6 +107,8 @@ const PLAN = [
   { entity: 'TaskComment', who: 'both', sentinel: 'c', kind: 'delete', check: 'delete shared row C', expected: 'denied (403)', rule: COMMENT_WRITE },
   { entity: 'TaskComment', who: 'hotmail', sentinel: 'a', kind: 'delete', check: 'delete own row A', expected: 'allowed — NOT executed', rule: COMMENT_WRITE, dangerous: true },
   { entity: 'TaskComment', who: 'schools', sentinel: 'b', kind: 'delete', check: 'delete own row B', expected: 'allowed — NOT executed', rule: COMMENT_WRITE, dangerous: true },
+  { entity: 'TaskComment', who: 'hotmail', sentinel: 'd', kind: 'delete', execute: true, check: 'delete disposal row D (real attempt)', expected: 'denied (403)', rule: COMMENT_WRITE, note: DISPOSAL_NOTE },
+  { entity: 'TaskComment', who: 'schools', sentinel: 'd', kind: 'delete', execute: true, check: 'delete disposal row D (real attempt)', expected: 'denied (403)', rule: COMMENT_WRITE, note: DISPOSAL_NOTE },
 
   // ── TaskActivity ────────────────────────────────────────────────────────
   { entity: 'TaskActivity', who: 'hotmail', sentinel: 'a', kind: 'read', check: 'read own row A', expected: '1', rule: ACTIVITY_READ },
@@ -112,8 +118,8 @@ const PLAN = [
   { entity: 'TaskActivity', who: 'both', sentinel: 'c', kind: 'read', check: 'read shared row C', expected: '1', rule: ACTIVITY_READ, unsure: true, note: ARRAY_NOTE },
   { entity: 'TaskActivity', who: 'hotmail', sentinel: 'a', kind: 'update', check: 'update own row A', expected: 'denied (403) — activity is append-only for users', rule: ACTIVITY_WRITE, field: 'description', restore: 'zzProbe TaskActivity A — safe to delete' },
   { entity: 'TaskActivity', who: 'schools', sentinel: 'b', kind: 'update', check: 'update own row B', expected: 'denied (403) — activity is append-only for users', rule: ACTIVITY_WRITE, field: 'description', restore: 'zzProbe TaskActivity B — safe to delete' },
-  { entity: 'TaskActivity', who: 'hotmail', sentinel: 'a', kind: 'delete', check: 'delete own row A', expected: 'denied (403)', rule: ACTIVITY_WRITE },
-  { entity: 'TaskActivity', who: 'schools', sentinel: 'b', kind: 'delete', check: 'delete own row B', expected: 'denied (403)', rule: ACTIVITY_WRITE },
+  { entity: 'TaskActivity', who: 'hotmail', sentinel: 'd', kind: 'delete', execute: true, check: 'delete disposal row D (real attempt)', expected: 'denied (403)', rule: ACTIVITY_WRITE, note: DISPOSAL_NOTE },
+  { entity: 'TaskActivity', who: 'schools', sentinel: 'd', kind: 'delete', execute: true, check: 'delete disposal row D (real attempt)', expected: 'denied (403)', rule: ACTIVITY_WRITE, note: DISPOSAL_NOTE },
 ];
 
 const denied = (err) => {
@@ -144,6 +150,22 @@ async function attemptUpdate(entity, id, field, restore) {
   } catch (err) {
     return `1 row written, restore failed (${denied(err)}) — ${field} now reads "${marker}"`;
   }
+}
+
+/**
+ * A REAL delete. Only ever aimed at a disposal row (D), so a wrong success
+ * costs nothing but D itself.
+ */
+async function attemptDelete(entity, id) {
+  try {
+    await base44.entities[entity].delete(id);
+  } catch (err) {
+    const described = describeError(err);
+    return described.status === 403
+      ? 'denied (403) — D untouched'
+      : `error ${described.status ?? 'no status'}: ${described.error}`;
+  }
+  return 'deleted — D is gone';
 }
 
 async function attemptCreate(entity, me) {
@@ -193,6 +215,8 @@ export async function runForeignChecks(sentinels = {}, me = {}) {
       actual = 'not executed (expected to succeed; left untouched)';
     } else if (entry.sentinel && !recordId) {
       actual = 'no sentinel id in this link';
+    } else if (entry.kind === 'delete' && entry.execute) {
+      actual = await attemptDelete(entry.entity, recordId);
     } else if (entry.kind === 'read') {
       actual = await readCount(entry.entity, recordId);
     } else if (entry.kind === 'update') {
