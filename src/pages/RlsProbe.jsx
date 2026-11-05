@@ -37,14 +37,32 @@ async function attempt(fn) {
 async function runProbe(push) {
   const params = new URLSearchParams(window.location.search);
   const teamId = params.get("teamId") || HOME_TEAM_ID;
+
+  // ?reset=1 clears this hostname's stored session and forces a fresh sign-in,
+  // for when the token left here belongs to a previously signed-in account.
+  if (params.get("reset") === "1") {
+    window.localStorage.removeItem("base44_access_token");
+    window.localStorage.removeItem("token");
+    push(`cleared the stored session for ${window.location.host} · signing you in again…`);
+    base44.auth.redirectToLogin(`${window.location.origin}/RlsProbe`);
+    return;
+  }
+
   const me = await base44.auth.me();
   const otherUserId =
     params.get("otherUserId") || (me.id === HOTMAIL_USER_ID ? SCHOOLS_USER_ID : HOTMAIL_USER_ID);
   const stamp = new Date().toISOString();
   const results = [];
 
+  const accountLabel =
+    me.id === HOTMAIL_USER_ID
+      ? "hotmail test account"
+      : me.id === SCHOOLS_USER_ID
+        ? "schools test account"
+        : "account not in the setup values";
+
   push(`RLS create-rule probe · ${new Date().toLocaleString("en-CA")}`);
-  push(`signed in as ${me.email} · role ${me.role || "user"} · id ${me.id}`);
+  push(`host ${window.location.host} · signed in as ${me.email} (${accountLabel}) · role ${me.role || "user"} · id ${me.id}`);
 
   // Home team membership decides what postTeamMessage/postTeamNotification should do.
   const teamRead = await attempt(() => base44.entities.Team.get(teamId));
@@ -220,15 +238,31 @@ export default function RlsProbe() {
       collected.current.push(line);
       setLines([...collected.current]);
     };
+    const start = () => {
+      collected.current = [];
+      setLines([]);
+      setRunning(true);
+      push("running…");
+      runProbe(push)
+        .catch((error) => push(`probe crashed: ${textOf(error)}`))
+        .finally(() => setRunning(false));
+    };
+    // A back/forward restore brings back the previous run's output, which may
+    // belong to a different account. Run again rather than show it.
+    const onPageShow = (event) => {
+      if (event.persisted) {
+        probeStarted = true;
+        start();
+      }
+    };
+    window.addEventListener("pageshow", onPageShow);
     if (probeStarted) {
       setRunning(false);
-      return;
+    } else {
+      probeStarted = true;
+      start();
     }
-    probeStarted = true;
-    push("running…");
-    runProbe(push)
-      .catch((error) => push(`probe crashed: ${textOf(error)}`))
-      .finally(() => setRunning(false));
+    return () => window.removeEventListener("pageshow", onPageShow);
   }, []);
 
   return (
