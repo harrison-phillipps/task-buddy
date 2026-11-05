@@ -6,6 +6,7 @@ import { runTaskChecks, resolveTaskEmails } from "@/lib/rlsProbeTaskChecks";
 import { runSessionChecks } from "@/lib/rlsProbeCollaborativeSessionChecks";
 import { runCalendarEventCheck } from "@/lib/rlsProbeCalendarCheck";
 import { runPreferencesCheck } from "@/lib/rlsProbePreferencesCheck";
+import { runForeignChecks, formatForeignResults } from "@/lib/rlsProbeForeignChecks";
 import ProbeResult from "@/components/rlsprobe/ProbeResult";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,7 @@ export default function RlsProbe() {
   const [memberEmails, setMemberEmails] = React.useState("");
   const [setupResult, setSetupResult] = React.useState(null);
   const [results, setResults] = React.useState([]);
+  const [foreignText, setForeignText] = React.useState("");
   const [busy, setBusy] = React.useState("");
   const [error, setError] = React.useState(null);
 
@@ -168,6 +170,14 @@ export default function RlsProbe() {
         }
         setResults([...collected]);
       }
+      try {
+        const foreign = await runForeignChecks(sentinels, me || {});
+        setForeignText(formatForeignResults(foreign));
+      } catch (err) {
+        setForeignText(
+          `foreign-row checks | ${me?.email || "unknown account"} | did not finish | expected — · rule: n/a | actual ${err?.message || "unknown error"}`
+        );
+      }
     } finally {
       setBusy("");
     }
@@ -296,6 +306,30 @@ export default function RlsProbe() {
           <p className="text-xs text-amber-700">
             No sentinel in this link — open the link the admin copied, or create the sentinels above.
           </p>
+        )}
+      </div>
+
+      <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-4">
+        <h2 className="text-sm font-semibold text-gray-900">4. Foreign-row checks (plain text)</h2>
+        <p className="text-xs text-gray-600">
+          One line per check: entity, account, check, expected with the rule it comes from, then
+          actual. CollaborativeFocusSession, TeamTemplate, Leaderboard, TaskComment and TaskActivity
+          only. An update that succeeds is restored; a delete expected to succeed is never executed.
+          The account must be signed in as one of the two probe accounts.
+        </p>
+        <Button
+          variant="outline"
+          onClick={() => navigator.clipboard.writeText(foreignText)}
+          disabled={!foreignText}
+        >
+          Copy plain text
+        </Button>
+        {foreignText ? (
+          <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg bg-gray-900 p-3 text-[11px] leading-relaxed text-gray-100">
+            {foreignText}
+          </pre>
+        ) : (
+          <p className="text-xs text-amber-700">Run the checks to fill this block.</p>
         )}
       </div>
 
