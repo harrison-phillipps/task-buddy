@@ -1,0 +1,135 @@
+{
+  "name": "TeamNotification",
+  "type": "object",
+  "properties": {
+    "team_id": {
+      "type": "string",
+      "description": "Team this notification belongs to"
+    },
+    "member_user_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Snapshot of the team's member user ids at write time. Nullable: absent until backfilled. A read rule can only see fields on the row, so this is what lets a notification be scoped to team members without a join to Team."
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "task_assigned",
+        "task_commented",
+        "status_changed",
+        "deadline_reminder",
+        "session_started",
+        "task_completed",
+        "general"
+      ],
+      "description": "Type of notification"
+    },
+    "title": {
+      "type": "string",
+      "description": "Notification title"
+    },
+    "message": {
+      "type": "string",
+      "description": "Notification message"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium",
+      "description": "Notification priority"
+    },
+    "related_id": {
+      "type": "string",
+      "description": "ID of related task/session"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "User who created the notification"
+    },
+    "author_user_id": {
+      "type": "string",
+      "description": "Author's user id for rows written by postTeamNotification under the service role, where created_by_id points at the service account and created_by is not a queryable field. Account deletion matches on this. Absent on notifications written from the browser, which the platform already stamps with created_by_id."
+    },
+    "acknowledged_by": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string"
+          },
+          "user_name": {
+            "type": "string"
+          },
+          "acknowledged_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "default": [],
+      "description": "Users who have acknowledged this notification"
+    }
+  },
+  "required": [
+    "team_id",
+    "type",
+    "title",
+    "message"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.member_user_ids": "{{user.id}}"
+        },
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.member_user_ids": {
+            "$in": [
+              "{{user.id}}"
+            ]
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
