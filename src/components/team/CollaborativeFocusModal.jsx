@@ -31,7 +31,7 @@ export default function CollaborativeFocusModal({ task, team, open, onOpenChange
             message: `${currentUser.full_name || currentUser.email} started a focus session on "${task.title}"`,
             related_id: session.id,
             related_type: "task",
-            action_url: `/FocusSession?collaborativeSessionId=${session.id}`,
+            action_url: `/TeamFocusSession?sessionId=${session.id}`,
             priority: "high",
             task_id: task.id
           })
