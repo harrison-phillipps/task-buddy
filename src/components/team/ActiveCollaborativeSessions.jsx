@@ -21,7 +21,7 @@ export default function ActiveCollaborativeSessions({ teamId, currentUser }) {
   if (sessions.length === 0) return null;
 
   const handleJoin = (sessionId) => {
-    window.location.href = `/FocusSession?collaborativeSessionId=${sessionId}`;
+    window.location.href = `/TeamFocusSession?sessionId=${sessionId}`;
   };
 
   return (
