@@ -9,6 +9,7 @@ import { Users, CheckCircle, Clock, AlertCircle, MessageSquare, Plus, Shield, Li
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { notifyAssignees } from "../components/notifications/NotificationUtils";
 import TaskCard from "../components/TaskCard";
 import TaskCommentsSection from "../components/team/TaskCommentsSection";
 import TaskAssignment from "../components/team/TaskAssignment";
@@ -440,6 +441,7 @@ export default function TeamDashboard() {
                           onAssign={(data) => {
                             updateTaskMutation.mutate({ id: task.id, data }, {
                               onSuccess: async () => {
+                                notifyAssignees({ task, assignedUsers: data.assigned_to_users || [], currentUser });
                                 if (task.team_id && (data.assigned_to || data.assigned_to_users?.length > 0)) {
                                   try {
                                     await notifyTeam({
@@ -495,6 +497,7 @@ export default function TeamDashboard() {
                         onAssign={(data) => {
                           updateTaskMutation.mutate({ id: task.id, data }, {
                             onSuccess: async () => {
+                              notifyAssignees({ task, assignedUsers: data.assigned_to_users || [], currentUser });
                               if (task.team_id && (data.assigned_to || data.assigned_to_users?.length > 0)) {
                                 try {
                                   await notifyTeam({
@@ -553,6 +556,7 @@ export default function TeamDashboard() {
                           onAssign={(data) => {
                             updateTaskMutation.mutate({ id: task.id, data }, {
                               onSuccess: async () => {
+                                notifyAssignees({ task, assignedUsers: data.assigned_to_users || [], currentUser });
                                 if (task.team_id && (data.assigned_to || data.assigned_to_users?.length > 0)) {
                                   try {
                                     await notifyTeam({

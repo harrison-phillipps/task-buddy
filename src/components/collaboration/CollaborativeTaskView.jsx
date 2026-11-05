@@ -16,6 +16,7 @@ import SubtaskTracker from "../tasks/SubtaskTracker";
 import CoEditingIndicator, { useCoEditing } from "./CoEditingIndicator";
 import { canEditTask } from "../team/TeamPermissions";
 import { teamMemberIds } from "@/lib/teamStamp";
+import { notifyAssignees } from "@/components/notifications/NotificationUtils";
 
 export default function CollaborativeTaskView({ task, open, onOpenChange, currentUser }) {
   const queryClient = useQueryClient();
@@ -239,11 +240,18 @@ export default function CollaborativeTaskView({ task, open, onOpenChange, curren
               task={task}
               team={team}
               currentUser={currentUser}
-              onAssign={async (userId, userName) => {
+              onAssign={async (assignment) => {
+                const assignedUsers = assignment.assigned_to_users || [];
                 await updateTaskMutation.mutateAsync({
                   id: task.id,
-                  data: { assigned_to: userId, assigned_to_name: userName }
+                  data: {
+                    assigned_to: assignment.assigned_to || null,
+                    assigned_to_name: assignment.assigned_to_name || null,
+                    assigned_to_users: assignedUsers,
+                  }
                 });
+
+                notifyAssignees({ task, assignedUsers, currentUser });
 
                 await base44.entities.TaskActivity.create({
                   task_id: task.id,
@@ -252,7 +260,7 @@ export default function CollaborativeTaskView({ task, open, onOpenChange, curren
                   user_id: currentUser.id,
                   user_name: currentUser.display_name || currentUser.full_name,
                   action_type: "assigned",
-                  description: `assigned this task to ${userName}`
+                  description: `assigned this task to ${assignment.assigned_to_name || `${assignedUsers.length} team members`}`
                 });
               }}
             />

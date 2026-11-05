@@ -91,6 +91,30 @@ export async function createNotification({
   }
 }
 
+/**
+ * Per-assignee notification for an assignment write that already succeeded.
+ * Fire-and-forget: never awaited, errors are logged and never surface to the UI.
+ * `team_mention` is the Notification type the existing assign path uses
+ * (`task_assigned` is not in the entity enum and would be stored as `general`).
+ */
+export function notifyAssignees({ task, assignedUsers = [], currentUser }) {
+  assignedUsers
+    .filter((member) => member?.user_id && member.user_id !== currentUser?.id)
+    .forEach((member) => {
+      createNotification({
+        userId: member.user_id,
+        type: 'team_mention',
+        title: "You've been assigned a task",
+        message: `${currentUser?.display_name || currentUser?.full_name || 'Someone'} assigned you: "${task.title}"`,
+        relatedId: task.id,
+        relatedType: 'task',
+        priority: task.priority === 'urgent' ? 'critical' : 'high',
+        actionUrl: createPageUrl('Tasks'),
+        sendEmail: true,
+      }).catch((err) => console.error('Assignment notification failed:', err));
+    });
+}
+
 export async function scheduleTaskReminder(task, userId) {
   if (!task.due_date) return;
 
