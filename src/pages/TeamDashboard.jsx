@@ -32,7 +32,6 @@ import RealTimeNotificationCenter from "../components/team/RealTimeNotificationC
 import TeamWorkloadView from "../components/team/TeamWorkloadView";
 import SharedGoals from "../components/team/SharedGoals";
 import { toast } from "sonner";
-import { teamMemberIds } from "@/lib/teamStamp";
 
 export default function TeamDashboard() {
   const queryClient = useQueryClient();
@@ -144,15 +143,9 @@ export default function TeamDashboard() {
   );
   const completedTasks = teamTasks.filter(t => t.status === 'completed');
 
-  // Every team notification carries the member snapshot, so the update rule can
-  // match a member's acknowledgement without joining Team.
-  const notifyTeam = (payload) => {
-    const ids = teamMemberIds(team);
-    return base44.entities.TeamNotification.create({
-      ...payload,
-      member_user_ids: ids.length ? ids : [currentUser?.id].filter(Boolean),
-    });
-  };
+  // The server stamps the member snapshot from the team row, so a member's
+  // acknowledgement still matches without joining Team here.
+  const notifyTeam = (payload) => base44.functions.invoke('postTeamNotification', payload);
 
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),

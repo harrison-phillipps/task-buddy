@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Send, MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { teamMemberIds } from "@/lib/teamStamp";
 
 export default function FocusSessionChat({ sessionId, currentUser }) {
   const queryClient = useQueryClient();
@@ -25,41 +24,17 @@ export default function FocusSessionChat({ sessionId, currentUser }) {
     refetchInterval: 2000, // Poll every 2 seconds
   });
 
-  // Session chat reuses TeamMessage with the session id as its scope, so the
-  // member snapshot has to come from the session's team.
-  const { data: session } = useQuery({
-    queryKey: ['focusSessionTeam', sessionId],
-    queryFn: async () => {
-      const rows = await base44.entities.CollaborativeFocusSession.filter({ id: sessionId });
-      return rows[0] || null;
-    },
-    enabled: !!sessionId,
-  });
-
-  const { data: sessionTeam } = useQuery({
-    queryKey: ['team', session?.team_id],
-    queryFn: async () => {
-      const rows = await base44.entities.Team.filter({ id: session.team_id });
-      return rows[0] || null;
-    },
-    enabled: !!session?.team_id,
-  });
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const sendMessageMutation = useMutation({
-    mutationFn: async (content) => {
-      const memberIds = teamMemberIds(sessionTeam);
-      return await base44.entities.TeamMessage.create({
-        team_id: sessionId,
-        member_user_ids: memberIds.length ? memberIds : [currentUser.id],
-        user_id: currentUser.id,
-        user_name: currentUser.full_name || currentUser.email,
-        content
-      });
-    },
+    // The server resolves the session's team, checks the caller is the host or a
+    // participant, and stamps the snapshot itself.
+    mutationFn: (content) => base44.functions.invoke('postTeamMessage', {
+      session_id: sessionId,
+      content,
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessionMessages'] });
       setMessage("");

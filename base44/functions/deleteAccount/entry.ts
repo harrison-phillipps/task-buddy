@@ -20,6 +20,9 @@ const BY_USER_ID = [
   // Rows whose created_by_id is the service role or a legacy auth id, so the
   // writable owner field is the only pointer back to the user.
   'BrainDump', 'FocusSession', 'Goal',
+  // Team chat is written by postTeamMessage under the service role and carries
+  // its author in user_id; without this the author's messages would survive.
+  'TeamMessage',
 ];
 
 // Entities that carry the owner in a writable field with a different name.

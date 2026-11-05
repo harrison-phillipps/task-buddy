@@ -84,15 +84,13 @@ export default function TeamTemplates({ team, currentUser, onUseTemplate }) {
         usage_count: (template.usage_count || 0) + 1
       });
 
-      // Send notification
-      await base44.entities.TeamNotification.create({
+      // Send notification — the server stamps the team's member snapshot.
+      await base44.functions.invoke('postTeamNotification', {
         team_id: team.id,
-        member_user_ids: teamMemberIds(team),
         type: "general",
         title: "Task Created from Template",
         message: `${currentUser.full_name || currentUser.email} created "${newTask.title}" from template "${template.name}"`,
         priority: "low",
-        created_by: currentUser.id,
         related_id: newTask.id
       });
 

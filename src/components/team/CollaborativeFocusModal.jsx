@@ -18,20 +18,22 @@ export default function CollaborativeFocusModal({ task, team, open, onOpenChange
     mutationFn: async (sessionData) => {
       const session = await base44.entities.CollaborativeFocusSession.create(sessionData);
       
-      // Notify team members
+      // Notify team members through the server, which applies each recipient's
+      // permissions and preferences before writing anything.
       const memberIds = teamMemberIds(team);
       const notificationPromises = memberIds
         .filter(id => id !== currentUser.id)
-        .map(userId => 
-          base44.entities.Notification.create({
-            user_id: userId,
+        .map(userId =>
+          base44.functions.invoke('notifyTeammate', {
+            recipient_user_id: userId,
             type: "team_mention",
             title: "Collaborative Focus Session Started",
             message: `${currentUser.full_name || currentUser.email} started a focus session on "${task.title}"`,
             related_id: session.id,
             related_type: "task",
             action_url: `/FocusSession?collaborativeSessionId=${session.id}`,
-            priority: "high"
+            priority: "high",
+            task_id: task.id
           })
         );
       

@@ -55,7 +55,6 @@ export default function CollaborativeTaskView({ task, open, onOpenChange, curren
   });
 
   const handleStatusChange = async (newStatus) => {
-    const teamIds = teamMemberIds(team);
     await updateTaskMutation.mutateAsync({
       id: task.id,
       data: { status: newStatus }
@@ -73,15 +72,13 @@ export default function CollaborativeTaskView({ task, open, onOpenChange, curren
     
     // Create notification for status change
     if (task.team_id) {
-      await base44.entities.TeamNotification.create({
+      await base44.functions.invoke('postTeamNotification', {
         team_id: task.team_id,
-        member_user_ids: teamIds.length ? teamIds : [currentUser.id],
         type: newStatus === "completed" ? "task_completed" : "status_changed",
         title: `Task status updated: "${task.title}"`,
         message: `${currentUser.display_name || currentUser.full_name} changed status to ${newStatus.replace('_', ' ')}`,
         priority: newStatus === "completed" ? "low" : "medium",
-        related_id: task.id,
-        created_by: currentUser.id
+        related_id: task.id
       });
       queryClient.invalidateQueries({ queryKey: ['teamNotifications'] });
     }

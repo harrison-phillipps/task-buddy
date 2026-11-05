@@ -85,18 +85,16 @@ export default function TaskCommentsSection({ task, currentUser, team, teamMembe
     mutationFn: async (commentData) => {
       const comment = await base44.entities.TaskComment.create(commentData);
       
-      // Notify team of new comment
+      // Notify team of new comment — the server resolves the team row and its
+      // member snapshot from the task's team id.
       if (task?.team_id && team) {
-        const teamIds = teamMemberIds(team);
-        await base44.entities.TeamNotification.create({
+        await base44.functions.invoke('postTeamNotification', {
           team_id: task.team_id,
-          member_user_ids: teamIds.length ? teamIds : [currentUser.id],
           type: "task_commented",
           title: `New comment on "${task.title}"`,
-          message: `${currentUser.full_name || currentUser.email} commented: "${commentData.content.slice(0, 60)}${commentData.content.length > 60 ? '...' : ''}"`  ,
+          message: `${currentUser.full_name || currentUser.email} commented: "${commentData.content.slice(0, 60)}${commentData.content.length > 60 ? '...' : ''}"`,
           priority: "medium",
-          related_id: task.id,
-          created_by: currentUser.id
+          related_id: task.id
         });
       }
 
@@ -104,14 +102,15 @@ export default function TaskCommentsSection({ task, currentUser, team, teamMembe
       const mentions = extractMentions(commentData.content);
       for (const mentionedId of mentions) {
         if (mentionedId === currentUser.id) continue;
-        await base44.entities.Notification.create({
-          user_id: mentionedId,
+        await base44.functions.invoke('notifyTeammate', {
+          recipient_user_id: mentionedId,
           type: "team_mention",
           title: `You were mentioned in "${task.title}"`,
           message: `${currentUser.full_name || currentUser.email}: "${commentData.content.slice(0, 80)}"`,
           related_id: task.id,
           related_type: "task",
           priority: "high",
+          task_id: task.id,
         });
       }
       

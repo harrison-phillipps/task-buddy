@@ -11,7 +11,6 @@ import { Send, Pin, Reply, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { hasPermission, PERMISSIONS, getUserRole, getRoleBadgeColor, getRoleLabel } from "./TeamPermissions";
-import { teamMemberIds } from "@/lib/teamStamp";
 
 export default function TeamMessaging({ team, currentUser }) {
   const queryClient = useQueryClient();
@@ -31,7 +30,7 @@ export default function TeamMessaging({ team, currentUser }) {
   });
 
   const sendMessageMutation = useMutation({
-    mutationFn: (messageData) => base44.entities.TeamMessage.create(messageData),
+    mutationFn: (messageData) => base44.functions.invoke('postTeamMessage', messageData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teamMessages', team.id] });
       setMessage("");
@@ -63,9 +62,6 @@ export default function TeamMessaging({ team, currentUser }) {
 
     sendMessageMutation.mutate({
       team_id: team.id,
-      member_user_ids: teamMemberIds(team),
-      user_id: currentUser.id,
-      user_name: currentUser.full_name,
       content: message,
       reply_to: replyingTo?.id || null
     });
