@@ -19,6 +19,29 @@ let probeStarted = false;
 
 const statusOf = (error) => Number(error?.status ?? error?.response?.status ?? 0);
 
+// Which credential the SDK is actually sending: a stored bearer token wins over
+// the session cookie, so this is the identity every check below runs as.
+function describeStoredToken() {
+  let token = null;
+  try {
+    token = window.localStorage.getItem("base44_access_token");
+  } catch {
+    token = null;
+  }
+  if (!token) return "no stored bearer token — identity comes from the session cookie";
+  const parts = token.split(".");
+  if (parts.length < 2) return "a stored bearer token is present (claims unreadable)";
+  try {
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+    const expires = payload.exp ? new Date(payload.exp * 1000).toISOString() : "no expiry claim";
+    return `stored bearer token for ${payload.email || "no email claim"} · user ${
+      payload.sub || "?"
+    } · expires ${expires}`;
+  } catch {
+    return "a stored bearer token is present (claims unreadable)";
+  }
+}
+
 const textOf = (error) =>
   String(error?.data?.error || error?.response?.data?.error || error?.message || error || "unknown error").slice(0, 200);
 
@@ -38,13 +61,13 @@ async function runProbe(push) {
   const params = new URLSearchParams(window.location.search);
   const teamId = params.get("teamId") || HOME_TEAM_ID;
 
-  // ?reset=1 clears this hostname's stored session and forces a fresh sign-in,
-  // for when the token left here belongs to a previously signed-in account.
+  // ?reset=1 ends this hostname's session properly. The SDK's logout also hits
+  // the server logout endpoint, which is the only thing that clears the
+  // HTTP-only session cookie — wiping localStorage alone leaves it in place, and
+  // that cookie can keep resolving the previous account.
   if (params.get("reset") === "1") {
-    window.localStorage.removeItem("base44_access_token");
-    window.localStorage.removeItem("token");
-    push(`cleared the stored session for ${window.location.host} · signing you in again…`);
-    base44.auth.redirectToLogin(`${window.location.origin}/RlsProbe`);
+    push(`signing out of ${window.location.host} — this clears the stored token and the session cookie…`);
+    base44.auth.logout(`${window.location.origin}/RlsProbe`);
     return;
   }
 
@@ -63,6 +86,7 @@ async function runProbe(push) {
 
   push(`RLS create-rule probe · ${new Date().toLocaleString("en-CA")}`);
   push(`host ${window.location.host} · signed in as ${me.email} (${accountLabel}) · role ${me.role || "user"} · id ${me.id}`);
+  push(`session source: ${describeStoredToken()}`);
 
   // Home team membership decides what postTeamMessage/postTeamNotification should do.
   const teamRead = await attempt(() => base44.entities.Team.get(teamId));
@@ -274,6 +298,12 @@ export default function RlsProbe() {
           rows that it deletes again where the rules allow.
           {running ? " Running…" : ""}
         </p>
+        <button
+          onClick={() => base44.auth.logout(`${window.location.origin}/RlsProbe`)}
+          className="text-xs px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+        >
+          Sign out, then sign in as the other account
+        </button>
         <pre className="text-xs sm:text-sm font-mono whitespace-pre-wrap break-words bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-gray-800 dark:text-gray-200">
 {lines.join("\n") || "no output"}
         </pre>
