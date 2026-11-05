@@ -15,8 +15,22 @@ export async function createNotification({
   // A notification addressed to someone else is delivered by the server, which
   // checks the caller may notify that person and applies their preferences
   // without exposing them to this page.
-  const me = await base44.auth.me().catch(() => null);
-  if (me && me.id !== userId) {
+  //
+  // Fail closed: without a confirmed signed-in user we cannot tell whether `userId`
+  // is the caller or someone else, so nothing is written and no email is sent —
+  // otherwise a failed auth check would fall through to a direct write for another
+  // user.
+  let me = null;
+  try {
+    me = await base44.auth.me();
+  } catch (error) {
+    console.error("createNotification: auth.me() failed, not creating the notification:", error);
+  }
+  if (!me?.id) {
+    console.error("createNotification: no signed-in user, not creating the notification for", userId);
+    return null;
+  }
+  if (me.id !== userId) {
     const res = await base44.functions.invoke('notifyTeammate', {
       recipient_user_id: userId,
       type,
