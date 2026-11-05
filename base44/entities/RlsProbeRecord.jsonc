@@ -9,7 +9,13 @@
         "TeamNotification",
         "TeamMessage",
         "Task",
-        "CollaborativeFocusSession"
+        "CollaborativeFocusSession",
+        "CalendarEvent",
+        "NotificationPreferences",
+        "TeamTemplate",
+        "Leaderboard",
+        "TaskComment",
+        "TaskActivity"
       ],
       "description": "Entity the sentinel row lives in. This row is the ONLY authority for treating a record as a sentinel: a record with no row here is refused by rlsProbeRowTouch."
     },
@@ -24,7 +30,7 @@
         "B",
         "C"
       ],
-      "description": "A = owner only, must stay invisible to a non-member. B = owner plus extra member accounts, must be visible to them. C = Task only: assigned_to the first extra account, must be visible to that account alone."
+      "description": "A = the first probe account's own row (foreign to the other). B = the second probe account's own row. C = a row neither probe account owns (shared member snapshot or a third owner)."
     },
     "label": {
       "type": "string",

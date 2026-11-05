@@ -237,6 +237,158 @@ export default async function (req) {
       verified: Boolean(taskA?.id && taskB?.id && taskC?.id),
     };
 
+    // ── Seven-entity sentinel sets ──────────────────────────────────────────
+    // A = hotmail's own row, B = schools' own row, C = a row neither owns
+    // (the admin account's, or a member snapshot listing both probe accounts).
+    // NotificationPreferences and Leaderboard deliberately avoid the admin
+    // account: a second prefs row for a real account would change which row
+    // notifyTeammate reads as that account's preferences.
+    const PROBE_DATE = new Date().toISOString().slice(0, 10);
+    const mark = (entityName: string, role: string) => `zzProbe ${entityName} ${role} — safe to delete`;
+
+    type SentinelRow = [string, Record<string, unknown>];
+    const seededSets: { entity: string; rows: SentinelRow[] }[] = [
+      {
+        entity: 'CalendarEvent',
+        rows: [
+          ['A', { title: mark('CalendarEvent', 'A'), start_date: PROBE_DATE, created_by_id: hotmail.id }],
+          ['B', { title: mark('CalendarEvent', 'B'), start_date: PROBE_DATE, created_by_id: schools.id }],
+          ['C', { title: mark('CalendarEvent', 'C'), start_date: PROBE_DATE, created_by_id: user.id }],
+        ],
+      },
+      {
+        entity: 'NotificationPreferences',
+        rows: [
+          ['A', { user_id: hotmail.id }],
+          ['B', { user_id: schools.id }],
+        ],
+      },
+      {
+        entity: 'TeamTemplate',
+        rows: [
+          [
+            'A',
+            {
+              team_id: PROBE_TEAM_ID,
+              member_user_ids: [hotmail.id],
+              name: mark('TeamTemplate', 'A'),
+              template_data: { title: 'zzProbe template' },
+            },
+          ],
+          [
+            'B',
+            {
+              team_id: PROBE_TEAM_ID,
+              member_user_ids: [schools.id],
+              name: mark('TeamTemplate', 'B'),
+              template_data: { title: 'zzProbe template' },
+            },
+          ],
+          [
+            'C',
+            {
+              team_id: PROBE_TEAM_ID,
+              member_user_ids: [hotmail.id, schools.id],
+              name: mark('TeamTemplate', 'C'),
+              template_data: { title: 'zzProbe template' },
+            },
+          ],
+        ],
+      },
+      {
+        entity: 'Leaderboard',
+        rows: [
+          ['A', { user_id: hotmail.id, user_name: mark('Leaderboard', 'A') }],
+          ['B', { user_id: schools.id, user_name: mark('Leaderboard', 'B') }],
+        ],
+      },
+      {
+        entity: 'TaskComment',
+        rows: [
+          [
+            'A',
+            { task_id: 'zzProbe-task-A', user_id: hotmail.id, user_name: 'zzProbe', content: mark('TaskComment', 'A'), member_user_ids: [] },
+          ],
+          [
+            'B',
+            { task_id: 'zzProbe-task-B', user_id: schools.id, user_name: 'zzProbe', content: mark('TaskComment', 'B'), member_user_ids: [] },
+          ],
+          [
+            'C',
+            {
+              task_id: 'zzProbe-task-C',
+              user_id: user.id,
+              user_name: 'zzProbe',
+              content: mark('TaskComment', 'C'),
+              member_user_ids: [hotmail.id, schools.id],
+            },
+          ],
+        ],
+      },
+      {
+        entity: 'TaskActivity',
+        rows: [
+          [
+            'A',
+            { task_id: 'zzProbe-task-A', user_id: hotmail.id, action_type: 'created', description: mark('TaskActivity', 'A'), member_user_ids: [] },
+          ],
+          [
+            'B',
+            { task_id: 'zzProbe-task-B', user_id: schools.id, action_type: 'created', description: mark('TaskActivity', 'B'), member_user_ids: [] },
+          ],
+          [
+            'C',
+            {
+              task_id: 'zzProbe-task-C',
+              user_id: user.id,
+              action_type: 'created',
+              description: mark('TaskActivity', 'C'),
+              member_user_ids: [hotmail.id, schools.id],
+            },
+          ],
+        ],
+      },
+    ];
+
+    for (const set of seededSets) {
+      const prior = asRows(await admin.entities.RlsProbeRecord.filter({ entity_name: set.entity }));
+      for (const row of prior) {
+        await admin.entities[set.entity].delete(row.record_id).catch(() => null);
+        await admin.entities.RlsProbeRecord.delete(row.id).catch(() => null);
+      }
+
+      const written: { role: string; id: string; created_by_id: string | null; user_id: string | null; member_user_ids: string[] }[] = [];
+      for (const [role, payload] of set.rows) {
+        const created = await admin.entities[set.entity].create(payload);
+        await admin.entities.RlsProbeRecord.create({
+          entity_name: set.entity,
+          record_id: created.id,
+          role,
+          label: `${set.entity}-${role}`,
+        });
+        const readBack = asRows(await admin.entities[set.entity].filter({ id: created.id }))[0] || null;
+        written.push({
+          role,
+          id: created.id,
+          created_by_id: readBack?.created_by_id ?? null,
+          user_id: readBack?.user_id ?? null,
+          member_user_ids: readBack?.member_user_ids ?? [],
+        });
+      }
+
+      const entry: Record<string, unknown> = {
+        verified: written.length === set.rows.length && written.every((w) => Boolean(w.id)),
+      };
+      for (const w of written) {
+        entry[w.role.toLowerCase()] = w.id;
+        entry[`${w.role.toLowerCase()}_created_by_id`] = w.created_by_id;
+      }
+      if (set.entity === 'CalendarEvent') {
+        entry.created_by_id_writable = written.find((w) => w.role === 'A')?.created_by_id === hotmail.id;
+      }
+      sentinels[set.entity] = entry;
+    }
+
     return Response.json({
       ok: true,
       entities: ALL_ENTITIES,
