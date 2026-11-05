@@ -21,6 +21,7 @@ import { hasPermission, PERMISSIONS } from "../components/team/TeamPermissions";
 import TeamBrainDump from "../components/team/TeamBrainDump";
 import CollaborativeFocusModal from "../components/team/CollaborativeFocusModal";
 import ActiveCollaborativeSessions from "../components/team/ActiveCollaborativeSessions";
+import { TEAM_FOCUS_ENABLED } from "@/lib/featureFlags";
 import TeamCalendar from "../components/team/TeamCalendar";
 import TeamNotifications from "../components/team/TeamNotifications";
 import TeamTemplates from "../components/team/TeamTemplates";
@@ -354,7 +355,9 @@ export default function TeamDashboard() {
 
             <TabsContent value="overview">
               <div className="space-y-6">
-                <ActiveCollaborativeSessions teamId={teamId} currentUser={currentUser} />
+                {TEAM_FOCUS_ENABLED && (
+                  <ActiveCollaborativeSessions teamId={teamId} currentUser={currentUser} />
+                )}
                 <TeamActivityDashboard team={team} currentUser={currentUser} />
               </div>
             </TabsContent>
@@ -421,10 +424,10 @@ export default function TeamDashboard() {
                           onDelete={() => {}}
                           allTasks={teamTasks}
                           showTeamInfo
-                          onStartCollab={(task) => {
+                          onStartCollab={TEAM_FOCUS_ENABLED ? (task) => {
                             setCollabFocusTask(task);
                             setShowCollabFocus(true);
-                          }}
+                          } : undefined}
                         />
                       </div>
                       <div className="ml-4">
@@ -477,10 +480,10 @@ export default function TeamDashboard() {
                           setCollabTask(task);
                           setShowCollabView(true);
                         }}
-                        onStartCollab={(task) => {
+                        onStartCollab={TEAM_FOCUS_ENABLED ? (task) => {
                           setCollabFocusTask(task);
                           setShowCollabFocus(true);
-                        }}
+                        } : undefined}
                       />
                     </div>
                     <div className="ml-4">
@@ -646,13 +649,15 @@ export default function TeamDashboard() {
           currentUser={currentUser}
         />
 
-        <CollaborativeFocusModal
-          task={collabFocusTask}
-          team={team}
-          open={showCollabFocus}
-          onOpenChange={setShowCollabFocus}
-          currentUser={currentUser}
-        />
+        {TEAM_FOCUS_ENABLED && (
+          <CollaborativeFocusModal
+            task={collabFocusTask}
+            team={team}
+            open={showCollabFocus}
+            onOpenChange={setShowCollabFocus}
+            currentUser={currentUser}
+          />
+        )}
         </div>
         </div>
         );

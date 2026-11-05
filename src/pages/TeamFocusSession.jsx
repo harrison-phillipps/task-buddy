@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { Navigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { withCompletionStamp } from "@/lib/taskCompletion";
+import { createPageUrl } from "@/utils";
+import { TEAM_FOCUS_ENABLED } from "@/lib/featureFlags";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import FocusSessionChat from "../components/team/FocusSessionChat";
 
-export default function TeamFocusSession() {
+function TeamFocusSessionView() {
   const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const sessionId = urlParams.get('sessionId');
@@ -425,4 +428,14 @@ Return ONLY valid JSON with this structure:
       </div>
     </div>
   );
+}
+
+// Team focus sessions are behind TEAM_FOCUS_ENABLED. While it is off, any old
+// invite notice pointing at /TeamFocusSession?sessionId=... lands here and is
+// sent to the team dashboard instead of the unfinished session page.
+export default function TeamFocusSession() {
+  if (!TEAM_FOCUS_ENABLED) {
+    return <Navigate to={createPageUrl("TeamDashboard")} replace />;
+  }
+  return <TeamFocusSessionView />;
 }
