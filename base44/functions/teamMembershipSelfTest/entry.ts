@@ -27,8 +27,16 @@ const sameSet = (a, b) => {
 };
 
 export default async function (req) {
-  const base44 = createClientFromRequest(req);
-  const caller = await currentUser(base44);
+  // A request with no session must answer 401. Resolving the caller throws rather
+  // than returning null, so the guard below only fires if that throw is caught.
+  let base44;
+  let caller = null;
+  try {
+    base44 = createClientFromRequest(req);
+    caller = await currentUser(base44);
+  } catch {
+    caller = null;
+  }
   if (!caller) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   if (caller.role !== 'admin') return Response.json({ error: 'Admin only' }, { status: 403 });
 

@@ -28,8 +28,16 @@ const pageHasMore = (page) => !Array.isArray(page) && (page?.has_more === true |
 
 export default async function (req) {
   try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me().catch((e) => (e.status === 401 ? null : Promise.reject(e)));
+    // A request with no session must answer 401. Resolving the caller throws
+    // rather than returning null, so the guard only fires if that throw is caught.
+    let base44;
+    let user = null;
+    try {
+      base44 = createClientFromRequest(req);
+      user = await base44.auth.me();
+    } catch {
+      user = null;
+    }
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
 

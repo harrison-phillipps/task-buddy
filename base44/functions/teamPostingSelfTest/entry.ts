@@ -19,8 +19,16 @@ import {
  * Exercises the real cores the two functions call, not copies of them.
  */
 export default async function (req: Request): Promise<Response> {
-  const base44 = createClientFromRequest(req);
-  const caller = await base44.auth.me().catch((e: any) => (e.status === 401 ? null : Promise.reject(e)));
+  // A request with no session must answer 401. Resolving the caller throws rather
+  // than returning null, so the guard below only fires if that throw is caught.
+  let base44;
+  let caller: any = null;
+  try {
+    base44 = createClientFromRequest(req);
+    caller = await base44.auth.me();
+  } catch {
+    caller = null;
+  }
   if (!caller) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   if (caller.role !== 'admin') return Response.json({ error: 'Admin only' }, { status: 403 });
 
