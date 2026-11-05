@@ -53,6 +53,10 @@
       "type": "string",
       "description": "User who created the notification"
     },
+    "author_user_id": {
+      "type": "string",
+      "description": "Author's user id for rows written by postTeamNotification under the service role, where created_by_id points at the service account and created_by is not a queryable field. Account deletion matches on this. Absent on notifications written from the browser, which the platform already stamps with created_by_id."
+    },
     "acknowledged_by": {
       "type": "array",
       "items": {

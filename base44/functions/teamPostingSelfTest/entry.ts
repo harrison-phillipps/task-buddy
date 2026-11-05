@@ -3,6 +3,8 @@ import { asRows } from '../../shared/entityResults.ts';
 import {
   postTeamMessageCore,
   postTeamNotificationCore,
+  postTeamMessageHandler,
+  postTeamNotificationHandler,
   sameIds,
   MESSAGE_BODY_MAX,
   NOTIFICATION_TITLE_MAX,
@@ -128,6 +130,41 @@ export default async function (req: Request): Promise<Response> {
       admin, actor: owner, payload: { team_id: `zzpost-missing-${stamp}`, title: 'x', message: 'y' },
     });
     check('notification with missing team is refused (404)', noteMissing.status === 404, noteMissing.json);
+
+    /* 7 — the handlers the entrypoints serve refuse a call with no token */
+    const entrypoints: Array<[string, any]> = [
+      ['postTeamMessage', postTeamMessageHandler],
+      ['postTeamNotification', postTeamNotificationHandler],
+    ];
+    for (const [name, handler] of entrypoints) {
+      const res = await handler(
+        new Request(`https://example.invalid/functions/${name}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            // The platform adds this on every real invocation; only the
+            // Authorization header is deliberately left off.
+            'Base44-App-Id': Deno.env.get('BASE44_APP_ID') ?? '',
+          },
+          body: JSON.stringify({ team_id: teamId, content: 'no token' }),
+        }),
+        createClientFromRequest,
+      );
+      const body = await res.text().catch(() => '');
+      check(`${name} returns 401 with no token`, res.status === 401, {
+        status: res.status,
+        body: body.slice(0, 120),
+      });
+    }
+
+    /* 8 — account deletion can find a service-written notice by its author field */
+    const authored = asRows(await admin.entities.TeamNotification.filter({ team_id: teamId, author_user_id: owner.id }));
+    check('service-written notice carries author_user_id', authored.length >= 1, authored.length);
+    const byCreatedBy = asRows(await admin.entities.TeamNotification.filter({ team_id: teamId, created_by: owner.id }));
+    check('created_by is not queryable, so deletes key on author_user_id', byCreatedBy.length === 0, byCreatedBy.length);
+    await admin.entities.TeamNotification.deleteMany({ author_user_id: owner.id });
+    const authoredLeft = asRows(await admin.entities.TeamNotification.filter({ team_id: teamId, author_user_id: owner.id })).length;
+    check('deleting by author_user_id removes the author rows', authoredLeft === 0, authoredLeft);
   } catch (error: any) {
     check('suite ran to completion', false, error?.message);
   } finally {
@@ -158,6 +195,7 @@ export default async function (req: Request): Promise<Response> {
     total: checks.length,
     passed: checks.length - failed.length,
     failed: failed.length,
+    problems: failed.map((c) => `${c.name} → ${JSON.stringify(c.detail ?? null).slice(0, 300)}`),
     results: checks,
   });
 }

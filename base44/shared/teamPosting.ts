@@ -189,7 +189,10 @@ export async function postTeamNotificationCore({ admin, actor, payload }: { admi
     message,
     priority: PRIORITIES.includes(body.priority) ? body.priority : 'medium',
     ...(relatedId ? { related_id: relatedId } : {}),
+    // created_by is the legacy author field and cannot be queried; created_by_id
+    // is the service account here, so the author owns the row through this.
     created_by: actor.id,
+    author_user_id: actor.id,
   });
 
   return {
@@ -203,3 +206,69 @@ export async function postTeamNotificationCore({ admin, actor, payload }: { admi
 /** Counts rows for a scope — used by the self-test's leftover check. */
 export const countRowsForTeam = async (admin: any, entity: string, teamId: string) =>
   asRows(await admin.entities[entity].filter({ team_id: teamId })).length;
+
+/**
+ * The signed-in caller, or null when the request carries no usable token.
+ * auth.me() surfaces a token-less request as an error whose status is not
+ * reliably 401 (it can arrive as 403, or as a bare message), so both shapes map
+ * to null instead of escaping as a 500.
+ */
+export const resolveActor = async (base44: any) => {
+  try {
+    return (await base44.auth.me()) ?? null;
+  } catch (error: any) {
+    const message = String(error?.message ?? '');
+    const status = Number(error?.status ?? error?.response?.status ?? 0);
+    const unauthenticated =
+      status === 401 ||
+      status === 403 ||
+      /logged in|unauthori[sz]ed|unauthenticated|not authenticated/i.test(message);
+    if (unauthenticated) return null;
+    throw error;
+  }
+};
+
+/**
+ * The handler the postTeamMessage entrypoint serves. The client factory is
+ * injected so the token-less path can be exercised in-process: a request with
+ * no valid token returns 401 before anything is read or written.
+ */
+export async function postTeamMessageHandler(
+  req: Request,
+  createClient: (req: Request) => any,
+): Promise<Response> {
+  try {
+    const base44 = createClient(req);
+    const actor = await resolveActor(base44);
+    if (!actor) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const payload = await req.json().catch(() => ({}));
+    const { status, json } = await postTeamMessageCore({ admin: base44.asServiceRole, actor, payload });
+    return Response.json(json, { status });
+  } catch (error: any) {
+    console.log('postTeamMessage failed:', error?.message);
+    return Response.json({ error: error?.message ?? 'Request failed' }, { status: 500 });
+  }
+}
+
+/**
+ * The handler the postTeamNotification entrypoint serves. Same contract:
+ * no valid token, no work — 401 first.
+ */
+export async function postTeamNotificationHandler(
+  req: Request,
+  createClient: (req: Request) => any,
+): Promise<Response> {
+  try {
+    const base44 = createClient(req);
+    const actor = await resolveActor(base44);
+    if (!actor) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const payload = await req.json().catch(() => ({}));
+    const { status, json } = await postTeamNotificationCore({ admin: base44.asServiceRole, actor, payload });
+    return Response.json(json, { status });
+  } catch (error: any) {
+    console.log('postTeamNotification failed:', error?.message);
+    return Response.json({ error: error?.message ?? 'Request failed' }, { status: 500 });
+  }
+}

@@ -26,8 +26,15 @@ const BY_USER_ID = [
 ];
 
 // Entities that carry the owner in a writable field with a different name.
+// TeamNotification is here because postTeamNotification writes it under the
+// service role: created_by_id points at the service account, and created_by —
+// although it holds the author's user id — is not a queryable field at all
+// (filtering on it always returns nothing). Rows written from the browser
+// before this change carry their author in created_by_id and are found by the
+// creator passes above.
 const BY_OWNER_FIELD = [
   { name: 'Task', field: 'owner_user_id' },
+  { name: 'TeamNotification', field: 'author_user_id' },
 ];
 
 const normaliseEmail = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
