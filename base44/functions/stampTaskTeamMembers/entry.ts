@@ -141,6 +141,7 @@ async function sweepEntity(admin, target, teamMap, presetRows, ctx) {
   let skippedUnknownTeam = 0;
   let alreadyOk = 0;
   let clearedNotMember = 0;
+  let leftAsIs = 0;
 
   for (const row of rows) {
     if (!row?.team_id) {
@@ -165,14 +166,22 @@ async function sweepEntity(admin, target, teamMap, presetRows, ctx) {
         : false;
       const decision = resolveTaskTeamStamp({ task: row, members: current, creatorIsAdmin });
 
-      if (!decision.stamp) {
-        // Only write — and only notify — when there is something to clear: once
-        // the snapshot is [], later runs compare equal and stay silent.
+      if (decision.action === 'clear') {
+        // Not on the team, not an admin, and not in the row's own snapshot: the
+        // team_id is stray. Noticed every time the decision is clear; written
+        // only when there is something to empty.
+        rejected.push({ task_id: row.id, team_id: row.team_id, reason: decision.reason });
         if (snapshotDiffers(row[target.field], [])) {
           updates.push({ id: row.id, [target.field]: [] });
-          rejected.push({ task_id: row.id, team_id: row.team_id, reason: decision.reason });
           clearedNotMember += 1;
         }
+        continue;
+      }
+
+      if (decision.action === 'leave') {
+        // Stamped while its creator was still on the team, so the row keeps the
+        // audience it was given: not cleared, and not re-stamped either.
+        leftAsIs += 1;
         continue;
       }
     }
@@ -198,6 +207,7 @@ async function sweepEntity(admin, target, teamMap, presetRows, ctx) {
     skipped_no_team: skippedNoTeam,
     skipped_unknown_team: skippedUnknownTeam,
     cleared_not_member: clearedNotMember,
+    left_former_member: leftAsIs,
     repaired_ids: updates.map((u) => u.id),
     rejected,
   };
@@ -239,6 +249,7 @@ export default async function (req) {
           skipped_no_team: outcome.skipped_no_team,
           skipped_unknown_team: outcome.skipped_unknown_team,
           cleared_not_member: outcome.cleared_not_member,
+          left_former_member: outcome.left_former_member,
         };
         scanned += outcome.scanned;
         stamped += outcome.stamped;
@@ -287,6 +298,7 @@ export default async function (req) {
       scanned: 1,
       stamped: outcome.stamped,
       cleared_not_member: outcome.cleared_not_member,
+      left_former_member: outcome.left_former_member,
       rejected_notified: rejectedNotified,
       already_ok: outcome.already_ok,
       skipped_no_team: outcome.skipped_no_team,

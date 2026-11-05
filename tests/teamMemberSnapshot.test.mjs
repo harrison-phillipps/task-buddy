@@ -1,52 +1,54 @@
 /**
- * Decision unit test for resolveTaskTeamStamp — the rule that decides whether a
- * team task may carry its team's member snapshot.
+ * Decision unit test for resolveTaskTeamStamp — the rule that decides what
+ * happens to a team task's member snapshot.
  *
- * Run: node --test tests/
+ * Run: node --test tests/*.test.mjs
  */
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
   resolveTaskTeamStamp,
-  teamMembers,
   taskCreatorId,
 } from "../base44/shared/teamMemberSnapshot.ts";
 
-// Owner is on the team, plus one unrelated teammate.
-const TEAM = { member_user_ids: ["user-owner", "user-teammate"] };
-const members = teamMembers(TEAM);
+// Owner is on the team, plus two unrelated teammates.
+const MEMBERS = ["user-home-1", "user-home-2", "user-owner"];
 
-/** What the sweep writes for a given decision. */
-const snapshotFor = (decision) => (decision.stamp ? members : []);
+/** What the sweep leaves on the row for a given decision. */
+const snapshotAfter = (decision, stored) => {
+  if (decision.action === "stamp") return MEMBERS;
+  if (decision.action === "clear") return [];
+  return stored; // leave: untouched
+};
 
 test("member creator: stamped with the team's members", () => {
-  const task = { id: "task-1", team_id: "team-1", created_by_id: "user-owner" };
-  const decision = resolveTaskTeamStamp({ task, members });
+  const task = { id: "task-1", team_id: "team-1", created_by_id: "user-owner", team_member_ids: [] };
+  const decision = resolveTaskTeamStamp({ task, members: MEMBERS });
 
-  assert.equal(decision.stamp, true);
+  assert.equal(decision.action, "stamp");
   assert.equal(decision.reason, "member");
   assert.equal(decision.creator_id, "user-owner");
-  assert.deepEqual(snapshotFor(decision), ["user-owner", "user-teammate"]);
+  assert.deepEqual(snapshotAfter(decision, task.team_member_ids), MEMBERS);
 });
 
-test("non-member creator: not stamped, snapshot cleared", () => {
-  const task = { id: "task-2", team_id: "team-1", created_by_id: "user-stranger" };
-  const decision = resolveTaskTeamStamp({ task, members });
+test("non-member creator: cleared", () => {
+  const task = { id: "task-2", team_id: "team-1", created_by_id: "user-stranger", team_member_ids: [] };
+  const decision = resolveTaskTeamStamp({ task, members: MEMBERS });
 
-  assert.equal(decision.stamp, false);
+  assert.equal(decision.action, "clear");
   assert.equal(decision.reason, "not_member");
   assert.equal(decision.creator_id, "user-stranger");
-  assert.deepEqual(snapshotFor(decision), []);
+  assert.deepEqual(snapshotAfter(decision, task.team_member_ids), []);
 });
 
 test("admin creator who is not on the team: stamped", () => {
-  const task = { id: "task-3", team_id: "team-1", created_by_id: "user-admin" };
-  const decision = resolveTaskTeamStamp({ task, members, creatorIsAdmin: true });
+  const task = { id: "task-3", team_id: "team-1", created_by_id: "user-admin", team_member_ids: [] };
+  const decision = resolveTaskTeamStamp({ task, members: MEMBERS, creatorIsAdmin: true });
 
-  assert.equal(decision.stamp, true);
+  assert.equal(decision.action, "stamp");
   assert.equal(decision.reason, "admin");
   assert.equal(decision.creator_id, "user-admin");
-  assert.deepEqual(snapshotFor(decision), ["user-owner", "user-teammate"]);
+  assert.deepEqual(snapshotAfter(decision, task.team_member_ids), MEMBERS);
 });
 
 test("service creator with a member owner: judged by the owner, stamped", () => {
@@ -55,27 +57,63 @@ test("service creator with a member owner: judged by the owner, stamped", () => 
     team_id: "team-1",
     created_by_id: "service_recurring_spawn",
     owner_user_id: "user-owner",
+    team_member_ids: [],
   };
-  const decision = resolveTaskTeamStamp({ task, members });
+  const decision = resolveTaskTeamStamp({ task, members: MEMBERS });
 
   assert.equal(taskCreatorId(task), "user-owner");
-  assert.equal(decision.stamp, true);
+  assert.equal(decision.action, "stamp");
   assert.equal(decision.reason, "member");
   assert.equal(decision.creator_id, "user-owner");
-  assert.deepEqual(snapshotFor(decision), ["user-owner", "user-teammate"]);
+  assert.deepEqual(snapshotAfter(decision, task.team_member_ids), MEMBERS);
 });
 
-test("service creator with no owner: no one to check, snapshot cleared", () => {
+test("service creator with no owner: no one to check, cleared", () => {
   const task = {
     id: "task-5",
     team_id: "team-1",
     created_by_id: "service_recurring_spawn",
+    team_member_ids: [],
   };
-  const decision = resolveTaskTeamStamp({ task, members, creatorIsAdmin: true });
+  const decision = resolveTaskTeamStamp({ task, members: MEMBERS, creatorIsAdmin: true });
 
   assert.equal(taskCreatorId(task), null);
-  assert.equal(decision.stamp, false);
+  assert.equal(decision.action, "clear");
   assert.equal(decision.reason, "missing_creator");
   assert.equal(decision.creator_id, null);
-  assert.deepEqual(snapshotFor(decision), []);
+  assert.deepEqual(snapshotAfter(decision, task.team_member_ids), []);
+});
+
+test("leaver with creator in snapshot: left untouched, not cleared, not restamped", () => {
+  // Stamped while user-leaver was on the team; they have since left.
+  const stored = ["user-home-1", "user-home-2", "user-leaver"];
+  const task = {
+    id: "task-6",
+    team_id: "team-1",
+    created_by_id: "user-leaver",
+    team_member_ids: stored,
+  };
+  const decision = resolveTaskTeamStamp({ task, members: MEMBERS });
+
+  assert.equal(decision.action, "leave");
+  assert.equal(decision.reason, "former_member");
+  assert.equal(decision.creator_id, "user-leaver");
+  assert.deepEqual(snapshotAfter(decision, stored), stored);
+});
+
+test("deleted account in snapshot: left untouched", () => {
+  // The creator's account is gone: not a team member, cannot be an admin, but
+  // their id is still in the row's snapshot from when it was stamped.
+  const stored = ["user-home-1", "user-home-2", "user-deleted-account"];
+  const task = {
+    id: "task-7",
+    team_id: "team-1",
+    created_by_id: "user-deleted-account",
+    team_member_ids: stored,
+  };
+  const decision = resolveTaskTeamStamp({ task, members: MEMBERS, creatorIsAdmin: false });
+
+  assert.equal(decision.action, "leave");
+  assert.equal(decision.reason, "former_member");
+  assert.deepEqual(snapshotAfter(decision, stored), stored);
 });

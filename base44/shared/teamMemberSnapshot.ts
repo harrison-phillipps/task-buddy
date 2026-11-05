@@ -63,11 +63,16 @@ export function taskCreatorId(task) {
 }
 
 /**
- * May this team task carry its team's member snapshot?
+ * What to do with a team task's member snapshot.
  *
- * Yes when the user it is addressed to (see taskCreatorId) is on the team, or is
- * an app admin. No otherwise: a task pointing at a team its creator has nothing
- * to do with must not hand that team's members access to it.
+ *   stamp — the user it is addressed to (see taskCreatorId) is on the team, or is
+ *           an app admin: carry the team's current members.
+ *   leave — that user is not on the team now, but the row's own snapshot already
+ *           includes them: it was stamped while they were still a member (they
+ *           have since left, or the account was deleted). The row keeps the
+ *           audience it was given — not cleared, not re-stamped.
+ *   clear — neither on the team, nor an admin, nor in the snapshot: the team_id
+ *           is stray, so the snapshot is emptied and the admin is told.
  *
  * `members` is the team's current member ids (teamMembers(team)); `creatorIsAdmin`
  * is the answer to "is that account an app admin?", looked up by the caller so
@@ -75,9 +80,12 @@ export function taskCreatorId(task) {
  */
 export function resolveTaskTeamStamp({ task, members, creatorIsAdmin = false }) {
   const creator_id = taskCreatorId(task);
-  if (!creator_id) return { stamp: false, reason: 'missing_creator', creator_id: null };
+  if (!creator_id) return { action: 'clear', reason: 'missing_creator', creator_id: null };
   const team = normalizeMemberIds(members);
-  if (team.includes(creator_id)) return { stamp: true, reason: 'member', creator_id };
-  if (creatorIsAdmin) return { stamp: true, reason: 'admin', creator_id };
-  return { stamp: false, reason: 'not_member', creator_id };
+  if (team.includes(creator_id)) return { action: 'stamp', reason: 'member', creator_id };
+  if (creatorIsAdmin) return { action: 'stamp', reason: 'admin', creator_id };
+  if (normalizeMemberIds(task?.team_member_ids).includes(creator_id)) {
+    return { action: 'leave', reason: 'former_member', creator_id };
+  }
+  return { action: 'clear', reason: 'not_member', creator_id };
 }
