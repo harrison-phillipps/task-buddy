@@ -50,6 +50,12 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
+    // Calendar containment: a non-admin caller gets an empty result — no event
+    // titles, no times, no free slots from the shared calendar.
+    if (user.role !== 'admin') {
+      return Response.json({ success: true, skipped: true, reason: 'admin_only', provider: null, events: [], gaps: [], tasks: [], suggestions: [] });
+    }
+
     const body = await req.json();
     const { date, work_start = 9, work_end = 18, min_gap_minutes = 30 } = body;
     const targetDate = date || adelaideDateString(new Date());

@@ -55,6 +55,8 @@ export default function CalendarIntegrations() {
   };
 
   const isNativeIOS = useIsNativeIOS();
+  // Calendar containment: only an admin may connect or sync the shared calendar.
+  const isAdmin = currentUser?.role === "admin";
   const isGoogleConnected = currentUser?.calendar_provider === "google" && currentUser?.calendar_connected;
   const isOutlookConnected = currentUser?.calendar_provider === "outlook" && currentUser?.calendar_connected;
 
@@ -80,6 +82,7 @@ export default function CalendarIntegrations() {
               )}
             </div>
           </div>
+          {isAdmin && (
           <Button
             onClick={() => handleSync(provider)}
             disabled={isSyncing !== null}
@@ -97,6 +100,7 @@ export default function CalendarIntegrations() {
               <>Connect & Sync</>
             )}
           </Button>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -136,7 +140,7 @@ export default function CalendarIntegrations() {
         </CardContent>
       </Card>
 
-      {(isGoogleConnected || isOutlookConnected) && (
+      {isAdmin && (isGoogleConnected || isOutlookConnected) && (
         <Card className="border-2 border-teal-200 bg-teal-50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between flex-wrap gap-3">

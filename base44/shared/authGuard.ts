@@ -43,3 +43,26 @@ export async function requireUser(base44: any): Promise<Gate> {
   if (!user) return { ok: false, response: unauthorized() };
   return { ok: true, user };
 }
+
+/**
+ * Calendar containment.
+ *
+ * The connected Google/Outlook calendar is one builder-wide SHARED connection,
+ * not a per-app-user calendar, so anything task-shaped that reaches it must
+ * belong to an admin account. Owner is owner_user_id, falling back to
+ * created_by_id for legacy rows.
+ */
+export function taskOwnerId(task: any): string | null {
+  return task?.owner_user_id || task?.created_by_id || null;
+}
+
+/** Ids of every app admin — one list() call reused across a whole sync pass. */
+export async function getAdminUserIds(base44: any): Promise<Set<string>> {
+  const users = await base44.asServiceRole.entities.User.list();
+  return new Set(users.filter((u: any) => u.role === 'admin').map((u: any) => u.id));
+}
+
+export function isAdminOwnedTask(task: any, adminIds: Set<string>): boolean {
+  const owner = taskOwnerId(task);
+  return !!owner && adminIds.has(owner);
+}

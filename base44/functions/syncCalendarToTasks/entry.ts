@@ -5,7 +5,7 @@
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
-import { requireUser } from '../../shared/authGuard.ts';
+import { resolveCaller, getAdminUserIds, isAdminOwnedTask } from '../../shared/authGuard.ts';
 
 const GCAL_BASE = 'https://www.googleapis.com/calendar/v3';
 const GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
@@ -17,7 +17,7 @@ function extractTaskId(description) {
   return match ? match[1] : null;
 }
 
-async function syncFromGoogle(base44, accessToken) {
+async function syncFromGoogle(base44, accessToken, adminIds) {
   const timeMin = new Date().toISOString();
   const future = new Date();
   future.setDate(future.getDate() + 90);
@@ -54,6 +54,8 @@ async function syncFromGoogle(base44, accessToken) {
     try {
       const task = await base44.asServiceRole.entities.Task.get(taskId);
       if (!task || task.status === 'completed') continue;
+      // Calendar containment: skip any task not owned by an admin account.
+      if (!isAdminOwnedTask(task, adminIds)) continue;
 
       const updates = {};
       const taskDate = task.due_date ? task.due_date.split('T')[0] : null;
@@ -81,7 +83,7 @@ async function syncFromGoogle(base44, accessToken) {
   return { updated, eventIds };
 }
 
-async function syncFromOutlook(base44, accessToken) {
+async function syncFromOutlook(base44, accessToken, adminIds) {
   const now = new Date().toISOString();
   const future = new Date();
   future.setDate(future.getDate() + 90);
@@ -122,6 +124,8 @@ async function syncFromOutlook(base44, accessToken) {
     try {
       const task = await base44.asServiceRole.entities.Task.get(taskId);
       if (!task || task.status === 'completed') continue;
+      // Calendar containment: skip any task not owned by an admin account.
+      if (!isAdminOwnedTask(task, adminIds)) continue;
 
       const updates = {};
       const taskDate = task.due_date ? task.due_date.split('T')[0] : null;
@@ -152,12 +156,15 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Signed-in callers only: the scheduled 30-minute poll runs as the
-    // workflow's creator (an admin) and the Settings "sync now" button sends the
-    // user's own token, so both pass; no token answers 401. Behaviour for a
-    // signed-in caller is unchanged — this is a global sync, not per-user.
-    const gate = await requireUser(base44);
-    if (!gate.ok) return gate.response;
+    // Calendar containment: a non-admin caller gets an empty result and the
+    // shared calendar is never read or written for them.
+    const caller = await resolveCaller(base44);
+    if (caller?.role !== 'admin') {
+      return Response.json({ success: true, skipped: true, reason: 'admin_only', total_updated: 0, stale_flags_cleared: 0 });
+    }
+
+    // Only tasks owned by an admin account may be touched by the sync.
+    const adminIds = await getAdminUserIds(base44);
 
     let googleUpdated = 0;
     let outlookUpdated = 0;
@@ -166,7 +173,7 @@ Deno.serve(async (req) => {
 
     try {
       const { accessToken } = await base44.asServiceRole.connectors.getConnection('googlecalendar');
-      const { updated, eventIds } = await syncFromGoogle(base44, accessToken);
+      const { updated, eventIds } = await syncFromGoogle(base44, accessToken, adminIds);
       googleUpdated = updated;
       for (const id of eventIds) fetchedIds.add(id);
       console.log(`Google Calendar → Tasks: ${googleUpdated} tasks updated`);
@@ -177,7 +184,7 @@ Deno.serve(async (req) => {
 
     try {
       const { accessToken } = await base44.asServiceRole.connectors.getConnection('outlook');
-      const { updated, eventIds } = await syncFromOutlook(base44, accessToken);
+      const { updated, eventIds } = await syncFromOutlook(base44, accessToken, adminIds);
       outlookUpdated = updated;
       for (const id of eventIds) fetchedIds.add(id);
       console.log(`Outlook Calendar → Tasks: ${outlookUpdated} tasks updated`);
@@ -207,6 +214,7 @@ Deno.serve(async (req) => {
         });
         for (const task of candidates) {
           if (task.status === 'completed') continue;
+          if (!isAdminOwnedTask(task, adminIds)) continue;
           if (!task.calendar_event_id) continue;
           if (task.due_date && (task.due_date < todayStr || task.due_date > futureStr)) continue;
           if (fetchedIds.has(task.calendar_event_id)) continue;

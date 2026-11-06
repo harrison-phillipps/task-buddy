@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import useIsAdmin from "@/hooks/useIsAdmin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,13 +34,15 @@ export default function CalendarSyncModal({
   const [syncType, setSyncType] = useState("tasks");
   const provider = currentUser?.calendar_provider || 'google';
   const calendarName = provider === 'outlook' ? 'Outlook Calendar' : 'Google Calendar';
+  const isAdmin = useIsAdmin();
 
   useEffect(() => {
-    // Check connection via fetchCalendarEvents function (uses app connector)
-    if (open) {
+    // Check connection via fetchCalendarEvents function (uses app connector).
+    // Admin only: opening this dialog triggers a fetch of the shared calendar.
+    if (open && isAdmin === true) {
       checkConnection();
     }
-  }, [open]);
+  }, [open, isAdmin]);
 
   const checkConnection = async () => {
     setIsConnecting(true);
@@ -209,6 +212,9 @@ export default function CalendarSyncModal({
     if (selectedTeamId) return g.team_id === selectedTeamId;
     return true;
   });
+
+  // Calendar containment: no connect/sync UI for non-admins.
+  if (isAdmin !== true) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

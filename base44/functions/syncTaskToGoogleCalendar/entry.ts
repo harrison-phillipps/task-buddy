@@ -1,12 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { resolveCaller } from '../../shared/authGuard.ts';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
 
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    // Calendar containment: a non-admin caller gets an empty result and no
+    // event is ever created on the shared calendar.
+    const caller = await resolveCaller(base44);
+    if (caller?.role !== 'admin') {
+      return Response.json({ success: false, skipped: true, reason: 'admin_only', event_id: null });
     }
 
     const { task, scheduled_date, scheduled_time, timezone, recurring, recurrence_end } = await req.json();

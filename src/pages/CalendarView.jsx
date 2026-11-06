@@ -8,6 +8,7 @@ import { Calendar, ChevronLeft, ChevronRight, Clock, CheckCircle, ExternalLink, 
 import AddEventModal from "../components/calendar/AddEventModal";
 import CalendarEventsList from "../components/calendar/CalendarEventsList";
 import CalendarConnectionStatus from "../components/calendar/CalendarConnectionStatus";
+import useIsAdmin from "@/hooks/useIsAdmin";
 import CalendarSyncModal from "../components/calendar/CalendarSyncModal";
 import AutoScheduleFocusBlock from "../components/calendar/AutoScheduleFocusBlock";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,6 +22,7 @@ export default function CalendarView() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const isAdmin = useIsAdmin();
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [backendEnabled, setBackendEnabled] = useState(false);
@@ -320,14 +322,16 @@ export default function CalendarView() {
               <Plus className="w-4 h-4 mr-2" />
               Add Event
             </Button>
-            <Button
-              onClick={() => setShowSyncModal(true)}
-              variant="outline"
-              className="border-purple-200"
-            >
-              <Zap className="w-4 h-4 mr-2" />
-              Sync Tasks
-            </Button>
+            {isAdmin && (
+              <Button
+                onClick={() => setShowSyncModal(true)}
+                variant="outline"
+                className="border-purple-200"
+              >
+                <Zap className="w-4 h-4 mr-2" />
+                Sync Tasks
+              </Button>
+            )}
             {currentUser?.google_calendar_connected && backendEnabled && (
               <Button
                 variant="outline"
@@ -346,12 +350,14 @@ export default function CalendarView() {
           </div>
         </motion.div>
 
-        {/* Calendar Connection Status */}
-        <CalendarConnectionStatus
-          currentUser={currentUser}
-          onSync={handleRefreshCalendar}
-          isSyncing={isRefreshing}
-        />
+        {/* Calendar Connection Status — admin only */}
+        {isAdmin && (
+          <CalendarConnectionStatus
+            currentUser={currentUser}
+            onSync={handleRefreshCalendar}
+            isSyncing={isRefreshing}
+          />
+        )}
 
         {/* Week Navigation */}
         <Card className="bg-white/80 backdrop-blur-sm border-purple-100">

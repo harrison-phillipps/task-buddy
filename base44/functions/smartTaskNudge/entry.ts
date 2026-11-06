@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { requireAdmin } from '../../shared/authGuard.ts';
+import { resolveCaller } from '../../shared/authGuard.ts';
 
 // Returns ISO strings for the next N hours window
 function getTimeWindow(fromNow = 0, windowMinutes = 60) {
@@ -24,9 +24,12 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Admin only: the scheduled nudge workflows call this as their creator, an app admin.
-    const gate = await requireAdmin(base44);
-    if (!gate.ok) return gate.response;
+    // Calendar containment: a non-admin caller gets an empty result — no
+    // calendar read and no notifications fanned out.
+    const caller = await resolveCaller(base44);
+    if (caller?.role !== 'admin') {
+      return Response.json({ sent: 0, skipped: true, reason: 'admin_only' });
+    }
 
     const client = base44.asServiceRole;
 

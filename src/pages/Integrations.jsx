@@ -40,10 +40,12 @@ const integrations = [
 export default function Integrations() {
   const [connectingId, setConnectingId] = useState(null);
   const [connectedIds, setConnectedIds] = useState([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const isNativeIOS = useIsNativeIOS();
 
   useEffect(() => {
     base44.auth.me().then(user => {
+      setIsAdmin(user?.role === "admin");
       if (user?.calendar_connected && user?.calendar_provider) {
         const id = user.calendar_provider === "google" ? "google-calendar" : "outlook-calendar";
         setConnectedIds([id]);
@@ -105,7 +107,11 @@ export default function Integrations() {
                         </li>
                       ))}
                     </ul>
-                    {isNativeIOS ? (
+                    {!isAdmin ? (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Calendar sync is available to admins only.
+                      </p>
+                    ) : isNativeIOS ? (
                       <div className="flex items-start gap-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-3 text-xs text-blue-800 dark:text-blue-300">
                         <Smartphone className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <span>To connect {integration.name}, visit <strong>taskbuddy.app</strong> in Safari.</span>

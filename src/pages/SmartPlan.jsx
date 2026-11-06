@@ -19,6 +19,8 @@ export default function SmartPlan() {
   const [workEnd, setWorkEnd] = useState("17:00");
   const [error, setError] = useState(null);
   const [isAddingAll, setIsAddingAll] = useState(false);
+  // Calendar containment: the shared calendar is admin-only.
+  const isAdmin = currentUser?.role === "admin";
 
   useEffect(() => {
     base44.auth.me().then(user => {
@@ -55,7 +57,9 @@ export default function SmartPlan() {
 
     try {
       const today = format(new Date(), "yyyy-MM-dd");
-      const existingEvents = await base44.entities.CalendarEvent.filter({ start_date: today }).catch(() => []);
+      const existingEvents = isAdmin
+        ? await base44.entities.CalendarEvent.filter({ start_date: today }).catch(() => [])
+        : [];
 
       const taskSummary = tasks.map(t => ({
         id: t.id,
@@ -210,14 +214,16 @@ Return JSON:
           </p>
         </div>
 
-        {/* Calendar connection status */}
-        <div className="mb-4">
-          <CalendarConnectionStatus
-            currentUser={currentUser}
-            onSync={handleCalendarSync}
-            isSyncing={isSyncing}
-          />
-        </div>
+        {/* Calendar connection status — admin only */}
+        {isAdmin && (
+          <div className="mb-4">
+            <CalendarConnectionStatus
+              currentUser={currentUser}
+              onSync={handleCalendarSync}
+              isSyncing={isSyncing}
+            />
+          </div>
+        )}
 
         {/* Settings row */}
         <Card className="mb-6 border-purple-100 dark:border-gray-700 dark:bg-gray-800/60">

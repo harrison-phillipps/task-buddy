@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { ChevronRight, ChevronLeft, Sparkles, CheckCircle, Calendar, Loader2, User, ClipboardList } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AIOnboardingAssistant from "./AIOnboardingAssistant";
+import useIsAdmin from "@/hooks/useIsAdmin";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CLINICIAN_ROLES = [
@@ -63,6 +64,7 @@ export default function AdaptiveOnboardingFlow({
   const effectiveStep = step >= 3 ? step - 1 : step;
   const progress = (effectiveStep / totalSteps) * 100;
   const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
+  const isAdmin = useIsAdmin();
   const [calendarSynced, setCalendarSynced] = useState(null); // null | "google" | "outlook" | "skipped"
   const [calendarSyncError, setCalendarSyncError] = useState(null);
 
@@ -441,7 +443,13 @@ export default function AdaptiveOnboardingFlow({
                       Connect your calendar so the AI Smart Plan can schedule tasks around your existing commitments. You can skip this and connect later in Settings.
                     </p>
 
-                    {calendarSynced && calendarSynced !== "skipped" ? (
+                    {!isAdmin ? (
+                      <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700">
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                          Calendar connection is available to admins only. You can skip this step.
+                        </p>
+                      </div>
+                    ) : calendarSynced && calendarSynced !== "skipped" ? (
                       <div className="p-4 bg-green-50 rounded-xl border-2 border-green-300 flex items-center gap-3">
                         <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
                         <div>

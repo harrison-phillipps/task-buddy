@@ -4,7 +4,7 @@
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
-import { requireAdmin } from '../../shared/authGuard.ts';
+import { requireAdmin, getAdminUserIds, isAdminOwnedTask } from '../../shared/authGuard.ts';
 
 const GCAL_BASE = 'https://www.googleapis.com/calendar/v3';
 const GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
@@ -114,6 +114,13 @@ Deno.serve(async (req) => {
 
     const task = taskData?.id ? taskData : await base44.asServiceRole.entities.Task.get(taskId);
     if (!task) return Response.json({ error: 'Task not found' }, { status: 404 });
+
+    // Calendar containment: only a task owned by an admin account may reach the
+    // builder's shared calendar. Every other task is skipped untouched.
+    const adminIds = await getAdminUserIds(base44);
+    if (!isAdminOwnedTask(task, adminIds)) {
+      return Response.json({ skipped: true, reason: 'owner_not_admin' });
+    }
 
     if (!task.due_date) return Response.json({ skipped: true, reason: 'no_due_date' });
     if (task.status === 'completed') return Response.json({ skipped: true, reason: 'task_completed' });

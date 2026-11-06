@@ -1,12 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { resolveCaller } from '../../shared/authGuard.ts';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
 
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    // Calendar containment: a non-admin caller gets an empty result and never
+    // reaches the builder's shared Google calendar.
+    const caller = await resolveCaller(base44);
+    if (caller?.role !== 'admin') {
+      return Response.json({ success: true, skipped: true, reason: 'admin_only', events_synced: 0 });
     }
 
     const { accessToken } = await base44.asServiceRole.connectors.getConnection("googlecalendar");
@@ -64,7 +67,7 @@ Deno.serve(async (req) => {
     }
 
     // Update user's calendar connection status
-    await base44.asServiceRole.entities.User.update(user.id, {
+    await base44.asServiceRole.entities.User.update(caller.id, {
       calendar_connected: true,
       calendar_provider: "google",
     });

@@ -7,6 +7,7 @@ import { Loader2, Zap, Calendar, Clock, CheckCircle2, ChevronLeft, ChevronRight,
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { format, addDays, subDays } from "date-fns";
+import useIsAdmin from "@/hooks/useIsAdmin";
 
 const PRIORITY_COLORS = {
   urgent: "bg-red-100 text-red-700 border-red-200",
@@ -32,6 +33,7 @@ function adjustDate(dateStr, delta) {
 }
 
 export default function CalendarGapFiller() {
+  const isAdmin = useIsAdmin();
   const today = format(new Date(), 'yyyy-MM-dd');
   const [date, setDate] = useState(today);
   const [loading, setLoading] = useState(false);
@@ -123,6 +125,24 @@ export default function CalendarGapFiller() {
   const getTask = (id) => data?.tasks?.find(t => t.id === id);
 
   const isTaskFilled = (gapIndex, taskId) => (filled[gapIndex] || []).includes(taskId);
+
+  // Calendar containment: free-slot scanning reads the shared calendar, so a
+  // non-admin never sees the scan controls or anything derived from it.
+  if (isAdmin === null) return null;
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen p-4 md:p-8">
+        <Card className="max-w-xl mx-auto bg-white/90 dark:bg-gray-800/90">
+          <CardContent className="py-10 px-6 text-center space-y-2">
+            <p className="font-semibold text-gray-800 dark:text-gray-100">Calendar scanning is available to admins only</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Free-time scanning reads the connected shared calendar, so it is limited to workspace admins.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-4 md:p-8">
