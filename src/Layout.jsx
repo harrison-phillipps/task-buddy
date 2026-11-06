@@ -29,6 +29,7 @@ import CrossDeviceSessionSync from "@/components/focus/CrossDeviceSessionSync";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import { useGlobalOfflineSync } from "@/hooks/useGlobalOfflineSync";
 import { hasFeatureAccess } from "@/components/subscription/FeatureGate";
+import { usePrefsTimezone } from "@/hooks/usePrefsTimezone";
 
 function LayoutContent({ children, currentPageName }) {
   const location = useLocation();
@@ -39,6 +40,9 @@ function LayoutContent({ children, currentPageName }) {
   const [showPersonalityModal, setShowPersonalityModal] = React.useState(false);
   const [showCompanionPicker, setShowCompanionPicker] = React.useState(false);
   const [isClinician, setIsClinician] = React.useState(false);
+
+  // Records the browser timezone on notification preferences once, on app load.
+  usePrefsTimezone();
 
   const navigationItems = [
     { title: "Home", url: isClinician ? createPageUrl("ClinicianDashboard") : createPageUrl("Dashboard"), icon: LayoutDashboard },

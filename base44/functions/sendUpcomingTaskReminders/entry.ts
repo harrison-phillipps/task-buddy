@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { requireAdmin } from '../../shared/authGuard.ts';
+import { isQuietNow } from '../../shared/quietHours.ts';
 
 // Parses a date+time as wall-clock Adelaide local and returns the true UTC
 // instant. Intl resolves the actual IANA offset (ACST +09:30 / ACDT +10:30),
@@ -141,6 +142,7 @@ Deno.serve(async (req) => {
     }
 
     let sent = 0;
+    let quietSkipped = 0;
 
     for (const [ownerId, items] of Object.entries(byUser)) {
       const user = userById[ownerId];
@@ -149,6 +151,9 @@ Deno.serve(async (req) => {
       const pref = prefByUserId[user.id];
       // Respect task_reminders preference (default true)
       if (pref && pref.task_reminders === false) continue;
+      // Quiet hours silence push and email only. The in-app row below is always
+      // written; this user's own window and timezone decide the rest.
+      const quiet = isQuietNow(pref, now);
 
       for (const { task, dueTime } of items) {
         // Dedup: check if we already sent this notification today
@@ -192,7 +197,8 @@ Deno.serve(async (req) => {
         // CalendarEvent with a start_time). Untimed tasks (8am fallback path,
         // dueTime === 'end of day') get in-app + email only — gentle, not aggressive.
         const hasSpecificTime = dueTime !== 'end of day';
-        if (hasSpecificTime) {
+        if (quiet) quietSkipped++;
+        if (hasSpecificTime && !quiet) {
           try {
             const pushPayload = {
               title: isMustDo ? `🔴 Must Do: ${task.title}` : `⏰ ${task.title}`,
@@ -227,7 +233,7 @@ Deno.serve(async (req) => {
         }
 
         // Send email if enabled
-        if (pref?.email_notifications !== false) {
+        if (!quiet && pref?.email_notifications !== false) {
           try {
             await client.integrations.Core.SendEmail({
               to: user.email,
@@ -258,7 +264,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return Response.json({ sent, checked: tasksToNotify.length });
+    return Response.json({ sent, checked: tasksToNotify.length, quiet_skipped: quietSkipped });
   } catch (error) {
     console.error('sendUpcomingTaskReminders error:', error);
     return Response.json({ error: error.message }, { status: 500 });

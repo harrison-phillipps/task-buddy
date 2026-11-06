@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { requireAdmin } from '../../shared/authGuard.ts';
+import { isQuietNow } from '../../shared/quietHours.ts';
 
 // Returns the Adelaide-local YYYY-MM-DD for a given Date, so date-window
 // boundaries align with Adelaide wall-clock days, not the server's UTC day.
@@ -68,6 +69,7 @@ Deno.serve(async (req) => {
     const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
 
     let sent = 0;
+    let quietSkipped = 0;
 
     for (const [ownerId, tasks] of Object.entries(tasksByUser)) {
       const user = userById[ownerId];
@@ -85,6 +87,9 @@ Deno.serve(async (req) => {
       // Respect email_notifications and email_digest preferences
       if (pref.email_notifications === false) continue;
       if (pref.email_digest === 'none') continue;
+      // Quiet hours silence the digest email only — the in-app notice below is
+      // still written so the user finds the summary when they open the app.
+      const quiet = isQuietNow(pref, now);
 
       // Categorise tasks
       const overdue = tasks.filter(t => t.due_date && t.due_date < today)
@@ -135,6 +140,12 @@ Deno.serve(async (req) => {
           related_type: 'task',
           related_id: topPriority?.id,
         });
+      }
+
+      if (quiet) {
+        console.log(`[dailyTaskDigest] quiet hours for ${user.email} — in-app notice only, email skipped`);
+        quietSkipped++;
+        continue;
       }
 
       // --- Summary email ---
@@ -218,7 +229,7 @@ Deno.serve(async (req) => {
     }
 
     console.log(`[dailyTaskDigest] Done. Sent: ${sent}`);
-    return Response.json({ sent, date: today });
+    return Response.json({ sent, date: today, quiet_skipped: quietSkipped });
   } catch (error) {
     console.error('[dailyTaskDigest] Error:', error);
     return Response.json({ error: error.message }, { status: 500 });

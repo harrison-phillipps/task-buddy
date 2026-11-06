@@ -6,6 +6,10 @@
       "type": "string",
       "description": "User these preferences belong to. The owner anchor for every rule: only this user (and an admin) may read or change the row."
     },
+    "timezone": {
+      "type": "string",
+      "description": "IANA timezone for quiet-hours evaluation, e.g. \"Australia/Adelaide\". Filled silently from Intl.DateTimeFormat().resolvedOptions().timeZone on app load when empty. Absent or invalid falls back to Australia/Adelaide (see base44/shared/quietHours.ts)."
+    },
     "task_reminders": {
       "type": "boolean",
       "default": true,

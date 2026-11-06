@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import PushNotificationSetup from "@/components/notifications/PushNotificationSetup";
 import FocusNotificationSettings from "@/components/focus/FocusNotificationSettings";
+import TimezoneSetting from "@/components/notifications/TimezoneSetting";
 
 export default function NotificationSettings() {
   const queryClient = useQueryClient();
@@ -48,7 +49,8 @@ export default function NotificationSettings() {
         team_notifications: true,
         email_notifications: true,
         email_digest: 'daily',
-        quiet_hours_enabled: false
+        quiet_hours_enabled: false,
+        timezone: Intl?.DateTimeFormat?.().resolvedOptions?.().timeZone || 'Australia/Adelaide'
       });
     },
     enabled: !!currentUser,
@@ -355,6 +357,15 @@ export default function NotificationSettings() {
                   </div>
                 </div>
               )}
+
+              <TimezoneSetting
+                value={preferences.timezone}
+                onChange={(tz) => handleChange('timezone', tz)}
+              />
+
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Quiet hours: we won't send push or email during these times. In-app notices still appear.
+              </p>
             </CardContent>
           </Card>
         </motion.div>

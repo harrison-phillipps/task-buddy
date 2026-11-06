@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { requireAdmin } from '../../shared/authGuard.ts';
+import { isQuietNow } from '../../shared/quietHours.ts';
 
 // Parses a date+time as wall-clock Adelaide local and returns the true UTC
 // instant. Intl resolves the actual IANA offset (ACST +09:30 / ACDT +10:30),
@@ -72,6 +73,7 @@ Deno.serve(async (req) => {
   );
 
   let notified = 0;
+  let quietSkipped = 0;
 
   for (const task of upcoming) {
     // Prefer owner_user_id (set on recurring instances), fall back to created_by_id
@@ -81,6 +83,8 @@ Deno.serve(async (req) => {
 
     const prefs = prefsMap[user.id];
     if (prefs && prefs.task_reminders === false) continue;
+    // Quiet hours silence the email only — the in-app row below is always written.
+    const quiet = isQuietNow(prefs, now);
 
     const dedupKey = `${user.id}:${task.id}`;
     if (alreadySentToday.has(dedupKey)) continue;
@@ -125,8 +129,9 @@ Deno.serve(async (req) => {
       is_read: false,
       sent_at: now.toISOString(),
     });
+    if (quiet) quietSkipped++;
 
-    if (sendEmail && user.email) {
+    if (sendEmail && !quiet && user.email) {
       try {
         await base44.asServiceRole.integrations.Core.SendEmail({
           to: user.email,
@@ -158,5 +163,5 @@ Deno.serve(async (req) => {
   }
 
   console.log(`sendDeadlineReminders: processed ${upcoming.length} tasks, sent ${notified} notifications`);
-  return Response.json({ message: 'Done', upcoming: upcoming.length, notified });
+  return Response.json({ message: 'Done', upcoming: upcoming.length, notified, quiet_skipped: quietSkipped });
 });
