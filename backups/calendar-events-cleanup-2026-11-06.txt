@@ -1,0 +1,32 @@
+calendarEventsCleanup — one-off run, 2026-11-06 (Australia/Adelaide)
+====================================================================
+
+What it did
+- Reconciled the calendar events written by pushTaskToCalendar against the tasks
+  that store their ids. Admin-only, dry run by default, { execute: true } deletes.
+- An event was deleted only when eventMatchesTask() agreed: the event's title
+  equals the task's title (the 📋 prefix allowed), or its description/body carries
+  "TaskBuddy task ID: <task_id>" with that id appearing whole.
+- After each successful delete, calendar_synced and calendar_event_id were cleared
+  on that task. Flagged tasks with no stored event id (stray flags) were cleared too.
+
+Result — clean: nothing mismatched, nothing errored
+- Pass 1, Google, 43 task_ids from backups/calendar-events-index-2026-11-06.json,
+  concurrency 2: deleted 43, skipped_mismatch 0, not_found 0, errors 0,
+  flags_cleared 44 (the 43 deletes plus the 1 stray flag).
+- Pass 2, Outlook, 11 task_ids, concurrency 2: deleted 11, skipped_mismatch 0,
+  not_found 0, errors 0, flags_cleared 11.
+- Totals: 54 events deleted, 55 task flags cleared.
+- Final dry run over all_flagged_tasks: entries_considered 0, stray_flags_found 0,
+  would_delete 0. No flagged task remains.
+
+Notes
+- An earlier dry run on 06 Nov returned one Outlook 429. The execute runs used the
+  retry-with-backoff path: 800ms then 1600ms, honouring Retry-After, retrying only
+  429/503. Both passes came back with errors 0.
+- The function has been deleted from base44/functions after this run. This file is
+  the exact source that ran. To re-run, restore it to
+  base44/functions/calendarEventsCleanup/entry.ts and invoke it as an admin; called
+  without { execute: true } it only reports and never writes.
+- The match rule lives in base44/shared/calendarEventMatch.ts and is pinned by
+  src/tests/calendarEventMatch.test.mjs (14 tests).

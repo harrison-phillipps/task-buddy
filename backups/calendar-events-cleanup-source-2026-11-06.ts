@@ -25,7 +25,7 @@ import { eventMatchesTask } from '../../shared/calendarEventMatch.ts';
 const GCAL_BASE = 'https://www.googleapis.com/calendar/v3';
 const GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
 const MAX_IDS = 200;
-const BATCH = 6;
+const DEFAULT_CONCURRENCY = 2;
 
 function classifyEventId(id: string): 'google' | 'outlook' | 'unknown' {
   const s = String(id || '');
@@ -43,8 +43,24 @@ function eventUrl(provider: string, eventId: string): string {
     : `${GRAPH_BASE}/me/events/${encodeURIComponent(eventId)}`;
 }
 
+const RETRY_STATUS = new Set([429, 503]);
+
+/** fetch, retrying a throttled request with backoff. Never retries another status. */
+async function requestWithRetry(url: string, init: RequestInit, attempts = 3): Promise<Response> {
+  let res = await fetch(url, init);
+  for (let attempt = 1; attempt < attempts && RETRY_STATUS.has(res.status); attempt++) {
+    const retryAfter = Number(res.headers.get('Retry-After'));
+    const waitMs =
+      Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 800 * 2 ** (attempt - 1);
+    console.log(`calendarEventsCleanup: ${res.status} from ${init.method || 'GET'} — retry ${attempt} in ${waitMs}ms`);
+    await new Promise((resolve) => setTimeout(resolve, waitMs));
+    res = await fetch(url, init);
+  }
+  return res;
+}
+
 async function fetchEvent(provider: string, eventId: string, accessToken: string) {
-  const res = await fetch(eventUrl(provider, eventId), {
+  const res = await requestWithRetry(eventUrl(provider, eventId), {
     method: 'GET',
     headers: { Authorization: `Bearer ${accessToken}` },
     signal: AbortSignal.timeout(10000),
@@ -57,7 +73,7 @@ async function fetchEvent(provider: string, eventId: string, accessToken: string
 }
 
 async function deleteEvent(provider: string, eventId: string, accessToken: string) {
-  const res = await fetch(eventUrl(provider, eventId), {
+  const res = await requestWithRetry(eventUrl(provider, eventId), {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${accessToken}` },
     signal: AbortSignal.timeout(15000),
@@ -81,6 +97,12 @@ export default async function (req: Request): Promise<Response> {
     // Deletion happens only on an explicit execute run. Anything else is a dry run.
     const execute = body?.execute === true;
 
+    // Keep the in-flight count small: both calendar APIs throttle aggressively.
+    const requestedConcurrency = Number(body?.concurrency);
+    const concurrency = Number.isFinite(requestedConcurrency) && requestedConcurrency > 0
+      ? Math.min(Math.trunc(requestedConcurrency), 6)
+      : DEFAULT_CONCURRENCY;
+
     const explicitIds: string[] = Array.isArray(body?.task_ids)
       ? body.task_ids.filter((x: unknown) => typeof x === 'string' && x).slice(0, MAX_IDS)
       : [];
@@ -102,9 +124,6 @@ export default async function (req: Request): Promise<Response> {
         provider: classifyEventId(t.calendar_event_id),
         event_id: String(t.calendar_event_id),
       }));
-
-    // Flag set but nothing to point at: no event to check, only a flag to clear.
-    const strayFlags = explicitIds.length ? [] : records.filter((t: any) => !t.calendar_event_id);
 
     // Resolve only the connections we actually need.
     const tokens: Record<string, string | null> = { google: null, outlook: null };
@@ -132,8 +151,8 @@ export default async function (req: Request): Promise<Response> {
     const error_ids: Array<{ task_id: string; event_id?: string; http_status?: number }> = [];
 
     // Walk in small concurrent batches to stay inside the connection limit.
-    for (let i = 0; i < targets.length; i += BATCH) {
-      const chunk = targets.slice(i, i + BATCH);
+    for (let i = 0; i < targets.length; i += concurrency) {
+      const chunk = targets.slice(i, i + concurrency);
       await Promise.all(
         chunk.map(async (t: any) => {
           if (t.provider === 'unknown') {
@@ -196,7 +215,10 @@ export default async function (req: Request): Promise<Response> {
       );
     }
 
-    // Clear the stray flag: no stored event id, so nothing was ever checkable.
+    // Stray flags: set but with no stored event id, so nothing was ever checkable.
+    // Counted on every run regardless of the task_ids scope; cleared only on execute.
+    const flagged = await base44.asServiceRole.entities.Task.filter({ calendar_synced: true });
+    const strayFlags = (flagged.items || flagged).filter((t: any) => !t.calendar_event_id);
     if (execute) {
       for (const t of strayFlags) {
         await base44.asServiceRole.entities.Task.update(t.id, { calendar_synced: false });
