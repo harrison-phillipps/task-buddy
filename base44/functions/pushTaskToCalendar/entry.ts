@@ -4,6 +4,7 @@
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { requireAdmin } from '../../shared/authGuard.ts';
 
 const GCAL_BASE = 'https://www.googleapis.com/calendar/v3';
 const GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
@@ -94,6 +95,13 @@ async function pushToOutlook(task, accessToken) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    // Admin only: the two entity-triggered "Sync Task Due Date to Calendar"
+    // workflows call this as their creator, an app admin. Gate before any
+    // service-role read, so no token never reaches the task lookup.
+    const gate = await requireAdmin(base44);
+    if (!gate.ok) return gate.response;
+
     const payload = await req.json().catch(() => ({}));
 
     // Support both entity automation payload and direct invocation
@@ -106,21 +114,6 @@ Deno.serve(async (req) => {
 
     const task = taskData?.id ? taskData : await base44.asServiceRole.entities.Task.get(taskId);
     if (!task) return Response.json({ error: 'Task not found' }, { status: 404 });
-
-    // Auth: allow scheduler/automation (no token), task owner, or admin.
-    // Uses the same dual-path pattern as sendDeadlineReminders / dailyTaskDigest:
-    // me() returns null OR throws when no user token is present (scheduler context).
-    try {
-      const caller = await base44.auth.me();
-      if (caller !== null) {
-        const isOwner = caller.id === task.owner_user_id || caller.id === task.created_by_id;
-        if (!isOwner && caller.role !== 'admin') {
-          return Response.json({ error: 'Forbidden: you can only sync your own tasks' }, { status: 403 });
-        }
-      }
-    } catch {
-      // No user token — scheduler/automation context, safe to proceed
-    }
 
     if (!task.due_date) return Response.json({ skipped: true, reason: 'no_due_date' });
     if (task.status === 'completed') return Response.json({ skipped: true, reason: 'task_completed' });

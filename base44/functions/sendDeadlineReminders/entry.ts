@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { requireAdmin } from '../../shared/authGuard.ts';
 
 // Parses a date+time as wall-clock Adelaide local and returns the true UTC
 // instant. Intl resolves the actual IANA offset (ACST +09:30 / ACDT +10:30),
@@ -32,17 +33,9 @@ function adelaideDateString(date, timeZone = 'Australia/Adelaide') {
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
 
-  // Allow both scheduled (service role) and manual admin triggers
-  // If a user token is present, they must be admin. Scheduler calls have no user token.
-  try {
-    const user = await base44.auth.me();
-    if (user !== null && user?.role !== 'admin') {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
-    }
-  } catch (authErr) {
-    // No user token present (scheduler context) — safe to proceed with service role
-    console.log('[sendDeadlineReminders] No user context, running as scheduler');
-  }
+  // Admin only: the scheduled workflow step calls this as its creator, an app admin.
+  const gate = await requireAdmin(base44);
+  if (!gate.ok) return gate.response;
 
   const now = new Date();
   const in7d = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { requireAdmin } from '../../shared/authGuard.ts';
 
 // Returns ISO strings for the next N hours window
 function getTimeWindow(fromNow = 0, windowMinutes = 60) {
@@ -22,6 +23,11 @@ function isCurrentlyBusy(events, nowMs) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    // Admin only: the scheduled nudge workflows call this as their creator, an app admin.
+    const gate = await requireAdmin(base44);
+    if (!gate.ok) return gate.response;
+
     const client = base44.asServiceRole;
 
     const now = new Date();

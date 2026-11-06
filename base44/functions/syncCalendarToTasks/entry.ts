@@ -5,6 +5,7 @@
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { requireUser } from '../../shared/authGuard.ts';
 
 const GCAL_BASE = 'https://www.googleapis.com/calendar/v3';
 const GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
@@ -151,16 +152,12 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Allow scheduler (no token) or admin only — pure sync poller with no
-    // legitimate per-user trigger case. Same pattern as sendDeadlineReminders.
-    try {
-      const user = await base44.auth.me();
-      if (user !== null && user?.role !== 'admin') {
-        return Response.json({ error: 'Forbidden' }, { status: 403 });
-      }
-    } catch {
-      // No user token — scheduler context, safe to proceed
-    }
+    // Signed-in callers only: the scheduled 30-minute poll runs as the
+    // workflow's creator (an admin) and the Settings "sync now" button sends the
+    // user's own token, so both pass; no token answers 401. Behaviour for a
+    // signed-in caller is unchanged — this is a global sync, not per-user.
+    const gate = await requireUser(base44);
+    if (!gate.ok) return gate.response;
 
     let googleUpdated = 0;
     let outlookUpdated = 0;

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { requireAdmin } from '../../shared/authGuard.ts';
 
 // Parses a date+time as wall-clock Adelaide local and returns the true UTC
 // instant. Intl resolves the actual IANA offset (ACST +09:30 / ACDT +10:30),
@@ -86,6 +87,12 @@ function calculateNextOccurrence(fromDate, template) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    // Admin only: the "Spawn Next Recurring Task on Completion" workflow step
+    // calls this as its creator, an app admin, so real runs still pass.
+    const gate = await requireAdmin(base44);
+    if (!gate.ok) return gate.response;
+
     const body = await req.json();
 
     const { event, data, old_data } = body;

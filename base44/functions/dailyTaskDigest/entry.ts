@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { requireAdmin } from '../../shared/authGuard.ts';
 
 // Returns the Adelaide-local YYYY-MM-DD for a given Date, so date-window
 // boundaries align with Adelaide wall-clock days, not the server's UTC day.
@@ -17,16 +18,10 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Allow scheduler context (no token) or admin users only
-    try {
-      const user = await base44.auth.me();
-      if (user !== null && user?.role !== 'admin') {
-        return Response.json({ error: 'Forbidden' }, { status: 403 });
-      }
-    } catch (authErr) {
-      // No user token present (scheduler context) — safe to proceed
-      console.log('[dailyTaskDigest] No user context, running as scheduler');
-    }
+    // Admin only: the "Daily Task Digest – 8AM" workflow step calls this as its
+    // creator, an app admin, so the scheduled run still passes.
+    const gate = await requireAdmin(base44);
+    if (!gate.ok) return gate.response;
 
     const client = base44.asServiceRole;
 

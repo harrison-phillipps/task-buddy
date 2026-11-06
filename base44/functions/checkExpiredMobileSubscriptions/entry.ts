@@ -1,8 +1,14 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { requireAdmin } from '../../shared/authGuard.ts';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    // Admin only: the scheduled workflow step calls this as its creator, an app admin.
+    const gate = await requireAdmin(base44);
+    if (!gate.ok) return gate.response;
+
     const client = base44.asServiceRole;
 
     const now = new Date();

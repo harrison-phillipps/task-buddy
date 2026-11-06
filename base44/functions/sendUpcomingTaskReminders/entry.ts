@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { requireAdmin } from '../../shared/authGuard.ts';
 
 // Parses a date+time as wall-clock Adelaide local and returns the true UTC
 // instant. Intl resolves the actual IANA offset (ACST +09:30 / ACDT +10:30),
@@ -45,6 +46,11 @@ function adelaideDateString(date, timeZone = 'Australia/Adelaide') {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    // Admin only: the scheduled workflow step calls this as its creator, an app admin.
+    const gate = await requireAdmin(base44);
+    if (!gate.ok) return gate.response;
+
     const client = base44.asServiceRole;
 
     const now = new Date();
