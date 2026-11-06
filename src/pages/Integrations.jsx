@@ -109,7 +109,7 @@ export default function Integrations() {
                     </ul>
                     {!isAdmin ? (
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Calendar sync is available to admins only.
+                        We're rebuilding calendar sync. Your tasks and dates stay safe in the meantime.
                       </p>
                     ) : isNativeIOS ? (
                       <div className="flex items-start gap-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-3 text-xs text-blue-800 dark:text-blue-300">

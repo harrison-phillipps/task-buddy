@@ -59,22 +59,26 @@ export default function AdaptiveOnboardingFlow({
 
   // Steps: 1=name, 2=userType, 4=goals, 5=challenge, 6=workStyle, 7=calendar, 8=summary
   // (step 3 "Who is this for?" removed for all users — every self-registered user is an adult)
-  const totalSteps = 7;
+  const isAdmin = useIsAdmin();
+  // Calendar (step 7) is skipped entirely for non-admins — no step, no message.
+  const showCalendarStep = isAdmin !== false;
+  const totalSteps = showCalendarStep ? 7 : 6;
   // Step 3 is skipped for everyone; adjust the displayed step number accordingly
-  const effectiveStep = step >= 3 ? step - 1 : step;
+  const effectiveStep = (step >= 3 ? step - 1 : step) - (!showCalendarStep && step > 7 ? 1 : 0);
   const progress = (effectiveStep / totalSteps) * 100;
   const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
-  const isAdmin = useIsAdmin();
   const [calendarSynced, setCalendarSynced] = useState(null); // null | "google" | "outlook" | "skipped"
   const [calendarSyncError, setCalendarSyncError] = useState(null);
 
   const getNextStep = (s) => {
     if (s === 2) return 4; // skip removed profileType step for everyone
+    if (s === 6 && !showCalendarStep) return 8; // calendar step skipped for non-admins
     return s + 1;
   };
 
   const getPrevStep = (s) => {
     if (s === 4) return 2; // skip back over removed profileType step for everyone
+    if (s === 8 && !showCalendarStep) return 6; // skip back over the calendar step
     return s - 1;
   };
 
@@ -443,13 +447,7 @@ export default function AdaptiveOnboardingFlow({
                       Connect your calendar so the AI Smart Plan can schedule tasks around your existing commitments. You can skip this and connect later in Settings.
                     </p>
 
-                    {!isAdmin ? (
-                      <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700">
-                        <p className="text-sm text-gray-600 dark:text-gray-300">
-                          Calendar connection is available to admins only. You can skip this step.
-                        </p>
-                      </div>
-                    ) : calendarSynced && calendarSynced !== "skipped" ? (
+                    {calendarSynced && calendarSynced !== "skipped" ? (
                       <div className="p-4 bg-green-50 rounded-xl border-2 border-green-300 flex items-center gap-3">
                         <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
                         <div>

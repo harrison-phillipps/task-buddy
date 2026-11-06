@@ -134,9 +134,9 @@ export default function CalendarGapFiller() {
       <div className="min-h-screen p-4 md:p-8">
         <Card className="max-w-xl mx-auto bg-white/90 dark:bg-gray-800/90">
           <CardContent className="py-10 px-6 text-center space-y-2">
-            <p className="font-semibold text-gray-800 dark:text-gray-100">Calendar scanning is available to admins only</p>
+            <p className="font-semibold text-gray-800 dark:text-gray-100">Free-time finding is being rebuilt.</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Free-time scanning reads the connected shared calendar, so it is limited to workspace admins.
+              Your calendar and tasks are left exactly as they are.
             </p>
           </CardContent>
         </Card>

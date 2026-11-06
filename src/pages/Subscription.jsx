@@ -46,8 +46,7 @@ const plansData = [
       "Brain dumps — no daily limit",
       "Focus sessions with AI coaching — no daily limit",
       "Goal tracking and visual progress",
-      "Habit and routine tracking",
-      "Calendar sync"
+      "Habit and routine tracking"
     ],
     limitations: [],
     cta: "Start Getting More Done →",

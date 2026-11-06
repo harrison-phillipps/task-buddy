@@ -66,7 +66,11 @@ function LayoutContent({ children, currentPageName }) {
     { title: "Teams", url: createPageUrl("Teams"), icon: Users, feature: "team_features" },
     { title: "Integrations", url: createPageUrl("Integrations"), icon: Sparkles, feature: null },
     { title: "Settings", url: createPageUrl("Settings"), icon: Settings, feature: null },
-  ].filter(item => !(isClinician && CLINICIAN_HIDDEN_ITEMS.has(item.title)));
+  ].filter(item =>
+    !(isClinician && CLINICIAN_HIDDEN_ITEMS.has(item.title)) &&
+    // Gap Filler reads the shared calendar — keep it off the sidebar for non-admins.
+    !(item.title === "Gap Filler" && currentUser?.role !== "admin")
+  );
 
   React.useEffect(() => {
     const fetchUser = async () => {

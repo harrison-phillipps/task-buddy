@@ -114,9 +114,15 @@ export default function CalendarIntegrations() {
             <Calendar className="w-5 h-5 text-purple-600" />
             Calendar Integrations
           </CardTitle>
-          <p className="text-sm text-gray-600">
-            Connect your calendar so the AI planner can schedule around existing commitments
-          </p>
+          {isAdmin ? (
+            <p className="text-sm text-gray-600">
+              Connect your calendar so the AI planner can schedule around existing commitments
+            </p>
+          ) : (
+            <p className="text-sm text-gray-600">
+              We're rebuilding calendar sync. Your tasks and dates stay safe in the meantime.
+            </p>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
           <CalendarCard

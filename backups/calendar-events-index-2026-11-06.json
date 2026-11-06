@@ -1,0 +1,465 @@
+{
+  "generated_at": "2026-11-06T01:45:20.116Z",
+  "note": "Index of flagged tasks (calendar_synced=true) with a stored external event id. No task titles included.",
+  "task_total_scanned": 278,
+  "flagged_task_total": 55,
+  "entries_with_event_id": 54,
+  "by_provider": {
+    "google": 43,
+    "outlook": 11
+  },
+  "counts_by_owner_email": {
+    "emily.coxy4@gmail.com": {
+      "google": 5,
+      "outlook": 0,
+      "unknown": 0,
+      "total": 5
+    },
+    "harrison.phillipps@hotmail.com": {
+      "google": 10,
+      "outlook": 0,
+      "unknown": 0,
+      "total": 10
+    },
+    "rdolman93@gmail.com": {
+      "google": 28,
+      "outlook": 11,
+      "unknown": 0,
+      "total": 39
+    }
+  },
+  "entries": [
+    {
+      "task_id": "6a230588e62ffa3d5d7c87e5",
+      "provider": "google",
+      "event_id": "dcjbktt6fj7llh0tbkj28ittdc",
+      "owner_user_id": "69c8ef7c7212cfe9dfddcfea",
+      "owner_email": "emily.coxy4@gmail.com",
+      "due_date": "2026-05-19"
+    },
+    {
+      "task_id": "6a0a8801689f4848a0480b7f",
+      "provider": "google",
+      "event_id": "8j7m06q5ftcgo6q20jdsl4m3m0",
+      "owner_user_id": "69c8ef7c7212cfe9dfddcfea",
+      "owner_email": "emily.coxy4@gmail.com",
+      "due_date": "2026-05-18"
+    },
+    {
+      "task_id": "6a0a88014bd290d6cc35dff1",
+      "provider": "google",
+      "event_id": "mfcj201i89mq325otjqmnel8p0",
+      "owner_user_id": "69c8ef7c7212cfe9dfddcfea",
+      "owner_email": "emily.coxy4@gmail.com",
+      "due_date": "2026-05-18"
+    },
+    {
+      "task_id": "6a0a880166585f1bd91f18e0",
+      "provider": "google",
+      "event_id": "m1rgu0e9rdcmblbm13a0cqg6e8",
+      "owner_user_id": "69c8ef7c7212cfe9dfddcfea",
+      "owner_email": "emily.coxy4@gmail.com",
+      "due_date": "2026-05-18"
+    },
+    {
+      "task_id": "6a0a880106edfe1be1e378a4",
+      "provider": "google",
+      "event_id": "clu2ll62pknktdqpdeaf4a461s",
+      "owner_user_id": "69c8ef7c7212cfe9dfddcfea",
+      "owner_email": "emily.coxy4@gmail.com",
+      "due_date": "2026-05-18"
+    },
+    {
+      "task_id": "6aebf6d1d7f940ffc61da016",
+      "provider": "google",
+      "event_id": "t40aui16uj5dm80hb2c1q8do9c",
+      "owner_user_id": "6a61816f1e6ed9f4008cdc78",
+      "owner_email": "harrison.phillipps@hotmail.com",
+      "due_date": "2026-11-19"
+    },
+    {
+      "task_id": "6aeac568df010bfa7683aeeb",
+      "provider": "google",
+      "event_id": "5f1sr8rae4e1oilc203mth30kk",
+      "owner_user_id": "6a61816f1e6ed9f4008cdc78",
+      "owner_email": "harrison.phillipps@hotmail.com",
+      "due_date": "2026-11-12"
+    },
+    {
+      "task_id": "6aeac4f2ae968b72dcea3d30",
+      "provider": "google",
+      "event_id": "u8kitlata3n5cjtaj6oo235lko",
+      "owner_user_id": "6a61816f1e6ed9f4008cdc78",
+      "owner_email": "harrison.phillipps@hotmail.com",
+      "due_date": "2026-11-18"
+    },
+    {
+      "task_id": "6aeac4f23309c7eebb7a8fa4",
+      "provider": "google",
+      "event_id": "5sr0ittkrurdhf8rod5cpvejqs",
+      "owner_user_id": "6a61816f1e6ed9f4008cdc78",
+      "owner_email": "harrison.phillipps@hotmail.com",
+      "due_date": "2026-11-11"
+    },
+    {
+      "task_id": "6aeac4f25ff206d02943a39f",
+      "provider": "google",
+      "event_id": "kohq5pofcdqikst0ovneng9jpc",
+      "owner_user_id": "6a61816f1e6ed9f4008cdc78",
+      "owner_email": "harrison.phillipps@hotmail.com",
+      "due_date": "2026-11-08"
+    },
+    {
+      "task_id": "6aeac4f2c007aea216d1c5db",
+      "provider": "google",
+      "event_id": "nr69dd8cf4c7sg6h4ad2pnmv8c",
+      "owner_user_id": "6a61816f1e6ed9f4008cdc78",
+      "owner_email": "harrison.phillipps@hotmail.com",
+      "due_date": "2026-11-05"
+    },
+    {
+      "task_id": "6aeac4f28d590816bdd1fd50",
+      "provider": "google",
+      "event_id": "ku3quq6p0p0vcp6dkupk4nvj8g",
+      "owner_user_id": "6a61816f1e6ed9f4008cdc78",
+      "owner_email": "harrison.phillipps@hotmail.com",
+      "due_date": "2026-11-09"
+    },
+    {
+      "task_id": "6a7a809110fc250273757bf4",
+      "provider": "google",
+      "event_id": "t9dr0qp8a990osj77eia33n3e8",
+      "owner_user_id": "6a61816f1e6ed9f4008cdc78",
+      "owner_email": "harrison.phillipps@hotmail.com",
+      "due_date": "2026-08-11"
+    },
+    {
+      "task_id": "6a6af10a39df1e7524c9352e",
+      "provider": "google",
+      "event_id": "1lutn5n3e3cl0oarc6993g9rm8",
+      "owner_user_id": "6a61816f1e6ed9f4008cdc78",
+      "owner_email": "harrison.phillipps@hotmail.com",
+      "due_date": "2026-08-17"
+    },
+    {
+      "task_id": "6a69499e0c58ab0ed22b5e54",
+      "provider": "google",
+      "event_id": "413uhfdcp4cj0kkbhfoqccuq2s",
+      "owner_user_id": "6a61816f1e6ed9f4008cdc78",
+      "owner_email": "harrison.phillipps@hotmail.com",
+      "due_date": "2026-08-05"
+    },
+    {
+      "task_id": "6ae743d6b92416a6c372c272",
+      "provider": "google",
+      "event_id": "557eh374m6clahl0k3p8rbg5os",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-08"
+    },
+    {
+      "task_id": "6ae743d6c9b70f08d60e8e32",
+      "provider": "google",
+      "event_id": "670oa1t165uftcb6g215uqv0fc",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-08"
+    },
+    {
+      "task_id": "6ae6a5040ac9db4cd52f1141",
+      "provider": "google",
+      "event_id": "h1lh9q84hu0tfotbf376ul3hg8",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-08"
+    },
+    {
+      "task_id": "6ae6a5046796e6d9b35bb459",
+      "provider": "google",
+      "event_id": "57hai8s7uci9ht0u0rftfmagag",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-08"
+    },
+    {
+      "task_id": "6ae6a5045dd32570d7c2174c",
+      "provider": "google",
+      "event_id": "pb5rquoo4aefoltolsdi4q2k1s",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-08"
+    },
+    {
+      "task_id": "6ae6a5041d50332fa3488938",
+      "provider": "google",
+      "event_id": "trkjijvcjsudg815u1ia78iles",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-08"
+    },
+    {
+      "task_id": "6ae6a50424ff9a9f8df58d5f",
+      "provider": "google",
+      "event_id": "n2lilnhbij0q4agnf8lhfibtl4",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-08"
+    },
+    {
+      "task_id": "6ae6a50415460de2c59f1767",
+      "provider": "google",
+      "event_id": "dmk47jvoj2e5doni13qibv9jkc",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-08"
+    },
+    {
+      "task_id": "6ae6a504d5d179420c30dd8d",
+      "provider": "google",
+      "event_id": "qr38pcngiiengtiljv0vpal3b4",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-08"
+    },
+    {
+      "task_id": "6ae6a50440bb27da04f5541b",
+      "provider": "google",
+      "event_id": "lqg61bg6ovd9runb6rujt1vu0k",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-08"
+    },
+    {
+      "task_id": "6ae6a5044c2b628cc6ec0a84",
+      "provider": "google",
+      "event_id": "tqjh1if4nv7v0n4stqgpq5pv6o",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-08"
+    },
+    {
+      "task_id": "6ae6a37b7c82ee4870b8894d",
+      "provider": "google",
+      "event_id": "vel40bapc6bsjjo5bihvu3dvs4",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-12-15"
+    },
+    {
+      "task_id": "6ae6a37b788ccd9591999e74",
+      "provider": "google",
+      "event_id": "icabjf6fkeimkssdgcfcsqsln4",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-20"
+    },
+    {
+      "task_id": "6ae6a37b56a2f3231a80bf25",
+      "provider": "google",
+      "event_id": "tf2a9ome6uiv03ca7ak9981nlc",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-12"
+    },
+    {
+      "task_id": "6ae6a37bccbd5190726f538b",
+      "provider": "google",
+      "event_id": "j8jcrtilttl1j818ne79sh50qc",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-12-01"
+    },
+    {
+      "task_id": "6ae6a37b9d714532fcc6f198",
+      "provider": "google",
+      "event_id": "p0tml3alaluakq01p7el954lag",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-08"
+    },
+    {
+      "task_id": "6ae6a37b83f9f9efcb6e4bdc",
+      "provider": "google",
+      "event_id": "k1o0a37iss8ts397vc3kkf4ssk",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-10"
+    },
+    {
+      "task_id": "6ae6a37b8ccc735bac619f95",
+      "provider": "google",
+      "event_id": "ocvncli9qlnpro30n7liuqjrck",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-12-01"
+    },
+    {
+      "task_id": "6ae6a37be69fda5e7016c38f",
+      "provider": "google",
+      "event_id": "52t4t8f3d5f3eas74lb9mboe6k",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-20"
+    },
+    {
+      "task_id": "6ae6a37b62b1171af29e5bcf",
+      "provider": "google",
+      "event_id": "mip01lbforvqm1r32tgifkc0ac",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-08"
+    },
+    {
+      "task_id": "6ae6a0f100cf0bed0ff29568",
+      "provider": "google",
+      "event_id": "k7g89bdq8338en511vfu7b3dcs",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-08"
+    },
+    {
+      "task_id": "6ae6a0f104537c1ea307518e",
+      "provider": "google",
+      "event_id": "p460fbskqq87t122d0t1e95qb4",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-22"
+    },
+    {
+      "task_id": "6ae6a0f1ec01bedf8b6f483c",
+      "provider": "google",
+      "event_id": "bdgnnmgc1i9mmi03rpulpmv4ug",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-12-01"
+    },
+    {
+      "task_id": "6ae6a0f103dbe3bf0eca2be3",
+      "provider": "google",
+      "event_id": "dgnijbdd8eqcidr95tmt10viu8",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-15"
+    },
+    {
+      "task_id": "6ae69e298ccc735bac618b06",
+      "provider": "google",
+      "event_id": "5r13c8vl46t6v6uhs2racjthd0",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-03"
+    },
+    {
+      "task_id": "6ae69e29b73348f47d7e8708",
+      "provider": "google",
+      "event_id": "q9nhh1v8ib73htqnu4ivtjvso0",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-08"
+    },
+    {
+      "task_id": "6ae69e292fe9208783bcbca8",
+      "provider": "google",
+      "event_id": "418qn20gj2adqtvvf76lv4upg0",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-11-03"
+    },
+    {
+      "task_id": "6a12f6ef7322c42a0518489d",
+      "provider": "google",
+      "event_id": "m64fe4k2rjfqb9qd190j36qmsg",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-05-25"
+    },
+    {
+      "task_id": "6a12f6ef98137a1ba6f34e52",
+      "provider": "outlook",
+      "event_id": "AQMkADAwATZiZmYAZC1iZGQAZi02YjUwLTAwAi0wMAoARgAAA7rfLhB9PbdLv5ukr2MEm5UHAML-6rzbw7NFjgOu7S4rR_UAAAIBDQAAAML-6rzbw7NFjgOu7S4rR_UACdDLcQsAAAA=",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-05-25"
+    },
+    {
+      "task_id": "6a12f6ef416867f943d0ccef",
+      "provider": "outlook",
+      "event_id": "AQMkADAwATZiZmYAZC1iZGQAZi02YjUwLTAwAi0wMAoARgAAA7rfLhB9PbdLv5ukr2MEm5UHAML-6rzbw7NFjgOu7S4rR_UAAAIBDQAAAML-6rzbw7NFjgOu7S4rR_UACdDLcQcAAAA=",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-05-25"
+    },
+    {
+      "task_id": "6a12f6ef2ffab387b8c3cf31",
+      "provider": "outlook",
+      "event_id": "AQMkADAwATZiZmYAZC1iZGQAZi02YjUwLTAwAi0wMAoARgAAA7rfLhB9PbdLv5ukr2MEm5UHAML-6rzbw7NFjgOu7S4rR_UAAAIBDQAAAML-6rzbw7NFjgOu7S4rR_UACdDLcQIAAAA=",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-05-25"
+    },
+    {
+      "task_id": "6a12f6effc32380e738b9fb9",
+      "provider": "outlook",
+      "event_id": "AQMkADAwATZiZmYAZC1iZGQAZi02YjUwLTAwAi0wMAoARgAAA7rfLhB9PbdLv5ukr2MEm5UHAML-6rzbw7NFjgOu7S4rR_UAAAIBDQAAAML-6rzbw7NFjgOu7S4rR_UACdDLcQ0AAAA=",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-05-25"
+    },
+    {
+      "task_id": "6a12f6ef01d89ecaed46facd",
+      "provider": "outlook",
+      "event_id": "AQMkADAwATZiZmYAZC1iZGQAZi02YjUwLTAwAi0wMAoARgAAA7rfLhB9PbdLv5ukr2MEm5UHAML-6rzbw7NFjgOu7S4rR_UAAAIBDQAAAML-6rzbw7NFjgOu7S4rR_UACdDLcQgAAAA=",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-05-25"
+    },
+    {
+      "task_id": "6a12f6ef9b458c961e5f8880",
+      "provider": "outlook",
+      "event_id": "AQMkADAwATZiZmYAZC1iZGQAZi02YjUwLTAwAi0wMAoARgAAA7rfLhB9PbdLv5ukr2MEm5UHAML-6rzbw7NFjgOu7S4rR_UAAAIBDQAAAML-6rzbw7NFjgOu7S4rR_UACdDLcQwAAAA=",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-05-25"
+    },
+    {
+      "task_id": "6a12f6efbc741e62aefcfc78",
+      "provider": "outlook",
+      "event_id": "AQMkADAwATZiZmYAZC1iZGQAZi02YjUwLTAwAi0wMAoARgAAA7rfLhB9PbdLv5ukr2MEm5UHAML-6rzbw7NFjgOu7S4rR_UAAAIBDQAAAML-6rzbw7NFjgOu7S4rR_UACdDLcQEAAAA=",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-05-25"
+    },
+    {
+      "task_id": "6a12f6ef3c89309dcb0166d6",
+      "provider": "outlook",
+      "event_id": "AQMkADAwATZiZmYAZC1iZGQAZi02YjUwLTAwAi0wMAoARgAAA7rfLhB9PbdLv5ukr2MEm5UHAML-6rzbw7NFjgOu7S4rR_UAAAIBDQAAAML-6rzbw7NFjgOu7S4rR_UACdDLcQUAAAA=",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-05-25"
+    },
+    {
+      "task_id": "6a12f6efb7b72989814ae8b4",
+      "provider": "outlook",
+      "event_id": "AQMkADAwATZiZmYAZC1iZGQAZi02YjUwLTAwAi0wMAoARgAAA7rfLhB9PbdLv5ukr2MEm5UHAML-6rzbw7NFjgOu7S4rR_UAAAIBDQAAAML-6rzbw7NFjgOu7S4rR_UACdDLcQoAAAA=",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-05-25"
+    },
+    {
+      "task_id": "6a12f6ef1693579aee8938f6",
+      "provider": "outlook",
+      "event_id": "AQMkADAwATZiZmYAZC1iZGQAZi02YjUwLTAwAi0wMAoARgAAA7rfLhB9PbdLv5ukr2MEm5UHAML-6rzbw7NFjgOu7S4rR_UAAAIBDQAAAML-6rzbw7NFjgOu7S4rR_UACdDLcQYAAAA=",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-05-25"
+    },
+    {
+      "task_id": "6a12f6ef729b76592a1984a0",
+      "provider": "outlook",
+      "event_id": "AQMkADAwATZiZmYAZC1iZGQAZi02YjUwLTAwAi0wMAoARgAAA7rfLhB9PbdLv5ukr2MEm5UHAML-6rzbw7NFjgOu7S4rR_UAAAIBDQAAAML-6rzbw7NFjgOu7S4rR_UACdDLcQMAAAA=",
+      "owner_user_id": "692eacef6775abca2ed5835c",
+      "owner_email": "rdolman93@gmail.com",
+      "due_date": "2026-05-25"
+    }
+  ]
+}

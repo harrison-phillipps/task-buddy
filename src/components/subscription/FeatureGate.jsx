@@ -147,7 +147,6 @@ export function UpgradeModal({ open, onOpenChange, feature, featureKey, required
       "Focus sessions with AI coaching — no daily limit",
       "Goal tracking and visual progress",
       "Habit and routine tracking",
-      "Calendar sync",
     ],
     premium: [
       "Unlimited active tasks",

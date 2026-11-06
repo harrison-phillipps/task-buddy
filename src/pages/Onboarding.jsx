@@ -66,7 +66,12 @@ export default function Onboarding() {
       destination = "Dashboard";
     }
     setPendingDestination(destination);
-    setShowCalendarStep(true);
+    // Calendar onboarding is skipped entirely for non-admins — no message, straight on.
+    if (currentUser?.role === "admin") {
+      setShowCalendarStep(true);
+    } else {
+      navigate(createPageUrl(destination));
+    }
   };
 
   const handleCalendarDone = () => {
