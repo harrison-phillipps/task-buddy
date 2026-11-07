@@ -3,7 +3,8 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { withCompletionStamp } from "@/lib/taskCompletion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useBackgroundTimer, requestNotificationPermission, showNotification, scheduleEncouragementNotification } from "../components/focus/BackgroundTimer";
+import { requestNotificationPermission, showNotification, scheduleEncouragementNotification } from "../components/focus/BackgroundTimer";
+import { deriveRemainingSec, saveFocusRecord, loadFocusRecord, clearFocusRecord, restoreFocusSession } from "@/lib/focusTimerStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -117,6 +118,14 @@ export default function FocusSession() {
   const [sessionStarted, setSessionStarted] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [sessionId, setSessionId] = useState(null);
+  // Wall-clock anchor for the countdown. Remaining time is derived from this on
+  // every tick and on every wake, so time spent backgrounded, locked or away is
+  // never lost — a decremented counter silently falls behind.
+  const [targetEndMs, setTargetEndMs] = useState(null);
+  const targetEndRef = useRef(null);
+  const completedPhaseRef = useRef(null);
+  const phaseStartSecRef = useRef(0);
+  const handlePhaseEndRef = useRef(null);
   // Default mood to "neutral" for quick-start so session can begin without manual mood selection
   const [moodBefore, setMoodBefore] = useState(preselectedMood || (quickStart ? "neutral" : null));
   const [completedSubtasks, setCompletedSubtasks] = useState(new Set());
@@ -248,6 +257,39 @@ export default function FocusSession() {
   const selectedTask = sessionStarted ? (lockedTask || tasks.find(t => t.id === selectedTaskId)) : tasks.find(t => t.id === selectedTaskId);
   const currentSubtask = selectedTask?.subtasks?.[currentSubtaskIndex];
 
+  // Anchors a phase to an absolute instant and reports it back.
+  const setPhaseDeadline = (seconds) => {
+    const secs = Math.max(0, seconds || 0);
+    const end = Date.now() + secs * 1000;
+    targetEndRef.current = end;
+    phaseStartSecRef.current = secs;
+    setTargetEndMs(end);
+    setTimeLeft(secs);
+    return end;
+  };
+
+  // Writes the one persisted record. Called on start / pause / resume / phase
+  // change / skip / finish — never on a tick.
+  const persistSession = (overrides = {}) => {
+    const task = lockedTask || selectedTask;
+    const end = overrides.targetEndMs !== undefined ? overrides.targetEndMs : targetEndRef.current;
+    saveFocusRecord({
+      taskId: overrides.taskId || task?.id,
+      phase: overrides.phase || (isBreakTime ? "break" : "work"),
+      status: overrides.status || (isActive ? "running" : "paused"),
+      targetEndMs: end,
+      remainingAtPauseSec:
+        overrides.remainingSec !== undefined
+          ? overrides.remainingSec
+          : deriveRemainingSec(end, Date.now()),
+      focusTechnique: overrides.focusTechnique || focusTechnique,
+      workInterval: overrides.workInterval ?? workInterval,
+      breakInterval: overrides.breakInterval ?? breakInterval,
+      pomodorosCompleted: overrides.pomodorosCompleted ?? pomodorosCompleted,
+      sessionStartMs: overrides.sessionStartMs ?? sessionStartTime ?? Date.now(),
+    });
+  };
+
   // Real-time cross-device session sync (must be after selectedTask is defined)
   const onRemoteState = useCallback((remote) => {
     setSelectedTaskId(remote.taskId);
@@ -289,57 +331,77 @@ export default function FocusSession() {
     endingSoonFiredRef.current = new Set();
   }, [currentSubtaskIndex, isBreakTime, sessionStarted]);
 
-  // Timer effect
+  // Timer effect — remaining time is DERIVED from targetEndMs, never decremented.
+  // A tick, a visibility change, pageshow or focus all just re-read the clock, so
+  // time spent backgrounded, locked or away is accounted for exactly.
   useEffect(() => {
-    let interval = null;
-    if (isActive && sessionStarted && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft(prev => {
-          const next = prev - 1;
-          checkMilestone(next, isBreakTime ? "break" : "focus");
+    if (!isActive || !sessionStarted || targetEndMs == null) return;
 
-          // Ending-soon alerts: 5 min, 2 min, 1 min
-          if (!isBreakTime && notificationsEnabled && getNotifPrefs().sessionEndingSoon !== false) {
-            const thresholds = [300, 120, 60]; // seconds
-            for (const t of thresholds) {
-              if (next === t && !endingSoonFiredRef.current.has(t)) {
-                endingSoonFiredRef.current.add(t);
-                const mins = Math.floor(t / 60);
-                const label = mins === 1 ? "1 minute" : `${mins} minutes`;
-                const msg = `${label} remaining — keep it up!`;
-                showRichNotification(`⏰ ${label} left`, msg, {
-                  tag: `ending-soon-${t}`,
-                  requireInteraction: false,
-                  vibrate: [100, 50, 100],
-                });
-                // Voice announcement
-                if (voiceAnnouncementsEnabled && 'speechSynthesis' in window) {
-                  const utt = new SpeechSynthesisUtterance(`${label} remaining`);
-                  utt.volume = 0.8;
-                  utt.rate = 0.95;
-                  window.speechSynthesis.speak(utt);
-                }
-              }
+    const tick = () => {
+      const remaining = deriveRemainingSec(targetEndMs, Date.now());
+      setTimeLeft(remaining);
+
+      checkMilestone(remaining, isBreakTime ? "break" : "focus");
+
+      // Ending-soon alerts: 5 min, 2 min, 1 min
+      if (!isBreakTime && notificationsEnabled && getNotifPrefs().sessionEndingSoon !== false) {
+        const thresholds = [300, 120, 60]; // seconds
+        for (const t of thresholds) {
+          if (
+            remaining > 0 &&
+            remaining <= t &&
+            t < phaseStartSecRef.current &&
+            !endingSoonFiredRef.current.has(t)
+          ) {
+            endingSoonFiredRef.current.add(t);
+            const mins = Math.floor(t / 60);
+            const label = mins === 1 ? "1 minute" : `${mins} minutes`;
+            const msg = `${label} remaining — keep it up!`;
+            showRichNotification(`⏰ ${label} left`, msg, {
+              tag: `ending-soon-${t}`,
+              requireInteraction: false,
+              vibrate: [100, 50, 100],
+            });
+            // Voice announcement
+            if (voiceAnnouncementsEnabled && 'speechSynthesis' in window) {
+              const utt = new SpeechSynthesisUtterance(`${label} remaining`);
+              utt.volume = 0.8;
+              utt.rate = 0.95;
+              window.speechSynthesis.speak(utt);
             }
           }
+        }
+      }
 
-          if (next <= 0) {
-            setIsActive(false);
-            if (focusTechnique === "pomodoro") {
-              handlePomodoroComplete();
-            } else {
-              handleSubtaskComplete();
-            }
-            return 0;
-          }
-          return next;
-        });
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
+      if (remaining > 0) return;
+
+      // One completion per phase, even when a tick and a visibility event land
+      // together — both observe zero, only the first may act.
+      if (completedPhaseRef.current === targetEndMs) return;
+      completedPhaseRef.current = targetEndMs;
+
+      setIsActive(false);
+      handlePhaseEndRef.current?.();
     };
-  }, [isActive, sessionStarted, timeLeft, checkMilestone, isBreakTime, notificationsEnabled, voiceAnnouncementsEnabled]);
+
+    tick();
+    const interval = setInterval(tick, 1000);
+
+    // Wake paths: phone unlocked, tab shown again, window focused.
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") tick();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pageshow", tick);
+    window.addEventListener("focus", tick);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pageshow", tick);
+      window.removeEventListener("focus", tick);
+    };
+  }, [isActive, sessionStarted, targetEndMs, isBreakTime, notificationsEnabled, voiceAnnouncementsEnabled, checkMilestone]);
 
   // Auto-start session when quickStart param is present and task is loaded
   const quickStartFiredRef = useRef(false);
@@ -470,10 +532,21 @@ export default function FocusSession() {
       // Show mindfulness break if enabled
       if (includeMindfulness && pomodorosCompleted % 2 === 1) {
         setShowMindfulness(true);
+        // Nothing is counting down during the mindfulness break: freeze the
+        // record so a reopen cannot replay this completion.
+        persistSession({ status: "paused", phase: "break", remainingSec: 0 });
       } else {
         setIsBreakTime(true);
-        setTimeLeft(breakInterval * 60);
+        const breakEnd = setPhaseDeadline(breakInterval * 60);
         setShowBreakPrompt(true);
+        // The break opens paused (as before) — the user starts it deliberately.
+        persistSession({
+          status: "paused",
+          phase: "break",
+          targetEndMs: breakEnd,
+          remainingSec: breakInterval * 60,
+          pomodorosCompleted: pomodorosCompleted + 1,
+        });
         announcePhase(`Pomodoro complete! Break time. ${breakInterval} minutes.`);
         if (notificationsEnabled && getNotifPrefs().breakReminder !== false) {
           showRichNotification('Break Time! ☕', `${breakInterval} min break — stretch, hydrate, breathe.`, {
@@ -527,6 +600,8 @@ export default function FocusSession() {
     if (subtasks.length === 0 || currentSubtaskIndex >= subtasks.length - 1) {
       setAllStepsComplete(true);
       setShowBreakPrompt(true);
+      // No next phase runs automatically here — hold the session paused at zero.
+      persistSession({ status: "paused", remainingSec: 0 });
 
       if (notificationsEnabled && getNotifPrefs().sessionEnd !== false) {
         showRichNotification('All Steps Complete! 🎉', 'Amazing work! Session finished.', {
@@ -544,8 +619,24 @@ export default function FocusSession() {
         ? workInterval * 60 
         : (nextSubtask?.estimated_minutes || 10) * 60;
 
-      setTimeLeft(nextTime);
+      const nextEnd = setPhaseDeadline(nextTime);
       setIsActive(false);
+      persistSession({
+        status: "paused",
+        phase: "work",
+        targetEndMs: nextEnd,
+        remainingSec: nextTime,
+      });
+    }
+  };
+
+  // Latest phase-end handler for the derived ticker, so a completion fired by a
+  // tick or a wake event always sees current session state.
+  handlePhaseEndRef.current = () => {
+    if (focusTechnique === "pomodoro") {
+      handlePomodoroComplete();
+    } else {
+      handleSubtaskComplete();
     }
   };
 
@@ -560,7 +651,12 @@ export default function FocusSession() {
 
   const handleNeedMoreTime = () => {
     const additionalTime = focusTechnique === "pomodoro" ? 5 * 60 : (currentSubtask?.estimated_minutes || 5) * 60 * 0.5;
-    setTimeLeft(prev => prev + additionalTime);
+    // Push the deadline out instead of adding to a counter.
+    const end = (targetEndRef.current ?? Date.now()) + additionalTime * 1000;
+    targetEndRef.current = end;
+    setTargetEndMs(end);
+    setTimeLeft(deriveRemainingSec(end, Date.now()));
+    persistSession({ targetEndMs: end });
     toast.success(`Added ${Math.floor(additionalTime / 60)} more minutes!`);
   };
 
@@ -660,11 +756,26 @@ export default function FocusSession() {
       ? workInterval * 60
       : (firstSubtask?.estimated_minutes || 10) * 60;
 
+    const startMs = Date.now();
+    const initialEnd = startMs + initialTime * 1000;
     setCurrentSubtaskIndex(firstIdx);
+    targetEndRef.current = initialEnd;
+    phaseStartSecRef.current = initialTime;
+    completedPhaseRef.current = null;
+    setTargetEndMs(initialEnd);
     setTimeLeft(initialTime);
-    setSessionStartTime(Date.now());
+    setSessionStartTime(startMs);
     setIsActive(true);
     setSessionStarted(true); // set LAST so lockedTask is ready when render triggers
+    persistSession({
+      taskId: taskToLock.id,
+      status: "running",
+      phase: "work",
+      targetEndMs: initialEnd,
+      remainingSec: initialTime,
+      sessionStartMs: startMs,
+      pomodorosCompleted: 0,
+    });
     startSWKeepAlive(); // Prevent SW termination during active session
 
     // Schedule a SW-based session-end notification at the exact timestamp
@@ -755,11 +866,96 @@ export default function FocusSession() {
     }
   }, [quickStart, selectedTaskId, tasks, moodBefore, sessionStarted]);
 
+  // Restore a session that outlived the page — locked phone, backgrounded tab,
+  // or the app swiped away. Runs once, after tasks have loaded.
+  const restoreAttemptedRef = useRef(false);
+
+  useEffect(() => {
+    if (restoreAttemptedRef.current) return;
+    if (sessionStarted || !currentUser || tasks.length === 0) return;
+
+    const record = loadFocusRecord();
+    if (!record) {
+      restoreAttemptedRef.current = true;
+      return;
+    }
+
+    const task = tasks.find(t => t.id === record.taskId);
+    if (!task) {
+      // The task is gone, so the session can never be resumed.
+      clearFocusRecord();
+      restoreAttemptedRef.current = true;
+      return;
+    }
+
+    const restored = restoreFocusSession(record);
+    if (!restored) {
+      restoreAttemptedRef.current = true;
+      return;
+    }
+    restoreAttemptedRef.current = true;
+
+    const subtasks = task.subtasks || [];
+    const firstIncomplete = subtasks.findIndex(st => !st.completed);
+
+    setLockedTask(task);
+    setSelectedTaskId(task.id);
+    setSessionId(`session_${Date.now()}`);
+    setFocusTechnique(record.focusTechnique);
+    setWorkInterval(record.workInterval);
+    setBreakInterval(record.breakInterval);
+    setPomodorosCompleted(record.pomodorosCompleted || 0);
+    setIsBreakTime(record.phase === "break");
+    setSessionStartTime(record.sessionStartMs);
+    setCurrentSubtaskIndex(firstIncomplete === -1 ? 0 : firstIncomplete);
+    setIsController(true);
+    startSWKeepAlive();
+    setSessionStarted(true);
+
+    phaseStartSecRef.current = restored.remainingSec;
+
+    if (restored.status === "paused") {
+      // Left paused: restore it frozen, exactly where it stopped.
+      targetEndRef.current = record.targetEndMs ?? null;
+      setTargetEndMs(record.targetEndMs ?? null);
+      setTimeLeft(restored.remainingSec);
+      setIsActive(false);
+      return;
+    }
+
+    // Running, or the deadline passed while away. The ticker derives the true
+    // remaining time and fires the existing completion path once (guarded) if it
+    // has already elapsed. Missed pomodoro phases are not replayed — we land at
+    // the end of the interval that was actually running.
+    targetEndRef.current = record.targetEndMs;
+    setTargetEndMs(record.targetEndMs);
+    setTimeLeft(restored.remainingSec);
+    setIsActive(true);
+  }, [sessionStarted, currentUser, tasks]);
+
   const togglePause = () => {
     if (isActive) {
       setPauseCount(prev => prev + 1);
+      // Freeze the remainder; the deadline stops mattering while paused.
+      const remaining = deriveRemainingSec(targetEndRef.current, Date.now());
+      setTimeLeft(remaining);
+      setIsActive(false);
+      persistSession({ status: "paused", remainingSec: remaining });
+    } else {
+      resumeTimer();
     }
-    setIsActive(!isActive);
+  };
+
+  // Resume: re-anchor the deadline from the frozen remainder.
+  const resumeTimer = () => {
+    const remaining = timeLeft > 0 ? timeLeft : deriveRemainingSec(targetEndRef.current, Date.now());
+    const end = Date.now() + remaining * 1000;
+    targetEndRef.current = end;
+    phaseStartSecRef.current = remaining;
+    setTargetEndMs(end);
+    setTimeLeft(remaining);
+    setIsActive(true);
+    persistSession({ status: "running", targetEndMs: end, remainingSec: remaining });
   };
 
   const skipBreak = () => {
@@ -769,7 +965,15 @@ export default function FocusSession() {
     setAdaptiveBreakConfig(null);
     setIsActive(true);
     if (focusTechnique === "pomodoro") {
-      setTimeLeft(workInterval * 60);
+      const end = setPhaseDeadline(workInterval * 60);
+      persistSession({
+        status: "running",
+        phase: "work",
+        targetEndMs: end,
+        remainingSec: workInterval * 60,
+      });
+    } else {
+      resumeTimer();
     }
   };
 
@@ -790,7 +994,13 @@ export default function FocusSession() {
         ? workInterval * 60 
         : (nextSubtask?.estimated_minutes || 10) * 60;
       
-      setTimeLeft(nextTime);
+      const nextEnd = setPhaseDeadline(nextTime);
+      persistSession({
+        status: "paused",
+        phase: "work",
+        targetEndMs: nextEnd,
+        remainingSec: nextTime,
+      });
     }
   };
 
@@ -817,6 +1027,8 @@ export default function FocusSession() {
 
   const finishSessionAfterReflection = async (reflectionNotes) => {
     setShowMoodReflection(false);
+    // Finished — nothing is left to resume.
+    clearFocusRecord();
     
     const totalDuration = sessionStartTime 
       ? Math.round((Date.now() - sessionStartTime) / 60000) 
@@ -1033,10 +1245,12 @@ export default function FocusSession() {
     setPauseCount(0);
     setDynamicBreakSuggestion(null);
     
-    // Clear any stored session
-    if (sessionId) {
-      localStorage.removeItem(`focus_session_${sessionId}`);
-    }
+    // Reset or cancel — nothing is left to resume.
+    clearFocusRecord();
+    targetEndRef.current = null;
+    completedPhaseRef.current = null;
+    phaseStartSecRef.current = 0;
+    setTargetEndMs(null);
 
     cancelAllNotifications();
     stopSWKeepAlive();
@@ -1576,7 +1790,7 @@ export default function FocusSession() {
                         <VoiceCommandListener
                           isSessionActive={sessionStarted}
                           isActive={isActive}
-                          onStart={() => setIsActive(true)}
+                          onStart={resumeTimer}
                           onPause={togglePause}
                           onSkip={skipToNextStep}
                           onComplete={handleCompleteEarly}
@@ -1728,7 +1942,7 @@ export default function FocusSession() {
             onComplete={() => {
               setShowGuidedBreak(false);
               setAdaptiveBreakConfig(null);
-              setIsActive(true);
+              resumeTimer();
               toast.success("Great break! Back to focus!");
             }}
             onSkip={skipBreak}
@@ -1749,8 +1963,14 @@ export default function FocusSession() {
             onComplete={() => {
               setShowMindfulness(false);
               setIsBreakTime(true);
-              setTimeLeft(breakInterval * 60);
+              const end = setPhaseDeadline(breakInterval * 60);
               setShowBreakPrompt(true);
+              persistSession({
+                status: "paused",
+                phase: "break",
+                targetEndMs: end,
+                remainingSec: breakInterval * 60,
+              });
             }}
             onSkip={() => {
               setShowMindfulness(false);
