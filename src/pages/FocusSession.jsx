@@ -728,11 +728,11 @@ export default function FocusSession() {
       requestNotificationPermission().then(granted => {
         setNotificationsEnabled(granted);
         if (granted && getNotifPrefs().sessionStart !== false) {
-          showRichNotification('Focus session started', 'Your timer is running.', { tag: 'session-start' });
+          showRichNotification('Focus session started', 'Your timer is running.', { tag: `session-start-${Date.now()}` });
         }
       });
     } else if (getNotifPrefs().sessionStart !== false) {
-      showRichNotification('Focus session started', 'Your timer is running.', { tag: 'session-start' });
+      showRichNotification('Focus session started', 'Your timer is running.', { tag: `session-start-${Date.now()}` });
     }
   };
 

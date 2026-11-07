@@ -99,7 +99,9 @@ export async function showRichNotification(title, body, options = {}) {
       });
       return;
     }
-  } catch (_) {}
+  } catch (e) {
+    console.warn('SW notification failed:', e);
+  }
 
   // Fallback: post to SW message channel (for scheduled future notifications)
   sendSWMessage({
