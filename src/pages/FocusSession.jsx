@@ -417,7 +417,7 @@ export default function FocusSession() {
       setShowEncouragement(true);
       
       if (document.hidden && notificationsEnabled && getNotifPrefs().encouragements !== false) {
-        showRichNotification('Keep Going! 💪', randomMessage, { tag: 'encouragement' });
+        showRichNotification('Still going', randomMessage, { tag: 'encouragement' });
       }
       
       setTimeout(() => setShowEncouragement(false), 5000);
@@ -429,7 +429,7 @@ export default function FocusSession() {
       setShowEncouragement(true);
       
       if (document.hidden && notificationsEnabled && getNotifPrefs().encouragements !== false) {
-        showRichNotification('Keep Going! 💪', randomMessage, { tag: 'encouragement' });
+        showRichNotification('Still going', randomMessage, { tag: 'encouragement' });
       }
       
       setTimeout(() => setShowEncouragement(false), 5000);
@@ -499,7 +499,7 @@ export default function FocusSession() {
         sendSWMessage({
           type: 'SCHEDULE_POMODORO_COMPLETE',
           completesAt: Date.now() + workInterval * 60 * 1000,
-          body: `Pomodoro #${pomodorosCompleted + 1} done! Time for a ${breakInterval}m break.`,
+          body: `One round done. A ${breakInterval}-minute break is next.`,
         });
       }
       handleSubtaskComplete();
@@ -677,8 +677,8 @@ export default function FocusSession() {
       sendSWMessage({
         type: 'SCHEDULE_SESSION_END',
         endsAt: sessionEndsAt,
-        title: '⏱ Session Complete!',
-        body: `You finished: ${taskToLock.title}`,
+        title: 'Session complete',
+        body: 'You finished your session.',
         taskId: taskToLock.id,
       });
     }
@@ -697,8 +697,8 @@ export default function FocusSession() {
             type: 'SCHEDULE_NOTIFICATION',
             id: `ending-soon-sw-${seconds}`,
             delay: alertAt - Date.now(),
-            title: `⏰ ${label} left`,
-            body: `${label} remaining on: ${taskToLock.title}`,
+            title: `Focus timer: ${label} left`,
+            body: `${label} remaining.`,
             tag: `ending-soon-${seconds}`,
             vibrate: [100, 50, 100],
             requireInteraction: false,
@@ -712,7 +712,7 @@ export default function FocusSession() {
       sendSWMessage({
         type: 'SCHEDULE_POMODORO_COMPLETE',
         completesAt: Date.now() + workInterval * 60 * 1000,
-        body: `Pomodoro #1 done! Time for a ${breakInterval}m break.`,
+        body: `One round done. A ${breakInterval}-minute break is next.`,
       });
     }
 
@@ -728,11 +728,11 @@ export default function FocusSession() {
       requestNotificationPermission().then(granted => {
         setNotificationsEnabled(granted);
         if (granted && getNotifPrefs().sessionStart !== false) {
-          showRichNotification('Focus Session Started 🎯', `Working on: ${taskToLock.title}`, { tag: 'session-start' });
+          showRichNotification('Focus session started', 'Your timer is running.', { tag: 'session-start' });
         }
       });
     } else if (getNotifPrefs().sessionStart !== false) {
-      showRichNotification('Focus Session Started 🎯', `Working on: ${taskToLock.title}`, { tag: 'session-start' });
+      showRichNotification('Focus session started', 'Your timer is running.', { tag: 'session-start' });
     }
   };
 

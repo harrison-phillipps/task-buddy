@@ -90,7 +90,7 @@ export function useBackgroundTimer({
           
           // Show notification if app is backgrounded
           if (document.hidden) {
-            showNotification('Focus Session Complete!', 'Great work! Time to take a break.');
+            showNotification('Session complete', "Take a break when you're ready.");
           }
         }
       }, 1000);
@@ -196,7 +196,7 @@ export async function showNotification(title, body, options = {}) {
 export function scheduleEncouragementNotification(message, delayMs) {
   return setTimeout(() => {
     if (document.hidden) {
-      showNotification('Keep Going! 💪', message);
+      showNotification('Still going', message);
     }
   }, delayMs);
 }

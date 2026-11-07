@@ -1,5 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
+import { isQuietNow } from "@/lib/quietHours";
 
 export async function createNotification({ 
   userId, 
@@ -68,7 +69,12 @@ export async function createNotification({
           user_id: userId 
         });
         
-        if (preferences.length > 0 && preferences[0].email_notifications) {
+        // Quiet hours silence the email only — the in-app row above is already written.
+        if (
+          preferences.length > 0 &&
+          preferences[0].email_notifications &&
+          !isQuietNow(preferences[0], new Date())
+        ) {
           const user = await base44.entities.User.filter({ id: userId });
           if (user.length > 0 && user[0].email) {
             await base44.integrations.Core.SendEmail({
@@ -138,13 +144,18 @@ export async function scheduleTaskReminder(task, userId) {
   const reminderMinutes = preferences[0].task_reminder_minutes || 60;
   const dueDate = new Date(task.due_date);
   const reminderTime = new Date(dueDate.getTime() - reminderMinutes * 60000);
+  const leadLabel = reminderMinutes === 1440
+    ? 'about a day'
+    : reminderMinutes % 60 === 0
+      ? `about ${reminderMinutes / 60} hour${reminderMinutes === 60 ? '' : 's'}`
+      : `about ${reminderMinutes} minutes`;
 
   if (reminderTime > new Date()) {
     await createNotification({
       userId,
       type: 'task_due',
-      title: `Task Due Soon: ${task.title}`,
-      message: `Your task "${task.title}" is due in ${reminderMinutes} minutes.`,
+      title: 'Task reminder',
+      message: `"${task.title}" is due in ${leadLabel}.`,
       relatedId: task.id,
       relatedType: 'task',
       priority: task.priority === 'urgent' ? 'critical' : 'high',
@@ -168,8 +179,8 @@ export async function scheduleGoalReminder(goal, userId) {
     await createNotification({
       userId,
       type: 'goal_deadline',
-      title: `Goal Deadline Approaching: ${goal.title}`,
-      message: `Your goal "${goal.title}" is due in ${reminderDays} days.`,
+      title: `Goal check-in: ${goal.title}`,
+      message: `"${goal.title}" has a target date in ${reminderDays} days.`,
       relatedId: goal.id,
       relatedType: 'goal',
       priority: goal.priority === 'critical' ? 'critical' : 'high',
@@ -186,8 +197,8 @@ export async function sendHabitReminder(habit, userId) {
   await createNotification({
     userId,
     type: 'habit_reminder',
-    title: `Time for your habit: ${habit.title}`,
-    message: `Don't forget to complete "${habit.title}" today!`,
+    title: `${habit.title} — whenever you're ready`,
+    message: `A gentle nudge for "${habit.title}".`,
     relatedId: habit.id,
     relatedType: 'habit',
     priority: 'medium',
@@ -203,7 +214,7 @@ export async function sendAchievementNotification(achievement, userId) {
   await createNotification({
     userId,
     type: 'achievement',
-    title: `🎉 Achievement Unlocked: ${achievement.title}`,
+    title: `Achievement unlocked: ${achievement.title}`,
     message: `Congratulations! You've earned "${achievement.title}"!`,
     relatedId: achievement.id,
     relatedType: 'achievement',

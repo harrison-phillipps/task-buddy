@@ -65,6 +65,10 @@
       "default": false,
       "description": "Enable quiet hours"
     },
+    "quiet_hours_user_set": {
+      "type": "boolean",
+      "description": "True once the user has saved the Quiet Hours card. Makes quiet_hours_enabled: false an explicit opt-out: isQuietNow returns not-quiet instead of applying the 21:00-07:30 default. Absent means the row has never been touched, so the default window still applies."
+    },
     "quiet_hours_start": {
       "type": "string",
       "description": "Quiet hours start time (HH:mm)"

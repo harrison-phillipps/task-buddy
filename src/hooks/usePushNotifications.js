@@ -194,8 +194,8 @@ export function usePushNotifications() {
     await base44.functions.invoke('sendPushNotification', {
       subscription: activeSub.toJSON(),
       payload: {
-        title: '✅ TaskBuddy Notifications Active',
-        body: "You'll now receive smart reminders for your Must Do tasks!",
+        title: 'Notifications are on',
+        body: 'Reminders will arrive here.',
         taskId: null,
         taskTitle: 'Test',
       },

@@ -14,6 +14,10 @@
  *
  * Window source: the row's own quiet_hours_start/quiet_hours_end when both parse
  * as HH:mm, otherwise 21:00-07:30 local.
+ *
+ * The default window only covers rows the user has never touched. Once they have
+ * saved the Quiet Hours card (quiet_hours_user_set) and left it switched off,
+ * that is an explicit opt-out and no window applies at all.
  */
 
 export const DEFAULT_TIMEZONE = 'Australia/Adelaide';
@@ -72,6 +76,8 @@ export function localMinutesOfDay(now: Date, timeZone: string): number {
  * `prefs` may be null/partial: a missing row means the default window applies.
  */
 export function isQuietNow(prefs: any, now: Date = new Date()): boolean {
+  // Explicit opt-out: the user has been to the card and switched quiet hours off.
+  if (prefs?.quiet_hours_user_set === true && prefs?.quiet_hours_enabled === false) return false;
   const timeZone = resolveTimezone(prefs);
   const { start, end } = quietWindow(prefs);
   const local = localMinutesOfDay(now, timeZone);

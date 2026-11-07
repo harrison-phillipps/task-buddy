@@ -117,3 +117,82 @@ test("UTC works as an explicit timezone", () => {
   assert.equal(isQuietNow(prefs, at("2026-11-06T12:00:00Z")), false); // 12:00
   assert.equal(isQuietNow(prefs, at("2026-11-06T22:00:00Z")), true); // 22:00
 });
+
+test("opt-out: an untouched row still gets the default window", () => {
+  // quiet_hours_user_set absent — the user has never saved the card.
+  const untouched = { timezone: "Australia/Adelaide" };
+  assert.equal(isQuietNow(untouched, at("2026-11-06T11:30:00Z")), true); // 22:00 local
+  assert.equal(isQuietNow(untouched, at("2026-11-06T01:30:00Z")), false); // 12:00 local
+  // enabled:false alone is not an opt-out while the row is untouched.
+  const untoggled = { timezone: "Australia/Adelaide", quiet_hours_enabled: false };
+  assert.equal(isQuietNow(untoggled, at("2026-11-06T11:30:00Z")), true); // 22:00 local
+});
+
+test("opt-out: a user who turned quiet hours off is never quiet", () => {
+  const turnedOff = {
+    timezone: "Australia/Adelaide",
+    quiet_hours_user_set: true,
+    quiet_hours_enabled: false,
+  };
+  assert.equal(isQuietNow(turnedOff, at("2026-11-06T11:30:00Z")), false); // 22:00 local
+  assert.equal(isQuietNow(turnedOff, at("2026-11-06T16:30:00Z")), false); // 03:00 local
+  // A stored window does not resurrect quiet hours after an explicit opt-out.
+  const turnedOffWithWindow = {
+    ...turnedOff,
+    quiet_hours_start: "22:00",
+    quiet_hours_end: "06:00",
+  };
+  assert.equal(isQuietNow(turnedOffWithWindow, at("2026-11-06T11:30:00Z")), false);
+});
+
+test("the frontend copy agrees with the backend rule", async () => {
+  // src/lib/quietHours.js mirrors base44/shared/quietHours.ts for the browser-side
+  // email step; if the two ever diverge, this fails.
+  const client = await import("../src/lib/quietHours.js");
+  const windows = [
+    null,
+    { timezone: "Australia/Adelaide" },
+    { timezone: "Australia/Adelaide", quiet_hours_enabled: false },
+    { timezone: "Australia/Adelaide", quiet_hours_start: "22:00", quiet_hours_end: "06:00" },
+    { timezone: "Australia/Adelaide", quiet_hours_start: "09:00", quiet_hours_end: "17:00" },
+    { timezone: "Australia/Adelaide", quiet_hours_user_set: true, quiet_hours_enabled: false },
+    {
+      timezone: "Australia/Adelaide",
+      quiet_hours_user_set: true,
+      quiet_hours_enabled: true,
+      quiet_hours_start: "23:30",
+      quiet_hours_end: "07:00",
+    },
+    { timezone: "Asia/Tokyo", quiet_hours_start: "09:00", quiet_hours_end: "17:00" },
+    { timezone: "UTC" },
+    { timezone: "Not/AZone", quiet_hours_start: "22:00", quiet_hours_end: "06:00" },
+  ];
+
+  let compared = 0;
+  for (const prefs of windows) {
+    // Sample every 7 minutes across two UTC days, so DST and day boundaries are hit.
+    for (let minute = 0; minute < 48 * 60; minute += 7) {
+      const now = new Date(Date.UTC(2026, 9, 3, 0, 0, 0) + minute * 60000);
+      assert.equal(
+        client.isQuietNow(prefs, now),
+        isQuietNow(prefs, now),
+        `disagreement for ${JSON.stringify(prefs)} at ${now.toISOString()}`
+      );
+      compared++;
+    }
+  }
+  assert.ok(compared > 4000, `expected a wide comparison, got ${compared}`);
+});
+
+test("opt-out: a user who turned quiet hours on uses their custom window", () => {
+  const turnedOn = {
+    timezone: "Australia/Adelaide",
+    quiet_hours_user_set: true,
+    quiet_hours_enabled: true,
+    quiet_hours_start: "22:00",
+    quiet_hours_end: "06:00",
+  };
+  assert.equal(isQuietNow(turnedOn, at("2026-11-06T11:30:00Z")), true); // 22:00 local
+  assert.equal(isQuietNow(turnedOn, at("2026-11-06T10:29:00Z")), false); // 20:59 local
+  assert.equal(isQuietNow(turnedOn, at("2026-11-06T19:30:00Z")), false); // 06:00 exactly
+});

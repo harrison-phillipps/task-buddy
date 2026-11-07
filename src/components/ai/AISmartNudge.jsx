@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles, X, TrendingUp, Coffee, Zap, Target, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { sanitizeNudge } from "@/lib/nudgeTone";
 
 const nudgeTypes = {
   energy_check: {
@@ -83,31 +84,30 @@ export default function AISmartNudge({ userProgress, tasks, sessions, currentUse
 
         // Generate nudge
         const response = await base44.integrations.Core.InvokeLLM({
-          prompt: `You are TaskBuddy's AI companion providing timely nudges to keep users motivated and productive.
+          prompt: `You are TaskBuddy's companion, writing one short nudge.
 
 Context:
-- Time: ${context.time_of_day}
+- Time of day: ${context.time_of_day}
 - Tasks remaining: ${context.total_tasks} (${context.urgent_tasks} due today)
 - Focus time today: ${context.focus_time_today} minutes
-- Current streak: ${context.current_streak} days
 - Level: ${context.user_level}
 - Personality: ${context.personality}
 
-Generate a personalized nudge that:
-1. Acknowledges their current situation
-2. Provides actionable advice or encouragement
-3. Matches their companion personality (${context.personality})
-4. Is brief (max 2 sentences)
-5. Chooses the most appropriate nudge type
+Write ONE nudge that:
+1. Acknowledges the moment in a warm, neutral tone.
+2. Offers one small, optional next step, or allows a pause.
+3. Matches the companion personality (${context.personality}).
 
-Consider:
-- If they haven't worked much today, encourage them to start
-- If they've been productive, celebrate their momentum
-- If it's late and they have tasks, suggest priorities
-- If they're on a streak, reinforce it
-- If energy might be low (afternoon/evening), suggest a break or easy task
+Hard rules. Any message breaking one of them is discarded:
+- No guilt or shame: never "should have", "still", "only", "you haven't", "catch up", "falling behind", "lazy", "excuse".
+- No streak language, no comparison with other people, no rankings.
+- Never state or imply the user is behind, late, or doing badly.
+- No urgency words: urgent, hurry, quick, now, asap, immediately, deadline, "don't forget", "last chance".
+- No exclamation marks.
+- At most one emoji.
+- Maximum 20 words in the message.
 
-Return a nudge type and message.`,
+Then choose the nudge type. If one next step is obvious, give an action_label of at most four words with no exclamation mark; otherwise set action_type to "none".`,
           response_json_schema: {
             type: "object",
             properties: {
@@ -126,7 +126,9 @@ Return a nudge type and message.`,
         });
 
         if (response.message) {
-          setNudge(response);
+          // Tone filter: anything that breaks a rule is replaced with a fixed
+          // neutral line rather than shown to the user.
+          setNudge(sanitizeNudge(response));
           setVisible(true);
           localStorage.setItem('last_nudge_time', Date.now().toString());
         }

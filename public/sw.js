@@ -29,9 +29,9 @@ self.addEventListener('push', (event) => {
     requireInteraction: true,
     data: { taskId, taskTitle, estimatedMinutes, dueDate },
     actions: [
-      { action: 'snooze_15', title: '⏰ Snooze 15 min' },
-      { action: 'snooze_60', title: '⏰ Snooze 1 hr' },
-      { action: 'open', title: '✅ Open Task' },
+      { action: 'snooze_15', title: 'Snooze 15 min' },
+      { action: 'snooze_60', title: 'Snooze 1 hr' },
+      { action: 'open', title: 'Open' },
     ],
   };
 
@@ -51,16 +51,17 @@ self.addEventListener('notificationclick', (event) => {
     event.waitUntil(
       new Promise((resolve) => {
         setTimeout(async () => {
-          await self.registration.showNotification(`⏰ ${taskTitle}`, {
-            body: `Snoozed reminder: "${taskTitle}" still needs your attention!`,
+          // Lock-screen text: no task title, no guilt.
+          await self.registration.showNotification('TaskBuddy reminder', {
+            body: 'Snoozed. Open TaskBuddy to view it.',
             icon: '/icon-192.png',
             badge: '/icon-192.png',
             tag: `task-${taskId}-snoozed`,
             requireInteraction: true,
             data: { taskId, taskTitle, estimatedMinutes, dueDate },
             actions: [
-              { action: 'snooze_15', title: '⏰ Snooze 15 min' },
-              { action: 'open', title: '✅ Open Task' },
+              { action: 'snooze_15', title: 'Snooze 15 min' },
+              { action: 'open', title: 'Open' },
             ],
           });
           resolve();

@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { asRows } from '../../shared/entityResults.ts';
+import { isQuietNow } from '../../shared/quietHours.ts';
 
 /**
  * Delivers a notification to ANOTHER app user on the caller's behalf.
@@ -126,6 +127,9 @@ export default async function (req) {
     const prefs = prefRows[0] ?? null;
     const teamEnabled = prefs ? prefs.team_notifications !== false : true;
     const emailEnabled = prefs ? prefs.email_notifications === true : false;
+    // Quiet hours silence the EMAIL only — the in-app notification below is always
+    // written, so the recipient still finds it when they next open the app.
+    const quiet = isQuietNow(prefs, new Date());
 
     if (!teamEnabled) {
       return Response.json({ delivered: false, emailed: false });
@@ -154,7 +158,7 @@ export default async function (req) {
     });
 
     let emailed = false;
-    if (intendsEmail && !limited) {
+    if (intendsEmail && !limited && !quiet) {
       const recipients = asRows(await admin.entities.User.filter({ id: recipientId }));
       const address = recipients[0]?.email;
       if (address) {

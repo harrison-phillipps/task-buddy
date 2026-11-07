@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
     // have email_digest set to 'daily' or 'weekly' (not 'none')
     const emailOptedIn = prefs?.email_notifications !== false && prefs?.email_digest !== 'none';
     if (diffDays <= 1) {
-      urgencyLabel = 'due TODAY';
+      urgencyLabel = 'due today';
       priority = 'critical';
       sendEmail = emailOptedIn; // even critical respects opt-out
     } else if (diffDays <= 3) {
@@ -114,8 +114,10 @@ Deno.serve(async (req) => {
       sendEmail = false; // never email for 4-7 day tasks
     }
 
-    const title = `⏰ Task ${urgencyLabel}: ${task.title}`;
-    const message = `"${task.title}" is ${urgencyLabel}${task.priority === 'urgent' ? ' — marked URGENT' : ''}. Stay on track!`;
+    const title = `Task ${urgencyLabel}: ${task.title}`;
+    const message = `"${task.title}" is ${urgencyLabel}.`;
+    // The subject is visible on a lock screen, so it carries no task title.
+    const emailSubject = diffDays <= 1 ? 'Your task is due today' : 'A task is coming up';
 
     await base44.asServiceRole.entities.Notification.create({
       user_id: user.id,
@@ -135,18 +137,18 @@ Deno.serve(async (req) => {
       try {
         await base44.asServiceRole.integrations.Core.SendEmail({
           to: user.email,
-          subject: title,
+          subject: emailSubject,
           body: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
               <div style="background: linear-gradient(135deg, #8B5CF6, #14B8A6); padding: 24px; border-radius: 12px; margin-bottom: 24px;">
                 <h1 style="color: white; margin: 0; font-size: 22px;">TaskBuddy Reminder</h1>
-                <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0 0; font-size: 14px;">You have a task coming up!</p>
+                <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0 0; font-size: 14px;">Here's what's coming up.</p>
               </div>
               <h2 style="color: #1F2937; font-size: 18px;">${task.title}</h2>
               <p style="color: #6B7280; font-size: 15px; margin-bottom: 8px;">📅 Due: <strong>${task.due_date}</strong></p>
               ${task.description ? `<p style="color: #6B7280; font-size: 14px;">${task.description}</p>` : ''}
               <div style="margin: 24px 0; padding: 16px; background: #FEF3C7; border-radius: 8px; border-left: 4px solid #F59E0B;">
-                <p style="margin: 0; color: #92400E; font-size: 14px; font-weight: 600;">⚡ This task is ${urgencyLabel}. Time to focus!</p>
+                <p style="margin: 0; color: #92400E; font-size: 14px; font-weight: 600;">This task is ${urgencyLabel}.</p>
               </div>
               <p style="font-size: 12px; color: #9CA3AF; margin-top: 32px;">
                 Manage your notification preferences in TaskBuddy Settings.

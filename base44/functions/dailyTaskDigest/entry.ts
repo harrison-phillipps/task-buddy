@@ -110,9 +110,9 @@ Deno.serve(async (req) => {
       const firstName = user.full_name?.split(' ')[0] || 'there';
 
       // Build summary title
-      let summaryTitle = '☀️ Your Daily Task Digest';
-      if (overdue.length > 0) summaryTitle = `🚨 ${overdue.length} Overdue Task${overdue.length > 1 ? 's' : ''} Need Attention`;
-      else if (dueToday.length > 0) summaryTitle = `📋 ${dueToday.length} Task${dueToday.length > 1 ? 's' : ''} Due Today`;
+      let summaryTitle = 'Your daily summary';
+      if (overdue.length > 0) summaryTitle = `${overdue.length} task${overdue.length > 1 ? 's' : ''} past the due date`;
+      else if (dueToday.length > 0) summaryTitle = `${dueToday.length} task${dueToday.length > 1 ? 's' : ''} due today`;
 
       // --- In-app notification (one per day) ---
       const alreadyNotified = await client.entities.Notification.filter({
@@ -132,8 +132,8 @@ Deno.serve(async (req) => {
           type: 'general',
           title: summaryTitle,
           message: overdue.length > 0
-            ? `You have ${overdue.length} overdue and ${dueToday.length} tasks due today. Check your task list!`
-            : `You have ${dueToday.length} task${dueToday.length > 1 ? 's' : ''} due today. Stay on track!`,
+            ? `You have ${overdue.length} past due and ${dueToday.length} due today.`
+            : `You have ${dueToday.length} task${dueToday.length > 1 ? 's' : ''} due today.`,
           priority: overdue.length > 0 ? 'critical' : dueToday.length > 0 ? 'high' : 'medium',
           is_read: false,
           sent_at: now.toISOString(),
@@ -160,7 +160,6 @@ Deno.serve(async (req) => {
                 <span style="background:${color}22; color:${color}; border-radius:4px; padding:2px 7px; font-size:11px; font-weight:600; text-transform:uppercase;">${task.priority || 'medium'}${badge}</span>
                 <span style="font-weight:600; color:#111;">${task.title}</span>
               </div>
-              ${task.description ? `<div style="color:#666; font-size:13px; margin-top:3px; padding-left:2px;">${task.description.slice(0, 80)}${task.description.length > 80 ? '…' : ''}</div>` : ''}
               ${dueLabel ? `<div style="color:#9CA3AF; font-size:12px; margin-top:2px;">📅 ${dueLabel}</div>` : ''}
             </td>
           </tr>
@@ -168,28 +167,29 @@ Deno.serve(async (req) => {
       };
 
       const overdueSection = overdue.length > 0 ? `
-        <h3 style="color:#EF4444; margin:24px 0 8px;">🚨 Overdue (${overdue.length})</h3>
+        <h3 style="color:#EF4444; margin:24px 0 8px;">Past due (${overdue.length})</h3>
         <table style="width:100%; border-collapse:collapse;">${overdue.slice(0, 5).map(t => taskRow(t)).join('')}</table>
-        ${overdue.length > 5 ? `<p style="color:#9CA3AF; font-size:13px;">+ ${overdue.length - 5} more overdue tasks</p>` : ''}
+        ${overdue.length > 5 ? `<p style="color:#9CA3AF; font-size:13px;">+ ${overdue.length - 5} more past due</p>` : ''}
       ` : '';
 
       const todaySection = dueToday.length > 0 ? `
-        <h3 style="color:#F97316; margin:24px 0 8px;">📋 Due Today (${dueToday.length})</h3>
+        <h3 style="color:#F97316; margin:24px 0 8px;">Due today (${dueToday.length})</h3>
         <table style="width:100%; border-collapse:collapse;">${dueToday.slice(0, 5).map(t => taskRow(t)).join('')}</table>
         ${dueToday.length > 5 ? `<p style="color:#9CA3AF; font-size:13px;">+ ${dueToday.length - 5} more tasks due today</p>` : ''}
       ` : '';
 
       const upcomingSection = upcoming.length > 0 ? `
-        <h3 style="color:#8B5CF6; margin:24px 0 8px;">🗓️ Coming Up This Week (${upcoming.length})</h3>
+        <h3 style="color:#8B5CF6; margin:24px 0 8px;">Coming up this week (${upcoming.length})</h3>
         <table style="width:100%; border-collapse:collapse;">${upcoming.slice(0, 5).map(t => taskRow(t)).join('')}</table>
         ${upcoming.length > 5 ? `<p style="color:#9CA3AF; font-size:13px;">+ ${upcoming.length - 5} more upcoming tasks</p>` : ''}
       ` : '';
 
+      // The subject is visible on a lock screen: no task titles, no urgency wording.
       const subject = overdue.length > 0
-        ? `🚨 TaskBuddy: ${overdue.length} overdue task${overdue.length > 1 ? 's' : ''} need your attention`
+        ? 'TaskBuddy: your tasks for today'
         : dueToday.length > 0
-          ? `☀️ TaskBuddy: ${dueToday.length} task${dueToday.length > 1 ? 's' : ''} due today`
-          : `☀️ TaskBuddy: Your morning task digest`;
+          ? "TaskBuddy: what's due today"
+          : 'TaskBuddy: your task summary';
 
       try {
         await client.integrations.Core.SendEmail({

@@ -177,14 +177,13 @@ Deno.serve(async (req) => {
 
         const timeLabel = dueTime === 'end of day' ? 'today' : `at ${dueTime}`;
         const isMustDo = task.task_priority === 'must_do';
-        const urgencyPrefix = isMustDo ? '🔴 Must Do: ' : '';
-        const message = `${urgencyPrefix}"${task.title}" is due ${timeLabel}.${task.estimated_minutes ? ` (~${task.estimated_minutes} min)` : ''}`;
+        const message = `"${task.title}" is due ${timeLabel}${task.estimated_minutes ? ` (~${task.estimated_minutes} min)` : ''}.`;
 
         // Create in-app notification
         await client.entities.Notification.create({
           user_id: user.id,
           type: 'task_due',
-          title: isMustDo ? '🔴 Must Do Task Due Soon' : '⏰ Task Due Soon',
+          title: 'Task reminder',
           message,
           related_id: task.id,
           related_type: 'task',
@@ -201,8 +200,9 @@ Deno.serve(async (req) => {
         if (hasSpecificTime && !quiet) {
           try {
             const pushPayload = {
-              title: isMustDo ? `🔴 Must Do: ${task.title}` : `⏰ ${task.title}`,
-              body: `Due ${timeLabel}${task.estimated_minutes ? ` · ~${task.estimated_minutes} min` : ''}. Tap to open or snooze.`,
+              // Lock-screen text: the task title never appears here.
+              title: `A task is due ${timeLabel}`,
+              body: `${task.estimated_minutes ? `~${task.estimated_minutes} min. ` : ''}Open to view, or snooze.`,
               taskId: task.id,
               taskTitle: task.title,
               estimatedMinutes: task.estimated_minutes || null,
@@ -237,7 +237,8 @@ Deno.serve(async (req) => {
           try {
             await client.integrations.Core.SendEmail({
               to: user.email,
-              subject: `⏰ Reminder: "${task.title}" is due soon`,
+              // Email subjects show on lock screens, so no task title here.
+              subject: 'Your task reminder',
               body: `
                 <div style="font-family: sans-serif; max-width: 480px; margin: auto; padding: 24px;">
                   <h2 style="color: #8B5CF6;">Task Reminder</h2>

@@ -72,6 +72,12 @@ export default function NotificationSettings() {
     updatePreferencesMutation.mutate({ [field]: value });
   };
 
+  // Saving this card records that the choice is the user's own, so leaving the
+  // switch off is an opt-out rather than a fall back to the default window.
+  const handleQuietHoursChange = (field, value) => {
+    updatePreferencesMutation.mutate({ [field]: value, quiet_hours_user_set: true });
+  };
+
   if (isLoading || !preferences) {
     return (
       <div className="min-h-screen p-4 md:p-8 flex items-center justify-center">
@@ -334,7 +340,7 @@ export default function NotificationSettings() {
                 <Switch
                   id="quiet-hours"
                   checked={preferences.quiet_hours_enabled}
-                  onCheckedChange={(checked) => handleToggle('quiet_hours_enabled', checked)}
+                  onCheckedChange={(checked) => handleQuietHoursChange('quiet_hours_enabled', checked)}
                 />
               </div>
               {preferences.quiet_hours_enabled && (
@@ -343,16 +349,16 @@ export default function NotificationSettings() {
                     <Label>Start time</Label>
                     <Input
                       type="time"
-                      value={preferences.quiet_hours_start || '22:00'}
-                      onChange={(e) => handleChange('quiet_hours_start', e.target.value)}
+                      value={preferences.quiet_hours_start || '21:00'}
+                      onChange={(e) => handleQuietHoursChange('quiet_hours_start', e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>End time</Label>
                     <Input
                       type="time"
-                      value={preferences.quiet_hours_end || '08:00'}
-                      onChange={(e) => handleChange('quiet_hours_end', e.target.value)}
+                      value={preferences.quiet_hours_end || '07:30'}
+                      onChange={(e) => handleQuietHoursChange('quiet_hours_end', e.target.value)}
                     />
                   </div>
                 </div>
