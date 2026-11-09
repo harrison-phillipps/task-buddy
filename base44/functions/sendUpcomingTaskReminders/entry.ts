@@ -1,49 +1,19 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { requireAdmin } from '../../shared/authGuard.ts';
-import { isQuietNow } from '../../shared/quietHours.ts';
+import { resolveTimezone } from '../../shared/quietHours.ts';
+import { localDateString } from '../../shared/localTime.ts';
 import { isInvalidPlayerIdError } from '../../shared/oneSignal.ts';
+import { reminderKey, selectDueReminders } from '../../shared/taskReminderSelection.ts';
 
-// Parses a date+time as wall-clock Adelaide local and returns the true UTC
-// instant. Intl resolves the actual IANA offset (ACST +09:30 / ACDT +10:30),
-// so this stays correct across daylight-saving transitions.
-function adelaideLocalToUtc(dateStr, timeStr, timeZone = 'Australia/Adelaide') {
-  const naiveUtc = new Date(`${dateStr}T${timeStr}:00Z`);
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone, hour12: false,
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-  });
-  const parts = Object.fromEntries(formatter.formatToParts(naiveUtc).map(p => [p.type, p.value]));
-  const asIfLocal = new Date(`${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}Z`);
-  const offsetMs = naiveUtc.getTime() - asIfLocal.getTime();
-  return new Date(naiveUtc.getTime() + offsetMs);
-}
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-// Returns the Adelaide-local hour and minute for a given Date, so time-of-day
-// gates fire at wall-clock Adelaide time, not the server's UTC clock.
-function adelaideHourMinute(date, timeZone = 'Australia/Adelaide') {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone, hour12: false,
-    hour: '2-digit', minute: '2-digit',
-  }).formatToParts(date);
-  return {
-    hour: Number(parts.find(p => p.type === 'hour').value),
-    minute: Number(parts.find(p => p.type === 'minute').value),
-  };
-}
+const parseDbDate = (value: unknown): Date | null => {
+  if (typeof value !== 'string' || !value) return null;
+  const parsed = new Date(value.includes('Z') || value.includes('+') ? value : `${value}Z`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
 
-// Returns the Adelaide-local YYYY-MM-DD for a given Date, so date-window
-// boundaries align with Adelaide wall-clock days, not the server's UTC day.
-function adelaideDateString(date, timeZone = 'Australia/Adelaide') {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone,
-    year: 'numeric', month: '2-digit', day: '2-digit',
-  }).formatToParts(date);
-  const y = parts.find(p => p.type === 'year').value;
-  const m = parts.find(p => p.type === 'month').value;
-  const d = parts.find(p => p.type === 'day').value;
-  return `${y}-${m}-${d}`;
-}
+const utcDateString = (date: Date) => date.toISOString().slice(0, 10);
 
 Deno.serve(async (req) => {
   try {
@@ -54,234 +24,185 @@ Deno.serve(async (req) => {
     if (!gate.ok) return gate.response;
 
     const client = base44.asServiceRole;
-
     const now = new Date();
-    const today = adelaideDateString(now); // Adelaide-local YYYY-MM-DD
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = adelaideDateString(tomorrow);
-    const { hour: currentHour, minute: currentMinute } = adelaideHourMinute(now);
 
-    console.log(`Checking tasks due ${today}..${tomorrowStr}, current time ${currentHour}:${String(currentMinute).padStart(2,'0')}`);
+    // One day either side of the old today..tomorrow window. The query is only
+    // a coarse net — widening it means a task is never missed because the
+    // server's calendar day differs from the owner's. selectDueReminders then
+    // decides every task in its owner's own timezone.
+    const fromDate = utcDateString(new Date(now.getTime() - DAY_MS));
+    const toDate = utcDateString(new Date(now.getTime() + 2 * DAY_MS));
+    console.log(`Checking tasks due ${fromDate}..${toDate}, now ${now.toISOString()}`);
 
-    // Fetch incomplete tasks due today or tomorrow (tomorrow covers the max
-    // supported task_reminder_minutes value of 1440 = 1 day lead time).
-    const allTasks = await client.entities.Task.filter({
-      due_date: { $gte: today, $lte: tomorrowStr }
+    const tasks = await client.entities.Task.filter({
+      due_date: { $gte: fromDate, $lte: toDate },
     });
-    const tasksInWindow = allTasks.filter(t => t.status !== 'completed');
-
-    if (tasksInWindow.length === 0) {
-      console.log('No tasks due today or tomorrow');
-      return Response.json({ sent: 0 });
+    if (tasks.length === 0) {
+      console.log('No tasks in the widened due window');
+      return Response.json({ sent: 0, checked: 0 });
     }
 
-    // Check calendar events for time-specific due times (today + tomorrow,
-    // so a task due tomorrow with a start_time is still matched)
+    // A task-linked calendar event carries a start time for tasks that have no
+    // due_time of their own (the second time source, unchanged).
     const calendarEvents = await client.entities.CalendarEvent.filter({
-      start_date: { $gte: today, $lte: tomorrowStr },
-      source: 'task'
+      start_date: { $gte: fromDate, $lte: toDate },
+      source: 'task',
+    });
+    const taskEventTime: Record<string, string> = {};
+    for (const event of calendarEvents) {
+      if (event.task_id && event.start_time) taskEventTime[event.task_id] = event.start_time;
+    }
+
+    const users = await client.entities.User.list();
+    const userById = Object.fromEntries(users.map((u: any) => [u.id, u]));
+    const prefs = await client.entities.NotificationPreferences.list();
+    const prefByUserId = Object.fromEntries(prefs.map((p: any) => [p.user_id, p]));
+
+    // Already-reminded keys for the last two days, in one query rather than one
+    // per task. Each row is keyed by the owner's own local date, so the
+    // once-per-task-per-day rule follows the owner's calendar, not the server's.
+    const recentNotifications = await client.entities.Notification.filter({
+      type: 'task_due',
+      created_date: { $gte: new Date(now.getTime() - 2 * DAY_MS).toISOString() },
+    });
+    const alreadyNotified = new Set<string>();
+    for (const row of recentNotifications) {
+      if (!row.user_id || !row.related_id) continue;
+      const sentAt = parseDbDate(row.created_date);
+      const localDate = sentAt
+        ? localDateString(sentAt, resolveTimezone(prefByUserId[row.user_id]))
+        : null;
+      if (localDate) alreadyNotified.add(reminderKey(row.user_id, row.related_id, localDate));
+    }
+
+    const { selected, skipped } = selectDueReminders({
+      tasks,
+      calendarTimeByTaskId: taskEventTime,
+      prefsByUserId,
+      now,
+      alreadyNotified,
     });
 
-    // Build map: task_id -> event time
-    const taskEventTime = {};
-    for (const event of calendarEvents) {
-      if (event.task_id && event.start_time) {
-        taskEventTime[event.task_id] = event.start_time; // "HH:mm"
-      }
-    }
-
-    // Fetch users + notification preferences up front so each owner's
-    // task_reminder_minutes can drive the per-task reminder window.
-    const users = await client.entities.User.list();
-    const userById = Object.fromEntries(users.map(u => [u.id, u]));
-    const prefs = await client.entities.NotificationPreferences.list();
-    const prefByUserId = Object.fromEntries(prefs.map(p => [p.user_id, p]));
-
-    const DEFAULT_REMINDER_MINUTES = 60;
-    const TOLERANCE_MIN = 5; // matches the 5-minute cron cadence
-
-    // Determine which tasks fall within each user's chosen reminder window.
-    const tasksToNotify = [];
-    for (const task of tasksInWindow) {
-      const eventTime = taskEventTime[task.id];
-      if (eventTime) {
-        // Specific due time — parse due_date + start_time as Adelaide
-        // local and convert to a true UTC instant, then compare absolutely
-        // so day boundaries are handled.
-        const ownerId = task.owner_user_id || task.created_by_id;
-        const owner = ownerId ? userById[ownerId] : null;
-        const pref = owner ? prefByUserId[owner.id] : null;
-        const leadMinutes = pref?.task_reminder_minutes ?? DEFAULT_REMINDER_MINUTES;
-
-        const dueTimestamp = adelaideLocalToUtc(task.due_date, eventTime);
-        const diffMinutes = (dueTimestamp.getTime() - now.getTime()) / 60000;
-        if (diffMinutes >= leadMinutes - TOLERANCE_MIN && diffMinutes <= leadMinutes + TOLERANCE_MIN) {
-          tasksToNotify.push({ task, dueTime: eventTime });
-        }
-      } else {
-        // No specific time — send reminder at 8am, but only for tasks
-        // actually due today (untimed tomorrow tasks wait for their own 8am).
-        if (task.due_date === today && currentHour === 8 && currentMinute < 5) {
-          tasksToNotify.push({ task, dueTime: 'end of day' });
-        }
-      }
-    }
-
-    if (tasksToNotify.length === 0) {
-      console.log('No tasks matched the reminder window');
-      return Response.json({ sent: 0 });
-    }
-
-    // Group by user (created_by_id)
-    const byUser = {};
-    for (const item of tasksToNotify) {
-      const ownerId = item.task.owner_user_id || item.task.created_by_id;
-      if (!ownerId) continue;
-      if (!byUser[ownerId]) byUser[ownerId] = [];
-      byUser[ownerId].push(item);
+    if (selected.length === 0) {
+      console.log(`No tasks matched the reminder window ${JSON.stringify(skipped)}`);
+      return Response.json({ sent: 0, checked: 0, skipped });
     }
 
     let sent = 0;
     let quietSkipped = 0;
 
-    for (const [ownerId, items] of Object.entries(byUser)) {
-      const user = userById[ownerId];
+    for (const candidate of selected) {
+      const { task, userId, dueTime, quiet, canPush } = candidate;
+      const user = userById[userId];
       if (!user) continue;
+      const pref = prefByUserId[userId] || null;
 
-      const pref = prefByUserId[user.id];
-      // Respect task_reminders preference (default true)
-      if (pref && pref.task_reminders === false) continue;
-      // Quiet hours silence push and email only. The in-app row below is always
-      // written; this user's own window and timezone decide the rest.
-      const quiet = isQuietNow(pref, now);
+      // The time is the owner's own wall clock: due_time is stored that way, and
+      // a calendar start_time is already local to them.
+      const timeLabel = dueTime ? `at ${dueTime}` : 'today';
+      const isMustDo = task.task_priority === 'must_do';
+      const message = `"${task.title}" is due ${timeLabel}${task.estimated_minutes ? ` (~${task.estimated_minutes} min)` : ''}.`;
 
-      for (const { task, dueTime } of items) {
-        // Dedup: check if we already sent this notification today
-        const existing = await client.entities.Notification.filter({
-          user_id: user.id,
-          related_id: task.id,
-          type: 'task_due'
-        });
+      // The in-app row is written for every reminder, quiet hours or not.
+      await client.entities.Notification.create({
+        user_id: user.id,
+        type: 'task_due',
+        title: 'Task reminder',
+        message,
+        related_id: task.id,
+        related_type: 'task',
+        priority: isMustDo ? 'critical' : task.priority === 'urgent' ? 'critical' : 'high',
+        is_read: false,
+        sent_at: now.toISOString(),
+      });
 
-        const alreadySentToday = existing.some(n => {
-          const sentDate = new Date(
-            n.created_date + (n.created_date?.includes('Z') ? '' : 'Z')
-          ).toLocaleDateString('en-CA');
-          return sentDate === today;
-        });
+      // Push only for a task with a real time, and never during quiet hours.
+      // Untimed tasks stay in-app + email, which keeps them gentle.
+      if (quiet) quietSkipped++;
+      if (canPush) {
+        try {
+          const pushPayload = {
+            // Lock-screen copy stays generic: the task title never appears here.
+            title: `A task is due ${timeLabel}`,
+            body: `${task.estimated_minutes ? `~${task.estimated_minutes} min. ` : ''}Open to view, or snooze.`,
+            taskId: task.id,
+            taskTitle: task.title,
+            estimatedMinutes: task.estimated_minutes || null,
+            dueDate: task.due_date,
+            dueTime: dueTime,
+          };
 
-        if (alreadySentToday) {
-          console.log(`Already notified user ${user.email} for task ${task.id} today`);
-          continue;
-        }
-
-        const timeLabel = dueTime === 'end of day' ? 'today' : `at ${dueTime}`;
-        const isMustDo = task.task_priority === 'must_do';
-        const message = `"${task.title}" is due ${timeLabel}${task.estimated_minutes ? ` (~${task.estimated_minutes} min)` : ''}.`;
-
-        // Create in-app notification
-        await client.entities.Notification.create({
-          user_id: user.id,
-          type: 'task_due',
-          title: 'Task reminder',
-          message,
-          related_id: task.id,
-          related_type: 'task',
-          priority: isMustDo ? 'critical' : task.priority === 'urgent' ? 'critical' : 'high',
-          is_read: false,
-          sent_at: now.toISOString(),
-        });
-
-        // Send push for any task with a specific scheduled time (a linked
-        // CalendarEvent with a start_time). Untimed tasks (8am fallback path,
-        // dueTime === 'end of day') get in-app + email only — gentle, not aggressive.
-        const hasSpecificTime = dueTime !== 'end of day';
-        if (quiet) quietSkipped++;
-        if (hasSpecificTime && !quiet) {
-          try {
-            const pushPayload = {
-              // Lock-screen text: the task title never appears here.
-              title: `A task is due ${timeLabel}`,
-              body: `${task.estimated_minutes ? `~${task.estimated_minutes} min. ` : ''}Open to view, or snooze.`,
-              taskId: task.id,
-              taskTitle: task.title,
-              estimatedMinutes: task.estimated_minutes || null,
-              dueDate: task.due_date,
-            };
-
-            // Native (OneSignal) takes precedence; fall back to VAPID web push
-            if (user.onesignal_player_id) {
+          // Native (OneSignal) takes precedence; fall back to VAPID web push.
+          if (user.onesignal_player_id) {
+            const res = await base44.asServiceRole.functions.invoke('sendPushNotification', {
+              playerId: user.onesignal_player_id,
+              payload: pushPayload,
+            });
+            const delivery = res?.data || {};
+            if (delivery.ok) {
+              console.log(`OneSignal push sent to ${user.email} (recipients=${delivery.recipients})`);
+            } else {
+              console.log(`push failed for ${user.email}: status=${delivery.status} recipients=${delivery.recipients} errors=${JSON.stringify(delivery.errors || [])}`);
+              // Only a dead id is cleared, so the app can register a fresh one.
+              if (isInvalidPlayerIdError(delivery.errors || [])) {
+                await base44.asServiceRole.entities.User.update(user.id, { onesignal_player_id: null });
+                console.log(`Cleared dead OneSignal player id for ${user.email}; it re-registers on next launch.`);
+              }
+            }
+          } else {
+            const pushSubRaw = user.push_subscription;
+            if (pushSubRaw) {
+              const pushSub = typeof pushSubRaw === 'string' ? JSON.parse(pushSubRaw) : pushSubRaw;
               const res = await base44.asServiceRole.functions.invoke('sendPushNotification', {
-                playerId: user.onesignal_player_id,
+                subscription: pushSub,
                 payload: pushPayload,
               });
               const delivery = res?.data || {};
               if (delivery.ok) {
-                console.log(`OneSignal push sent to ${user.email} for task "${task.title}" (recipients=${delivery.recipients})`);
+                console.log(`VAPID push sent to ${user.email}`);
               } else {
-                console.log(`push failed for ${user.email} (task "${task.title}"): status=${delivery.status} recipients=${delivery.recipients} errors=${JSON.stringify(delivery.errors || [])}`);
-                // Only a dead id is cleared, so the app can register a fresh one.
-                if (isInvalidPlayerIdError(delivery.errors || [])) {
-                  await base44.asServiceRole.entities.User.update(user.id, { onesignal_player_id: null });
-                  console.log(`Cleared dead OneSignal player id for ${user.email}; it re-registers on next launch.`);
-                }
-              }
-            } else {
-              const pushSubRaw = user.push_subscription;
-              if (pushSubRaw) {
-                const pushSub = typeof pushSubRaw === 'string' ? JSON.parse(pushSubRaw) : pushSubRaw;
-                const res = await base44.asServiceRole.functions.invoke('sendPushNotification', {
-                  subscription: pushSub,
-                  payload: pushPayload,
-                });
-                const delivery = res?.data || {};
-                if (delivery.ok) {
-                  console.log(`VAPID push sent to ${user.email} for task "${task.title}"`);
-                } else {
-                  console.log(`push failed for ${user.email} (VAPID, task "${task.title}"): status=${delivery.status} errors=${JSON.stringify(delivery.errors || [])}`);
-                }
+                console.log(`push failed for ${user.email} (VAPID): status=${delivery.status} errors=${JSON.stringify(delivery.errors || [])}`);
               }
             }
-          } catch (pushErr) {
-            console.error(`Push failed for ${user.email}:`, pushErr.message);
           }
+        } catch (pushErr) {
+          console.error(`Push failed for ${user.email}:`, pushErr.message);
         }
-
-        // Send email if enabled
-        if (!quiet && pref?.email_notifications !== false) {
-          try {
-            await client.integrations.Core.SendEmail({
-              to: user.email,
-              // Email subjects show on lock screens, so no task title here.
-              subject: 'Your task reminder',
-              body: `
-                <div style="font-family: sans-serif; max-width: 480px; margin: auto; padding: 24px;">
-                  <h2 style="color: #8B5CF6;">Task Reminder</h2>
-                  <p>Hi ${user.full_name || 'there'},</p>
-                  <p>${message}</p>
-                  ${task.description ? `<p style="color: #666;">${task.description}</p>` : ''}
-                  <a href="https://taskbuddyapp.online" style="background: #8B5CF6; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block; margin-top: 12px;">
-                    Open TaskBuddy
-                  </a>
-                  <p style="font-size: 12px; color: #999; margin-top: 24px;">
-                    You can manage notification preferences in your TaskBuddy settings.
-                  </p>
-                </div>
-              `,
-            });
-            console.log(`Email sent to ${user.email} for task "${task.title}"`);
-          } catch (emailErr) {
-            console.error(`Failed to send email to ${user.email}:`, emailErr.message);
-          }
-        }
-
-        sent++;
-        console.log(`Notified ${user.email} for task "${task.title}" due ${timeLabel}`);
       }
+
+      // Email if enabled, and silenced by quiet hours like push.
+      if (!quiet && pref?.email_notifications !== false) {
+        try {
+          await client.integrations.Core.SendEmail({
+            to: user.email,
+            // Email subjects show on lock screens, so no task title here.
+            subject: 'Your task reminder',
+            body: `
+              <div style="font-family: sans-serif; max-width: 480px; margin: auto; padding: 24px;">
+                <h2 style="color: #8B5CF6;">Task Reminder</h2>
+                <p>Hi ${user.full_name || 'there'},</p>
+                <p>${message}</p>
+                ${task.description ? `<p style="color: #666;">${task.description}</p>` : ''}
+                <a href="https://taskbuddyapp.online" style="background: #8B5CF6; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block; margin-top: 12px;">
+                  Open TaskBuddy
+                </a>
+                <p style="font-size: 12px; color: #999; margin-top: 24px;">
+                  You can manage notification preferences in your TaskBuddy settings.
+                </p>
+              </div>
+            `,
+          });
+          console.log(`Email sent to ${user.email}`);
+        } catch (emailErr) {
+          console.error(`Failed to send email to ${user.email}:`, emailErr.message);
+        }
+      }
+
+      sent++;
+      console.log(`Notified ${user.email} (${candidate.timeSource}, due ${timeLabel} ${candidate.timezone})`);
     }
 
-    return Response.json({ sent, checked: tasksToNotify.length, quiet_skipped: quietSkipped });
+    return Response.json({ sent, checked: selected.length, quiet_skipped: quietSkipped, skipped });
   } catch (error) {
     console.error('sendUpcomingTaskReminders error:', error);
     return Response.json({ error: error.message }, { status: 500 });

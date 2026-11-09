@@ -8,6 +8,7 @@ import SubtaskTracker from "./tasks/SubtaskTracker";
 import OverwhelmedBreakdown from "./tasks/OverwhelmedBreakdown";
 import DueDateSuggester from "./tasks/DueDateSuggester";
 import { useState } from "react";
+import { format, parseISO } from "date-fns";
 import RecurringTaskBadge from "./tasks/RecurringTaskBadge";
 import { getAIPriorityColor, getAIPriorityLabel, getUrgencyIcon } from "./ai/TaskPrioritizer";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -121,6 +122,13 @@ export default function TaskCard({ task, onStart, onEdit, onDelete, onSpread, on
                   <Badge variant="outline" className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     {task.estimated_minutes}m total
+                  </Badge>
+                )}
+                {task.due_date && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <CalendarDays className="w-3 h-3" />
+                    {format(parseISO(task.due_date), "EEE")}
+                    {task.due_time ? ` ${task.due_time}` : ""}
                   </Badge>
                 )}
                 {task.energy_level_needed && (

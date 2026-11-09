@@ -6,7 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import DueTimeField from "@/components/tasks/DueTimeField";
 import { motion } from "framer-motion";
 import { Users, MessageSquare, Activity, X, CheckCircle, Clock, User } from "lucide-react";
 import TaskCommentsSection from "../team/TaskCommentsSection";
@@ -224,9 +226,28 @@ export default function CollaborativeTaskView({ task, open, onOpenChange, curren
                 </div>
               )}
               {task.due_date && (
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Due Date</p>
-                  <p className="font-semibold">{new Date(task.due_date).toLocaleDateString()}</p>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-500 mb-1">Due</p>
+                  <Input
+                    type="date"
+                    value={task.due_date || ""}
+                    disabled={!!task.team_id && !canEdit}
+                    // Clearing the date clears the time with it.
+                    onChange={(e) => {
+                      const next = e.target.value || null;
+                      updateTaskMutation.mutate({
+                        id: task.id,
+                        data: { due_date: next, due_time: next ? task.due_time || null : null },
+                      });
+                    }}
+                    className="w-40"
+                  />
+                  <DueTimeField
+                    dueDate={task.due_date}
+                    value={task.due_time}
+                    onChange={(value) => updateTaskMutation.mutate({ id: task.id, data: { due_time: value } })}
+                    id={`due_time_${task.id}`}
+                  />
                 </div>
               )}
             </div>

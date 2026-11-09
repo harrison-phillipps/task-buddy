@@ -17,6 +17,7 @@ import { teamMemberIds } from "@/lib/teamStamp";
 import VirtualCompanion from "../components/VirtualCompanion";
 import { getPersonalizedMessage } from "../components/companionUtils";
 import DuplicateTaskChecker from "../components/tasks/DuplicateTaskChecker";
+import DueTimeField from "@/components/tasks/DueTimeField";
 import AITaskBreakdownConsentModal from "@/components/AITaskBreakdownConsentModal";
 import { UpgradeModal } from "@/components/subscription/FeatureGate";
 import { fetchMyTasks, countActiveTasks, slotsForNewTasks } from "@/lib/myTasks";
@@ -36,7 +37,9 @@ export default function TaskBreakdown() {
     category: "personal",
     difficulty: "medium",
     energy_level_needed: "medium",
-    current_mood: null
+    current_mood: null,
+    due_date: null,
+    due_time: null
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [breakdownResult, setBreakdownResult] = useState(null);
@@ -184,6 +187,9 @@ export default function TaskBreakdown() {
     const totalTime = editingSubtasks.reduce((sum, st) => sum + (st.estimated_minutes || 0), 0);
     const taskData = {
       ...taskInput,
+      // Absent rather than null when unset; the time is only ever what the person picked.
+      due_date: taskInput.due_date || undefined,
+      due_time: taskInput.due_date && taskInput.due_time ? taskInput.due_time : undefined,
       subtasks: editingSubtasks,
       estimated_minutes: totalTime,
       status: "not_started",
@@ -291,6 +297,31 @@ export default function TaskBreakdown() {
                     value={taskInput.description}
                     onChange={(e) => setTaskInput({...taskInput, description: e.target.value})}
                     rows={4}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="due_date">Due date (optional)</Label>
+                  <Input
+                    id="due_date"
+                    type="date"
+                    value={taskInput.due_date || ""}
+                    // Clearing the date clears the time with it.
+                    onChange={(e) => {
+                      const next = e.target.value || null;
+                      setTaskInput((prev) => ({
+                        ...prev,
+                        due_date: next,
+                        due_time: next ? prev.due_time || null : null,
+                      }));
+                    }}
+                    className="w-48"
+                  />
+                  <DueTimeField
+                    dueDate={taskInput.due_date}
+                    value={taskInput.due_time}
+                    onChange={(value) => setTaskInput((prev) => ({ ...prev, due_time: value }))}
+                    id="task_due_time"
                   />
                 </div>
 

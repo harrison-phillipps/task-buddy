@@ -101,7 +101,12 @@
     "due_date": {
       "type": "string",
       "format": "date",
-      "description": "Deadline for the task"
+      "description": "Deadline for the task. Clearing it also clears due_time."
+    },
+    "due_time": {
+      "type": "string",
+      "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+      "description": "Optional time of day this task is due, 24-hour \"HH:mm\", read as wall clock in the owner's own timezone. Only meaningful alongside due_date. Never inferred by AI generation, quick-add, templates or bulk creation; only ever set by the person editing the task."
     },
     "blocked_by": {
       "type": "array",

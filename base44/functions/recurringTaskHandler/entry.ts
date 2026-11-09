@@ -190,6 +190,8 @@ Deno.serve(async (req) => {
       subtasks: (template.subtasks || []).map(s => ({ ...s, completed: false, completed_date: undefined })),
       status: 'not_started',
       due_date: nextDateStr,
+      // The instance keeps the source task's time of day; it is never invented.
+      due_time: template.due_time || undefined,
       parent_recurring_task_id: template.id,
       is_recurring: false,
       team_id: template.team_id || undefined,
