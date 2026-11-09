@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { requireAdmin } from '../../shared/authGuard.ts';
 import { isQuietNow } from '../../shared/quietHours.ts';
+import { isInvalidPlayerIdError } from '../../shared/oneSignal.ts';
 
 // Parses a date+time as wall-clock Adelaide local and returns the true UTC
 // instant. Intl resolves the actual IANA offset (ACST +09:30 / ACDT +10:30),
@@ -211,20 +212,35 @@ Deno.serve(async (req) => {
 
             // Native (OneSignal) takes precedence; fall back to VAPID web push
             if (user.onesignal_player_id) {
-              await base44.asServiceRole.functions.invoke('sendPushNotification', {
+              const res = await base44.asServiceRole.functions.invoke('sendPushNotification', {
                 playerId: user.onesignal_player_id,
                 payload: pushPayload,
               });
-              console.log(`OneSignal push sent to ${user.email} for task "${task.title}"`);
+              const delivery = res?.data || {};
+              if (delivery.ok) {
+                console.log(`OneSignal push sent to ${user.email} for task "${task.title}" (recipients=${delivery.recipients})`);
+              } else {
+                console.log(`push failed for ${user.email} (task "${task.title}"): status=${delivery.status} recipients=${delivery.recipients} errors=${JSON.stringify(delivery.errors || [])}`);
+                // Only a dead id is cleared, so the app can register a fresh one.
+                if (isInvalidPlayerIdError(delivery.errors || [])) {
+                  await base44.asServiceRole.entities.User.update(user.id, { onesignal_player_id: null });
+                  console.log(`Cleared dead OneSignal player id for ${user.email}; it re-registers on next launch.`);
+                }
+              }
             } else {
               const pushSubRaw = user.push_subscription;
               if (pushSubRaw) {
                 const pushSub = typeof pushSubRaw === 'string' ? JSON.parse(pushSubRaw) : pushSubRaw;
-                await base44.asServiceRole.functions.invoke('sendPushNotification', {
+                const res = await base44.asServiceRole.functions.invoke('sendPushNotification', {
                   subscription: pushSub,
                   payload: pushPayload,
                 });
-                console.log(`VAPID push sent to ${user.email} for task "${task.title}"`);
+                const delivery = res?.data || {};
+                if (delivery.ok) {
+                  console.log(`VAPID push sent to ${user.email} for task "${task.title}"`);
+                } else {
+                  console.log(`push failed for ${user.email} (VAPID, task "${task.title}"): status=${delivery.status} errors=${JSON.stringify(delivery.errors || [])}`);
+                }
               }
             }
           } catch (pushErr) {

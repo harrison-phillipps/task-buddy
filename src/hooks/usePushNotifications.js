@@ -1,6 +1,7 @@
-/* global NativelyInfo, NativelyNotifications */
+/* global NativelyNotifications */
 import { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
+import { isNativeShell } from '@/lib/nativelyNative';
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
 
@@ -11,22 +12,7 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
 }
 
-/**
- * Returns true only when the Natively SDK is loaded AND it reports we are
- * running inside the native app wrapper (iOS or Android). In a regular browser
- * the SDK still loads (inert) but browserInfo().isNativeApp is false, so this
- * stays false and the VAPID/Web Push path is used instead.
- */
-function getNativelyNativeFlag() {
-  try {
-    if (typeof window === 'undefined' || typeof NativelyInfo === 'undefined') return false;
-    const info = new NativelyInfo();
-    const bi = info.browserInfo();
-    return !!(bi && bi.isNativeApp);
-  } catch {
-    return false;
-  }
-}
+
 
 export function usePushNotifications() {
   const isVapidSupported =
@@ -35,16 +21,16 @@ export function usePushNotifications() {
   // The Natively SDK loads asynchronously via a <script> tag in index.html.
   // Track readiness so the UI can reveal the "Enable Reminders" control once
   // the native bridge is available.
-  const [nativelyReady, setNativelyReady] = useState(() => getNativelyNativeFlag());
+  const [nativelyReady, setNativelyReady] = useState(() => isNativeShell());
 
   useEffect(() => {
     if (nativelyReady) return;
-    const check = () => { if (getNativelyNativeFlag()) setNativelyReady(true); };
+    const check = () => { if (isNativeShell()) setNativelyReady(true); };
     check();
     window.addEventListener('natively-loaded', check);
     // Fallback poll in case the SDK becomes ready before the event fires.
     const iv = setInterval(() => {
-      if (getNativelyNativeFlag()) { setNativelyReady(true); clearInterval(iv); }
+      if (isNativeShell()) { setNativelyReady(true); clearInterval(iv); }
     }, 300);
     const stop = setTimeout(() => clearInterval(iv), 6000);
     return () => {
@@ -98,6 +84,17 @@ export function usePushNotifications() {
     return () => { cancelled = true; };
   }, [isNative]);
 
+  // Native test push: the server targets this account's own stored OneSignal id.
+  const runNativeTestPush = useCallback(async () => {
+    try {
+      const res = await base44.functions.invoke('sendTestPush', {});
+      return res.data || { success: false, reason: 'unknown' };
+    } catch (err) {
+      console.error('Native test push error:', err);
+      return { success: false, reason: 'error', message: (err && err.message) || 'Could not send the test notification.' };
+    }
+  }, []);
+
   const requestNativePermission = useCallback(async () => {
     if (typeof NativelyNotifications === 'undefined') {
       return { success: false, reason: 'natively_sdk_not_loaded' };
@@ -123,14 +120,19 @@ export function usePushNotifications() {
       await base44.auth.updateMe({ onesignal_player_id: playerId });
       setSubscription({ playerId });
 
-      return { success: true, native: true, playerId };
+      // 4. Prove it delivers. The server clears the id when the device has
+      // dropped its subscription, so local state follows suit.
+      const test = await runNativeTestPush();
+      if (test?.cleared) setSubscription(null);
+
+      return { success: true, native: true, playerId, test };
     } catch (err) {
       console.error('Natively push subscription error:', err);
       return { success: false, reason: (err && err.message) || 'native_error' };
     } finally {
       setIsRegistering(false);
     }
-  }, []);
+  }, [runNativeTestPush]);
 
   const requestPermissionAndSubscribe = useCallback(async (vapidPublicKeyFromServer) => {
     if (isNative) return requestNativePermission();
@@ -188,10 +190,11 @@ export function usePushNotifications() {
   }, [subscription, isNative]);
 
   const sendTestNotification = useCallback(async (sub) => {
-    if (isNative) return; // native test pushes are sent via the OneSignal dashboard / REST API
+    // Native: the server pushes to this account's own stored OneSignal id.
+    if (isNative) return runNativeTestPush();
     const activeSub = sub || subscription;
     if (!activeSub) return;
-    await base44.functions.invoke('sendPushNotification', {
+    const res = await base44.functions.invoke('sendPushNotification', {
       subscription: activeSub.toJSON(),
       payload: {
         title: 'Notifications are on',
@@ -200,10 +203,12 @@ export function usePushNotifications() {
         taskTitle: 'Test',
       },
     });
-  }, [subscription, isNative]);
+    return res.data;
+  }, [subscription, isNative, runNativeTestPush]);
 
   return {
     isSupported,
+    isNative,
     permission,
     subscription,
     isRegistering,

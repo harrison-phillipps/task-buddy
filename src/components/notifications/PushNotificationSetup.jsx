@@ -5,8 +5,22 @@ import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
 
+/** Turns a sendTestPush result into something a person can act on. */
+function nativeFailureMessage(test) {
+  switch (test.reason) {
+    case 'no_device':
+      return 'No device registered yet. Allow notifications, then tap Enable again.';
+    case 'not_subscribed':
+      return 'This phone is no longer subscribed. Turn notifications off, then on again.';
+    case 'rate_limited':
+      return test.message || 'That is three test notifications in the last hour. Please try again later.';
+    default:
+      return test.message || 'Notifications are on, but the test notification could not be delivered.';
+  }
+}
+
 export default function PushNotificationSetup({ compact = false, onDismiss }) {
-  const { isSupported, permission, subscription, isRegistering, requestPermissionAndSubscribe, unsubscribe, sendTestNotification } = usePushNotifications();
+  const { isSupported, isNative, permission, subscription, isRegistering, requestPermissionAndSubscribe, unsubscribe, sendTestNotification } = usePushNotifications();
   const [vapidKey, setVapidKey] = useState('');
   const [status, setStatus] = useState(null); // 'success' | 'error' | null
   const [statusMsg, setStatusMsg] = useState('');
@@ -21,27 +35,41 @@ export default function PushNotificationSetup({ compact = false, onDismiss }) {
   const isEnabled = permission === 'granted' && !!subscription;
 
   const handleEnable = async () => {
-    if (!vapidKey) {
+    // The VAPID key is only needed for browser/web push. The native path
+    // registers through OneSignal and must not be blocked by it.
+    if (!isNative && !vapidKey) {
       setStatus('error');
       setStatusMsg('Push configuration not ready. Please try again.');
       return;
     }
+
     const result = await requestPermissionAndSubscribe(vapidKey);
-    if (result.success) {
-      if (!result.native) {
-        await sendTestNotification(result.subscription);
-      }
-      setStatus('success');
-      setStatusMsg(result.native
-        ? 'Push notifications enabled!'
-        : 'Push notifications enabled! A test notification was just sent.');
-    } else if (result.reason === 'denied') {
+
+    if (!result.success) {
       setStatus('error');
-      setStatusMsg('Permission denied. Enable notifications in your browser settings.');
-    } else {
-      setStatus('error');
-      setStatusMsg('Something went wrong. Please try again.');
+      setStatusMsg(result.reason === 'denied'
+        ? 'Permission denied. Enable notifications in your settings.'
+        : 'Something went wrong. Please try again.');
+      return;
     }
+
+    if (result.native) {
+      // The native flow already sent the test push and returned its outcome,
+      // so this message reports what actually happened.
+      const test = result.test || {};
+      if (test.success) {
+        setStatus('success');
+        setStatusMsg('Notifications are on. A test notification was just sent.');
+      } else {
+        setStatus('error');
+        setStatusMsg(nativeFailureMessage(test));
+      }
+      return;
+    }
+
+    await sendTestNotification(result.subscription);
+    setStatus('success');
+    setStatusMsg('Push notifications enabled! A test notification was just sent.');
   };
 
   const handleDisable = async () => {

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { sendOneSignal } from '../../shared/oneSignal.ts';
 
 // Minimal VAPID / Web Push implementation using SubtleCrypto (no npm:web-push needed)
 
@@ -159,39 +160,6 @@ async function sendWebPush(subscription, payload) {
   return { status: response.status, ok: response.ok };
 }
 
-async function sendOneSignal(playerId, payload) {
-  const restKey = Deno.env.get('One_Signal_REST_API_Key');
-  const appId = Deno.env.get('One_Signal_APP_ID');
-  if (!restKey || !appId) {
-    console.error('OneSignal credentials not configured');
-    return { ok: false, status: 500, error: 'OneSignal credentials not configured' };
-  }
-
-  // Pass through deep-link / custom data fields under OneSignal's `data` block
-  const data = {};
-  if (payload.taskId != null) data.taskId = payload.taskId;
-  if (payload.taskTitle != null) data.taskTitle = payload.taskTitle;
-  if (payload.dueDate != null) data.dueDate = payload.dueDate;
-  if (payload.estimatedMinutes != null) data.estimatedMinutes = payload.estimatedMinutes;
-
-  const res = await fetch('https://onesignal.com/api/v1/notifications', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Basic ${restKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      app_id: appId,
-      include_player_ids: [playerId],
-      headings: { en: payload.title || 'TaskBuddy' },
-      contents: { en: payload.body || '' },
-      data,
-    }),
-  });
-
-  return { ok: res.ok, status: res.status };
-}
-
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -208,15 +176,30 @@ Deno.serve(async (req) => {
     let result;
     if (playerId) {
       result = await sendOneSignal(playerId, payload);
-      console.log(`OneSignal push sent to ${user.email}: status=${result.status}`);
     } else if (subscription) {
-      result = await sendWebPush(subscription, payload);
-      console.log(`VAPID push sent to ${user.email}: status=${result.status}`);
+      const web = await sendWebPush(subscription, payload);
+      result = web.ok
+        ? { ok: true, status: web.status, recipients: 1, errors: [] }
+        : { ok: false, status: web.status, recipients: 0, errors: [`web push rejected with ${web.status}`] };
     } else {
       return Response.json({ error: 'Missing subscription or playerId' }, { status: 400 });
     }
 
-    return Response.json({ success: result.ok, status: result.status });
+    // OneSignal answers 200 even when nothing was delivered, so delivery — not
+    // the status code — decides what this logs.
+    if (result.ok) {
+      console.log(`push sent to ${user.email}: status=${result.status} recipients=${result.recipients}`);
+    } else {
+      console.log(`push failed for ${user.email}: status=${result.status} recipients=${result.recipients} errors=${JSON.stringify(result.errors)}`);
+    }
+
+    return Response.json({
+      success: result.ok,
+      ok: result.ok,
+      status: result.status,
+      recipients: result.recipients,
+      errors: result.errors,
+    });
   } catch (error) {
     console.error('sendPushNotification error:', error);
     return Response.json({ error: error.message }, { status: 500 });

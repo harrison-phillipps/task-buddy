@@ -30,6 +30,7 @@ import OfflineIndicator from "@/components/OfflineIndicator";
 import { useGlobalOfflineSync } from "@/hooks/useGlobalOfflineSync";
 import { hasFeatureAccess } from "@/components/subscription/FeatureGate";
 import { usePrefsTimezone } from "@/hooks/usePrefsTimezone";
+import { useOneSignalIdRefresh } from "@/hooks/useOneSignalIdRefresh";
 
 function LayoutContent({ children, currentPageName }) {
   const location = useLocation();
@@ -43,6 +44,10 @@ function LayoutContent({ children, currentPageName }) {
 
   // Records the browser timezone on notification preferences once, on app load.
   usePrefsTimezone();
+
+  // Native shell only: keeps the stored OneSignal id in step with this device.
+  // Reads permission, never prompts, writes only when the id has changed.
+  useOneSignalIdRefresh();
 
   const navigationItems = [
     { title: "Home", url: isClinician ? createPageUrl("ClinicianDashboard") : createPageUrl("Dashboard"), icon: LayoutDashboard },
