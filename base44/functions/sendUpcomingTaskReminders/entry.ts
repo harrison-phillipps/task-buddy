@@ -4,6 +4,7 @@ import { resolveTimezone } from '../../shared/quietHours.ts';
 import { localDateString } from '../../shared/localTime.ts';
 import { isInvalidPlayerIdError } from '../../shared/oneSignal.ts';
 import { reminderKey, selectDueReminders } from '../../shared/taskReminderSelection.ts';
+import { buildDryRunReport } from '../../shared/reminderDryRun.ts';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -22,6 +23,16 @@ Deno.serve(async (req) => {
     // Admin only: the scheduled workflow step calls this as its creator, an app admin.
     const gate = await requireAdmin(base44);
     if (!gate.ok) return gate.response;
+
+    // dry_run is opt-in and never implied: the scheduled step sends no body, so
+    // anything unreadable means a real run. Only an admin reaches this point.
+    let payload: any = {};
+    try {
+      payload = await req.json();
+    } catch {
+      payload = {};
+    }
+    const dryRun = payload?.dry_run === true;
 
     const client = base44.asServiceRole;
     const now = new Date();
@@ -56,7 +67,7 @@ Deno.serve(async (req) => {
     const users = await client.entities.User.list();
     const userById = Object.fromEntries(users.map((u: any) => [u.id, u]));
     const prefs = await client.entities.NotificationPreferences.list();
-    const prefByUserId = Object.fromEntries(prefs.map((p: any) => [p.user_id, p]));
+    const prefsByUserId = Object.fromEntries(prefs.map((p: any) => [p.user_id, p]));
 
     // Already-reminded keys for the last two days, in one query rather than one
     // per task. Each row is keyed by the owner's own local date, so the
@@ -70,9 +81,31 @@ Deno.serve(async (req) => {
       if (!row.user_id || !row.related_id) continue;
       const sentAt = parseDbDate(row.created_date);
       const localDate = sentAt
-        ? localDateString(sentAt, resolveTimezone(prefByUserId[row.user_id]))
+        ? localDateString(sentAt, resolveTimezone(prefsByUserId[row.user_id]))
         : null;
       if (localDate) alreadyNotified.add(reminderKey(row.user_id, row.related_id, localDate));
+    }
+
+    // Dry run: the full real decision against live data, reported instead of
+    // acted on. It returns here — before any notification row, push, email,
+    // player-id write or dedupe bookkeeping can happen.
+    if (dryRun) {
+      const entries = buildDryRunReport(tasks, {
+        calendarTimeByTaskId: taskEventTime,
+        prefsByUserId,
+        now,
+        alreadyNotified,
+      });
+      const wouldNotify = entries.filter((entry) => entry.reason_skipped === null);
+      const skippedEntries = entries.filter((entry) => entry.reason_skipped !== null);
+      console.log(`Dry run: ${wouldNotify.length} of ${entries.length} tasks would be notified`);
+      return Response.json({
+        dry_run: true,
+        now: now.toISOString(),
+        checked: entries.length,
+        would_notify: wouldNotify,
+        skipped: skippedEntries,
+      });
     }
 
     const { selected, skipped } = selectDueReminders({
@@ -95,7 +128,7 @@ Deno.serve(async (req) => {
       const { task, userId, dueTime, quiet, canPush } = candidate;
       const user = userById[userId];
       if (!user) continue;
-      const pref = prefByUserId[userId] || null;
+      const pref = prefsByUserId[userId] || null;
 
       // The time is the owner's own wall clock: due_time is stored that way, and
       // a calendar start_time is already local to them.
