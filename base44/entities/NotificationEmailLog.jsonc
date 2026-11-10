@@ -4,7 +4,7 @@
   "properties": {
     "sender_user_id": {
       "type": "string",
-      "description": "User on whose behalf the email was sent (the caller of notifyTeammate)"
+      "description": "User on whose behalf the email was sent (the caller of notifyTeammate), or whose rate-limited action this row counts (sendTestPush, scheduleSessionEndPush)."
     },
     "recipient_user_id": {
       "type": "string",
@@ -14,6 +14,10 @@
       "type": "string",
       "format": "date-time",
       "description": "When the send was recorded. notifyTeammate counts the last hour of rows for one sender-recipient pair to enforce its 10-per-hour limit."
+    },
+    "kind": {
+      "type": "string",
+      "description": "Which rate limit this row counts, so separate features keep separate budgets: \"test_push\" for sendTestPush, \"session_end_push\" for scheduleSessionEndPush. Absent on older rows and on notifyTeammate's email sends."
     }
   },
   "required": [

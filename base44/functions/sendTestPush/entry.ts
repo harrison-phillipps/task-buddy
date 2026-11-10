@@ -13,6 +13,8 @@ import {
  * request body — so this cannot be used to push to anyone else. Rate limited to
  * three attempts per hour per user, counted in NotificationEmailLog (an
  * admin-only log, service-role writes) so the limit survives cold starts.
+ * Rows are tagged kind: 'test_push' so the scheduled session-end push, which
+ * counts in the same table, keeps its own budget.
  */
 Deno.serve(async (req) => {
   try {
@@ -23,7 +25,7 @@ Deno.serve(async (req) => {
     const client = base44.asServiceRole;
 
     const recent = await client.entities.NotificationEmailLog.filter(
-      { sender_user_id: caller.id },
+      { sender_user_id: caller.id, kind: 'test_push' },
       '-created_date',
       50,
       0,
@@ -53,6 +55,7 @@ Deno.serve(async (req) => {
       sender_user_id: caller.id,
       recipient_user_id: caller.id,
       sent_at: new Date().toISOString(),
+      kind: 'test_push',
     });
 
     const result = await sendOneSignal(playerId, {

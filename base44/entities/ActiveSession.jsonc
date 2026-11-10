@@ -59,6 +59,10 @@
     "device_id": {
       "type": "string",
       "description": "ID of the device that owns/controls this session"
+    },
+    "end_push_id": {
+      "type": "string",
+      "description": "OneSignal message id of the scheduled end-of-phase push for this session, written by scheduleSessionEndPush and cleared by cancelSessionEndPush or when a new schedule replaces it. Absent means nothing is scheduled. Only ever set from the server, from the caller's own row."
     }
   },
   "required": [

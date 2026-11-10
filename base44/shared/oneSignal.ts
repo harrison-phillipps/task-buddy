@@ -152,3 +152,183 @@ export function isOverTestPushLimit(
   });
   return inWindow.length >= limit;
 }
+
+/* ── Scheduled (future) delivery ───────────────────────────────────────────────
+ *
+ * POST https://api.onesignal.com/notifications accepts `send_after`, an ISO 8601
+ * timestamp. A scheduled create is answered with the message id — nothing has
+ * been delivered at that point, so `recipients` says nothing about whether the
+ * schedule was accepted and must never be what success is judged on here.
+ * Success is: a 2xx status, a non-empty id, and no errors.
+ */
+
+export type ScheduleResult = {
+  ok: boolean;
+  status: number;
+  id: string | null;
+  recipients: number;
+  errors: string[];
+};
+
+export function parseScheduleResponse(status: number, body: unknown): ScheduleResult {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return {
+      ok: false,
+      status,
+      id: null,
+      recipients: 0,
+      errors: ['OneSignal response could not be read'],
+    };
+  }
+  const record = body as Record<string, unknown>;
+  const id = notificationId(record);
+  const rawRecipients = record.recipients;
+  const recipients =
+    typeof rawRecipients === 'number' && Number.isFinite(rawRecipients) ? rawRecipients : 0;
+  const errors = toErrorList(record.errors);
+  // An empty id is the documented "no message was created" shape.
+  const ok = status >= 200 && status < 300 && !!id && errors.length === 0;
+  if (!ok && errors.length === 0) {
+    errors.push(
+      status >= 200 && status < 300
+        ? 'OneSignal did not return a message id'
+        : `OneSignal rejected the request with status ${status}`,
+    );
+  }
+  return { ok, status, id, recipients, errors };
+}
+
+/** Schedules one notification for one player id at an ISO 8601 instant. */
+export async function scheduleOneSignal(
+  playerId: string,
+  payload: OneSignalPayload,
+  sendAfter: string,
+): Promise<ScheduleResult> {
+  const restKey = Deno.env.get('One_Signal_REST_API_Key') || '';
+  const appId = Deno.env.get('One_Signal_APP_ID') || '';
+  if (!restKey || !appId) {
+    console.error('OneSignal credentials not configured');
+    return {
+      ok: false,
+      status: 500,
+      id: null,
+      recipients: 0,
+      errors: ['OneSignal credentials not configured'],
+    };
+  }
+
+  let res: Response;
+  try {
+    res = await fetch('https://api.onesignal.com/notifications', {
+      method: 'POST',
+      headers: {
+        Authorization: `Key ${restKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        app_id: appId,
+        target_channel: 'push',
+        include_subscription_ids: [playerId],
+        headings: { en: payload.title || 'TaskBuddy' },
+        contents: { en: payload.body || '' },
+        send_after: sendAfter,
+      }),
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      status: 0,
+      id: null,
+      recipients: 0,
+      errors: [`OneSignal request failed: ${(error as Error).message}`],
+    };
+  }
+
+  let body: unknown = null;
+  try {
+    body = await res.json();
+  } catch {
+    body = null;
+  }
+
+  const result = parseScheduleResponse(res.status, body);
+  console.log(
+    'OneSignal schedule:',
+    JSON.stringify({
+      status: result.status,
+      id: result.id,
+      recipients: result.recipients,
+      errors: result.errors,
+      send_after: sendAfter,
+    }),
+  );
+  return result;
+}
+
+export type CancelResult = {
+  ok: boolean;
+  status: number;
+  notFound: boolean;
+  errors: string[];
+};
+
+/**
+ * Cancelling something already gone is a success, not a failure: `notFound`
+ * covers both a 404 and OneSignal's "notification not found" wording.
+ */
+export function parseCancelResponse(status: number, body: unknown): CancelResult {
+  const record =
+    body && typeof body === 'object' && !Array.isArray(body)
+      ? (body as Record<string, unknown>)
+      : {};
+  const errors = toErrorList(record.errors);
+  const notFound =
+    status === 404 ||
+    errors.some((error) => /not\s*found|no (such )?notification|could not find/i.test(error));
+  const flagged = record.success;
+  const clean = status >= 200 && status < 300 && flagged !== false;
+  const ok = clean || notFound;
+  if (!ok && errors.length === 0) {
+    errors.push(`OneSignal rejected the cancel with status ${status}`);
+  }
+  return { ok, status, notFound, errors };
+}
+
+/** Cancels a scheduled (or currently outgoing) message by its id. */
+export async function cancelOneSignal(messageId: string): Promise<CancelResult> {
+  const restKey = Deno.env.get('One_Signal_REST_API_Key') || '';
+  const appId = Deno.env.get('One_Signal_APP_ID') || '';
+  if (!restKey || !appId) {
+    console.error('OneSignal credentials not configured');
+    return { ok: false, status: 500, notFound: false, errors: ['OneSignal credentials not configured'] };
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(
+      `https://api.onesignal.com/notifications/${encodeURIComponent(messageId)}?app_id=${encodeURIComponent(appId)}`,
+      { method: 'DELETE', headers: { Authorization: `Key ${restKey}` } },
+    );
+  } catch (error) {
+    return {
+      ok: false,
+      status: 0,
+      notFound: false,
+      errors: [`OneSignal request failed: ${(error as Error).message}`],
+    };
+  }
+
+  let body: unknown = null;
+  try {
+    body = await res.json();
+  } catch {
+    body = null;
+  }
+
+  const result = parseCancelResponse(res.status, body);
+  console.log(
+    'OneSignal cancel:',
+    JSON.stringify({ status: result.status, not_found: result.notFound, ok: result.ok, errors: result.errors }),
+  );
+  return result;
+}

@@ -5,6 +5,7 @@ import { withCompletionStamp } from "@/lib/taskCompletion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { requestNotificationPermission, showNotification, scheduleEncouragementNotification } from "../components/focus/BackgroundTimer";
 import { deriveRemainingSec, saveFocusRecord, loadFocusRecord, clearFocusRecord, restoreFocusSession } from "@/lib/focusTimerStore";
+import { scheduleEndPush, cancelEndPush } from "@/lib/sessionEndPush";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -402,6 +403,30 @@ export default function FocusSession() {
       window.removeEventListener("focus", tick);
     };
   }, [isActive, sessionStarted, targetEndMs, isBreakTime, notificationsEnabled, voiceAnnouncementsEnabled, checkMilestone]);
+
+  // Server-scheduled end-of-phase push, kept in step with the timer's own state:
+  // scheduled while the clock runs (session start, resume, each pomodoro phase,
+  // and after +More Time pushes the deadline out), cancelled the moment it stops
+  // (pause, skip, reset, early finish, completion). Fire-and-forget — a slow or
+  // failing call never delays the countdown.
+  const endPushArmedRef = useRef(false);
+  useEffect(() => {
+    if (!currentUser) return;
+
+    if (sessionStarted && isActive && targetEndMs != null) {
+      const remaining = deriveRemainingSec(targetEndMs, Date.now());
+      if (remaining < 5) return;
+      const kind = isBreakTime ? "break_end" : focusTechnique === "pomodoro" ? "work_end" : "session";
+      endPushArmedRef.current = true;
+      scheduleEndPush(currentUser, kind, remaining);
+      return;
+    }
+
+    if (endPushArmedRef.current) {
+      endPushArmedRef.current = false;
+      cancelEndPush();
+    }
+  }, [currentUser, sessionStarted, isActive, targetEndMs, isBreakTime, focusTechnique]);
 
   // Auto-start session when quickStart param is present and task is loaded
   const quickStartFiredRef = useRef(false);

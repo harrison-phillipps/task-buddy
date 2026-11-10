@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Stripe from 'npm:stripe@14';
 import { asRows, countRows } from '../../shared/entityResults.ts';
+import { cancelOneSignal } from '../../shared/oneSignal.ts';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
 
@@ -204,6 +205,31 @@ Deno.serve(async (req) => {
       await admin.entities.User.update(userId, { deleted_at: new Date().toISOString() });
     } catch (e) {
       console.error(`deleteAccount: failed to set deleted_at for ${userId}:`, e.message);
+    }
+
+    // ── Cancel any scheduled focus end-of-phase push BEFORE the ActiveSession
+    // rows carrying its id are deleted, so no push fires for a deleted account.
+    // Best effort: a failure here is logged and never stops the deletion.
+    try {
+      const sessionRows = asRows(
+        await admin.entities.ActiveSession.filter({ user_id: userId }, '-created_date', 20, 0),
+      );
+      for (const sessionRow of sessionRows) {
+        if (!sessionRow?.end_push_id) continue;
+        try {
+          const cancelled = await cancelOneSignal(sessionRow.end_push_id);
+          console.log(
+            `deleteAccount: end push ${sessionRow.end_push_id} cancel status=${cancelled.status} ok=${cancelled.ok}`,
+          );
+        } catch (e) {
+          console.error(
+            `deleteAccount: could not cancel end push ${sessionRow.end_push_id} for ${userId}:`,
+            e.message,
+          );
+        }
+      }
+    } catch (e) {
+      console.error(`deleteAccount: end push cleanup skipped for ${userId}:`, e.message);
     }
 
     // ── RevenueCat: delete the subscriber record (app_user_id = User.id).
