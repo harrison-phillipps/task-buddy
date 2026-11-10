@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { requestNotificationPermission, showNotification, scheduleEncouragementNotification } from "../components/focus/BackgroundTimer";
 import { deriveRemainingSec, saveFocusRecord, loadFocusRecord, clearFocusRecord, restoreFocusSession } from "@/lib/focusTimerStore";
 import { scheduleEndPush, cancelEndPush } from "@/lib/sessionEndPush";
+import { endPushActionFor } from "@/lib/endPushTransition";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -409,21 +410,28 @@ export default function FocusSession() {
   // and after +More Time pushes the deadline out), cancelled the moment it stops
   // (pause, skip, reset, early finish, completion). Fire-and-forget — a slow or
   // failing call never delays the countdown.
-  const endPushArmedRef = useRef(false);
+  // The decision is keyed on the deadline + phase kind (see endPushTransition),
+  // so one real transition is exactly one call — a re-render, a foreground
+  // round trip or a tick that changes nothing about the schedule makes none.
+  const endPushKeyRef = useRef(null);
   useEffect(() => {
     if (!currentUser) return;
 
-    if (sessionStarted && isActive && targetEndMs != null) {
-      const remaining = deriveRemainingSec(targetEndMs, Date.now());
-      if (remaining < 5) return;
-      const kind = isBreakTime ? "break_end" : focusTechnique === "pomodoro" ? "work_end" : "session";
-      endPushArmedRef.current = true;
-      scheduleEndPush(currentUser, kind, remaining);
-      return;
-    }
+    const remainingSec = targetEndMs == null ? 0 : deriveRemainingSec(targetEndMs, Date.now());
+    const next = endPushActionFor(endPushKeyRef.current, {
+      sessionStarted,
+      isActive,
+      targetEndMs,
+      isBreakTime,
+      focusTechnique,
+      remainingSec,
+    });
+    if (next.action === "none") return;
 
-    if (endPushArmedRef.current) {
-      endPushArmedRef.current = false;
+    endPushKeyRef.current = next.key;
+    if (next.action === "schedule") {
+      scheduleEndPush(currentUser, next.kind, next.remainingSec);
+    } else {
       cancelEndPush();
     }
   }, [currentUser, sessionStarted, isActive, targetEndMs, isBreakTime, focusTechnique]);

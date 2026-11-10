@@ -110,7 +110,7 @@ export default function PushNotificationSetup({ compact = false, onDismiss }) {
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {isEnabled
-                ? 'You\'ll get reminders for Must Do tasks with snooze options'
+                ? 'Reminders will arrive at the time you set.'
                 : 'Get browser reminders for Must Do tasks — even when the app is closed'}
             </p>
           </div>

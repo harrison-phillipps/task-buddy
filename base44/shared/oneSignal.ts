@@ -110,6 +110,10 @@ export async function sendOneSignal(
       include_player_ids: [playerId],
       headings: { en: payload.title || 'TaskBuddy' },
       contents: { en: payload.body || '' },
+      // Never move the app icon badge. "None" is OneSignal's "leave the badge
+      // as it is" option: we send no count, so a reminder can never leave a
+      // number on the icon.
+      ios_badgeType: 'None',
       data,
     }),
   });
@@ -231,6 +235,9 @@ export async function scheduleOneSignal(
         include_subscription_ids: [playerId],
         headings: { en: payload.title || 'TaskBuddy' },
         contents: { en: payload.body || '' },
+        // Same rule as the immediate send: a scheduled end-of-phase push never
+        // changes the badge.
+        ios_badgeType: 'None',
         send_after: sendAfter,
       }),
     });
