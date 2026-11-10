@@ -11,3 +11,16 @@
  * are untouched — flip this to true to restore the feature exactly as it was.
  */
 export const TEAM_FOCUS_ENABLED = false;
+
+/**
+ * FOCUS_NUDGE_BETA_EMAILS — who may see the gentle focus nudge opt-in.
+ *
+ * Beta only, matched case-insensitively against the signed-in user's email. An
+ * account not on this list never sees the one-time prompt or the Settings card,
+ * and the nudge fields are simply never written for them. The sender itself
+ * needs no list: it only ever acts on rows where focus_nudge_enabled is true.
+ */
+export const FOCUS_NUDGE_BETA_EMAILS = [
+  'harrison.phillipps@hotmail.com',
+  'harrison.phillipps@outlook.com',
+];

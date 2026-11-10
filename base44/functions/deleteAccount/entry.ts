@@ -24,6 +24,9 @@ const BY_USER_ID = [
   // Team chat is written by postTeamMessage under the service role and carries
   // its author in user_id; without this the author's messages would survive.
   'TeamMessage',
+  // Focus nudge log is written by sendFocusNudges under the service role, so
+  // created_by_id points at the service account and user_id is the only pointer.
+  'NudgeLog',
 ];
 
 // Entities that carry the owner in a writable field with a different name.

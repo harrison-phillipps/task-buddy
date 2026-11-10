@@ -1,0 +1,45 @@
+{
+  "name": "Gentle Focus Nudge \u2014 15 Minute Sweep",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "gentle_focus_nudge_sweep",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "send_focus_nudges": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendFocusNudges",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Send focus nudges",
+            "description": "One nudge per user per local day"
+          }
+        }
+      }
+    ]
+  },
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 15,
+      "interval_unit": "minutes",
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "description": "Every 15 minutes, sends the opt-in gentle focus nudge to users whose chosen local time has arrived, and closes out nudges that went unanswered so the nudge can pause itself."
+}

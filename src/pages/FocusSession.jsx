@@ -7,6 +7,7 @@ import { requestNotificationPermission, showNotification, scheduleEncouragementN
 import { deriveRemainingSec, saveFocusRecord, loadFocusRecord, clearFocusRecord, restoreFocusSession } from "@/lib/focusTimerStore";
 import { scheduleEndPush, cancelEndPush } from "@/lib/sessionEndPush";
 import { endPushActionFor } from "@/lib/endPushTransition";
+import { parseFocusParams, pickQuickStartTask } from "@/lib/focusQuickStart";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -106,14 +107,20 @@ const getEncouragementMessages = (userProgress) => {
 export default function FocusSession() {
   const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
-  const preselectedTaskId = urlParams.get('taskId');
-  const preselectedTaskTitle = urlParams.get('taskTitle') ? decodeURIComponent(urlParams.get('taskTitle')) : null;
+  const focusParams = parseFocusParams(window.location.search);
+  const preselectedTaskId = focusParams.taskId;
+  const preselectedTaskTitle = focusParams.taskTitle;
 
-  const quickStart = urlParams.get('quickStart') === '1' || urlParams.get('autostart') === 'true';
+  const quickStart = focusParams.quickStart;
+  // ?minutes=N sets the first work phase's length — the focus nudge card asks for
+  // ten. Pomodoro keeps its own interval, which drives the whole cycle.
+  const preselectedMinutes = focusParams.minutes;
   const preselectedMood = urlParams.get('mood') || null;
   const preselectedTechnique = urlParams.get('technique') || null;
 
   const [selectedTaskId, setSelectedTaskId] = useState(preselectedTaskId || null);
+  // Set when a quick-start link asked for a session but there is nothing open to work on.
+  const [quickStartNoTask, setQuickStartNoTask] = useState(false);
   const [currentSubtaskIndex, setCurrentSubtaskIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isActive, setIsActive] = useState(false);
@@ -192,7 +199,7 @@ export default function FocusSession() {
     });
   }, []);
 
-  const { data: tasks = [], refetch: refetchTasks } = useQuery({
+  const { data: tasks = [], isLoading: tasksLoading, refetch: refetchTasks } = useQuery({
     queryKey: ['focusSessionTasks', currentUser?.id],
     queryFn: async () => {
       const user = currentUser || await base44.auth.me();
@@ -787,7 +794,7 @@ export default function FocusSession() {
     const firstSubtask = subtasks[firstIdx];
     const initialTime = focusTechnique === "pomodoro"
       ? workInterval * 60
-      : (firstSubtask?.estimated_minutes || 10) * 60;
+      : (preselectedMinutes || firstSubtask?.estimated_minutes || 10) * 60;
 
     const startMs = Date.now();
     const initialEnd = startMs + initialTime * 1000;
@@ -882,6 +889,16 @@ export default function FocusSession() {
 
   // Register startSession in ref so the quick-start effect can call it after definition
   startSessionRef.current = startSession;
+
+  // A quick-start link that names no task (the focus nudge card) picks one itself:
+  // the most important open task, then the nearest due date. With nothing open the
+  // normal setup screen stays, and says why.
+  useEffect(() => {
+    if (!quickStart || preselectedTaskId || selectedTaskId || sessionStarted || tasksLoading) return;
+    const picked = pickQuickStartTask(tasks);
+    if (picked) setSelectedTaskId(picked.id);
+    else setQuickStartNoTask(true);
+  }, [quickStart, preselectedTaskId, selectedTaskId, sessionStarted, tasksLoading, tasks]);
 
   // Auto-start when quickStart URL param is set
   useEffect(() => {
@@ -1423,6 +1440,11 @@ export default function FocusSession() {
                   <CardTitle className="dark:text-gray-100">Start Your Session</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
+              {quickStartNoTask && (
+                <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
+                  There's nothing open to work on yet. Add a task and a 10-minute session can start straight away.
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>Choose a task</Label>
                 <Select value={selectedTaskId || ""} onValueChange={setSelectedTaskId}>

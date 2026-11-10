@@ -1,0 +1,58 @@
+{
+  "name": "NudgeLog",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User the nudge was sent to. Written only by sendFocusNudges under the service role; the read rule is the only rule that uses it."
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the nudge was actually delivered. Set only after a confirmed OneSignal send."
+    },
+    "local_date": {
+      "type": "string",
+      "description": "The user's own local calendar day the nudge was sent on (YYYY-MM-DD), so the once-per-day rule follows their calendar rather than the server's."
+    },
+    "session_started": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when a focus session started within IGNORE_WINDOW_MINUTES (3 hours) of this nudge. Evaluated once, on the first sweep after the window closes; see evaluated_at."
+    },
+    "started_within_minutes": {
+      "type": "number",
+      "description": "Minutes between the nudge and the first session activity after it, when one happened inside the window. Absent when the nudge was ignored or not yet evaluated."
+    },
+    "evaluated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the 3-hour ignored-or-not decision was recorded. Absent means the nudge is still inside its window and must not be judged yet. This is what keeps one nudge from being counted as ignored on every later sweep."
+    }
+  },
+  "required": [
+    "user_id",
+    "sent_at",
+    "local_date"
+  ],
+  "rls": {
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

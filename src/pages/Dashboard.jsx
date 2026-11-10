@@ -18,6 +18,9 @@ import EnergyTaskSuggester from "../components/dashboard/EnergyTaskSuggester";
 import { hasFeatureAccess } from "../components/subscription/FeatureGate";
 import QuickStartFocus from "../components/dashboard/QuickStartFocus";
 import SuggestedTaskChips from "../components/dashboard/SuggestedTaskChips";
+import FocusNudgeCard from "../components/dashboard/FocusNudgeCard";
+import FocusNudgeOptInSheet from "../components/notifications/FocusNudgeOptInSheet";
+import { shouldOfferNudgePrompt } from "@/lib/focusNudgeClient";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -51,6 +54,23 @@ export default function Dashboard() {
   const { data: sessions = [] } = useQuery({
     queryKey: ['sessions', currentUser?.email],
     queryFn: () => base44.entities.FocusSession.filter({ created_by: currentUser.email }, '-created_date', 10),
+    enabled: !!currentUser,
+    staleTime: 60_000,
+  });
+
+  // What the gentle focus nudge needs here: the person's preference row, the last
+  // few nudges, and whether a session is in flight. NudgeLog is readable by its
+  // owner only, so this is the user's own history.
+  const { data: nudgeState } = useQuery({
+    queryKey: ['focusNudgeState', currentUser?.id],
+    queryFn: async () => {
+      const [prefsRows, logs, activeSessions] = await Promise.all([
+        base44.entities.NotificationPreferences.filter({ user_id: currentUser.id }),
+        base44.entities.NudgeLog.filter({ user_id: currentUser.id }, '-sent_at', 5),
+        base44.entities.ActiveSession.filter({ user_id: currentUser.id }),
+      ]);
+      return { prefs: prefsRows[0] || null, logs, activeSessions };
+    },
     enabled: !!currentUser,
     staleTime: 60_000,
   });
@@ -102,6 +122,37 @@ export default function Dashboard() {
   };
 
   const currentLevel = userProgress ? Math.floor(userProgress.total_points / 200) + 1 : 1;
+
+  // ── Gentle focus nudge: the one-time opt-in, and the way back into a session ──
+  const [showNudgePrompt, setShowNudgePrompt] = useState(false);
+
+  const localDateOf = (value) => {
+    if (!value) return null;
+    const raw = String(value);
+    const parsed = new Date(/Z|[+-]\d{2}:?\d{2}$/.test(raw) ? raw : `${raw}Z`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toLocaleDateString('en-CA');
+  };
+  const todayLocal = new Date().toLocaleDateString('en-CA');
+  const nudgedToday = (nudgeState?.logs || []).some((log) => log.local_date === todayLocal);
+  const sessionActivityToday =
+    (sessions || []).some((session) => localDateOf(session.created_date) === todayLocal) ||
+    (nudgeState?.activeSessions || []).some((row) => localDateOf(row.last_updated_at) === todayLocal);
+  const showNudgeCard = nudgedToday && !sessionActivityToday;
+  const nudgePaused = nudgeState?.prefs?.focus_nudge_paused === true;
+
+  useEffect(() => {
+    if (!currentUser || !nudgeState) return;
+    if (
+      shouldOfferNudgePrompt({
+        user: currentUser,
+        prefs: nudgeState.prefs,
+        hasCompletedTask: tasks.some((task) => task.status === 'completed'),
+        hasCompletedSession: (sessions || []).length > 0,
+      })
+    ) {
+      setShowNudgePrompt(true);
+    }
+  }, [currentUser, nudgeState, tasks, sessions]);
 
   if (!currentUser) {
     return (
@@ -193,6 +244,16 @@ export default function Dashboard() {
           )}
         </motion.div>
 
+        {/* ── 3b. FOCUS NUDGE — only on a day a nudge went out ── */}
+        {(showNudgeCard || nudgePaused) && (
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+            <FocusNudgeCard
+              paused={nudgePaused}
+              onStart={() => navigate(`${createPageUrl("FocusSession")}?minutes=10&quickStart=1`)}
+            />
+          </motion.div>
+        )}
+
         {/* ── 4. WHAT SHOULD I WORK ON (energy matcher) ──────── */}
         {tasks.filter(t => t.status !== 'completed').length > 0 && (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
@@ -226,6 +287,14 @@ export default function Dashboard() {
         )}
 
       </div>
+
+      <FocusNudgeOptInSheet
+        open={showNudgePrompt}
+        onOpenChange={setShowNudgePrompt}
+        user={currentUser}
+        prefs={nudgeState?.prefs || null}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ['focusNudgeState'] })}
+      />
     </div>
 
     </PullToRefresh>

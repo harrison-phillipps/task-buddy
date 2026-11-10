@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import PushNotificationSetup from "@/components/notifications/PushNotificationSetup";
 import FocusNotificationSettings from "@/components/focus/FocusNotificationSettings";
 import TimezoneSetting from "@/components/notifications/TimezoneSetting";
+import FocusNudgeSetting from "@/components/notifications/FocusNudgeSetting";
+import { isFocusNudgeBeta } from "@/lib/focusNudgeClient";
 
 export default function NotificationSettings() {
   const queryClient = useQueryClient();
@@ -123,6 +125,21 @@ export default function NotificationSettings() {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* Gentle focus nudge — beta accounts only */}
+        {isFocusNudgeBeta(currentUser?.email) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <FocusNudgeSetting
+              user={currentUser}
+              prefs={preferences}
+              onSaved={() => queryClient.invalidateQueries({ queryKey: ['notificationPreferences'] })}
+            />
+          </motion.div>
+        )}
 
         {/* Task Reminders */}
         <motion.div

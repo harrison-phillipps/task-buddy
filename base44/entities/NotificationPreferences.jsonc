@@ -8,7 +8,7 @@
     },
     "timezone": {
       "type": "string",
-      "description": "IANA timezone for quiet-hours evaluation, e.g. \"Australia/Adelaide\". Filled silently from Intl.DateTimeFormat().resolvedOptions().timeZone on app load when empty. Absent or invalid falls back to Australia/Adelaide (see base44/shared/quietHours.ts)."
+      "description": "IANA timezone for quiet-hours and focus-nudge evaluation, e.g. \"Australia/Adelaide\". Filled silently from Intl.DateTimeFormat().resolvedOptions().timeZone on app load when empty. Absent or invalid falls back to Australia/Adelaide for quiet hours (see base44/shared/quietHours.ts); the focus nudge skips a user with no usable timezone instead of guessing."
     },
     "task_reminders": {
       "type": "boolean",
@@ -76,6 +76,34 @@
     "quiet_hours_end": {
       "type": "string",
       "description": "Quiet hours end time (HH:mm)"
+    },
+    "focus_nudge_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Opted in to the gentle focus nudge. False (or absent) means this user is never nudged. Only ever set true by the user's own opt-in, and set back to false when they switch it off in Settings."
+    },
+    "focus_nudge_time": {
+      "type": "string",
+      "description": "The local wall-clock time the user chose for their nudge, \"HH:mm\", read in this row's own timezone. The sweep sends inside [this time, +15 minutes). Never inferred \u2014 only written when the user picks a time."
+    },
+    "focus_nudge_paused": {
+      "type": "boolean",
+      "default": false,
+      "description": "Set by sendFocusNudges after three consecutive nudges went unanswered. A paused user is skipped until they switch the nudge back on in Settings, which clears this."
+    },
+    "focus_nudge_ignored_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Consecutive nudges with no focus session inside their 3-hour window. Any session start resets it to 0; at 3 the nudge pauses itself."
+    },
+    "focus_nudge_last_sent_local_date": {
+      "type": "string",
+      "description": "The user's own local date (YYYY-MM-DD) the last nudge was delivered on. This is what enforces at most one nudge per day, in their calendar rather than the server's."
+    },
+    "focus_nudge_last_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the last nudge was actually delivered. Written only after OneSignal confirmed the send, so a failed delivery never consumes the day."
     }
   },
   "required": [
