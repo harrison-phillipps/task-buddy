@@ -155,12 +155,14 @@ Deno.serve(async (req) => {
       if (canPush) {
         try {
           const pushPayload = {
-            // Lock-screen copy stays generic: the task title never appears here.
-            title: `A task is due ${timeLabel}`,
-            body: `${task.estimated_minutes ? `~${task.estimated_minutes} min. ` : ''}Open to view, or snooze.`,
+            // Lock-screen copy stays generic: no task title, no estimate, and no
+            // action this notification cannot take — the native payload carries
+            // no snooze button, so the copy never offers one. The estimate and
+            // the task title live in the in-app row written above.
+            title: `A task is due at ${dueTime}`,
+            body: 'Open TaskBuddy to view.',
             taskId: task.id,
             taskTitle: task.title,
-            estimatedMinutes: task.estimated_minutes || null,
             dueDate: task.due_date,
             dueTime: dueTime,
           };
