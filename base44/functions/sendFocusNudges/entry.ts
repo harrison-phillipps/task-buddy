@@ -13,6 +13,14 @@ import {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * Server-side allowlist for the beta. A preference row is only acted on when its
+ * owner's email is listed here, matched case-insensitively — so an enabled row
+ * belonging to anyone else can never receive a nudge, whatever the client allows.
+ * Add an address here (and to FOCUS_NUDGE_BETA_EMAILS) to widen the beta.
+ */
+const NUDGE_ALLOWED_EMAILS = new Set(['harrison.phillipps@hotmail.com']);
+
 const parseDbDate = (value: unknown): Date | null => {
   if (typeof value !== 'string' || !value) return null;
   const parsed = new Date(value.includes('Z') || value.includes('+') ? value : `${value}Z`);
@@ -53,15 +61,19 @@ Deno.serve(async (req) => {
     const now = new Date();
 
     const prefsRows = await client.entities.NotificationPreferences.list();
-    const candidates = prefsRows.filter((row: any) => row?.focus_nudge_enabled === true);
-    console.log(
-      `Focus nudge sweep: ${candidates.length} opted in of ${prefsRows.length} preference rows (dry_run=${dryRun})`,
-    );
 
     const users = await client.entities.User.list();
     const userById: Record<string, any> = Object.fromEntries(users.map((u: any) => [u.id, u]));
     const userIdByEmail: Record<string, string> = Object.fromEntries(
       users.filter((u: any) => u.email).map((u: any) => [u.email, u.id]),
+    );
+
+    const enabledRows = prefsRows.filter((row: any) => row?.focus_nudge_enabled === true);
+    const candidates = enabledRows.filter((row: any) =>
+      NUDGE_ALLOWED_EMAILS.has(String(userById[row.user_id]?.email || '').toLowerCase()),
+    );
+    console.log(
+      `Focus nudge sweep: ${candidates.length} eligible of ${enabledRows.length} opted in, ${prefsRows.length} preference rows (dry_run=${dryRun})`,
     );
 
     // One "latest session activity" instant per user, from two sources:

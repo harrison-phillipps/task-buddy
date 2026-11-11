@@ -17,10 +17,12 @@ export const TEAM_FOCUS_ENABLED = false;
  *
  * Beta only, matched case-insensitively against the signed-in user's email. An
  * account not on this list never sees the one-time prompt or the Settings card,
- * and the nudge fields are simply never written for them. The sender itself
- * needs no list: it only ever acts on rows where focus_nudge_enabled is true.
+ * and the nudge fields are simply never written for them.
+ *
+ * Keep this in step with NUDGE_ALLOWED_EMAILS in the sendFocusNudges function:
+ * that server-side list is what actually decides who can receive a nudge, this
+ * one only decides who is offered the switch.
  */
 export const FOCUS_NUDGE_BETA_EMAILS = [
   'harrison.phillipps@hotmail.com',
-  'harrison.phillipps@outlook.com',
 ];
