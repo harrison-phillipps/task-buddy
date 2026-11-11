@@ -28,6 +28,46 @@ export function deriveRemainingSec(targetEndMs, nowMs = Date.now()) {
   return Math.max(0, Math.ceil((targetEndMs - nowMs) / 1000));
 }
 
+/** Hard ceiling: no single session may record more than this. */
+export const MAX_SESSION_MINUTES = 240;
+
+/**
+ * Minutes to record for a finished session.
+ *
+ * Wall clock since the session began, minus every pause and the time spent
+ * away while paused, capped at what was planned plus the time the user added
+ * with "More Time", and never above MAX_SESSION_MINUTES. A session restored
+ * after its deadline had already passed records the planned length instead of
+ * the elapsed time, so an app left closed for a day cannot inflate it.
+ */
+export function computeSessionMinutes({
+  nowMs,
+  startMs,
+  pausedTotalMs = 0,
+  plannedMinutes = 0,
+  extensionMinutes = 0,
+  expired = false,
+} = {}) {
+  const planned = isNum(plannedMinutes) && plannedMinutes > 0 ? plannedMinutes : 0;
+
+  // The deadline passed while the app was away: the phase that was running is
+  // all that was actually planned, never the hours that followed it.
+  if (expired) return Math.max(0, Math.min(Math.round(planned), MAX_SESSION_MINUTES));
+
+  if (!isNum(nowMs)) return 0;
+
+  const start = isNum(startMs) ? startMs : nowMs;
+  const paused = isNum(pausedTotalMs) ? Math.max(0, pausedTotalMs) : 0;
+  const extension = isNum(extensionMinutes) ? Math.max(0, extensionMinutes) : 0;
+  const cap =
+    planned > 0
+      ? Math.min(planned + extension, MAX_SESSION_MINUTES)
+      : MAX_SESSION_MINUTES;
+
+  const elapsedMinutes = Math.round((nowMs - start - paused) / 60000);
+  return Math.max(0, Math.min(elapsedMinutes, cap));
+}
+
 function getStorage(storage) {
   if (storage !== undefined) return storage;
   try {
@@ -70,6 +110,9 @@ export function normalizeRecord(raw) {
         ? raw.pomodorosCompleted
         : 0,
     sessionStartMs: raw.sessionStartMs,
+    // Total time spent paused. Absent on older records, which mean zero.
+    pausedTotalMs:
+      isNum(raw.pausedTotalMs) && raw.pausedTotalMs >= 0 ? raw.pausedTotalMs : 0,
   };
 
   // A running record needs a deadline; a paused one needs a frozen remainder.

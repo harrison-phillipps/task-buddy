@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { withCompletionStamp } from "@/lib/taskCompletion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { requestNotificationPermission, showNotification, scheduleEncouragementNotification } from "../components/focus/BackgroundTimer";
-import { deriveRemainingSec, saveFocusRecord, loadFocusRecord, clearFocusRecord, restoreFocusSession } from "@/lib/focusTimerStore";
+import { deriveRemainingSec, saveFocusRecord, loadFocusRecord, clearFocusRecord, restoreFocusSession, computeSessionMinutes } from "@/lib/focusTimerStore";
 import { scheduleEndPush, cancelEndPush } from "@/lib/sessionEndPush";
 import { endPushActionFor } from "@/lib/endPushTransition";
 import { parseFocusParams, pickQuickStartTask } from "@/lib/focusQuickStart";
@@ -167,6 +167,13 @@ export default function FocusSession() {
   const [showFocusBot, setShowFocusBot] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [pauseCount, setPauseCount] = useState(0);
+  // Bounded-duration bookkeeping: total time spent paused (persisted, so a
+  // restore can subtract it), when the current pause began, the minutes added
+  // with "More Time", and whether this session came back expired.
+  const pausedTotalMsRef = useRef(0);
+  const pausedAtRef = useRef(null);
+  const extensionMinutesRef = useRef(0);
+  const expiredRestoreRef = useRef(false);
   const [dynamicBreakSuggestion, setDynamicBreakSuggestion] = useState(null);
   const [includeMindfulness, setIncludeMindfulness] = useState(false);
   const [mindfulnessType, setMindfulnessType] = useState("breathing");
@@ -296,6 +303,7 @@ export default function FocusSession() {
       breakInterval: overrides.breakInterval ?? breakInterval,
       pomodorosCompleted: overrides.pomodorosCompleted ?? pomodorosCompleted,
       sessionStartMs: overrides.sessionStartMs ?? sessionStartTime ?? Date.now(),
+      pausedTotalMs: overrides.pausedTotalMs ?? pausedTotalMsRef.current,
     });
   };
 
@@ -691,6 +699,7 @@ export default function FocusSession() {
 
   const handleNeedMoreTime = () => {
     const additionalTime = focusTechnique === "pomodoro" ? 5 * 60 : (currentSubtask?.estimated_minutes || 5) * 60 * 0.5;
+    extensionMinutesRef.current += additionalTime / 60;
     // Push the deadline out instead of adding to a counter.
     const end = (targetEndRef.current ?? Date.now()) + additionalTime * 1000;
     targetEndRef.current = end;
@@ -798,6 +807,10 @@ export default function FocusSession() {
 
     const startMs = Date.now();
     const initialEnd = startMs + initialTime * 1000;
+    pausedTotalMsRef.current = 0;
+    pausedAtRef.current = null;
+    extensionMinutesRef.current = 0;
+    expiredRestoreRef.current = false;
     setCurrentSubtaskIndex(firstIdx);
     targetEndRef.current = initialEnd;
     phaseStartSecRef.current = initialTime;
@@ -957,6 +970,10 @@ export default function FocusSession() {
     setPomodorosCompleted(record.pomodorosCompleted || 0);
     setIsBreakTime(record.phase === "break");
     setSessionStartTime(record.sessionStartMs);
+    pausedTotalMsRef.current = record.pausedTotalMs || 0;
+    pausedAtRef.current = null;
+    extensionMinutesRef.current = 0;
+    expiredRestoreRef.current = restored.status === "expired";
     setCurrentSubtaskIndex(firstIncomplete === -1 ? 0 : firstIncomplete);
     setIsController(true);
     startSWKeepAlive();
@@ -965,7 +982,13 @@ export default function FocusSession() {
     phaseStartSecRef.current = restored.remainingSec;
 
     if (restored.status === "paused") {
-      // Left paused: restore it frozen, exactly where it stopped.
+      // Left paused: restore it frozen, exactly where it stopped. The pause
+      // began when the deadline was frozen at the remaining seconds, so that
+      // gap is subtracted from the duration when the user resumes.
+      pausedAtRef.current =
+        record.targetEndMs != null && record.remainingAtPauseSec != null
+          ? Math.min(Date.now(), record.targetEndMs - record.remainingAtPauseSec * 1000)
+          : Date.now();
       targetEndRef.current = record.targetEndMs ?? null;
       setTargetEndMs(record.targetEndMs ?? null);
       setTimeLeft(restored.remainingSec);
@@ -983,9 +1006,29 @@ export default function FocusSession() {
     setIsActive(true);
   }, [sessionStarted, currentUser, tasks]);
 
+  // Fold an open pause into the accumulator, so its time is never counted.
+  const settlePausedTime = () => {
+    if (pausedAtRef.current != null) {
+      pausedTotalMsRef.current += Math.max(0, Date.now() - pausedAtRef.current);
+      pausedAtRef.current = null;
+    }
+    return pausedTotalMsRef.current;
+  };
+
+  // What this session was planned to take: its subtask estimates, else the
+  // plain-timer length. This is the cap on the recorded duration.
+  const plannedSessionMinutes = () => {
+    const subtaskTotal = (selectedTask?.subtasks || []).reduce(
+      (sum, st) => sum + (st.estimated_minutes || 0),
+      0
+    );
+    return subtaskTotal > 0 ? subtaskTotal : preselectedMinutes || workInterval || 10;
+  };
+
   const togglePause = () => {
     if (isActive) {
       setPauseCount(prev => prev + 1);
+      pausedAtRef.current = Date.now();
       // Freeze the remainder; the deadline stops mattering while paused.
       const remaining = deriveRemainingSec(targetEndRef.current, Date.now());
       setTimeLeft(remaining);
@@ -999,6 +1042,7 @@ export default function FocusSession() {
   // Resume: re-anchor the deadline from the frozen remainder.
   const resumeTimer = () => {
     const remaining = timeLeft > 0 ? timeLeft : deriveRemainingSec(targetEndRef.current, Date.now());
+    settlePausedTime();
     const end = Date.now() + remaining * 1000;
     targetEndRef.current = end;
     phaseStartSecRef.current = remaining;
@@ -1080,8 +1124,20 @@ export default function FocusSession() {
     // Finished — nothing is left to resume.
     clearFocusRecord();
     
-    const totalDuration = sessionStartTime 
-      ? Math.round((Date.now() - sessionStartTime) / 60000) 
+    // Bounded duration: wall clock since the session began, minus every pause,
+    // capped at what was planned plus any "More Time" added, and never above
+    // the hard ceiling. An expired restore records the planned length — the
+    // hours that followed the deadline must never inflate it.
+    const pausedTotalMs = settlePausedTime();
+    const totalDuration = sessionStartTime
+      ? computeSessionMinutes({
+          nowMs: Date.now(),
+          startMs: sessionStartTime,
+          pausedTotalMs,
+          plannedMinutes: plannedSessionMinutes(),
+          extensionMinutes: extensionMinutesRef.current,
+          expired: expiredRestoreRef.current,
+        })
       : selectedTask.subtasks?.reduce((sum, st) => sum + (st.estimated_minutes || 0), 0) || 0;
     
     const currentTime = new Date().getHours();
@@ -1146,6 +1202,10 @@ export default function FocusSession() {
         data: withCompletionStamp({ status: 'completed' })
       });
     }
+
+    // The session is written — take the cross-device timer row down the same
+    // way the reset path does, so nothing is left flagged active after a finish.
+    await clearSyncSession();
 
     try {
       const user = await base44.auth.me();
@@ -1251,6 +1311,8 @@ export default function FocusSession() {
         mindfulness_used: includeMindfulness,
         mindfulness_type: mindfulnessType,
         time_of_day: timeOfDay
+      }).catch((journeyError) => {
+        console.warn("FocusJourney create failed:", journeyError?.message || journeyError);
       });
 
       queryClient.invalidateQueries({ queryKey: ['focusJourney'] });
