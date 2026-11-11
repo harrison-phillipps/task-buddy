@@ -1,0 +1,232 @@
+{
+  "captured_at": "2026-11-11T01:39:44.980Z",
+  "app": "TaskBuddy",
+  "reason": "Pre-correction snapshot: focus duration 1397 -> planned length, UserProgress totals/achievements/level, duplicate UserProgress deletion, ActiveSession deactivation.",
+  "owner_user_id": "6a61816f1e6ed9f4008cdc78",
+  "records": {
+    "FocusSession:6af399666b58904231f74cfb": {
+      "user_id": null,
+      "task_id": "6aebd6ece4dcec67fb670061",
+      "task_title": "Read PBL book",
+      "duration_minutes": 1397,
+      "completed": true,
+      "notes": "",
+      "mood_before": null,
+      "mood_after": "tired",
+      "focus_technique": "standard",
+      "work_interval": 25,
+      "break_interval": 5,
+      "ambient_sound": "none",
+      "pomodoros_completed": 0,
+      "id": "6af399666b58904231f74cfb",
+      "created_date": "2026-11-10T22:23:34.030000",
+      "updated_date": "2026-11-10T22:23:34.030000",
+      "created_by_id": "6a61816f1e6ed9f4008cdc78",
+      "is_sample": false
+    },
+    "UserProgress:6a6182ca8f749263f04abe11 (primary)": {
+      "user_id": "6a61816f1e6ed9f4008cdc78",
+      "total_points": 1215,
+      "level": 3,
+      "achievements_unlocked": [
+        "first_task",
+        "first_focus",
+        "hour_warrior",
+        "time_champion",
+        "productivity_legend"
+      ],
+      "tasks_completed": 7,
+      "focus_sessions_completed": 7,
+      "total_focus_minutes": 1448,
+      "brain_dumps_created": 3,
+      "current_streak": 1,
+      "longest_streak": 1,
+      "last_activity_date": "2026-11-10T22:23:35.131Z",
+      "id": "6a6182ca8f749263f04abe11",
+      "created_date": "2026-07-23T02:56:10.622000",
+      "updated_date": "2026-11-10T22:23:35.501000",
+      "created_by_id": "6a61816f1e6ed9f4008cdc78",
+      "is_sample": false
+    },
+    "UserProgress:6a6182c979cb6505a640e293 (duplicate, to be deleted)": {
+      "user_id": "6a61816f1e6ed9f4008cdc78",
+      "level": 1,
+      "tasks_completed": 0,
+      "total_points": 0,
+      "total_focus_minutes": 0,
+      "last_activity_date": null,
+      "focus_sessions_completed": 0,
+      "brain_dumps_created": 0,
+      "current_streak": 0,
+      "longest_streak": 0,
+      "achievements_unlocked": [],
+      "id": "6a6182c979cb6505a640e293",
+      "created_date": "2026-07-23T02:56:09.108000",
+      "updated_date": "2026-07-23T02:56:09.108000",
+      "created_by_id": "6a61816f1e6ed9f4008cdc78",
+      "is_sample": false
+    },
+    "ActiveSession:6a64b40a6141ca262bf887c1": {
+      "user_id": "6a61816f1e6ed9f4008cdc78",
+      "task_id": "6af2a7a9b185189c9bb2607f",
+      "task_title": "Fix task buddy notifications",
+      "is_active": true,
+      "is_break_time": false,
+      "time_left": 281,
+      "current_subtask_index": 0,
+      "focus_technique": "pomodoro",
+      "work_interval": 5,
+      "break_interval": 5,
+      "pomodoros_completed": 0,
+      "last_updated_at": "2026-11-10T22:30:11.640Z",
+      "device_id": "device_1794349357861_1pksekejbvwj",
+      "end_push_id": "737b6674-9631-4dcb-83d7-c626b9ec0f50",
+      "id": "6a64b40a6141ca262bf887c1",
+      "created_date": "2026-07-25T13:03:06.478000",
+      "updated_date": "2026-11-10T22:30:11.842000",
+      "created_by_id": "6a61816f1e6ed9f4008cdc78",
+      "is_sample": false
+    }
+  },
+  "context": {
+    "focus_sessions_used_for_sum": [
+      {
+        "id": "6af399666b58904231f74cfb",
+        "task_id": "6aebd6ece4dcec67fb670061",
+        "task_title": "Read PBL book",
+        "duration_minutes": 1397,
+        "created_date": "2026-11-10T22:23:34.030000",
+        "created_by_id": "6a61816f1e6ed9f4008cdc78",
+        "user_id": null
+      },
+      {
+        "id": "6aeeafd98c311a7ae8f79562",
+        "task_id": "6aeac4936a6ce7a47460177c",
+        "task_title": "Complete TaskBuddy audit",
+        "duration_minutes": 49,
+        "created_date": "2026-11-07T04:58:01.839000",
+        "created_by_id": "6a61816f1e6ed9f4008cdc78",
+        "user_id": null
+      },
+      {
+        "id": "6aebf6d00474077836403417",
+        "task_id": "6aeac568df010bfa7683aeeb",
+        "task_title": "Mow lawn",
+        "duration_minutes": 1,
+        "created_date": "2026-11-05T03:24:00.581000",
+        "created_by_id": "6a61816f1e6ed9f4008cdc78",
+        "user_id": null
+      },
+      {
+        "id": "6ab113280503fdebf8c3bb39",
+        "task_id": "6a7db1a6ad7887341ad60411",
+        "task_title": "Do washing ",
+        "duration_minutes": 1,
+        "created_date": "2026-09-21T11:21:12.101000",
+        "created_by_id": "6a61816f1e6ed9f4008cdc78",
+        "user_id": "6a61816f1e6ed9f4008cdc78"
+      },
+      {
+        "id": "6a7809030ee0d4a6ac78bd85",
+        "task_id": "6a6af0cee73bc30f51b9f765",
+        "task_title": "Clean the kitchen",
+        "duration_minutes": 0,
+        "created_date": "2026-08-09T04:58:43.320000",
+        "created_by_id": "6a61816f1e6ed9f4008cdc78",
+        "user_id": "6a61816f1e6ed9f4008cdc78"
+      },
+      {
+        "id": "6a69498e585c87595a608612",
+        "task_id": "69b139f63ce01e1aa21e36a8",
+        "task_title": "Do laundry",
+        "duration_minutes": 0,
+        "created_date": "2026-07-29T00:30:06.138000",
+        "created_by_id": "6a61816f1e6ed9f4008cdc78",
+        "user_id": "6a61816f1e6ed9f4008cdc78"
+      },
+      {
+        "id": "6a64b427c45f790a86535057",
+        "task_id": "6a64b3e82b80d95b0f4cb62b",
+        "task_title": "Wash the car",
+        "duration_minutes": 0,
+        "created_date": "2026-07-25T13:03:35.533000",
+        "created_by_id": "6a61816f1e6ed9f4008cdc78",
+        "user_id": "6a61816f1e6ed9f4008cdc78"
+      },
+      {
+        "id": "6a608e86082858a4f78af0c2",
+        "task_id": "69b139f6eba5651fe1fdc298",
+        "task_title": "Sort old clothes",
+        "duration_minutes": 1,
+        "created_date": "2026-07-22T09:33:58.764000",
+        "created_by_id": "692cd428acb61bd5d429cddb",
+        "user_id": "6a61816f1e6ed9f4008cdc78"
+      },
+      {
+        "id": "6a261d6b1a11119e6211fe1b",
+        "task_id": "6a15680b2392252d200aef48",
+        "task_title": "Clean kitchen",
+        "duration_minutes": 1,
+        "created_date": "2026-06-08T01:39:55.383000",
+        "created_by_id": "692cd428acb61bd5d429cddb",
+        "user_id": "6a61816f1e6ed9f4008cdc78"
+      },
+      {
+        "id": "6a1e64a84c617452eb25788d",
+        "task_id": "6a12f6ef7322c42a0518489d",
+        "task_title": "Do the Dishes",
+        "duration_minutes": 2,
+        "created_date": "2026-06-02T05:05:44.554000",
+        "created_by_id": "692cd428acb61bd5d429cddb",
+        "user_id": "6a61816f1e6ed9f4008cdc78"
+      },
+      {
+        "id": "6a1438b666f29e75de9616fb",
+        "task_id": "693f6494ca12bbbb6d95e7c7",
+        "task_title": "Clean Kitchen",
+        "duration_minutes": 1,
+        "created_date": "2026-05-25T11:55:34.761000",
+        "created_by_id": "692cd428acb61bd5d429cddb",
+        "user_id": "6a61816f1e6ed9f4008cdc78"
+      },
+      {
+        "id": "6a12e4382630bb9dc56b6d6d",
+        "task_id": "696c80238978185308c5a6dd",
+        "task_title": "Finish Organising Shed",
+        "duration_minutes": 1,
+        "created_date": "2026-05-24T11:42:48.844000",
+        "created_by_id": "692cd428acb61bd5d429cddb",
+        "user_id": "6a61816f1e6ed9f4008cdc78"
+      }
+    ],
+    "sum_as_stored": 1454,
+    "task_behind_bad_session": {
+      "id": "6aebd6ece4dcec67fb670061",
+      "title": "Read PBL book",
+      "estimated_minutes": 13,
+      "subtasks": [
+        {
+          "title": "Locate the PBL book physically and place it on the surface where you'll read",
+          "estimated_minutes": 2
+        },
+        {
+          "title": "Open to the page marked with a bookmark, or to page 1 if unmarked",
+          "estimated_minutes": 2
+        },
+        {
+          "title": "Read the next 3 paragraphs only, stopping at the end of the third paragraph",
+          "estimated_minutes": 5
+        },
+        {
+          "title": "Place a bookmark on the page you stopped at and close the book",
+          "estimated_minutes": 2
+        },
+        {
+          "title": "Write down one sentence about what you just read on a piece of paper next to the book",
+          "estimated_minutes": 2
+        }
+      ],
+      "subtask_estimate_sum": 13
+    }
+  }
+}
